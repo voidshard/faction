@@ -15,6 +15,7 @@ type Faction struct {
 	Wealth     int // money/liquid wealth the faction has available to spend
 	Cohesion   int // a metric for how united a faction is
 	Corruption int // 'asset' corruption or how much money tends to go inexplicably missing
+	Property   []*Land
 
 	IsCovert     bool // the faction actively avoids notice, discourages public action
 	IsIllegal    bool // explicitly illegal (by design or running afoul of the government
@@ -32,4 +33,9 @@ type Faction struct {
 
 	ParentFactionID       string       // ID of parent faction (if any)
 	ParentFactionRelation RelationType // relation to parent faction (if any)
+
+	ResearchScience  int // the various kinds of research a faction can do
+	ResearchTheology int
+	ResearchMagic    int
+	ResearchOccult   int
 }
