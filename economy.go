@@ -2,64 +2,45 @@ package faction
 
 import ()
 
-// Commodity is anything that can be bought or sold
-type Commodity interface {
-	// Value at the given location
-	Value(area string, ticks int64) int
+// Economy is a primitive way for our simulation to understand enough about the world
+// economy to make hopefully not irrational decisions.
+type Economy interface {
+	// Commodity looks up a commodity by name & returns it
+	Commodity(commodity string) *Commodity
+
+	// CommodityValue returns the value (or forecasted value) of a commodity in
+	// some area at some time offset in ticks (ie. '0' is 'now')
+	CommodityValue(commodity, area string, ticks int64) float64
+
+	// CommodityYield returns the yield (or forecasted yield) of a commodity in
+	// some area at some time offset in ticks (ie. '0' is 'now').
+	// Skill here is the skill named on the Commodity itself.
+	CommodityYield(commodity, area string, skill int) float64
+
+	// LandValue returns the value of 1 unit squared of land in the area
+	LandValue(area string, ticks int64) float64
 }
 
-// profession is some job that creates some Commodity.
-// Used for following Harvest & Craft.
-type profession interface {
-	// Skill that applies to this profession
-	Skill() string
-
-	// Difficulty rating (applied to given Harvest, Craft).
-	// In *general* we anticipate that Crafts require higher and
-	// rarer Skill(s) than Harvest(ables).
-	Difficulty() int
-
-	// Land required in order to perform this craft.
-	// Metalworking is probably fairly compact.
-	// Tanning hides will take a fair amount of room ..
-	// Return should be in land units ^2 (ie. an area).
-	LandRequired() int
-}
-
-// Harvest is a commodity that is harvested somehow.
-// Eg. it could be mined, farmed, found .. whatever
-type Harvest interface {
-	Commodity
-	profession
-
-	// Yield at the given location at the given offset in ticks.
-	// Nb. this should be a yield expected of one person in a `tick`
-	Yield(area string, ticks int64) int
-}
-
-// Craft represents a process that
-// - requires one or more input Commodities
-// - yields one or more output Commodities
+// Commodity is something of value in the economy.
 //
-// Note that this (along with Harvest) effectively forms a chain, where Harvest
-// goods are those that are raw or starting points in a production chain.
+// Raw materials are defined as those with no inputs.
+// Everything else is a worked good (a "craft") that has one or more input(s) and
+// returns one or more output(s).
 //
-// Ie.
+// Every commodity has a name, a profession and an applicable skill.
 //
-//	You harvest Eggs
-//	You harvest Grain & 'craft' to yield Flour
-//	You harvest Milk & 'craft' to make Butter
-//	You use Egg, Milk, Butter, Flour & 'craft' to yield Custard.
+// Professions are generally the focus of a Faction `ProfessionFocus`
+// ie. a guild of farmers might have a focus on professions Farming, Weaving, Tanning
+// and produce commodities wheat, textiles, leather.
 //
-// Nb. this is only an example, please don't make custard without sugar, we're not advocating
-// barbarism here.
-type Craft interface {
-	profession
+// The simulator doesn't actually need to understand what these professions mean
+// it's simply a way of linking commodities -> professions -> factions.
+type Commodity struct {
+	Name            string // eg. wheat, iron, iron ingots, silk
+	Profession      string // eg. farmer, blacksmith
+	Skill           string // eg. farming, smithing, weaving, painting
+	LandRequirement int    // some amount of land required to perform this task (units squared)
 
-	// Material input(s)
-	Materials() map[Commodity]int
-
-	// Material output(s)
-	// Nb. this should be a yield expected of one person in a `tick`
-	Yield() map[Commodity]int
+	Requires  map[string]float64 // required input Commodity (names) + their amounts (if any)
+	BaseYield map[string]float64 // output Commoditiy (names) + their amounts
 }
