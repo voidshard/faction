@@ -8,7 +8,7 @@ type Faction struct {
 
 	Ethos *Ethos // average ethics of faction members (traditionally & leaders)
 
-	ActionFocus     []ActionType // actions the faction favours
+	ActionFocus     []ActionType // actions the faction favours; ie. "business as usual"
 	ProfessionFocus []string     // profession name(s)
 
 	Leadership LeaderType // how faction is run

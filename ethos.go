@@ -68,3 +68,7 @@ func Average(in ...*Ethos) *Ethos {
 	// TODO
 	return &Ethos{}
 }
+
+// EthosDeviation represents variation (std. deviation) from an average in a populace.
+// https://en.wikipedia.org/wiki/Standard_deviation
+type EthosDeviation [ethicCount]float64

@@ -24,9 +24,8 @@ package faction
 // - Factions under Duria obey the laws of Duria.
 type Government struct {
 
-	// IllegalActions are actions this government considers illegal.
-	// Factions that perform them do so may face punishment if they're
-	// caught.
+	// IllegalActions are actions this government considers illegal (obviously).
+	// Factions that perform these may face punishment if they're caught.
 	//
 	// Any faction performing an illegal action automatically attempts to do
 	// so secretly (unless it's in full revolt ..).
@@ -36,7 +35,7 @@ type Government struct {
 	// has outlawed.
 	//
 	// It is considered illegal to craft, import or export these crafts, however
-	// that can make them very lucrative to people less concerned with the law.
+	// they can still be very lucrative to people less concerned with the law.
 	IllegalCrafts []string
 
 	// Every tick the governing faction will collect funds from law abiding
