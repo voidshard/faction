@@ -51,12 +51,12 @@ func (r *RandGenerator) Int() int {
 
 // value returns a new random value
 func (r *RandGenerator) value() float64 {
-	// generate a new random value such that we keep reasonably close to the desired
-	// standard deviation.
-	// The brute force approach; we'll choose sum number of values, experimentally
+	// The brute force approach; we'll choose some number of values, experimentally
 	// add them to our running values & see how the std dev. changes.
-	// Then we pick the best value that keeps us closer (in absolute terms) to our
+	// Then we pick the best value that keeps us closest (in absolute terms) to our
 	// desired std deviation.
+	// There's probably a smarter way to do this, I had a short look for a nice library
+	// but .. nothing jumped out at me
 	bestVal := r.min + r.rng.Float64()*(r.max-r.min)
 	r.add(bestVal)
 	bestDev := math.Abs(r.deviation - r.runningStdDev())
