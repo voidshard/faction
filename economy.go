@@ -9,13 +9,14 @@ type Economy interface {
 	Commodity(commodity string) *Commodity
 
 	// CommodityValue returns the value (or forecasted value) of a commodity in
-	// some area at some time offset in ticks (ie. '0' is 'now')
+	// some area at some time offset in ticks (ie. '0' is 'now').
+	// Negative values are invalid.
 	CommodityValue(commodity, area string, ticks int64) float64
 
 	// CommodityYield returns the yield (or forecasted yield) of a commodity in
 	// some area at some time offset in ticks (ie. '0' is 'now').
-	// Skill here is the skill named on the Commodity itself.
-	CommodityYield(commodity, area string, skill int) float64
+	// Negative values are invalid.
+	CommodityYield(commodity, area string, professionSkill int) float64
 
 	// LandValue returns the value of 1 unit squared of land in the area
 	LandValue(area string, ticks int64) float64
@@ -37,8 +38,7 @@ type Economy interface {
 // it's simply a way of linking commodities -> professions -> factions.
 type Commodity struct {
 	Name            string // eg. wheat, iron, iron ingots, silk
-	Profession      string // eg. farmer, blacksmith
-	Skill           string // eg. farming, smithing, weaving, painting
+	Profession      string // eg. farmer, blacksmith (cannot be "" - meaning "no profession")
 	LandRequirement int    // some amount of land required to perform this task (units squared)
 
 	Requires  map[string]float64 // required input Commodity (names) + their amounts (if any)

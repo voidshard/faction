@@ -8,8 +8,9 @@ type Faction struct {
 
 	Ethos *Ethos // average ethics of faction members (traditionally & leaders)
 
-	ActionFocus     []ActionType // actions the faction favours; ie. "business as usual"
-	ProfessionFocus []string     // profession name(s)
+	ActionFocus          []ActionType // actions the faction favours; ie. "business as usual"
+	ActionFrequencyTicks int          // how often the faction leadership meets / offers new jobs
+	ProfessionFocus      []string     // profession name(s)
 
 	Leadership LeaderType // how faction is run
 
@@ -40,12 +41,4 @@ type Faction struct {
 	ResearchTheology int
 	ResearchMagic    int
 	ResearchOccult   int
-
-	// LandRights are (Area, Commodity) pairs that this faction has the right to.
-	// Ie.
-	//   Area FooTown - Iron Ore Mine
-	//   Area BobVillage - Wheat Field
-	// The faction has been granted the right to work these resources & own their
-	// proceeds.
-	LandRights []*LandRight
 }

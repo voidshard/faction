@@ -1,10 +1,7 @@
 package faction
 
+// Event is something we want to report to the caller
 type Event struct {
-	FactionSource string
-	FactionTarget string
-
-	ActionType ActionType
-
+	// TODO: expand on event
 	Message string
 }

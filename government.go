@@ -14,15 +14,17 @@ package faction
 //
 // Most factions under a government qualify as Tributaries (they're
 // allowed to act on their own, but pay tax to their overlord).
+// (See relations.go).
 //
 // = vassals =
 // Note that a Government may have a subordinate faction that is also a
 // Government. ie Kingdom of Morovia (Government) run by the Morovian Royal
-// Family (Faction) might have a vassal, Kingdom of Duria (Government) (run
-// by the Durian Royal Family).
+// Family (Faction) might have a vassal, Kingdom of Duria (Government) run
+// by the Durian Royal Family (Faction).
 // - Factions under Morovia (but not Duria) obey the laws of Morovia.
 // - Factions under Duria obey the laws of Duria.
 type Government struct {
+	ID string
 
 	// IllegalActions are actions this government considers illegal (obviously).
 	// Factions that perform these may face punishment if they're caught.
@@ -31,35 +33,23 @@ type Government struct {
 	// so secretly (unless it's in full revolt ..).
 	IllegalActions []ActionType
 
-	// IllegalCrafts are Commodities (or even processes) that the government
-	// has outlawed.
+	// IllegalCommodities are items that the government has outlawed.
 	//
 	// It is considered illegal to craft, import or export these crafts, however
 	// they can still be very lucrative to people less concerned with the law.
-	IllegalCrafts []string
+	IllegalCommodities []string
 
-	// Every tick the governing faction will collect funds from law abiding
-	// factions under it.
+	// CraftCommodities is a list of commodities that citizens of this state know
+	// how to craft. These, in addition to any DefaultCraftCommodities (see settings.go),
+	// are possible output(s) of ActionTypeCraft (see action.go).
+	CraftCommodities []string
+
+	// Every `TaxFrequency` tick(s) the governing faction will collect
+	// funds from law abiding factions under it.
+	// Covert factions do not pay tax .. since that would require them to exist
+	// openly.
 	//
 	// Higher tax rates make factions increasingly unhappy. Obviously.
-	TaxRate float64
-
-	// LandRights are (Area, Commodity) pairs that the government has the right to.
-	// Ie.
-	//   Area FooTown - Iron Ore Mine
-	//   Area BobVillage - Wheat Field
-	// The government doesn't work these itself but sells them off to faction(s)
-	// to work them (or spawns divisions of the government to handle them).
-	// Well, technically a government *could* work them .. if they awarded
-	// themselves the right. This would be like .. a state run mine or something.
-	LandRights []*LandRight
-}
-
-// LandRight is the legal right to work some land for some resource
-type LandRight struct {
-	// Area ID
-	Area string
-
-	// Resource (commodity name)
-	Resource string
+	TaxRate      float64
+	TaxFrequency int
 }

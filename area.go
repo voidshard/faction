@@ -16,9 +16,9 @@ type Area struct {
 	ID string
 
 	// Faction ID
-	Government string
+	GoverningFaction string
 
-	// Natural resources at this location that can (in theory) be harvested.
+	// Resources at this location that can (in theory) be harvested (ActionTypeHarvest).
 	//
 	// By default the rights to collect these fall to the area government, who then
 	// sells / allocates the right to factions to utilize (ActionTypeGrantLand).

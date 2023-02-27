@@ -14,6 +14,7 @@ const (
 )
 
 // RandGenerator yields random numbers that follow some desired distribution.
+// This isn't super pretty, but we only need something
 //
 // We don't keep all yielded values in memory, rather we calculate running average &
 // std deviation values as we go.

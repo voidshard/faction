@@ -14,6 +14,7 @@ type Simulation interface {
 	// Populate adds people to an area based on a general outline.
 	Populate(areaID string, demo *Demographics) error
 
+	//
 	Events() <-chan *Event
 }
 
