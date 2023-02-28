@@ -1,4 +1,4 @@
-package faction
+package structs
 
 // Job is what a faction creates when it wishes to perform an Action.
 //
@@ -31,4 +31,5 @@ type Job struct {
 
 	IsIllegal bool // action has been outlawed
 	IsReady   bool // action has all people it needs to start
+	IsDone    bool // job is completed
 }

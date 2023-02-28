@@ -1,9 +1,5 @@
 package faction
 
-const (
-	defaultLimit = 5000
-)
-
 type TupleFilter struct {
 	Subject  *string
 	Object   *string
@@ -16,6 +12,8 @@ type AreaFilter struct{}
 type PersonFilter struct{}
 
 type FactionFilter struct{}
+
+type FamilyFilter struct{}
 
 type JobFilter struct{}
 

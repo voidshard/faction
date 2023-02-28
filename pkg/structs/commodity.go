@@ -1,26 +1,4 @@
-package faction
-
-import ()
-
-// Economy is a primitive way for our simulation to understand enough about the world
-// economy to make hopefully not irrational decisions.
-type Economy interface {
-	// Commodity looks up a commodity by name & returns it
-	Commodity(commodity string) *Commodity
-
-	// CommodityValue returns the value (or forecasted value) of a commodity in
-	// some area at some time offset in ticks (ie. '0' is 'now').
-	// Negative values are invalid.
-	CommodityValue(commodity, area string, ticks int64) float64
-
-	// CommodityYield returns the yield (or forecasted yield) of a commodity in
-	// some area at some time offset in ticks (ie. '0' is 'now').
-	// Negative values are invalid.
-	CommodityYield(commodity, area string, professionSkill int) float64
-
-	// LandValue returns the value of 1 unit squared of land in the area
-	LandValue(area string, ticks int64) float64
-}
+package structs
 
 // Commodity is something of value in the economy.
 //

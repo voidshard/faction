@@ -1,4 +1,4 @@
-package faction
+package structs
 
 // Area represents a logical area of land .. since our simulation cares about people
 // and factions, it should probably represent somewhere people can live.
@@ -15,7 +15,7 @@ type Area struct {
 	// a unique reference for this area
 	ID string
 
-	// Faction ID
+	// Faction ID (if any)
 	GoverningFaction string
 
 	// Resources at this location that can (in theory) be harvested (ActionTypeHarvest).

@@ -1,8 +1,7 @@
-package action
+package structs
 
 type ActionType int
 
-// favor
 // trust
 // affiliation
 

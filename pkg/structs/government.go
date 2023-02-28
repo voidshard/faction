@@ -1,4 +1,4 @@
-package faction
+package structs
 
 // Government for our purposes is a set of laws, rights, obligations
 // and similar.

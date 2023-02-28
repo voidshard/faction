@@ -1,4 +1,4 @@
-package faction
+package structs
 
 // Faction represents some group we would like to simulate.
 // Nb. we don't assume these are the *only* factions, just that they're the
@@ -27,7 +27,7 @@ type Faction struct {
 	// *Religion // TODO similar to government
 	IsReligion bool // organised religion, not simply *has* a religion (ie. church vs. order of knights)
 
-	MemberByBirth bool // if having parent(s) in the faction allows children to join
+	MemberByBirth bool // if having parent(s) in the faction auto joins children
 
 	EspionageOffense int // represent stored good(s), member training & general preparation
 	EspionageDefense int

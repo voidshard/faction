@@ -31,7 +31,7 @@ func (i *IterToken) String() string {
 // NewIterToken returns a default starting token
 func NewIterToken() *IterToken {
 	return &IterToken{
-		Limit:  5000,
+		Limit:  limitDefault,
 		Offset: 0,
 	}
 }

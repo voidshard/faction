@@ -1,4 +1,4 @@
-package faction
+package structs
 
 // TradeRoute represents a formal treaty to trade a specific good between
 // two places.

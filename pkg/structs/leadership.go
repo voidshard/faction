@@ -1,4 +1,4 @@
-package faction
+package structs
 
 type LeaderType int
 

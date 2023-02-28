@@ -14,7 +14,8 @@ const (
 )
 
 // RandGenerator yields random numbers that follow some desired distribution.
-// This isn't super pretty, but we only need something
+// This isn't super pretty, but we only need something to get us started .. we could use
+// straight up random values but it would make our societies seem a bit too random.
 //
 // We don't keep all yielded values in memory, rather we calculate running average &
 // std deviation values as we go.
@@ -35,11 +36,6 @@ type RandGenerator struct {
 
 // Float64 returns a new random value between min & max such that we stay reasonably
 // close to the desired std deviation.
-//
-// Nb. this is best effort are we probably don't sit exactly on this value, we don't
-// guarantee that the std deviation requested is honored exactly .. I mean .. we *are*
-// returning random values here .. we just aim to supply slightly less randomness so
-// the values huddle around some variance.
 func (r *RandGenerator) Float64() float64 {
 	return r.value()
 }
@@ -51,6 +47,11 @@ func (r *RandGenerator) Int() int {
 }
 
 // value returns a new random value
+//
+// Nb. this is best effort as we probably don't sit exactly on this value, we don't
+// guarantee that the std deviation requested is honored exactly .. I mean .. we *are*
+// returning random values here .. we just aim to supply slightly less randomness so
+// the values huddle around some variance.
 func (r *RandGenerator) value() float64 {
 	// The brute force approach; we'll choose some number of values, experimentally
 	// add them to our running values & see how the std dev. changes.
@@ -58,6 +59,7 @@ func (r *RandGenerator) value() float64 {
 	// desired std deviation.
 	// There's probably a smarter way to do this, I had a short look for a nice library
 	// but .. nothing jumped out at me
+	// TODO: more math less YOLO
 	bestVal := r.min + r.rng.Float64()*(r.max-r.min)
 	r.add(bestVal)
 	bestDev := math.Abs(r.deviation - r.runningStdDev())

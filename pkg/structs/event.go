@@ -1,4 +1,4 @@
-package faction
+package structs
 
 // Event is something we want to report to the caller
 type Event struct {

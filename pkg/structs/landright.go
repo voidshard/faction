@@ -1,4 +1,4 @@
-package faction
+package structs
 
 // LandRights are (Area, Commodity) pairs that the government has the right to.
 // Ie.

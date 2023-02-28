@@ -1,4 +1,4 @@
-package ethos
+package structs
 
 import (
 	"math"
