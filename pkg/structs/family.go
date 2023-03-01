@@ -31,13 +31,16 @@ const (
 type Family struct {
 	ID string
 
+	// Area where the family is based (where children will be placed)
+	AreaID string
+
 	// Faction ID (if any) if this family is simulated as a major player.
 	//
 	// This implies the family is fairly wealthy and/or influential, probably 95% of families
 	// will not have this set; which is probably a good thing and saves us lots of calculations
 	// for families which don't really have the resources to act on the national / international
 	// stage.
-	Faction string
+	FactionID string
 
 	// True while;
 	// - both people are capable of bearing children

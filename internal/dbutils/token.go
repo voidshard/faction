@@ -28,8 +28,8 @@ func (i *IterToken) String() string {
 	return fmt.Sprintf("%d,%d", i.Limit, i.Offset)
 }
 
-// NewIterToken returns a default starting token
-func NewIterToken() *IterToken {
+// NewToken returns a default starting token
+func NewToken() *IterToken {
 	return &IterToken{
 		Limit:  limitDefault,
 		Offset: 0,
@@ -37,10 +37,10 @@ func NewIterToken() *IterToken {
 }
 
 // ParseIterToken returns our limit / offset from a token
-func ParseIterToken(in string) (*IterToken, error) {
+func ParseToken(in string) (*IterToken, error) {
 	if in == "" {
 		// special case for those starting an iteration
-		return NewIterToken(), nil
+		return NewToken(), nil
 	}
 
 	bits := strings.SplitN(in, ",", 2)

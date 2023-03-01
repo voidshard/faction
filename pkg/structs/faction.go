@@ -4,41 +4,39 @@ package structs
 // Nb. we don't assume these are the *only* factions, just that they're the
 // most notable / influential / interesting.
 type Faction struct {
-	ID string
+	Ethos // average ethics of faction members (by tradition / current leadership)
 
-	Ethos *Ethos // average ethics of faction members (traditionally & leaders)
+	ID string `db:"id"`
 
-	ActionFocus          []ActionType // actions the faction favours; ie. "business as usual"
-	ActionFrequencyTicks int          // how often the faction leadership meets / offers new jobs
-	ProfessionFocus      []string     // profession name(s)
+	ActionFrequencyTicks int `db:"action_frequency_ticks"` // faction offers new jobs every X ticks
 
-	Leadership LeaderType // how faction is run
+	Leadership LeaderType `db:"leadership"` // how faction is run
 
-	Wealth     int // money/liquid wealth the faction has available to spend
-	Cohesion   int // a metric for how united a faction is
-	Corruption int // 'asset' corruption or how much money tends to go inexplicably missing
+	Wealth     int `db:"wealth"`     // money/liquid wealth the faction has available to spend
+	Cohesion   int `db:"cohesion"`   // a metric for how united a faction is
+	Corruption int `db:"corruption"` // 'asset' corruption or how much money tends to go inexplicably missing
 
-	IsCovert  bool // the faction actively avoids notice, discourages public action
-	IsIllegal bool // explicitly illegal (by design or running afoul of the government
+	IsCovert  bool `db:"is_covert"`  // the faction actively avoids notice, discourages public action
+	IsIllegal bool `db:"is_illegal"` // explicitly illegal (by design or by running afoul of the government)
 
-	Government   *Government // the actual law(s) in place in the land
-	IsGovernment bool        // a government can modify the Government struct
+	GovernmentID string `db:"government_id"` // ID of Government that this faction is under (if only nominally)
+	IsGovernment bool   `db:"is_government"` // a government can modify the Government struct
 
-	// *Religion // TODO similar to government
-	IsReligion bool // organised religion, not simply *has* a religion (ie. church vs. order of knights)
+	ReligionID string `db:"religion_id"` // ID of Religion (TODO)
+	IsReligion bool   `db:"is_religion"` // organised religion, not simply *has* a religion (ie. church vs. order of knights)
 
-	MemberByBirth bool // if having parent(s) in the faction auto joins children
+	IsMemberByBirth bool `db:"is_member_by_birth"` // if having parent(s) in the faction auto joins children
 
-	EspionageOffense int // represent stored good(s), member training & general preparation
-	EspionageDefense int
-	MilitaryOffense  int
-	MilitaryDefense  int
+	EspionageOffense int `db:"espionage_offense"` // represent stored good(s), member training & general preparation
+	EspionageDefense int `db:"espionage_defense"`
+	MilitaryOffense  int `db:"military_offense"`
+	MilitaryDefense  int `db:"military_defense"`
 
-	ParentFactionID       string       // ID of parent faction (if any)
-	ParentFactionRelation RelationType // relation to parent faction (if any)
+	ParentFactionID       string          `db:"parent_faction_id"`       // ID of parent faction (if any)
+	ParentFactionRelation FactionRelation `db:"parent_faction_relation"` // relation to parent faction (if any)
 
-	ResearchScience  int // the various kinds of research a faction can do
-	ResearchTheology int
-	ResearchMagic    int
-	ResearchOccult   int
+	ResearchScience  int `db:"research_science"` // the various kinds of research a faction can do
+	ResearchTheology int `db:"research_theology"`
+	ResearchMagic    int `db:"research_magic"`
+	ResearchOccult   int `db:"research_occult"`
 }

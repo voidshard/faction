@@ -11,8 +11,8 @@ type Demographics struct {
 	// Ethos represents the average outlook of members of the population
 	Ethos *Ethos
 
-	// EthosDeviation is the standard deviation of the populace from the average (above)
-	EthosDeviation *EthosDeviation
+	// EthosDeviation is the standard deviation of the populace from the average (above).
+	EthosDeviation *Ethos
 
 	// Professions to allocate to people
 	Professions []*Profession

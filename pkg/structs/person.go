@@ -2,9 +2,15 @@ package structs
 
 // Person roughly outlines someone that can belong to / work for a faction.
 type Person struct {
-	Ethos *Ethos // rough outlook
+	Ethos // rough outlook
 
-	Job string // ie. current job id (if any)
+	ID string `db:"id"`
 
-	Age int // current age, in ticks
+	AreaID string `db:"area_id"` // area person lives in
+	JobID  string `db:"job_id"`  // ie. current job id (if any)
+
+	BirthTick int `db:"birth_tick"`
+	DeathTick int `db:"death_tick"`
+
+	IsMale bool `db:"is_male"`
 }

@@ -22,6 +22,8 @@ type Economy interface {
 	// some area at some time offset in ticks (ie. '0' is 'now').
 	CommodityYield(commodity, area string, ticks, professionSkill int) float64
 
-	// LandValue returns the value of 1 unit squared of land in the area
+	// LandValue returns the value of 1 unit squared of land in the area.
+	// This might be a farm + attached building(s) in a rural area, a large complex
+	// within a city area, a small apartment or .. whatever.
 	LandValue(area string, ticks int) float64
 }

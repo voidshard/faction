@@ -21,12 +21,52 @@ const (
 )
 
 var (
+	// NB. UUIDs are 36 chars (eg. 123e4567-e89b-12d3-a456-426655440000)
+
 	// Sqlite3 we use as a DB for users wanting to run in local-sim mode.
 	createMeta = fmt.Sprintf(`CREATE TABLE IF NOT EXISTS %s (
 	id VARCHAR(255) PRIMARY KEY,
 	str TEXT NOT NULL DEFAULT "",
 	int INTEGER NOT NULL DEFAULT 0
     );`, tableMeta)
+
+	createArea = fmt.Sprintf(`CREATE TABLE IF NOT EXISTS %s (
+	    id VARCHAR(36) PRIMARY KEY,
+	    governing_faction_id VARCHAR(36)
+	);`, tableAreas)
+
+	// table for structs.Faction object
+	createFactions = fmt.Sprintf(`CREATE TABLE IF NOT EXISTS %s (
+            id VARCHAR(36) PRIMARY KEY,
+            ethos_altruism INTEGER NOT NULL DEFAULT 0,
+            ethos_ambition INTEGER NOT NULL DEFAULT 0,
+            ethos_tradition INTEGER NOT NULL DEFAULT 0,
+            ethos_pacifism INTEGER NOT NULL DEFAULT 0,
+            ethos_piety INTEGER NOT NULL DEFAULT 0,
+            ethos_caution INTEGER NOT NULL DEFAULT 0,
+            action_frequency_ticks INTEGER NOT NULL DEFAULT 1,
+            leadership INTEGER NOT NULL DEFAULT 0,
+            wealth INTEGER NOT NULL DEFAULT 0,
+            cohesion INTEGER NOT NULL DEFAULT 0,
+            corruption INTEGER NOT NULL DEFAULT 0,
+            is_covered BOOLEAN NOT NULL DEFAULT FALSE,
+            is_illegal BOOLEAN NOT NULL DEFAULT FALSE,
+            government_id VARCHAR(36) NOT NULL,
+            is_government BOOLEAN NOT NULL DEFAULT FALSE,
+            religion_id VARCHAR(36),
+            is_religion BOOLEAN NOT NULL DEFAULT FALSE,
+            is_member_by_birth BOOLEAN NOT NULL DEFAULT FALSE,
+            espionage_offense INTEGER NOT NULL DEFAULT 0,
+            espionage_defense INTEGER NOT NULL DEFAULT 0,
+            military_offense INTEGER NOT NULL DEFAULT 0,
+            military_defense INTEGER NOT NULL DEFAULT 0,
+            parent_faction_id VARCHAR(36),
+            parent_faction_relation INTEGER,
+            research_science INTEGER NOT NULL DEFAULT 0,
+            research_theology INTEGER NOT NULL DEFAULT 0,
+            research_magic INTEGER NOT NULL DEFAULT 0,
+            research_occult INTEGER NOT NULL DEFAULT 0
+        );`, tableFactions)
 
 	// indexes that we should create
 	indexes = []string{}
@@ -62,7 +102,7 @@ func (s *Sqlite) setupDatabase() error {
 		return err
 	}
 
-	txn, err := s.Begin()
+	txn, err := s.Transaction()
 	if err != nil {
 		return err
 	}

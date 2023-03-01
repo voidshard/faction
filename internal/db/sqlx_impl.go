@@ -1,27 +1,26 @@
-package database
+package db
 
 import (
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
 )
 
-// Relation here is a name we accept for Tuple(s) and Modifier(s).
-type Relation string
-
 const (
 	// Relation Table Partitioning
 	//
 	// We could in theory have all Tuples and Modifiers in two giant tables
-	// (possible even the same table where Tuples don't use all of the columns)
+	// (possible even with one table where Tuples don't use all of the columns)
 	// and partition by the Relation (in the case of Postgres at least?) but
 	// in practice we disallow querying the table directly in our interface and
 	// it's sort of easier conceptually / book keeping wise to have distinct tables
-	// which hold distinct data.
+	// which hold distinct data. That is, we know given the relation what the
+	// subject and object fields represent which is different per relation.
 	//
 	// Ie. an inter-personal relationship (wife / son / ally) between Person X and
 	// Person Y has no bearing on the trust between Faction A and Faction B .. and
-	// we don't to be able to query them in the same breath .. although they're both
-	// tuples and in theory we *could*
+	// we don't to be able to query them both in the same breath .. although they're both
+	// tuples and in theory we *could* .. but then we'd have to work backwards and
+	// store more rows to work out what the various fields mean.
 	//
 	// Thus currently each Relation has a "tuples_" and a "modifiers_" table created
 	// for it. Modifiers apply temporary alterations to Tuple values until their expire
@@ -41,34 +40,35 @@ const (
 	//    12 <= T < 15 =     V + Z
 	//    15 <= T      =     V
 
-	// RelationPFAffiliation holds how closely people affiliate with factions
-	RelationPFAffiliation Relation = "affiliation_person_to_faction"
+	// RelationAffiliationPersonToFaction holds how closely people affiliate with factions
+	RelationAffiliationPersonToFaction Relation = "affiliation_person_to_faction"
 
-	// RelationFFTrust holds how much factions trust each other
-	RelationFFTrust Relation = "trust_faction_to_faction"
+	// RelationTrustFactionToFaction holds how much factions trust each other
+	RelationTrustFactionToFaction Relation = "trust_faction_to_faction"
 
-	// RelationPProfessionSkill holds how skilled people are in professions
-	RelationPProfessionSkill Relation = "skill_person_to_profession"
+	// RelationSkillPersonToProfession holds how skilled people are in professions
+	RelationSkillPersonToProfession Relation = "skill_person_to_profession"
+
+	// RelationPriorityFactionToAction holds how much a faction wants to do something
+	RelationPriorityFactionToAction Relation = "priority_faction_to_action"
 )
 
 const (
 	// SQL table names
 	tableMeta        = "meta"
 	tableAreas       = "areas"
-	tableFaction     = "factions"
+	tableFactions    = "factions"
 	tableFamilies    = "families"
 	tableGovernments = "governments"
 	tableJobs        = "jobs"
 	tableLandRights  = "landrights"
 	tablePeople      = "people"
+	tableRoutes      = "routes"
+	tablePlots       = "plots"
 
 	// metaClock is the current simulation tick, stored in the metadata table
 	metaClock = "tick"
 )
-
-func (r Relation) tupleTable() string { return fmt.Sprintf("tuples_%s", r) }
-
-func (r Relation) modTable() string { return fmt.Sprintf("modifiers_%s", r) }
 
 // sqlDB represents a generic DB wrapper -- this allows SQLite & Postgres to run
 // the same code & execute queries in the same manner.

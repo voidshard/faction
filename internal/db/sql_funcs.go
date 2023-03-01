@@ -2,6 +2,7 @@ package db
 
 import (
 	"github.com/voidshard/faction/internal/dbutils"
+	"github.com/voidshard/faction/pkg/structs"
 
 	"database/sql"
 	"fmt"
@@ -25,6 +26,32 @@ type mstruct struct {
 	ID  string `db:"id"`
 	Str string `db:"str"`
 	Int int    `db:"int"`
+}
+
+func areas(op sqlOperator, token string, in []*AreaFilter) ([]*structs.Area, error) {
+	tk, err := dbutils.ParseToken(token)
+	if err != nil {
+		return nil, err
+	}
+
+}
+
+// setAreas saves area information to the database
+func setAreas(op sqlOperator, areas []*structs.Area) error {
+	if len(areas) == 0 {
+		return nil
+	}
+
+	qstr := fmt.Sprintf(`INSERT INTO %s (id, name, description, parent_id, type)
+        VALUES (:id, :governing_faction) 
+        ON CONFLICT (id) DO UPDATE SET
+            governing_faction=EXCLUDED.governing_faction
+        ;`,
+		tableAreas,
+	)
+
+	_, err := op.NamedExec(qstr, areas)
+	return err
 }
 
 // meta returns some metadata, if set

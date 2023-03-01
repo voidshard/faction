@@ -37,6 +37,9 @@ func NewID(args ...interface{}) string {
 
 // IsValidID returns if the given string represents a UUID
 func IsValidID(in string) bool {
+	if in == "" {
+		return false
+	}
 	return valid.MatchString(in)
 }
 

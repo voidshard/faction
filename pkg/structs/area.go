@@ -13,14 +13,8 @@ package structs
 // be using it a lot and asking for it back.
 type Area struct {
 	// a unique reference for this area
-	ID string
+	ID string `db:"id"`
 
 	// Faction ID (if any)
-	GoverningFaction string
-
-	// Resources at this location that can (in theory) be harvested (ActionTypeHarvest).
-	//
-	// By default the rights to collect these fall to the area government, who then
-	// sells / allocates the right to factions to utilize (ActionTypeGrantLand).
-	Resources []string // Commodity name(s)
+	GoverningFactionID string `db:"governing_faction_id"`
 }
