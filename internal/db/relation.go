@@ -49,13 +49,30 @@ const (
 	// - tuple filters (which tuples you're interested in)
 
 	// RelationPFAffiliation holds how closely people affiliate with factions
+	// So: <person_id> <faction_id> <affiliation_level>
 	RelationPFAffiliation Relation = "affiliation_person_to_faction"
 
 	// RelationFFTrust holds how much factions trust each other
+	// So: <faction_id> <faction_id> <trust_level>
 	RelationFFTrust Relation = "trust_faction_to_faction"
 
 	// RelationPProfessionSkill holds how skilled people are in professions
+	// So: <person_id> <profession> <skill_level>
 	RelationPProfessionSkill Relation = "skill_person_to_profession"
+
+	// RelationFactionResearch holds how much research a faction has done on a topic
+	// (we use the ActionType as the object)
+	// So: <faction_id> <research_action_type> <research_level>
+	RelationFactionResearch Relation = "research_faction_to_research"
+)
+
+var (
+	allRelations = []Relation{
+		RelationPFAffiliation,
+		RelationFFTrust,
+		RelationPProfessionSkill,
+		RelationFactionResearch,
+	}
 )
 
 func (r Relation) tupleTable() string {

@@ -36,7 +36,7 @@ type FactionFilter struct {
 
 	ID              string
 	GovernmentID    string
-	ReligionID      bool
+	ReligionID      string
 	ParentFactionID string
 }
 

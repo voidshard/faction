@@ -15,9 +15,9 @@ package structs
 // Faction->Faction
 // etc.
 type Tuple struct {
-	Subject string
-	Object  string
-	Value   int
+	Subject string `db:"subject"`
+	Object  string `db:"object"`
+	Value   int    `db:"value"`
 }
 
 // Modifier is some temporary modifier to a Tuple(s).
@@ -37,8 +37,8 @@ type Tuple struct {
 type Modifier struct {
 	Tuple
 
-	Expires    int    // modifiers expire at some Tick
-	MetaType   string // information about what MetaID refers to
-	MetaID     string // ID of what caused this modifier
-	MetaReason string // human readable reason string (eg. "bribe")
+	Expires    int    `db:"expires"`     // modifiers expire at some Tick
+	MetaType   string `db:"meta_type"`   // information about what MetaID refers to
+	MetaID     string `db:"meta_id"`     // ID of what caused this modifier
+	MetaReason string `db:"meta_reason"` // human readable reason string (eg. "bribe")
 }

@@ -1,3 +1,8 @@
+/*
+	Sqlite3 we use as a DB for users wanting to run in local mode.
+
+It is not recommended to use this for anything other than testing, or very small simulations.
+*/
 package db
 
 import (
@@ -18,24 +23,100 @@ const (
 	// currentSchemaVersion of the db schema. Should be updated
 	// when we update the tables so we can handle migrations
 	currentSchemaVersion = 1
+
+	tupleTableCreateTemplate = `CREATE TABLE IF NOT EXISTS %s (
+	    subject VARCHAR(255) NOT NULL, 
+	    object VARCHAR(255) NOT NULL,
+	    value INTEGER NOT NULL DEFAULT 0,
+	);`
+
+	modifierTableCreateTemplate = `CREATE TABLE IF NOT EXISTS %s (
+	    subject VARCHAR(255) NOT NULL,
+	    object VARCHAR(255) NOT NULL,
+	    value INTEGER NOT NULL DEFAULT 0,
+	    expires INTEGER NOT NULL DEFAULT 0,
+	    meta_type VARCHAR(255) NOT NULL DEFAULT "",
+	    meta_id VARCHAR(255) NOT NULL DEFAULT "",
+	    meta_reason TEXT NOT NULL DEFAULT ""
+	);`
 )
 
 var (
 	// NB. UUIDs are 36 chars (eg. 123e4567-e89b-12d3-a456-426655440000)
-
-	// Sqlite3 we use as a DB for users wanting to run in local-sim mode.
 	createMeta = fmt.Sprintf(`CREATE TABLE IF NOT EXISTS %s (
-	id VARCHAR(255) PRIMARY KEY,
-	str TEXT NOT NULL DEFAULT "",
-	int INTEGER NOT NULL DEFAULT 0
-    );`, tableMeta)
+	    id VARCHAR(255) PRIMARY KEY,
+	    str VARCHAR(255) NOT NULL DEFAULT "",
+	    int INTEGER NOT NULL DEFAULT 0
+	);`, tableMeta)
 
 	createArea = fmt.Sprintf(`CREATE TABLE IF NOT EXISTS %s (
 	    id VARCHAR(36) PRIMARY KEY,
 	    governing_faction_id VARCHAR(36)
 	);`, tableAreas)
 
-	// table for structs.Faction object
+	createGovernments = fmt.Sprintf(`CREATE TABLE IF NOT EXISTS %s (
+	    id VARCHAR(36) PRIMARY KEY,
+	    tax_rate REAL NOT NULL DEFAULT 0.10,
+	    tax_frequency_ticks INTEGER NOT NULL DEFAULT 1
+	);`, tableGovernments)
+
+	createLandRights = fmt.Sprintf(`CREATE TABLE IF NOT EXISTS %s (
+	    id VARCHAR(36) PRIMARY KEY,
+	    governing_faction_id VARCHAR(36) NOT NULL,
+	    controlling_faction_id VARCHAR(36) NOT NULL,
+	    area_id VARCHAR(36) NOT NULL,
+	    resource VARCHAR(255) NOT NULL
+	);`, tableLandRights)
+
+	createRoutes = fmt.Sprintf(`CREATE TABLE IF NOT EXISTS %s (
+	    source_area_id VARCHAR(36) NOT NULL,
+	    target_area_id VARCHAR(36) NOT NULL,
+	    travel_time INTEGER NOT NULL DEFAULT 0
+	);`, tableRoutes)
+
+	createJobs = fmt.Sprintf(`CREATE TABLE IF NOT EXISTS %s (
+	    id VARCHAR(36) PRIMARY KEY,
+	    source_faction_id VARCHAR(36) NOT NULL,
+	    source_area_id VARCHAR(36) NOT NULL,
+	    action INTEGER NOT NULL,
+	    target_faction_id VARCHAR(36),
+	    target_area_id VARCHAR(36),
+	    target_meta_key VARCHAR(20),
+	    target_meta_value VARCHAR(255),
+	    people_min INTEGER NOT NULL DEFAULT 1,
+	    people_max INTEGER NOT NULL DEFAULT 1,
+	    tick_created INTEGER NOT NULL DEFAULT 0,
+	    tick_starts INTEGER NOT NULL DEFAULT 0,
+	    tick_duration INTEGER NOT NULL DEFAULT 1,
+	    secrecy INTEGER NOT NULL DEFAULT 0,
+	    is_illegal BOOLEAN NOT NULL DEFAULT FALSE,
+	    state VARCHAR(20) NOT NULL DEFAULT "pending"
+	);`, tableJobs)
+
+	createFamilies = fmt.Sprintf(`CREATE TABLE IF NOT EXISTS %s (
+	    id VARCHAR(36) PRIMARY KEY,
+	    area_id VARCHAR(36) NOT NULL,
+	    faction_id VARCHAR(36) NOT NULL,
+	    is_child_bearing BOOLEAN NOT NULL DEFAULT FALSE,
+	    male_id VARCHAR(36),
+	    female_id VARCHAR(36)
+	);`, tableFamilies)
+
+	createPeople = fmt.Sprintf(`CREATE TABLE IF NOT EXISTS %s (
+            id VARCHAR(36) PRIMARY KEY,
+            ethos_altruism INTEGER NOT NULL DEFAULT 0,
+            ethos_ambition INTEGER NOT NULL DEFAULT 0,
+            ethos_tradition INTEGER NOT NULL DEFAULT 0,
+            ethos_pacifism INTEGER NOT NULL DEFAULT 0,
+            ethos_piety INTEGER NOT NULL DEFAULT 0,
+            ethos_caution INTEGER NOT NULL DEFAULT 0,
+	    area_id VARCHAR(36) NOT NULL,
+	    job_id VARCHAR(36) NOT NULL,
+	    birth_tick INTEGER NOT NULL,
+	    death_tick INTEGER,
+	    is_male BOOLEAN NOT NULL DEFAULT FALSE
+	);`, tablePeople)
+
 	createFactions = fmt.Sprintf(`CREATE TABLE IF NOT EXISTS %s (
             id VARCHAR(36) PRIMARY KEY,
             ethos_altruism INTEGER NOT NULL DEFAULT 0,
@@ -49,7 +130,7 @@ var (
             wealth INTEGER NOT NULL DEFAULT 0,
             cohesion INTEGER NOT NULL DEFAULT 0,
             corruption INTEGER NOT NULL DEFAULT 0,
-            is_covered BOOLEAN NOT NULL DEFAULT FALSE,
+            is_covert BOOLEAN NOT NULL DEFAULT FALSE,
             is_illegal BOOLEAN NOT NULL DEFAULT FALSE,
             government_id VARCHAR(36) NOT NULL,
             is_government BOOLEAN NOT NULL DEFAULT FALSE,
@@ -61,11 +142,7 @@ var (
             military_offense INTEGER NOT NULL DEFAULT 0,
             military_defense INTEGER NOT NULL DEFAULT 0,
             parent_faction_id VARCHAR(36),
-            parent_faction_relation INTEGER,
-            research_science INTEGER NOT NULL DEFAULT 0,
-            research_theology INTEGER NOT NULL DEFAULT 0,
-            research_magic INTEGER NOT NULL DEFAULT 0,
-            research_occult INTEGER NOT NULL DEFAULT 0
+            parent_faction_relation INTEGER
         );`, tableFactions)
 
 	// indexes that we should create
@@ -120,8 +197,27 @@ func (s *Sqlite) setupDatabase() error {
 // We'll try to press on despite errors.
 func (s *Sqlite) createTables() error {
 	var final error
-	todo := []string{createMeta}
+	todo := []string{
+		createMeta,
+		createArea,
+		createGovernments,
+		createLandRights,
+		createRoutes,
+		createJobs,
+		createFamilies,
+		createPeople,
+		createFactions,
+	}
+	for _, r := range allRelations {
+		todo = append(
+			todo,
+			fmt.Sprintf(tupleTableCreateTemplate, r.modTable()),
+			fmt.Sprintf(modifierTableCreateTemplate, r.modTable()),
+		)
+	}
+
 	todo = append(todo, indexes...)
+
 	for _, ddl := range todo {
 		_, err := s.conn.Exec(ddl)
 		if err != nil {

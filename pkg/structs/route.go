@@ -13,7 +13,7 @@ package structs
 // based on direction; eg. sailing with vs against prevailing winds,
 // travelling up vs down from the mountains.
 type Route struct {
-	AreaSource string // area ID
-	AreaTarget string // area ID
-	TravelTime int    // travel time in ticks
+	SourceAreaID string `db:"source_area_id"` // area ID
+	TargetAreaID string `db:"target_area_id"` // area ID
+	TravelTime   int    `db:"travel_time"`    // travel time in ticks
 }

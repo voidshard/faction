@@ -34,9 +34,4 @@ type Faction struct {
 
 	ParentFactionID       string          `db:"parent_faction_id"`       // ID of parent faction (if any)
 	ParentFactionRelation FactionRelation `db:"parent_faction_relation"` // relation to parent faction (if any)
-
-	ResearchScience  int `db:"research_science"` // the various kinds of research a faction can do
-	ResearchTheology int `db:"research_theology"`
-	ResearchMagic    int `db:"research_magic"`
-	ResearchOccult   int `db:"research_occult"`
 }

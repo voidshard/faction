@@ -29,10 +29,10 @@ const (
 // For as long as both people are lovers / married & within child-bearing age a family
 // has a chance of bearing children every so often.
 type Family struct {
-	ID string
+	ID string `db:"id"`
 
 	// Area where the family is based (where children will be placed)
-	AreaID string
+	AreaID string `db:"area_id"`
 
 	// Faction ID (if any) if this family is simulated as a major player.
 	//
@@ -40,15 +40,15 @@ type Family struct {
 	// will not have this set; which is probably a good thing and saves us lots of calculations
 	// for families which don't really have the resources to act on the national / international
 	// stage.
-	FactionID string
+	FactionID string `db:"faction_id"`
 
 	// True while;
 	// - both people are capable of bearing children
 	// - both people are married or lovers (ie. willing to bear children)
-	IsChildBearing bool
+	IsChildBearing bool `db:"is_child_bearing"`
 
 	// A family consists of a male & female and can bear children.
 	// Nb. this does not imply that the couple are married ..
-	Male   string
-	Female string
+	MaleID   string `db:"male_id"`
+	FemaleID string `db:"female_id"`
 }

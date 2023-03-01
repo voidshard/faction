@@ -67,4 +67,7 @@ type Transaction interface {
 
 	Routes(token string, areaID ...string) ([]*structs.Route, string, error)
 	SetRoutes(in ...*structs.Route) error
+
+	Meta(id string) (string, int, error)
+	SetMeta(id, str_val string, int_val int) error
 }
