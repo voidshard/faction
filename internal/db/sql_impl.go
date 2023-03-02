@@ -79,12 +79,20 @@ func (s *sqlDB) Families(token string, in ...*FamilyFilter) ([]*structs.Family, 
 	return families(s.conn, token, in)
 }
 
-func (s *sqlDB) Factions(token string, in []*FactionFilter) ([]*structs.Faction, string, error) {
+func (s *sqlDB) Factions(token string, in ...*FactionFilter) ([]*structs.Faction, string, error) {
 	return factions(s.conn, token, in)
 }
 
-func (s *sqlDB) Areas(token string, in []*AreaFilter) ([]*structs.Area, string, error) {
+func (s *sqlDB) Areas(token string, in ...*AreaFilter) ([]*structs.Area, string, error) {
 	return areas(s.conn, token, in)
+}
+
+func (s *sqlDB) Tuples(r Relation, token string, in ...*TupleFilter) ([]*structs.Tuple, string, error) {
+	return tuples(s.conn, r, token, in)
+}
+
+func (s *sqlDB) Modifiers(r Relation, token string, in ...*ModifierFilter) ([]*structs.Modifier, string, error) {
+	return modifiers(s.conn, r, token, in)
 }
 
 // Close connection to DB
@@ -131,74 +139,94 @@ func (t *sqlTx) SetTick(tick int) error {
 	return t.SetMeta(metaClock, "", tick)
 }
 
-func (t *sqlTx) Plots(token string, in []*PlotFilter) ([]*structs.Plot, string, error) {
+func (t *sqlTx) Plots(token string, in ...*PlotFilter) ([]*structs.Plot, string, error) {
 	return plots(t.tx, token, in)
 }
 
-func (t *sqlTx) Routes(token string, in []*RouteFilter) ([]*structs.Route, string, error) {
+func (t *sqlTx) Routes(token string, in ...*RouteFilter) ([]*structs.Route, string, error) {
 	return routes(t.tx, token, in)
 }
 
-func (t *sqlTx) People(token string, in []*PersonFilter) ([]*structs.Person, string, error) {
+func (t *sqlTx) People(token string, in ...*PersonFilter) ([]*structs.Person, string, error) {
 	return people(t.tx, token, in)
 }
 
-func (t *sqlTx) LandRights(token string, in []*LandRightFilter) ([]*structs.LandRight, string, error) {
+func (t *sqlTx) LandRights(token string, in ...*LandRightFilter) ([]*structs.LandRight, string, error) {
 	return landRights(t.tx, token, in)
 }
 
-func (t *sqlTx) Jobs(token string, in []*JobFilter) ([]*structs.Job, string, error) {
+func (t *sqlTx) Jobs(token string, in ...*JobFilter) ([]*structs.Job, string, error) {
 	return jobs(t.tx, token, in)
 }
 
-func (t *sqlTx) Governments(token string, in []*GovernmentFilter) ([]*structs.Government, string, error) {
+func (t *sqlTx) Governments(token string, in ...*GovernmentFilter) ([]*structs.Government, string, error) {
 	return governments(t.tx, token, in)
 }
 
-func (t *sqlTx) Families(token string, in []*FamilyFilter) ([]*structs.Family, string, error) {
+func (t *sqlTx) Families(token string, in ...*FamilyFilter) ([]*structs.Family, string, error) {
 	return families(t.tx, token, in)
 }
 
-func (t *sqlTx) Factions(token string, in []*FactionFilter) ([]*structs.Faction, string, error) {
+func (t *sqlTx) Factions(token string, in ...*FactionFilter) ([]*structs.Faction, string, error) {
 	return factions(t.tx, token, in)
 }
 
-func (t *sqlTx) Areas(token string, in []*AreaFilter) ([]*structs.Area, string, error) {
+func (t *sqlTx) Areas(token string, in ...*AreaFilter) ([]*structs.Area, string, error) {
 	return areas(t.tx, token, in)
 }
 
-func (t *sqlTx) SetPlots(plots []*structs.Plot) error {
+func (t *sqlTx) Tuples(r Relation, token string, in ...*TupleFilter) ([]*structs.Tuple, string, error) {
+	return tuples(t.tx, r, token, in)
+}
+
+func (t *sqlTx) Modifiers(r Relation, token string, in ...*ModifierFilter) ([]*structs.Modifier, string, error) {
+	return modifiers(t.tx, r, token, in)
+}
+
+func (t *sqlTx) SetPlots(plots ...*structs.Plot) error {
 	return setPlots(t.tx, plots)
 }
 
-func (t *sqlTx) SetRoutes(routes []*structs.Route) error {
+func (t *sqlTx) SetRoutes(routes ...*structs.Route) error {
 	return setRoutes(t.tx, routes)
 }
 
-func (t *sqlTx) SetPeople(people []*structs.Person) error {
+func (t *sqlTx) SetPeople(people ...*structs.Person) error {
 	return setPeople(t.tx, people)
 }
 
-func (t *sqlTx) SetLandRights(landRights []*structs.LandRight) error {
+func (t *sqlTx) SetLandRights(landRights ...*structs.LandRight) error {
 	return setLandRights(t.tx, landRights)
 }
 
-func (t *sqlTx) SetJobs(jobs []*structs.Job) error {
+func (t *sqlTx) SetJobs(jobs ...*structs.Job) error {
 	return setJobs(t.tx, jobs)
 }
 
-func (t *sqlTx) SetGovernments(governments []*structs.Government) error {
+func (t *sqlTx) SetGovernments(governments ...*structs.Government) error {
 	return setGovernments(t.tx, governments)
 }
 
-func (t *sqlTx) SetFamilies(families []*structs.Family) error {
+func (t *sqlTx) SetFamilies(families ...*structs.Family) error {
 	return setFamilies(t.tx, families)
 }
 
-func (t *sqlTx) SetFactions(factions []*structs.Faction) error {
+func (t *sqlTx) SetFactions(factions ...*structs.Faction) error {
 	return setFactions(t.tx, factions)
 }
 
-func (t *sqlTx) SetAreas(areas []*structs.Area) error {
+func (t *sqlTx) SetAreas(areas ...*structs.Area) error {
 	return setAreas(t.tx, areas)
+}
+
+func (t *sqlTx) SetTuples(r Relation, tuples ...*structs.Tuple) error {
+	return setTuples(t.tx, r, tuples)
+}
+
+func (t *sqlTx) SetModifiers(r Relation, mod ...*structs.Modifier) error {
+	return setModifiers(t.tx, r, mod)
+}
+
+func (t *sqlTx) DeleteModifiers(r Relation, expires_before_tick int) error {
+	return deleteModifiers(t.tx, r, expires_before_tick)
 }

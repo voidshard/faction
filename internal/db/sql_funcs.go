@@ -28,6 +28,19 @@ type mstruct struct {
 	Int int    `db:"int"`
 }
 
+func deleteModifiers(op sqlOperator, r Relation, expires_before_tick int) error {
+	if !r.supportsModifiers() {
+		return nil
+	}
+
+	qstr := fmt.Sprintf(`DELETE FROM %s WHERE tick_expires < :time;`, r.modTable())
+
+	_, err := op.NamedExec(qstr, map[string]interface{}{
+		"time": expires_before_tick,
+	})
+	return err
+}
+
 func modifiers(op sqlOperator, r Relation, token string, in []*ModifierFilter) ([]*structs.Modifier, string, error) {
 	if !r.supportsModifiers() {
 		return nil, token, fmt.Errorf("relation %s does not support modifiers", r)

@@ -34,32 +34,31 @@ type Transaction interface {
 	SetTick(i int) error
 
 	Areas(token string, f ...*AreaFilter) ([]*structs.Area, string, error)
-	SetAreas(in []*structs.Area) error
+	SetAreas(in ...*structs.Area) error
 
 	Factions(token string, f ...*FactionFilter) ([]*structs.Faction, string, error)
-	SetFactions(in []*structs.Faction) error
+	SetFactions(in ...*structs.Faction) error
 
 	Families(token string, f ...*FamilyFilter) ([]*structs.Family, string, error)
-	SetFamilies(in []*structs.Family) error
+	SetFamilies(in ...*structs.Family) error
 
 	Governments(token string, f ...*GovernmentFilter) ([]*structs.Government, string, error)
-	SetGovernments(in []*structs.Government) error
+	SetGovernments(in ...*structs.Government) error
 
 	Jobs(token string, f ...*JobFilter) ([]*structs.Job, string, error)
-	SetJobs(in []*structs.Job) error
+	SetJobs(in ...*structs.Job) error
 
 	LandRights(token string, f ...*LandRightFilter) ([]*structs.LandRight, string, error)
-	SetLandRighs(in []*structs.LandRight) error
+	SetLandRighs(in ...*structs.LandRight) error
 
 	People(token string, f ...*PersonFilter) ([]*structs.Person, string, error)
-	SetPeople(in []*structs.Person) error
+	SetPeople(in ...*structs.Person) error
 
 	Plots(token string, f ...*PlotFilter) ([]*structs.Plot, string, error)
-	SetPlots(in []*structs.Plot) error
+	SetPlots(in ...*structs.Plot) error
 
 	Tuples(table Relation, token string, f ...*TupleFilter) ([]*structs.Tuple, string, error)
 	SetTuples(table Relation, in ...*structs.Tuple) error
-	ComputeTuples(table Relation, token string, tick int, f ...*TupleFilter) ([]*structs.Tuple, string, error)
 
 	Modifiers(table Relation, token string, f ...*TupleFilter) ([]*structs.Modifier, string, error)
 	SetModifiers(table Relation, in ...*structs.Modifier) error

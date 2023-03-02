@@ -9,9 +9,9 @@ var (
 	// '-' (hypen) symbols to appear anywhere but the start / end.
 	//
 	// must start with alpha / number
-	// can contain any number of alpha, numbers or '-'
 	// must end with alpha / number
-	validName = regexp.MustCompile("^[0-9a-zA-Z]{1}[0-9a-zA-Z\\-]*[0-9a-zA-Z]{1}$")
+	// may contain alpha / number / ' / - / space
+	validName = regexp.MustCompile("^[0-9a-zA-Z]{1}[0-9a-zA-Z\\'\\ \\-]*[0-9a-zA-Z]{1}$")
 )
 
 // IsValidName returns if we consider a name valid
