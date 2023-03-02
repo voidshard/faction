@@ -1,6 +1,8 @@
 package structs
 
-// Tuple is a way of storing a value for a generic a->b relationship.
+// Tuple is a way of storing a value for a generic a->b relationship,
+// or lists of items.
+//
 // Ie. we use this to store
 // - affiliation of Faction A to Faction B
 // - favor of faction A to Faction B
@@ -10,7 +12,8 @@ package structs
 // - family relations
 // So uh, a lot of things really.
 //
-// Table here represents the kind of relation we're talking about;
+// A specific table represents the kind of relation we're talking about;
+// (hence we use the Relation in the table name).
 // Person->Person
 // Faction->Faction
 // etc.
@@ -37,8 +40,8 @@ type Tuple struct {
 type Modifier struct {
 	Tuple
 
-	Expires    int    `db:"expires"`     // modifiers expire at some Tick
-	MetaType   string `db:"meta_type"`   // information about what MetaID refers to
-	MetaID     string `db:"meta_id"`     // ID of what caused this modifier
-	MetaReason string `db:"meta_reason"` // human readable reason string (eg. "bribe")
+	TickExpires int     `db:"tick_expires"` // modifiers expire at some Tick
+	MetaKey     MetaKey `db:"meta_key"`     // information about what MetaVal refers to
+	MetaVal     string  `db:"meta_val"`     // ID of what caused this modifier
+	MetaReason  string  `db:"meta_reason"`  // human readable reason string (eg. "bribe")
 }

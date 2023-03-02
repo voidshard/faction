@@ -8,6 +8,11 @@ type Demographics struct {
 	FamilySizeAverage   int
 	FamilySizeDeviation float64
 
+	// All people created with this Populate call will have this race set.
+	// In general we expect different races (where relevant) to have their own
+	// spread of professions, ethos etc.
+	Race string
+
 	// Ethos represents the average outlook of members of the population
 	Ethos *Ethos
 

@@ -10,7 +10,7 @@ package structs
 type Plot struct {
 	ID string `db:"id"`
 
-	IsHeadQuarters bool `db:"is_head_quarters"` // area HQ usually the main place of business, trade, whatever
+	IsHeadQuarters bool `db:"is_headquarters"` // area HQ usually the main place of business, trade, whatever
 
 	AreaID         string `db:"area_id"`
 	OwnerFactionID string `db:"owner_faction_id"`

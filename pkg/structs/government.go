@@ -26,24 +26,6 @@ package structs
 type Government struct {
 	ID string `db:"id"`
 
-	// IllegalActions are actions this government considers illegal (obviously).
-	// Factions that perform these may face punishment if they're caught.
-	//
-	// Any faction performing an illegal action automatically attempts to do
-	// so secretly (unless it's in full revolt ..).
-	IllegalActions []ActionType `db:"-"`
-
-	// IllegalCommodities are items that the government has outlawed.
-	//
-	// It is considered illegal to craft, import or export these crafts, however
-	// they can still be very lucrative to people less concerned with the law.
-	IllegalCommodities []string `db:"-"`
-
-	// CraftCommodities is a list of commodities that citizens of this state know
-	// how to craft. These are in addition to any DefaultCraftCommodities (see settings.go),
-	// are possible output(s) of ActionTypeCraft (see action.go).
-	CraftCommodities []string `db:"-"`
-
 	// Every `TaxFrequency` tick(s) the governing faction will collect
 	// funds from law abiding factions under it.
 	// Covert factions do not pay tax .. since that would require them to exist

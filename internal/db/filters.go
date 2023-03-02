@@ -9,6 +9,15 @@ type AreaFilter struct {
 	GoverningFactionID string
 }
 
+type GovernmentFilter struct {
+	ID string
+}
+
+type RouteFilter struct {
+	SourceAreaID string
+	TargetAreaID string
+}
+
 type ethosFilter struct {
 	// provide some bounds for ethos matches
 	MinEthos *structs.Ethos
@@ -18,9 +27,12 @@ type ethosFilter struct {
 type PersonFilter struct {
 	ethosFilter
 
-	ID     string
-	JobID  string
-	AreaID string
+	ID            string
+	JobID         string
+	AreaID        string
+	BirthFamilyID string
+
+	Race string
 
 	IncludeDead bool // by default we do not infact see dead people
 }
@@ -41,30 +53,44 @@ type FactionFilter struct {
 }
 
 type FamilyFilter struct {
-	ID             string
-	IsChildBearing bool
-	FactionID      string
+	ID               string
+	BirthFactionID   string
+	FactionID        string
+	OnlyChildBearing bool // restricts the search to only child bearing families
+	MaleID           string
+	FemaleID         string
 }
 
 type JobFilter struct {
 	ID              string
 	SourceFactionID string
 	SourceAreaID    string
-	TargetFactionID string
 	TargetAreaID    string
+	TargetMetaKey   structs.MetaKey
+	TargetMetaVal   string
 	MinSecrecy      int
-	MaxSecrecy      int
+	MaxSecrecy      int // values <= 0 are ignored
+	State           structs.JobState
+	TickEndsBefore  int
 }
 
 type LandRightFilter struct {
 	ID     string
 	AreaID string
 
-	GoverningFactionID  string
-	ControlledFactionID string
+	GoverningFactionID   string
+	ControllingFactionID string
 }
 
 type TupleFilter struct {
 	Subject string
 	Object  string
+}
+
+type ModifierFilter struct {
+	TupleFilter
+
+	TickExpiresBefore int // values <= 0 are ignored
+	MetaKey           structs.MetaKey
+	MetaVal           string
 }

@@ -9,18 +9,18 @@ package structs
 // Normally government doesn't work these itself but sells them off to faction(s)
 // to work them (or spawns divisions of the government to handle them).
 type LandRight struct {
-	ID string
+	ID string `db:"id"`
 
 	// Faction ID of whomever has ultimate say over this
-	GoverningFactionID string
+	GoverningFactionID string `db:"governing_faction_id"`
 
 	// Faction ID of whomever has permission to use this
 	// ie. a government has granted the right to use the land
-	ControllingFactionID string
+	ControllingFactionID string `db:"controlling_faction_id"`
 
 	// Area ID
-	AreaID string
+	AreaID string `db:"area_id"`
 
 	// Resource (commodity name)
-	Resource string
+	Resource string `db:"resource"`
 }

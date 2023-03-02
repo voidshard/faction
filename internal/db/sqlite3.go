@@ -28,15 +28,16 @@ const (
 	    subject VARCHAR(255) NOT NULL, 
 	    object VARCHAR(255) NOT NULL,
 	    value INTEGER NOT NULL DEFAULT 0,
+	    UNIQUE(subject, object)
 	);`
 
 	modifierTableCreateTemplate = `CREATE TABLE IF NOT EXISTS %s (
 	    subject VARCHAR(255) NOT NULL,
 	    object VARCHAR(255) NOT NULL,
 	    value INTEGER NOT NULL DEFAULT 0,
-	    expires INTEGER NOT NULL DEFAULT 0,
-	    meta_type VARCHAR(255) NOT NULL DEFAULT "",
-	    meta_id VARCHAR(255) NOT NULL DEFAULT "",
+	    tick_expires INTEGER NOT NULL DEFAULT 0,
+	    meta_key VARCHAR(255) NOT NULL DEFAULT "",
+	    meta_val VARCHAR(255) NOT NULL DEFAULT "",
 	    meta_reason TEXT NOT NULL DEFAULT ""
 	);`
 )
@@ -57,21 +58,30 @@ var (
 	createGovernments = fmt.Sprintf(`CREATE TABLE IF NOT EXISTS %s (
 	    id VARCHAR(36) PRIMARY KEY,
 	    tax_rate REAL NOT NULL DEFAULT 0.10,
-	    tax_frequency_ticks INTEGER NOT NULL DEFAULT 1
+	    tax_frequency INTEGER NOT NULL DEFAULT 1
 	);`, tableGovernments)
 
 	createLandRights = fmt.Sprintf(`CREATE TABLE IF NOT EXISTS %s (
 	    id VARCHAR(36) PRIMARY KEY,
-	    governing_faction_id VARCHAR(36) NOT NULL,
-	    controlling_faction_id VARCHAR(36) NOT NULL,
+	    governing_faction_id VARCHAR(36) NOT NULL DEFAULT "",
+	    controlling_faction_id VARCHAR(36) NOT NULL DEFAULT "",
 	    area_id VARCHAR(36) NOT NULL,
 	    resource VARCHAR(255) NOT NULL
 	);`, tableLandRights)
 
+	createPlots = fmt.Sprintf(`CREATE TABLE IF NOT EXISTS %s (
+	    id VARCHAR(36) PRIMARY KEY,
+	    is_headquarters BOOLEAN NOT NULL DEFAULT FALSE,
+	    area_id VARCHAR(36) NOT NULL,
+	    owner_faction_id VARCHAR(36) NOT NULL DEFAULT "",
+	    size INTEGER NOT NULL DEFAULT 1,
+	);`, tablePlots)
+
 	createRoutes = fmt.Sprintf(`CREATE TABLE IF NOT EXISTS %s (
 	    source_area_id VARCHAR(36) NOT NULL,
 	    target_area_id VARCHAR(36) NOT NULL,
-	    travel_time INTEGER NOT NULL DEFAULT 0
+	    travel_time INTEGER NOT NULL DEFAULT 0,
+	    UNIQUE(source_area_id, target_area_id)
 	);`, tableRoutes)
 
 	createJobs = fmt.Sprintf(`CREATE TABLE IF NOT EXISTS %s (
@@ -79,10 +89,9 @@ var (
 	    source_faction_id VARCHAR(36) NOT NULL,
 	    source_area_id VARCHAR(36) NOT NULL,
 	    action INTEGER NOT NULL,
-	    target_faction_id VARCHAR(36),
-	    target_area_id VARCHAR(36),
-	    target_meta_key VARCHAR(20),
-	    target_meta_value VARCHAR(255),
+	    target_area_id VARCHAR(36) NOT NULL,
+	    target_meta_key VARCHAR(20) NOT NULL DEFAULT "",
+	    target_meta_value VARCHAR(255) NOT NULL DEFAULT "",
 	    people_min INTEGER NOT NULL DEFAULT 1,
 	    people_max INTEGER NOT NULL DEFAULT 1,
 	    tick_created INTEGER NOT NULL DEFAULT 0,
@@ -96,14 +105,19 @@ var (
 	createFamilies = fmt.Sprintf(`CREATE TABLE IF NOT EXISTS %s (
 	    id VARCHAR(36) PRIMARY KEY,
 	    area_id VARCHAR(36) NOT NULL,
-	    faction_id VARCHAR(36) NOT NULL,
-	    is_child_bearing BOOLEAN NOT NULL DEFAULT FALSE,
-	    male_id VARCHAR(36),
-	    female_id VARCHAR(36)
+	    faction_id VARCHAR(36) NOT NULL DEFAULT "",
+	    is_child_bearing BOOLEAN NOT NULL DEFAULT TRUE,
+	    male_id VARCHAR(36) NOT NULL,
+	    female_id VARCHAR(36) NOT NULL,
+	    UNIQUE (male_id, female_id)
 	);`, tableFamilies)
 
 	createPeople = fmt.Sprintf(`CREATE TABLE IF NOT EXISTS %s (
             id VARCHAR(36) PRIMARY KEY,
+	    first_name VARCHAR(255) NOT NULL default "",
+	    last_name VARCHAR(255) NOT NULL default "",
+	    birth_family_id VARCHAR(36) NOT NULL,
+	    race VARCHAR(255) NOT NULL default "",
             ethos_altruism INTEGER NOT NULL DEFAULT 0,
             ethos_ambition INTEGER NOT NULL DEFAULT 0,
             ethos_tradition INTEGER NOT NULL DEFAULT 0,
@@ -111,7 +125,7 @@ var (
             ethos_piety INTEGER NOT NULL DEFAULT 0,
             ethos_caution INTEGER NOT NULL DEFAULT 0,
 	    area_id VARCHAR(36) NOT NULL,
-	    job_id VARCHAR(36) NOT NULL,
+	    job_id VARCHAR(36) NOT NULL DEFAULT "",
 	    birth_tick INTEGER NOT NULL,
 	    death_tick INTEGER,
 	    is_male BOOLEAN NOT NULL DEFAULT FALSE
@@ -119,6 +133,7 @@ var (
 
 	createFactions = fmt.Sprintf(`CREATE TABLE IF NOT EXISTS %s (
             id VARCHAR(36) PRIMARY KEY,
+	    name VARCHAR(255) NOT NULL default "",
             ethos_altruism INTEGER NOT NULL DEFAULT 0,
             ethos_ambition INTEGER NOT NULL DEFAULT 0,
             ethos_tradition INTEGER NOT NULL DEFAULT 0,
@@ -134,18 +149,19 @@ var (
             is_illegal BOOLEAN NOT NULL DEFAULT FALSE,
             government_id VARCHAR(36) NOT NULL,
             is_government BOOLEAN NOT NULL DEFAULT FALSE,
-            religion_id VARCHAR(36),
+            religion_id VARCHAR(36) NOT NULL DEFAULT "",
             is_religion BOOLEAN NOT NULL DEFAULT FALSE,
             is_member_by_birth BOOLEAN NOT NULL DEFAULT FALSE,
-            espionage_offense INTEGER NOT NULL DEFAULT 0,
-            espionage_defense INTEGER NOT NULL DEFAULT 0,
-            military_offense INTEGER NOT NULL DEFAULT 0,
-            military_defense INTEGER NOT NULL DEFAULT 0,
-            parent_faction_id VARCHAR(36),
-            parent_faction_relation INTEGER
+	    espionage_offense INTEGER NOT NULL DEFAULT 0,
+	    espionage_defense INTEGER NOT NULL DEFAULT 0,
+	    military_offense INTEGER NOT NULL DEFAULT 0,
+	    military_defense INTEGER NOT NULL DEFAULT 0,
+            parent_faction_id VARCHAR(36) NOT NULL DEFAULT "",
+            parent_faction_relation INTEGER NOT NULL DEFAULT 0
         );`, tableFactions)
 
 	// indexes that we should create
+	// TODO
 	indexes = []string{}
 )
 
@@ -209,11 +225,10 @@ func (s *Sqlite) createTables() error {
 		createFactions,
 	}
 	for _, r := range allRelations {
-		todo = append(
-			todo,
-			fmt.Sprintf(tupleTableCreateTemplate, r.modTable()),
-			fmt.Sprintf(modifierTableCreateTemplate, r.modTable()),
-		)
+		todo = append(todo, fmt.Sprintf(tupleTableCreateTemplate, r.modTable()))
+		if r.supportsModifiers() {
+			todo = append(todo, fmt.Sprintf(modifierTableCreateTemplate, r.modTable()))
+		}
 	}
 
 	todo = append(todo, indexes...)

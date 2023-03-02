@@ -41,37 +41,58 @@ const (
 	//    10 <= T < 12 =     V + Y + Z
 	//    12 <= T < 15 =     V + Z
 	//    15 <= T      =     V
-	//
-	// Thus ComputeTuples() accepts;
-	// - the relation in question
-	// - iter token
-	// - current time tick (any modifier with this time or less is not considered)
-	// - tuple filters (which tuples you're interested in)
 
 	// RelationPFAffiliation holds how closely people affiliate with factions
 	// So: <person_id> <faction_id> <affiliation_level>
-	RelationPFAffiliation Relation = "affiliation_person_to_faction"
+	RelationPersonFactionAffiliation Relation = "affiliation_person_to_faction"
 
 	// RelationFFTrust holds how much factions trust each other
 	// So: <faction_id> <faction_id> <trust_level>
-	RelationFFTrust Relation = "trust_faction_to_faction"
+	RelationFactionFactionTrust Relation = "trust_faction_to_faction"
 
 	// RelationPProfessionSkill holds how skilled people are in professions
 	// So: <person_id> <profession> <skill_level>
-	RelationPProfessionSkill Relation = "skill_person_to_profession"
+	RelationPersonProfessionSkill Relation = "skill_person_to_profession"
 
-	// RelationFactionResearch holds how much research a faction has done on a topic
+	// RelationFactionTopicResearch holds how much research a faction has done on a topic
 	// (we use the ActionType as the object)
-	// So: <faction_id> <research_action_type> <research_level>
-	RelationFactionResearch Relation = "research_faction_to_research"
+	// So: <faction_id> <topic> <research_level>
+	RelationFactionTopicResearch Relation = "research_faction_to_topic"
+
+	// RelationPersonRelationships holds how people relate to each other
+	// So: <person_id> <person_id> <relationship_level> (see structs/family.go)
+	RelationPersonRelationships Relation = "relationships_person_to_person"
+
+	// RelationPersonReligionFaith holds how much faith a person has in a religion
+	// So: <person_id> <religion_id> <faith_level>
+	RelationPersonReligionFaith Relation = "faith_person_to_religion"
+
+	// RelationPersonPersonTrust holds how much trust a person has in another person
+	// So: <person_id> <person_id> <trust_level>
+	RelationPersonPersonTrust Relation = "trust_person_to_person"
+
+	// RelationLawGovernmentToCommodidty holds if a commodity is legal (0) or illegal (1).
+	// By default, all commodities are legal (if not specified).
+	// So: <government_id> <commodity> <0 or 1>
+	RelationLawGovernmentToCommodidty Relation = "law_government_to_commodity"
+
+	// RelationLawGovernmentToAction holds if an action is legal (0) or illegal (1).
+	// By default, all actions are legal (if not specified).
+	// So: <government_id> <action_type> <0 or 1>
+	RelationLawGovernmentToAction Relation = "law_government_to_action"
 )
 
 var (
 	allRelations = []Relation{
-		RelationPFAffiliation,
-		RelationFFTrust,
-		RelationPProfessionSkill,
-		RelationFactionResearch,
+		RelationFactionFactionTrust,
+		RelationFactionTopicResearch,
+		RelationPersonFactionAffiliation,
+		RelationPersonProfessionSkill,
+		RelationPersonRelationships,
+		RelationPersonReligionFaith,
+		RelationPersonPersonTrust,
+		RelationLawGovernmentToAction,
+		RelationLawGovernmentToCommodidty,
 	}
 )
 
@@ -81,4 +102,19 @@ func (r Relation) tupleTable() string {
 
 func (r Relation) modTable() string {
 	return fmt.Sprintf("modifiers_%s", r)
+}
+
+func (r Relation) supportsModifiers() bool {
+	// modifiers complicate queries & add calculations but are a nice way of adding
+	// slow burn buffs / debuffs.
+	// In general we only support these on super important tuples.
+	switch r {
+	case RelationPersonFactionAffiliation:
+		return true
+	case RelationFactionFactionTrust:
+		return true
+	case RelationPersonPersonTrust:
+		return true
+	}
+	return false
 }

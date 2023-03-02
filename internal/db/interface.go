@@ -42,7 +42,7 @@ type Transaction interface {
 	Families(token string, f ...*FamilyFilter) ([]*structs.Family, string, error)
 	SetFamilies(in []*structs.Family) error
 
-	Governments(token string, ids ...string) ([]*structs.Government, error)
+	Governments(token string, f ...*GovernmentFilter) ([]*structs.Government, string, error)
 	SetGovernments(in []*structs.Government) error
 
 	Jobs(token string, f ...*JobFilter) ([]*structs.Job, string, error)
@@ -65,7 +65,7 @@ type Transaction interface {
 	SetModifiers(table Relation, in ...*structs.Modifier) error
 	DeleteModifiers(table Relation, expires_before_tick int) error
 
-	Routes(token string, areaID ...string) ([]*structs.Route, string, error)
+	Routes(token string, f ...*RouteFilter) ([]*structs.Route, string, error)
 	SetRoutes(in ...*structs.Route) error
 
 	Meta(id string) (string, int, error)

@@ -6,7 +6,8 @@ package structs
 type Faction struct {
 	Ethos // average ethics of faction members (by tradition / current leadership)
 
-	ID string `db:"id"`
+	ID   string `db:"id"`
+	Name string `db:"name"`
 
 	ActionFrequencyTicks int `db:"action_frequency_ticks"` // faction offers new jobs every X ticks
 
@@ -27,10 +28,10 @@ type Faction struct {
 
 	IsMemberByBirth bool `db:"is_member_by_birth"` // if having parent(s) in the faction auto joins children
 
-	EspionageOffense int `db:"espionage_offense"` // represent stored good(s), member training & general preparation
-	EspionageDefense int `db:"espionage_defense"`
-	MilitaryOffense  int `db:"military_offense"`
-	MilitaryDefense  int `db:"military_defense"`
+	EspionageOffense int `db:"espionage_offense"` // how good the faction is at spying on others
+	EspionageDefense int `db:"espionage_defense"` // how good the faction is at defending against spying
+	MilitaryOffense  int `db:"military_offense"`  // how good the faction is at attacking others
+	MilitaryDefense  int `db:"military_defense"`  // how good the faction is at defending against attacks
 
 	ParentFactionID       string          `db:"parent_faction_id"`       // ID of parent faction (if any)
 	ParentFactionRelation FactionRelation `db:"parent_faction_relation"` // relation to parent faction (if any)

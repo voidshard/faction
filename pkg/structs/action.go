@@ -32,21 +32,16 @@ const (
 	ActionTypeCharity   ActionType = "charity"   // donate money to people of an area(s), increases general favor
 
 	// Neutral actions (these target "self")
-	ActionTypePropoganda       ActionType = "propoganda"        // increases general favor towards you, cheaper than 'Charity' but less um, honest
-	ActionTypeRecruit          ActionType = "recruit"           // push recuitment (overtly or covertly), increases general affiliation
-	ActionTypeExpand           ActionType = "expand"            // purchase more land / property, add base of operations in another city etc
-	ActionTypeDownsize         ActionType = "downsize"          // sell land / property to recoup funds
-	ActionTypeCraft            ActionType = "craft"             // focus on crafting, increasing funds
-	ActionTypeHarvest          ActionType = "harvest"           // focus on harvesting, increasing crop yield, mining - increasing funds
-	ActionTypeConsolidate      ActionType = "consolidate"       // consolidate; internal re-organisation, process streamlining etc (increases cohession)
-	ActionTypeResearchScience  ActionType = "research-science"  // adds some science & funds
-	ActionTypeResearchTheology ActionType = "research-theology" // adds some theology & funds
-	ActionTypeResearchMagic    ActionType = "research-magic"    // adds some magic(al science) & funds
-	ActionTypeResearchOccult   ActionType = "research-occult"   // adds some occult (research) & funds
-	ActionTypeHoldMagicRitual  ActionType = "magic-ritual"      // culmination of magical research (effect varies)
-	ActionTypeHoldOccultRitual ActionType = "occult-ritual"     // culmination of occult magical research (effect varies)
-	ActionTypeExcommunicate    ActionType = "excommunicate"     // religion explicitly excommunicates someone; person loses favour & affiliation
-	ActionTypeConcealSecrets   ActionType = "conceal-secrets"   // bribes are paid, people are silenced, documents burned (+secrecy)
+	ActionTypePropoganda     ActionType = "propoganda"      // increases general favor towards you, cheaper than 'Charity' but less um, honest
+	ActionTypeRecruit        ActionType = "recruit"         // push recuitment (overtly or covertly), increases general affiliation
+	ActionTypeExpand         ActionType = "expand"          // purchase more land / property, add base of operations in another city etc
+	ActionTypeDownsize       ActionType = "downsize"        // sell land / property to recoup funds
+	ActionTypeCraft          ActionType = "craft"           // focus on crafting, increasing funds
+	ActionTypeHarvest        ActionType = "harvest"         // focus on harvesting, increasing crop yield, mining - increasing funds
+	ActionTypeConsolidate    ActionType = "consolidate"     // consolidate; internal re-organisation, process streamlining etc (increases cohession)
+	ActionTypeResearch       ActionType = "research"        // adds some science & funds
+	ActionTypeExcommunicate  ActionType = "excommunicate"   // religion explicitly excommunicates someone; person loses favour & affiliation
+	ActionTypeConcealSecrets ActionType = "conceal-secrets" // bribes are paid, people are silenced, documents burned (+secrecy)
 
 	// Unfriendly actions (all of these have a target faction)
 	ActionTypeGatherSecrets ActionType = "gather-secrets" // attempt to discover secrets of target faction
