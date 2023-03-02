@@ -600,14 +600,14 @@ func setAreas(op sqlOperator, in []*structs.Area) error {
 	}
 
 	qstr := fmt.Sprintf(`INSERT INTO %s (id, governing_faction_id)
-        VALUES (:id, :governing_faction) 
-        ON CONFLICT (id) DO UPDATE SET
-            governing_faction=EXCLUDED.governing_faction
-        ;`,
+		        VALUES (:id, :governing_faction_id)
+		        ON CONFLICT (id) DO UPDATE SET
+		            governing_faction_id=EXCLUDED.governing_faction_id
+		        ;`,
 		tableAreas,
 	)
 
-	_, err := op.NamedExec(qstr, areas)
+	_, err := op.NamedExec(qstr, in)
 	return err
 }
 

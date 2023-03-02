@@ -1,18 +1,18 @@
 package config
 
-// DatabaseEngine denotes what kind of data store we'll use
-type DatabaseEngine string
+// DatabaseDriver denotes what kind of data store we'll use
+type DatabaseDriver string
 
 const (
-	// DatabaseEngineSQLite3 uses sqlite3 to store data.
+	// DatabaseSQLite3 uses sqlite3 to store data.
 	// Easy to manage, good for testing, not recommended for large datasets / large simulations.
-	DatabaseEngineSQLite3 DatabaseEngine = "sqlite3"
+	DatabaseSQLite3 DatabaseDriver = "sqlite3"
 )
 
 // Database configuration struct
 type Database struct {
-	// Engine denotes the underlying db implementation
-	Engine DatabaseEngine
+	// Driver denotes the underlying db implementation
+	Driver DatabaseDriver
 
 	// Name of database
 	// [sqlite3]: file name

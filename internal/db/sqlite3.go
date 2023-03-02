@@ -172,9 +172,9 @@ type Sqlite struct {
 
 // NewSqlite3 opens a SQLite DB file.
 // We also attempt to create / update tables to make it ready for use.
-func NewSqlite3(cfg config.Database) (*Sqlite, error) {
-	if cfg.Engine != config.DatabaseEngineSQLite3 {
-		return nil, fmt.Errorf("invalid Engine, expected %s", config.DatabaseEngineSQLite3)
+func NewSqlite3(cfg *config.Database) (*Sqlite, error) {
+	if cfg.Driver != config.DatabaseSQLite3 {
+		return nil, fmt.Errorf("invalid Engine, expected %s", config.DatabaseSQLite3)
 	}
 
 	db, err := sqlx.Connect("sqlite3", filepath.Join(cfg.Location, cfg.Name))
@@ -225,7 +225,7 @@ func (s *Sqlite) createTables() error {
 		createFactions,
 	}
 	for _, r := range allRelations {
-		todo = append(todo, fmt.Sprintf(tupleTableCreateTemplate, r.modTable()))
+		todo = append(todo, fmt.Sprintf(tupleTableCreateTemplate, r.tupleTable()))
 		if r.supportsModifiers() {
 			todo = append(todo, fmt.Sprintf(modifierTableCreateTemplate, r.modTable()))
 		}
