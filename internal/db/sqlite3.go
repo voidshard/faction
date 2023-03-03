@@ -91,7 +91,7 @@ var (
 	    action INTEGER NOT NULL,
 	    target_area_id VARCHAR(36) NOT NULL,
 	    target_meta_key VARCHAR(20) NOT NULL DEFAULT "",
-	    target_meta_value VARCHAR(255) NOT NULL DEFAULT "",
+	    target_meta_val VARCHAR(255) NOT NULL DEFAULT "",
 	    people_min INTEGER NOT NULL DEFAULT 1,
 	    people_max INTEGER NOT NULL DEFAULT 1,
 	    tick_created INTEGER NOT NULL DEFAULT 0,

@@ -148,7 +148,7 @@ func sqlFromRouteFilters(tk *dbutils.IterToken, in []*RouteFilter) (string, []in
 	}
 
 	return fmt.Sprintf(`SELECT 
-	    source_area_id, target_area_id, travel_time_ticks
+	    source_area_id, target_area_id, travel_time
 	    FROM %s %s LIMIT $%d OFFSET $%d;`,
 		tableRoutes, where, len(args)+1, len(args)+2,
 	), append(args, tk.Limit, tk.Offset)
@@ -188,7 +188,7 @@ func sqlFromLandRightFilters(tk *dbutils.IterToken, in []*LandRightFilter) (stri
 
 	return fmt.Sprintf(`SELECT id
 		area_id,
-		goeverning_faction_id,
+		governing_faction_id,
 		controlling_faction_id
 	    FROM %s %s
 	    ORDER BY id LIMIT $%d OFFSET $%d;`,
@@ -259,7 +259,7 @@ func sqlFromJobFilters(tk *dbutils.IterToken, in []*JobFilter) (string, []interf
 		target_area_id, target_meta_key, target_meta_val,
 		people_min,
 		people_max,
-		tick_start, tick_starts, tick_duration,
+		tick_created, tick_starts, tick_ends,
 		secrecy,
 		is_illegal,
 		state
@@ -397,7 +397,7 @@ func sqlFromFactionFilters(tk *dbutils.IterToken, in []*FactionFilter) (string, 
 		is_illegal,
 		government_id,
 		is_government,
-		relgion_id,
+		religion_id,
 		is_religion,
 		is_member_by_birth,
 		parent_faction_id,

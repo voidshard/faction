@@ -8,6 +8,9 @@ import (
 )
 
 func main() {
+	// inserts at least one of each struct into the DB so we call
+	// all of the SET sql statements.
+
 	cfg := &config.Database{
 		Driver:   config.DatabaseSQLite3,
 		Name:     "test.sqlite",
@@ -154,7 +157,7 @@ func main() {
 	err = tx.SetTuples(db.RelationLawGovernmentToAction, law3)
 	errRollback(err)
 
-	err = tx.SetTuples(db.RelationPersonPersonRelationships, relation1, relation2)
+	err = tx.SetTuples(db.RelationPersonPersonRelationship, relation1, relation2)
 	errRollback(err)
 
 	err = tx.SetTuples(db.RelationPersonPersonTrust, trust1, trust2)

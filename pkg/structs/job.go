@@ -33,7 +33,7 @@ type Job struct {
 	// key/val pair to hold adv. target metadata (ie. key:PERSON val:PERSON_ID)
 	// In general the target will be a faction, and the value a faction ID.
 	TargetMetaKey MetaKey `db:"target_meta_key"`
-	TargetMetaVal string  `db:"target_meta_value"`
+	TargetMetaVal string  `db:"target_meta_val"`
 
 	PeopleMin int `db:"people_min"` // required min number of people (else job fails to kick off)
 	PeopleMax int `db:"people_max"` // max number of people that can work this (if any)
