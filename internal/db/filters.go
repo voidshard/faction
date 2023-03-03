@@ -90,7 +90,9 @@ type TupleFilter struct {
 type ModifierFilter struct {
 	TupleFilter
 
-	TickExpiresBefore int // values <= 0 are ignored
-	MetaKey           structs.MetaKey
-	MetaVal           string
+	MinTickExpires int // values <= 0 are ignored
+	MaxTickExpires int // values <= 0 are ignored
+
+	MetaKey structs.MetaKey
+	MetaVal string
 }

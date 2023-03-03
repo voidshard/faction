@@ -41,6 +41,27 @@ func deleteModifiers(op sqlOperator, r Relation, expires_before_tick int) error 
 	return err
 }
 
+func modifiersSum(op sqlOperator, r Relation, token string, in []*ModifierFilter) ([]*structs.Tuple, string, error) {
+	if !r.supportsModifiers() {
+		return nil, token, fmt.Errorf("relation %s does not support modifiers", r)
+	}
+
+	tk, err := dbutils.ParseToken(token)
+	if err != nil {
+		return nil, token, err
+	}
+
+	q, args := sqlSummationTuplesFromModifiers(r, tk, in)
+
+	var out []*structs.Tuple
+	err = op.Select(&out, q, args...)
+	if err != nil {
+		return nil, token, err
+	}
+
+	return out, nextToken(tk, len(out)), nil
+}
+
 func modifiers(op sqlOperator, r Relation, token string, in []*ModifierFilter) ([]*structs.Modifier, string, error) {
 	if !r.supportsModifiers() {
 		return nil, token, fmt.Errorf("relation %s does not support modifiers", r)

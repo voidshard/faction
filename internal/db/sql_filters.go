@@ -8,6 +8,61 @@ import (
 	"github.com/voidshard/faction/internal/dbutils"
 )
 
+func sqlSummationTuplesFromModifiers(r Relation, tk *dbutils.IterToken, in []*ModifierFilter) (string, []interface{}) {
+	var (
+		ors   []string
+		args  []interface{}
+		where string
+	)
+
+	for _, f := range in {
+		ands := []string{}
+
+		if f.Subject != "" {
+			args = append(args, f.Subject)
+			ands = append(ands, fmt.Sprintf("subject = $%d", len(args)))
+		}
+		if f.Object != "" {
+			args = append(args, f.Object)
+			ands = append(ands, fmt.Sprintf("object = $%d", len(args)))
+		}
+		if f.MinTickExpires > 0 {
+			args = append(args, f.MinTickExpires)
+			ands = append(ands, fmt.Sprintf("tick_expires >= $%d", len(args)))
+		}
+		if f.MaxTickExpires > 0 {
+			args = append(args, f.MaxTickExpires)
+			ands = append(ands, fmt.Sprintf("tick_expires <= $%d", len(args)))
+		}
+		if f.MetaKey != "" {
+			args = append(args, f.MetaKey)
+			ands = append(ands, fmt.Sprintf("meta_key = $%d", len(args)))
+		}
+		if f.MetaVal != "" {
+			args = append(args, f.MetaVal)
+			ands = append(ands, fmt.Sprintf("meta_val = $%d", len(args)))
+		}
+
+		if len(ands) > 0 {
+			ors = append(ors, fmt.Sprintf("(%s)", strings.Join(ands, " AND ")))
+		}
+	}
+
+	if len(ors) != 0 { // at least one subject, object must be passed in
+		where = fmt.Sprintf("WHERE %s", strings.Join(ors, " OR "))
+	}
+
+	return fmt.Sprintf(`SELECT
+		    subject, object, sum(value) as value
+		FROM %s
+		%s 
+		GROUP BY subject, object
+		ORDER BY subject
+		LIMIT $%d OFFSET $%d;`,
+		r.modTable(), where, len(args)+1, len(args)+2,
+	), append(args, tk.Limit, tk.Offset)
+}
+
 func sqlFromModifierFilters(r Relation, tk *dbutils.IterToken, in []*ModifierFilter) (string, []interface{}) {
 	var (
 		ors   []string
@@ -26,9 +81,13 @@ func sqlFromModifierFilters(r Relation, tk *dbutils.IterToken, in []*ModifierFil
 			args = append(args, f.Object)
 			ands = append(ands, fmt.Sprintf("object = $%d", len(args)))
 		}
-		if f.TickExpiresBefore > 0 {
-			args = append(args, f.TickExpiresBefore)
-			ands = append(ands, fmt.Sprintf("tick_expires < $%d", len(args)))
+		if f.MinTickExpires > 0 {
+			args = append(args, f.MinTickExpires)
+			ands = append(ands, fmt.Sprintf("tick_expires >= $%d", len(args)))
+		}
+		if f.MaxTickExpires > 0 {
+			args = append(args, f.MaxTickExpires)
+			ands = append(ands, fmt.Sprintf("tick_expires <= $%d", len(args)))
 		}
 		if f.MetaKey != "" {
 			args = append(args, f.MetaKey)

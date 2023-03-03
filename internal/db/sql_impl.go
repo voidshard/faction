@@ -95,6 +95,10 @@ func (s *sqlDB) Modifiers(r Relation, token string, in ...*ModifierFilter) ([]*s
 	return modifiers(s.conn, r, token, in)
 }
 
+func (s *sqlDB) ModifiersSum(table Relation, token string, f ...*ModifierFilter) ([]*structs.Tuple, string, error) {
+	return modifiersSum(s.conn, table, token, f)
+}
+
 // Close connection to DB
 func (s *sqlDB) Close() error {
 	return s.conn.Close()
@@ -181,6 +185,10 @@ func (t *sqlTx) Tuples(r Relation, token string, in ...*TupleFilter) ([]*structs
 
 func (t *sqlTx) Modifiers(r Relation, token string, in ...*ModifierFilter) ([]*structs.Modifier, string, error) {
 	return modifiers(t.tx, r, token, in)
+}
+
+func (t *sqlTx) ModifiersSum(table Relation, token string, f ...*ModifierFilter) ([]*structs.Tuple, string, error) {
+	return modifiersSum(t.tx, table, token, f)
 }
 
 func (t *sqlTx) SetPlots(plots ...*structs.Plot) error {

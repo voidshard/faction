@@ -9,8 +9,8 @@ import (
 )
 
 func main() {
-	// inserts at least one of each struct into the DB so we call
-	// all of the SET sql statements.
+	// Reads everything written by db_insert_all.go
+	// Nb. we don't iter with any token here, which generally would be advised
 
 	cfg := &config.Database{
 		Driver:   config.DatabaseSQLite3,
@@ -87,6 +87,13 @@ func main() {
 		fmt.Printf("\t%v\n", i)
 	}
 
+	fmt.Println("jobs")
+	jobs, _, err := conn.Jobs("")
+	perr(err)
+	for _, i := range jobs {
+		fmt.Printf("\t%v\n", i)
+	}
+
 	for _, r := range []db.Relation{
 		db.RelationLawGovernmentToCommodidty,
 		db.RelationLawGovernmentToAction,
@@ -111,10 +118,11 @@ func main() {
 		}
 	}
 
-	fmt.Println("jobs")
-	jobs, _, err := conn.Jobs("")
+	fmt.Println("modifier sums", db.RelationPersonPersonTrust)
+	sums, _, err := conn.ModifiersSum(db.RelationPersonPersonTrust, "")
 	perr(err)
-	for _, i := range jobs {
+	for _, i := range sums {
 		fmt.Printf("\t%v\n", i)
 	}
+
 }

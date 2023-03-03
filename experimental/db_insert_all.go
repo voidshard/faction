@@ -65,6 +65,14 @@ func main() {
 		IsMale:        false,
 		BirthTick:     1,
 	}
+	steve1 := &structs.Person{
+		ID:            structs.NewID(),
+		FirstName:     "Steve",
+		BirthFamilyID: structs.NewID(),
+		AreaID:        area2.ID,
+		IsMale:        true,
+		BirthTick:     2,
+	}
 	family1 := &structs.Family{
 		ID: structs.NewID(), AreaID: area1.ID, IsChildBearing: true, MaleID: husband1.ID, FemaleID: wife1.ID,
 	}
@@ -76,15 +84,39 @@ func main() {
 	// RelationPersonPersonTrust
 	trust1 := &structs.Tuple{Subject: husband1.ID, Object: wife1.ID, Value: 100}
 	trust2 := &structs.Tuple{Subject: wife1.ID, Object: husband1.ID, Value: 100}
+	trust3 := &structs.Tuple{Subject: husband1.ID, Object: steve1.ID, Value: 10}
+	trust4 := &structs.Tuple{Subject: wife1.ID, Object: steve1.ID, Value: 12}
+	trust5 := &structs.Tuple{Subject: steve1.ID, Object: husband1.ID, Value: 50}
+	trust6 := &structs.Tuple{Subject: steve1.ID, Object: wife1.ID, Value: 70}
 
-	mod1 := new(structs.Modifier)
-	mod1.Subject = husband1.ID
-	mod1.Object = wife1.ID
-	mod1.Value = -10
-	mod1.TickExpires = 10
-	mod1.MetaKey = structs.MetaKeyPerson
-	mod1.MetaVal = wife1.ID
-	mod1.MetaReason = "listening to serpents"
+	mod1 := &structs.Modifier{
+		Tuple:       structs.Tuple{Subject: husband1.ID, Object: wife1.ID, Value: -10},
+		TickExpires: 10,
+		MetaKey:     structs.MetaKeyPerson,
+		MetaVal:     wife1.ID,
+		MetaReason:  "listening to serpents",
+	}
+	mod2 := &structs.Modifier{
+		Tuple:       structs.Tuple{Subject: husband1.ID, Object: wife1.ID, Value: 15},
+		TickExpires: 20,
+		MetaKey:     structs.MetaKeyPerson,
+		MetaVal:     wife1.ID,
+		MetaReason:  "being wonderful",
+	}
+	mod3 := &structs.Modifier{
+		Tuple:       structs.Tuple{Subject: wife1.ID, Object: husband1.ID, Value: 25},
+		TickExpires: 15,
+		MetaKey:     structs.MetaKeyPerson,
+		MetaVal:     husband1.ID,
+		MetaReason:  "naming animals",
+	}
+	mod4 := &structs.Modifier{
+		Tuple:       structs.Tuple{Subject: husband1.ID, Object: steve1.ID, Value: -20},
+		TickExpires: 12,
+		MetaKey:     structs.MetaKeyPerson,
+		MetaVal:     steve1.ID,
+		MetaReason:  "being suspicious",
+	}
 
 	// RelationPersonFactionAffiliation
 	affiliation1 := &structs.Tuple{Subject: husband1.ID, Object: faction1.ID, Value: 100}
@@ -142,7 +174,7 @@ func main() {
 	err = tx.SetFactions(faction1)
 	errRollback(err)
 
-	err = tx.SetPeople(husband1, wife1)
+	err = tx.SetPeople(husband1, wife1, steve1)
 	errRollback(err)
 
 	err = tx.SetFamilies(family1)
@@ -160,13 +192,13 @@ func main() {
 	err = tx.SetTuples(db.RelationPersonPersonRelationship, relation1, relation2)
 	errRollback(err)
 
-	err = tx.SetTuples(db.RelationPersonPersonTrust, trust1, trust2)
+	err = tx.SetTuples(db.RelationPersonPersonTrust, trust1, trust2, trust3, trust4, trust5, trust6)
 	errRollback(err)
 
 	err = tx.SetTuples(db.RelationPersonFactionAffiliation, affiliation1, affiliation2)
 	errRollback(err)
 
-	err = tx.SetModifiers(db.RelationPersonPersonTrust, mod1)
+	err = tx.SetModifiers(db.RelationPersonPersonTrust, mod1, mod2, mod3, mod4)
 	errRollback(err)
 
 	err = tx.SetJobs(job1)

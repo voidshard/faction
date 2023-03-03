@@ -35,6 +35,7 @@ type Reader interface {
 	Routes(token string, f ...*RouteFilter) ([]*structs.Route, string, error)
 	Meta(id string) (string, int, error)
 	Modifiers(table Relation, token string, f ...*ModifierFilter) ([]*structs.Modifier, string, error)
+	ModifiersSum(table Relation, token string, f ...*ModifierFilter) ([]*structs.Tuple, string, error)
 }
 
 // Database is something the simulation uses to record data.
