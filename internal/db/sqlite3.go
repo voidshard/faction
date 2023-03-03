@@ -74,7 +74,7 @@ var (
 	    is_headquarters BOOLEAN NOT NULL DEFAULT FALSE,
 	    area_id VARCHAR(36) NOT NULL,
 	    owner_faction_id VARCHAR(36) NOT NULL DEFAULT "",
-	    size INTEGER NOT NULL DEFAULT 1,
+	    size INTEGER NOT NULL DEFAULT 1
 	);`, tablePlots)
 
 	createRoutes = fmt.Sprintf(`CREATE TABLE IF NOT EXISTS %s (
@@ -96,7 +96,7 @@ var (
 	    people_max INTEGER NOT NULL DEFAULT 1,
 	    tick_created INTEGER NOT NULL DEFAULT 0,
 	    tick_starts INTEGER NOT NULL DEFAULT 0,
-	    tick_duration INTEGER NOT NULL DEFAULT 1,
+	    tick_ends INTEGER NOT NULL DEFAULT 1,
 	    secrecy INTEGER NOT NULL DEFAULT 0,
 	    is_illegal BOOLEAN NOT NULL DEFAULT FALSE,
 	    state VARCHAR(20) NOT NULL DEFAULT "pending"
@@ -126,8 +126,8 @@ var (
             ethos_caution INTEGER NOT NULL DEFAULT 0,
 	    area_id VARCHAR(36) NOT NULL,
 	    job_id VARCHAR(36) NOT NULL DEFAULT "",
-	    birth_tick INTEGER NOT NULL,
-	    death_tick INTEGER,
+	    birth_tick INTEGER NOT NULL DEFAULT 1,
+	    death_tick INTEGER NOT NULL DEFAULT 0,
 	    is_male BOOLEAN NOT NULL DEFAULT FALSE
 	);`, tablePeople)
 
@@ -216,6 +216,7 @@ func (s *Sqlite) createTables() error {
 	todo := []string{
 		createMeta,
 		createArea,
+		createPlots,
 		createGovernments,
 		createLandRights,
 		createRoutes,

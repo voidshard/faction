@@ -59,9 +59,9 @@ const (
 	// So: <faction_id> <topic> <research_level>
 	RelationFactionTopicResearch Relation = "research_faction_to_topic"
 
-	// RelationPersonRelationships holds how people relate to each other
+	// RelationPersonPersonRelationships holds how people relate to each other
 	// So: <person_id> <person_id> <relationship_level> (see structs/family.go)
-	RelationPersonRelationships Relation = "relationships_person_to_person"
+	RelationPersonPersonRelationships Relation = "relationships_person_to_person"
 
 	// RelationPersonReligionFaith holds how much faith a person has in a religion
 	// So: <person_id> <religion_id> <faith_level>
@@ -88,7 +88,7 @@ var (
 		RelationFactionTopicResearch,
 		RelationPersonFactionAffiliation,
 		RelationPersonProfessionSkill,
-		RelationPersonRelationships,
+		RelationPersonPersonRelationships,
 		RelationPersonReligionFaith,
 		RelationPersonPersonTrust,
 		RelationLawGovernmentToAction,

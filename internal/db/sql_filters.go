@@ -485,7 +485,7 @@ func sqlFromPersonFilters(tk *dbutils.IterToken, in []*PersonFilter) (string, []
 			ands = append(ands, fmt.Sprintf("race = $%d", len(args)))
 		}
 		if !f.IncludeDead { // add this by default
-			ands = append(ands, fmt.Sprintf("death_tick is null"))
+			ands = append(ands, fmt.Sprintf("death_tick > 0"))
 		}
 		if f.MinEthos != nil {
 			args = append(args, f.MinEthos.Altruism)

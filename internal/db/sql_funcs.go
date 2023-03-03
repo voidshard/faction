@@ -70,16 +70,10 @@ func setModifiers(op sqlOperator, r Relation, in []*structs.Modifier) error {
 	}
 
 	qstr := fmt.Sprintf(`INSERT INTO %s (
-	    subject, object, value,
-	    tick_expires,
-	    meta_key, meta_val, meta_reason
+	    subject, object, value, tick_expires, meta_key, meta_val, meta_reason
 	) VALUES (
-	    :subject, :object, :value
-	    :tick_expires,
-	    :meta_key, :meta_val, :meta_reason
-	) ON CONFLICT SET
-	    value=EXCLUDED.value
-	;`, r.modTable())
+	    :subject, :object, :value, :tick_expires, :meta_key, :meta_val, :meta_reason
+	);`, r.modTable())
 
 	_, err := op.NamedExec(qstr, in)
 	return err
@@ -111,7 +105,7 @@ func setTuples(op sqlOperator, r Relation, in []*structs.Tuple) error {
 	    subject, object, value
 	) VALUES (
 	    :subject, :object, :value
-	) ON CONFLICT SET value=EXCLUDED.value;`, r.tupleTable())
+	) ON CONFLICT (subject, object) DO UPDATE SET value=EXCLUDED.value;`, r.tupleTable())
 
 	_, err := op.NamedExec(qstr, in)
 	return err
@@ -155,7 +149,7 @@ func setPlots(op sqlOperator, in []*structs.Plot) error {
 	    id, is_headquarters, area_id, owner_faction_id, size
 	) VALUES (
 	    :id, :is_headquarters, :area_id, :owner_faction_id, :size
-	) ON CONFLICT SET 
+	) ON CONFLICT (id) DO UPDATE SET 
 	    is_headquarters=EXCLUDED.is_headquarters,
 	    owner_faction_id=EXCLUDED.owner_faction_id,
 	    size=EXCLUDED.size
@@ -200,7 +194,8 @@ func setRoutes(op sqlOperator, in []*structs.Route) error {
 	    source_area_id, target_area_id, travel_time
 	) VALUES (
 	    :source_area_id, :target_area_id, :travel_time
-	) ON CONFLICT SET travel_time=EXCLUDED.travel_time;`, tableRoutes)
+	) ON CONFLICT (source_area_id, target_area_id) DO UPDATE SET
+	    travel_time=EXCLUDED.travel_time;`, tableRoutes)
 
 	_, err := op.NamedExec(qstr, in)
 	return err
@@ -248,13 +243,13 @@ func setPeople(op sqlOperator, in []*structs.Person) error {
 	    ethos_altruism, ethos_ambition, ethos_tradition, ethos_pacifism, ethos_piety, ethos_caution,
 	    first_name, last_name, birth_family_id, race,
 	    area_id, job_id,
-	    birth_tick, death_tick, isMale
+	    birth_tick, death_tick, is_male
 	) VALUES (
 	    :id,
 	    :ethos_altruism, :ethos_ambition, :ethos_tradition, :ethos_pacifism, :ethos_piety, :ethos_caution,
 	    :first_name, :last_name, :birth_family_id, :race,
 	    :area_id, :job_id,
-	    :birth_tick, :death_tick, :isMale
+	    :birth_tick, :death_tick, :is_male
 	) ON CONFLICT (id) DO UPDATE SET
 	    ethos_altruism=EXCLUDED.ethos_altruism,
 	    ethos_ambition=EXCLUDED.ethos_ambition,
@@ -359,22 +354,24 @@ func setJobs(op sqlOperator, in []*structs.Job) error {
 	qstr := fmt.Sprintf(`INSERT INTO %s (
 	    id,
 	    source_faction_id, source_area_id,
+	    action,
 	    target_area_id, target_meta_key, target_meta_value,
 	    people_min, people_max,
-	    tick_created, tick_starts, tick_duration,
+	    tick_created, tick_starts, tick_ends,
 	    secrecy,
 	    is_illegal,
 	    state
 	) VALUES (
 	    :id,
 	    :source_faction_id, :source_area_id,
+	    :action,
 	    :target_area_id, :target_meta_key, :target_meta_value,
 	    :people_min, :people_max,
-	    :tick_created, :tick_starts, :tick_duration,
+	    :tick_created, :tick_starts, :tick_ends,
 	    :secrecy,
 	    :is_illegal,
 	    :state
-	) ON CONFLICT (id) SET 
+	) ON CONFLICT (id) DO UPDATE SET 
 	   state=EXCLUDED.state 
 	;`, tableJobs)
 
@@ -414,7 +411,7 @@ func setGovernments(op sqlOperator, in []*structs.Government) error {
 	    id, tax_rate, tax_frequency
 	) VALUES (
 	    :id, :tax_rate, :tax_frequency
-	) ON CONFLICT (id) SET 
+	) ON CONFLICT (id) DO UPDATE SET 
 	    tax_rate=EXCLUDED.tax_rate,
 	    tax_frequency=EXCLUDED.tax_frequency
 	;`, tableGovernments)
