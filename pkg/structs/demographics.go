@@ -4,26 +4,45 @@ package structs
 //
 // For randomly making societies that look "sort of like this."
 type Demographics struct {
-	// Decides how large to make family units
+	// FamilySizeAverage is the average number of children in a family.
+	// A family always has parents ..
+	FamilySizeMax       int
 	FamilySizeAverage   int
-	FamilySizeDeviation float64
+	FamilySizeDeviation int
+
+	// The chance someone will marry (probably very high)
+	MarriageProbability float64
+	// The chance two people will divorce (hopefully very low)
+	MarriageDivorceProbability float64
+	// The chance one partner will have an affair (hopefully very low)
+	MarriageAffairProbability float64
 
 	// All people created with this Populate call will have this race set.
 	// In general we expect different races (where relevant) to have their own
 	// spread of professions, ethos etc.
 	Race string
 
-	// Ethos represents the average outlook of members of the population
-	Ethos *Ethos
+	// Ages min/max (in ticks) at which someone can have children.
+	ChildbearingAgeMin           int
+	ChildbearingAgeMax           int
+	ChildbearingAgeAverage       int
+	ChildbearingAgeDeviation     int
+	ChildbearingDeathProbability float64
 
+	// Ethos represents the average outlook of members of the population
+	EthosAverage *Ethos
 	// EthosDeviation is the standard deviation of the populace from the average (above).
 	EthosDeviation *Ethos
+	// Probability of a person getting a wildly different Ethos ("black sheep")
+	EthosBlackSheepProbability float64
 
-	// Professions to allocate to people
+	// Probability of a person dying of some natural cause
+	DeathCauseNaturalProbability map[string]float64
+
+	// Professions to allocate to people.
 	Professions []*Profession
-
-	// SideProfessions is a list of probabilities such that a given person has the number
-	// of professions indicated by the index (any yes, index 0 means "" or "no profession").
+	// ProfessionProbability is a list of probabilities such that a given person has the number
+	// of professions indicated by the index (index 0 means "" or "no profession").
 	//
 	// - a person cannot have the same profession multiple times
 	// - a person may have only one profession with `ValidSideProfession` False
@@ -42,5 +61,9 @@ type Demographics struct {
 	// 40% chance of 1 profession
 	// 30% chance of 2 professions
 	// 10% chance of 3 professions
-	SideProfessions []float64
+	ProfessionProbability []float64
+
+	// Faiths to allocate to people.
+	Faiths           []*Faith
+	FaithProbability []float64 // likelihood of 0 or more faiths
 }

@@ -7,6 +7,7 @@ import (
 	"github.com/voidshard/faction/pkg/structs"
 )
 
+// Read only functions. We can read these outside of a transaction.
 type Reader interface {
 	// Generally;
 	// - All Filter fields are considered "AND" and all Filter
@@ -38,53 +39,57 @@ type Reader interface {
 	ModifiersSum(table Relation, token string, f ...*ModifierFilter) ([]*structs.Tuple, string, error)
 }
 
-// Database is something the simulation uses to record data.
-// We don't expect users to supply their own implementations (if so, they can add one to internal/),
-// we keep the interface here to outline what the Simulation needs.
-type Database interface {
-	Reader
-	Transaction() (Transaction, error)
-}
-
-type Transaction interface {
-	Reader
-
-	Commit() error
-	Rollback() error
-
+type Writer interface {
 	SetTick(i int) error
-
 	SetAreas(in ...*structs.Area) error
-
 	SetFactions(in ...*structs.Faction) error
-
 	SetFamilies(in ...*structs.Family) error
-
 	SetGovernments(in ...*structs.Government) error
-
 	SetJobs(in ...*structs.Job) error
-
 	SetLandRights(in ...*structs.LandRight) error
-
 	SetPeople(in ...*structs.Person) error
-
 	SetPlots(in ...*structs.Plot) error
-
 	SetTuples(table Relation, in ...*structs.Tuple) error
-
 	SetModifiers(table Relation, in ...*structs.Modifier) error
 	DeleteModifiers(table Relation, expires_before_tick int) error
-
 	SetRoutes(in ...*structs.Route) error
-
 	SetMeta(id, str_val string, int_val int) error
 }
 
-func New(cfg *config.Database) (Database, error) {
+type ReaderWriter interface {
+	Reader
+	Writer
+}
+
+// Database is something the simulation uses to record data.
+// We don't expect users to supply their own implementations (if so, they can add one to internal/),
+type Database interface {
+	Reader
+
+	Transaction() (Transaction, error)
+}
+
+// Transaction grants all read functions & includes write functions.
+type Transaction interface {
+	ReaderWriter
+
+	Commit() error
+	Rollback() error
+}
+
+func New(cfg *config.Database) (*FactionDB, error) {
+	var dbconn Database
+	var err error
+
 	switch cfg.Driver {
 	case config.DatabaseSQLite3:
-		return NewSqlite3(cfg)
+		dbconn, err = NewSqlite3(cfg)
+		if err != nil {
+			return nil, err
+		}
 	default:
 		return nil, fmt.Errorf("unknown database driver: %s", cfg.Driver)
 	}
+
+	return &FactionDB{dbconn}, nil
 }

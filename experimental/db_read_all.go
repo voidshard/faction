@@ -56,7 +56,16 @@ func main() {
 	govts, _, err := conn.Governments("")
 	perr(err)
 	for _, i := range govts {
-		fmt.Printf("\t%v\n", i)
+		fmt.Printf("\t%v\n\toutlawed\n", i)
+		for item, illegal := range i.Outlawed.Commodities {
+			fmt.Printf("\t\t%v: %v\n", item, illegal)
+		}
+		for action, illegal := range i.Outlawed.Actions {
+			fmt.Printf("\t\t%v: %v\n", action, illegal)
+		}
+		for faction, illegal := range i.Outlawed.Factions {
+			fmt.Printf("\t\t%v: %v\n", faction, illegal)
+		}
 	}
 
 	fmt.Println("factions")
@@ -95,8 +104,6 @@ func main() {
 	}
 
 	for _, r := range []db.Relation{
-		db.RelationLawGovernmentToCommodidty,
-		db.RelationLawGovernmentToAction,
 		db.RelationPersonPersonRelationship,
 		db.RelationPersonPersonTrust,
 		db.RelationPersonFactionAffiliation,

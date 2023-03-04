@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"strings"
 
+	_ "github.com/lib/pq"
+
 	"github.com/voidshard/faction/internal/dbutils"
 )
 
@@ -176,6 +178,23 @@ func sqlFromGovernmentFilters(tk *dbutils.IterToken, in []*GovernmentFilter) (st
 		"SELECT id, tax_rate, tax_frequency FROM %s %s LIMIT $%d OFFSET $%d;",
 		tableGovernments, where, len(args)+1, len(args)+2,
 	), append(args, tk.Limit, tk.Offset)
+}
+
+func sqlLawsFromGovernmentIDs(in []string) (string, []interface{}) {
+	inGovtIDs, args := sqlIn(in)
+	return fmt.Sprintf(`SELECT government_id, meta_key, meta_val, illegal
+	    FROM %s WHERE government_id IN (%s);
+	`, tableLaws, inGovtIDs), args
+}
+
+func sqlIn(in []string) (string, []interface{}) {
+	bindvars := make([]string, len(in))
+	args := make([]interface{}, len(in))
+	for i, id := range in {
+		args[i] = id
+		bindvars[i] = fmt.Sprintf("$%d", i+1)
+	}
+	return strings.Join(bindvars, ", "), args
 }
 
 func sqlFromRouteFilters(tk *dbutils.IterToken, in []*RouteFilter) (string, []interface{}) {
@@ -593,7 +612,8 @@ func sqlFromPersonFilters(tk *dbutils.IterToken, in []*PersonFilter) (string, []
 		    job_id,
 		    birth_tick,
 		    death_tick,
-		    is_male
+		    is_male,
+		    death_meta_reason, death_meta_key, death_meta_val
 		FROM %s
 		%s
 		ORDER BY id ASC LIMIT $%d OFFSET $%d;`,

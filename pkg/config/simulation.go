@@ -17,13 +17,10 @@ type Simulation struct {
 
 	// DefaultCraftCommodities are commodities (see economy.go) that can be produced
 	// using ActionTypeCraft (see action.go) by a faction(s).
-	// These are available to any faction that is into craft in general.
+	// These are available to any faction that is into crafting in general.
 	//
 	// That is, anyone in any area can "Craft" to output these commodities assuming
 	// they have a requisite resources and the will to do so.
-	//
-	// Phrased another way, these might be considered default technologies that
-	// everyone knows how to make -- to save you specifying them per government.
 	DefaultCraftCommodities []string
 
 	// TODO: queue (fan out for faction job calculations)

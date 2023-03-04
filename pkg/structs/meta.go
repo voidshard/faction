@@ -13,4 +13,6 @@ const (
 	MetaKeyReligion   MetaKey = "religion"   // targets specific religion (ie. conversion) Key:RELIGION_ID
 	MetaKeyGovernment MetaKey = "government" // targets specific government (ie. coup) Key:GOVERNMENT_ID
 	MetaKeyFamily     MetaKey = "family"     // targets specific family Key:FAMILY_ID
+	MetaKeyCommodity  MetaKey = "commodity"  // targets specific commodity (ie. spice) Key:COMMODITY_ID
+	MetaKeyAction     MetaKey = "action"     // targets specific action (ie. assassination) Key:ACTION_TYPE
 )

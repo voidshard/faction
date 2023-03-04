@@ -19,4 +19,8 @@ type Person struct {
 	DeathTick int `db:"death_tick"`
 
 	IsMale bool `db:"is_male"`
+
+	DeathMetaReason string  `db:"death_reason"`
+	DeathMetaKey    MetaKey `db:"death_meta_key"`
+	DeathMetaVal    string  `db:"death_meta_val"`
 }

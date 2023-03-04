@@ -34,4 +34,36 @@ type Government struct {
 	// Higher tax rates make factions increasingly unhappy. Obviously.
 	TaxRate      float64 `db:"tax_rate"`
 	TaxFrequency int     `db:"tax_frequency"`
+
+	// Outlawed is a set of laws marking factions, actions, commodities as
+	// illegal (or not).
+	Outlawed *Laws `db:"-"`
+}
+
+type Laws struct {
+	// We track these as map[<id>]bool meaning: <id> -> is_illegal
+	// Technically we could store that items are specifically legal too, but
+	// in practice we regard anything not marked illegal as legal.
+
+	// IllegalFactions are factions that are illegal to be a part of.
+	// Any jobs from these factions are illegal, even if the action is otherwise legal,
+	// if within the jurisdiction of the government.
+	Factions map[string]bool `db:"-"`
+
+	// IllegalActions are actions that are illegal to perform. Any job with such an action
+	// is illegal, if within the jurisdiction of the government.
+	Actions map[ActionType]bool `db:"-"`
+
+	// IllegalCommodities are commodities that are illegal to trade, harvest or produce
+	// if within the jurisdiction of the government.
+	Commodities map[string]bool `db:"-"`
+}
+
+// NewLaws returns a new Laws struct with all maps initialised.
+func NewLaws() *Laws {
+	return &Laws{
+		Factions:    map[string]bool{},
+		Actions:     map[ActionType]bool{},
+		Commodities: map[string]bool{},
+	}
 }

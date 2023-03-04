@@ -1,7 +1,6 @@
 package stats
 
 import (
-	"fmt"
 	"math"
 	"math/rand"
 	"time"
@@ -13,13 +12,13 @@ const (
 	candidateValues = 5
 )
 
-// RandGenerator yields random numbers that follow some desired distribution.
+// Rand yields random numbers that follow some desired distribution.
 // This isn't super pretty, but we only need something to get us started .. we could use
 // straight up random values but it would make our societies seem a bit too random.
 //
 // We don't keep all yielded values in memory, rather we calculate running average &
 // std deviation values as we go.
-type RandGenerator struct {
+type Rand struct {
 	rng *rand.Rand
 
 	min       float64
@@ -36,13 +35,13 @@ type RandGenerator struct {
 
 // Float64 returns a new random value between min & max such that we stay reasonably
 // close to the desired std deviation.
-func (r *RandGenerator) Float64() float64 {
+func (r *Rand) Float64() float64 {
 	return r.value()
 }
 
 // Int is sugar over Float64; it returns a new random value between min & max such
 // that we stay reasonably close to the desired std deviation.
-func (r *RandGenerator) Int() int {
+func (r *Rand) Int() int {
 	return int(r.value())
 }
 
@@ -52,7 +51,7 @@ func (r *RandGenerator) Int() int {
 // guarantee that the std deviation requested is honored exactly .. I mean .. we *are*
 // returning random values here .. we just aim to supply slightly less randomness so
 // the values huddle around some variance.
-func (r *RandGenerator) value() float64 {
+func (r *Rand) value() float64 {
 	// The brute force approach; we'll choose some number of values, experimentally
 	// add them to our running values & see how the std dev. changes.
 	// Then we pick the best value that keeps us closest (in absolute terms) to our
@@ -82,14 +81,14 @@ func (r *RandGenerator) value() float64 {
 }
 
 // Add a value to the running totals
-func (r *RandGenerator) add(v float64) {
+func (r *Rand) add(v float64) {
 	r.count += 1
 	r.ex += v - r.k
 	r.ex2 += math.Pow(v-r.k, 2)
 }
 
 // Sub (remove) a value from the running totals
-func (r *RandGenerator) sub(v float64) {
+func (r *Rand) sub(v float64) {
 	if r.count == 0 {
 		return
 	}
@@ -99,7 +98,7 @@ func (r *RandGenerator) sub(v float64) {
 }
 
 // runningMean returns the running mean value (average)
-func (r *RandGenerator) runningMean() float64 {
+func (r *Rand) runningMean() float64 {
 	return r.k + r.ex/r.count
 }
 
@@ -108,19 +107,19 @@ func (r *RandGenerator) runningMean() float64 {
 // We could sqrt this but we're going to use this a lot internally - it's cheaper to square
 // the desired std deviation (passed in on creation) than the sqrt everything whenever we
 // call this.
-func (r *RandGenerator) runningStdDev() float64 {
+func (r *Rand) runningStdDev() float64 {
 	return (r.ex2 - math.Pow(r.ex, 2)/r.count) / (r.count - 1)
 }
 
 // SetSeed sets our internal RNG seed
-func (r *RandGenerator) SetSeed(seed int64) {
+func (r *Rand) SetSeed(seed int64) {
 	r.rng = rand.New(rand.NewSource(seed))
 }
 
-// NewRandGenerator creates a new random number generator that attempts to yield
+// NewRand creates a new random number generator that attempts to yield
 // values with some desired average (mean) and std deviation.
-func NewRandGenerator(min, max, average, deviation float64) *RandGenerator {
-	return &RandGenerator{
+func NewRand(min, max, average, deviation float64) *Rand {
+	return &Rand{
 		rng:       rand.New(rand.NewSource(time.Now().UnixNano())),
 		min:       min,
 		max:       max,

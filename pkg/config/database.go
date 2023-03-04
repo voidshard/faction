@@ -24,3 +24,10 @@ type Database struct {
 	// [postgres]: connection string
 	Location string
 }
+
+func DefaultDatabase() *Database {
+	return &Database{
+		Driver: DatabaseSQLite3,
+		Name:   "faction-sim.sqlite",
+	}
+}

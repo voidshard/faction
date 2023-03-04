@@ -18,3 +18,8 @@ func NewID(args ...interface{}) string {
 	}
 	return dbutils.NewID(args...)
 }
+
+// IsValidID returns true if the given ID is a valid UUID
+func IsValidID(id string) bool {
+	return dbutils.IsValidID(id)
+}

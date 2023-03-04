@@ -61,6 +61,14 @@ var (
 	    tax_frequency INTEGER NOT NULL DEFAULT 1
 	);`, tableGovernments)
 
+	createLaws = fmt.Sprintf(`CREATE TABLE IF NOT EXISTS %s (
+	    government_id VARCHAR(36) NOT NULL,
+	    meta_key VARCHAR(255) NOT NULL,
+	    meta_val VARCHAR(255) NOT NULL,
+	    illegal BOOLEAN NOT NULL DEFAULT FALSE,
+	    UNIQUE(government_id, meta_key, meta_val)
+	);`, tableLaws)
+
 	createLandRights = fmt.Sprintf(`CREATE TABLE IF NOT EXISTS %s (
 	    id VARCHAR(36) PRIMARY KEY,
 	    governing_faction_id VARCHAR(36) NOT NULL DEFAULT "",
@@ -116,7 +124,7 @@ var (
             id VARCHAR(36) PRIMARY KEY,
 	    first_name VARCHAR(255) NOT NULL default "",
 	    last_name VARCHAR(255) NOT NULL default "",
-	    birth_family_id VARCHAR(36) NOT NULL,
+	    birth_family_id VARCHAR(36) NOT NULL default "",
 	    race VARCHAR(255) NOT NULL default "",
             ethos_altruism INTEGER NOT NULL DEFAULT 0,
             ethos_ambition INTEGER NOT NULL DEFAULT 0,
@@ -128,7 +136,10 @@ var (
 	    job_id VARCHAR(36) NOT NULL DEFAULT "",
 	    birth_tick INTEGER NOT NULL DEFAULT 1,
 	    death_tick INTEGER NOT NULL DEFAULT 0,
-	    is_male BOOLEAN NOT NULL DEFAULT FALSE
+	    is_male BOOLEAN NOT NULL DEFAULT FALSE,
+	    death_meta_reason TEXT NOT NULL DEFAULT "",
+	    death_meta_key VARCHAR(255) NOT NULL DEFAULT "",
+	    death_meta_val VARCHAR(255) NOT NULL DEFAULT ""
 	);`, tablePeople)
 
 	createFactions = fmt.Sprintf(`CREATE TABLE IF NOT EXISTS %s (
@@ -218,6 +229,7 @@ func (s *Sqlite) createTables() error {
 		createArea,
 		createPlots,
 		createGovernments,
+		createLaws,
 		createLandRights,
 		createRoutes,
 		createJobs,

@@ -21,14 +21,10 @@ func main() {
 		panic(err)
 	}
 
-	govt1 := &structs.Government{ID: structs.NewID()}
-
-	// RelationLawGovernmentToCommodidty
-	law1 := &structs.Tuple{Subject: govt1.ID, Object: "apples", Value: 1} // illegal
-	law2 := &structs.Tuple{Subject: govt1.ID, Object: "fur", Value: 0}    // legal
-
-	// RelationLawGovernmentToAction
-	law3 := &structs.Tuple{Subject: govt1.ID, Object: string(structs.ActionTypeWar), Value: 1} // illegal
+	govt1 := &structs.Government{ID: structs.NewID(), Outlawed: &structs.Laws{
+		Commodities: map[string]bool{"apples": true, "fur": false},
+		Actions:     map[structs.ActionType]bool{structs.ActionTypeWar: true, structs.ActionTypeHarvest: false},
+	}}
 
 	area1 := &structs.Area{ID: structs.NewID(), GoverningFactionID: govt1.ID}
 	area2 := &structs.Area{ID: structs.NewID()}
@@ -181,12 +177,6 @@ func main() {
 	errRollback(err)
 
 	err = tx.SetPlots(plot1)
-	errRollback(err)
-
-	err = tx.SetTuples(db.RelationLawGovernmentToCommodidty, law1, law2)
-	errRollback(err)
-
-	err = tx.SetTuples(db.RelationLawGovernmentToAction, law3)
 	errRollback(err)
 
 	err = tx.SetTuples(db.RelationPersonPersonRelationship, relation1, relation2)

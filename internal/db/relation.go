@@ -60,7 +60,7 @@ const (
 	RelationFactionTopicResearch Relation = "research_faction_to_topic"
 
 	// RelationPersonPersonRelationships holds how people relate to each other
-	// So: <person_id> <person_id> <relationship_level> (see structs/family.go)
+	// So: <person_id> <person_id> <PersonalRelation> (see structs/family.go)
 	RelationPersonPersonRelationship Relation = "relationship_person_to_person"
 
 	// RelationPersonReligionFaith holds how much faith a person has in a religion
@@ -70,16 +70,6 @@ const (
 	// RelationPersonPersonTrust holds how much trust a person has in another person
 	// So: <person_id> <person_id> <trust_level>
 	RelationPersonPersonTrust Relation = "trust_person_to_person"
-
-	// RelationLawGovernmentToCommodidty holds if a commodity is legal (0) or illegal (1).
-	// By default, all commodities are legal (if not specified).
-	// So: <government_id> <commodity> <0 or 1>
-	RelationLawGovernmentToCommodidty Relation = "law_government_to_commodity"
-
-	// RelationLawGovernmentToAction holds if an action is legal (0) or illegal (1).
-	// By default, all actions are legal (if not specified).
-	// So: <government_id> <action_type> <0 or 1>
-	RelationLawGovernmentToAction Relation = "law_government_to_action"
 )
 
 var (
@@ -91,8 +81,6 @@ var (
 		RelationPersonPersonRelationship,
 		RelationPersonReligionFaith,
 		RelationPersonPersonTrust,
-		RelationLawGovernmentToAction,
-		RelationLawGovernmentToCommodidty,
 	}
 )
 

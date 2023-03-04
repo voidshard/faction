@@ -13,6 +13,7 @@ const (
 	tableFactions    = "factions"
 	tableFamilies    = "families"
 	tableGovernments = "governments"
+	tableLaws        = "laws"
 	tableJobs        = "jobs"
 	tableLandRights  = "landrights"
 	tablePeople      = "people"
