@@ -259,7 +259,7 @@ func setPeople(op sqlOperator, in []*structs.Person) error {
 		if !dbutils.IsValidID(f.ID) {
 			return fmt.Errorf("person id %s is invalid", f.ID)
 		}
-		if !dbutils.IsValidID(f.BirthFamilyID) {
+		if f.BirthFamilyID != "" && !dbutils.IsValidID(f.BirthFamilyID) {
 			return fmt.Errorf("person birth family id %s is invalid", f.BirthFamilyID)
 		}
 		if !dbutils.IsValidID(f.AreaID) {
@@ -275,7 +275,8 @@ func setPeople(op sqlOperator, in []*structs.Person) error {
 	    ethos_altruism, ethos_ambition, ethos_tradition, ethos_pacifism, ethos_piety, ethos_caution,
 	    first_name, last_name, birth_family_id, race,
 	    area_id, job_id,
-	    birth_tick, death_tick, is_male
+	    birth_tick, death_tick, is_male,
+	    death_meta_reason, death_meta_key, death_meta_val
 	) VALUES (
 	    :id,
 	    :ethos_altruism, :ethos_ambition, :ethos_tradition, :ethos_pacifism, :ethos_piety, :ethos_caution,

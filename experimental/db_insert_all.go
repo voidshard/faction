@@ -1,6 +1,8 @@
 package main
 
 import (
+	"fmt"
+
 	"github.com/voidshard/faction/pkg/config"
 	"github.com/voidshard/faction/pkg/structs"
 
@@ -154,45 +156,59 @@ func main() {
 
 	err = tx.SetTick(1)
 	errRollback(err)
+	fmt.Println("Tick set to 1")
 
 	err = tx.SetAreas(area1, area2)
 	errRollback(err)
+	fmt.Println("Areas set")
 
 	err = tx.SetLandRights(landright1, landright2)
 	errRollback(err)
+	fmt.Println("Land rights set")
 
 	err = tx.SetRoutes(route1, route2)
 	errRollback(err)
+	fmt.Println("Routes set")
 
 	err = tx.SetGovernments(govt1)
 	errRollback(err)
+	fmt.Println("Governments set")
 
 	err = tx.SetFactions(faction1)
 	errRollback(err)
+	fmt.Println("Factions set")
 
 	err = tx.SetPeople(husband1, wife1, steve1)
 	errRollback(err)
+	fmt.Println("People set")
 
 	err = tx.SetFamilies(family1)
 	errRollback(err)
+	fmt.Println("Families set")
 
 	err = tx.SetPlots(plot1)
 	errRollback(err)
+	fmt.Println("Plots set")
 
 	err = tx.SetTuples(db.RelationPersonPersonRelationship, relation1, relation2)
 	errRollback(err)
+	fmt.Println("Relations set")
 
 	err = tx.SetTuples(db.RelationPersonPersonTrust, trust1, trust2, trust3, trust4, trust5, trust6)
 	errRollback(err)
+	fmt.Println("Trust set")
 
 	err = tx.SetTuples(db.RelationPersonFactionAffiliation, affiliation1, affiliation2)
 	errRollback(err)
+	fmt.Println("Affiliations set")
 
 	err = tx.SetModifiers(db.RelationPersonPersonTrust, mod1, mod2, mod3, mod4)
 	errRollback(err)
+	fmt.Println("Modifiers set")
 
 	err = tx.SetJobs(job1)
 	errRollback(err)
+	fmt.Println("Jobs set")
 
 	err = tx.Commit()
 	if err != nil {

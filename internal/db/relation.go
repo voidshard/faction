@@ -50,14 +50,14 @@ const (
 	// So: <faction_id> <faction_id> <trust_level>
 	RelationFactionFactionTrust Relation = "trust_faction_to_faction"
 
-	// RelationPProfessionSkill holds how skilled people are in professions
-	// So: <person_id> <profession> <skill_level>
-	RelationPersonProfessionSkill Relation = "skill_person_to_profession"
-
 	// RelationFactionTopicResearch holds how much research a faction has done on a topic
 	// (we use the ActionType as the object)
 	// So: <faction_id> <topic> <research_level>
 	RelationFactionTopicResearch Relation = "research_faction_to_topic"
+
+	// RelationPProfessionSkill holds how skilled people are in professions
+	// So: <person_id> <profession> <skill_level>
+	RelationPersonProfessionSkill Relation = "skill_person_to_profession"
 
 	// RelationPersonPersonRelationships holds how people relate to each other
 	// So: <person_id> <person_id> <PersonalRelation> (see structs/family.go)

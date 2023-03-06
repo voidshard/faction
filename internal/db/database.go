@@ -29,3 +29,8 @@ func (f *FactionDB) InTransaction(do func(tx ReaderWriter) error) error {
 
 	return tx.Commit()
 }
+
+// NewPump returns a pump - a buffered writer for the database.
+func (f *FactionDB) NewPump() *Pump {
+	return newPump(f)
+}

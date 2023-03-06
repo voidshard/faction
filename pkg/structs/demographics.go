@@ -27,7 +27,7 @@ type Demographics struct {
 	ChildbearingAgeMax           int
 	ChildbearingAgeAverage       int
 	ChildbearingAgeDeviation     int
-	ChildbearingDeathProbability float64
+	ChildbearingDeathProbability float64 // probability of (mother's) death during childbirth
 
 	// Ethos represents the average outlook of members of the population
 	EthosAverage *Ethos
@@ -37,7 +37,9 @@ type Demographics struct {
 	EthosBlackSheepProbability float64
 
 	// Probability of a person dying of some natural cause
-	DeathCauseNaturalProbability map[string]float64
+	DeathInfantMortalityProbability float64            // natural death in childhood
+	DeathAdultMortalityProbability  float64            // natural death in adulthood
+	DeathCauseNaturalProbability    map[string]float64 // what actually kills someone
 
 	// Professions to allocate to people.
 	Professions []*Profession

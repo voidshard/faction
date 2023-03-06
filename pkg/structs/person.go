@@ -20,7 +20,7 @@ type Person struct {
 
 	IsMale bool `db:"is_male"`
 
-	DeathMetaReason string  `db:"death_reason"`
+	DeathMetaReason string  `db:"death_meta_reason"`
 	DeathMetaKey    MetaKey `db:"death_meta_key"`
 	DeathMetaVal    string  `db:"death_meta_val"`
 }

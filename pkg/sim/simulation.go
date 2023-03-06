@@ -31,6 +31,18 @@ func New(cfg *config.Simulation) (Simulation, error) {
 		return nil, err
 	}
 
+	// we always start at tick 1
+	err = dbconn.InTransaction(func(tx db.ReaderWriter) error {
+		tick, err := tx.Tick()
+		if err != nil {
+			return err
+		}
+		if tick <= 0 {
+			return tx.SetTick(1)
+		}
+		return nil
+	})
+
 	return &simulationImpl{
 		cfg:    cfg,
 		dbconn: dbconn,
