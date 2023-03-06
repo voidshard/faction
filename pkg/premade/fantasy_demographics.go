@@ -23,6 +23,10 @@ func DemographicsFantasyHuman() *structs.Demographics {
 		FamilySizeAverage:            8, // children
 		FamilySizeDeviation:          4,
 		FamilySizeMax:                18,
+		FriendshipProbability:        0.3,
+		FriendshipCloseProbability:   0.1,
+		EnemyProbability:             0.15,
+		EnemyHatedProbability:        0.5,
 		MarriageProbability:          0.8,
 		MarriageDivorceProbability:   0.10,
 		MarriageAffairProbability:    0.02,
@@ -41,7 +45,9 @@ func DemographicsFantasyHuman() *structs.Demographics {
 			Piety:     90,
 			Caution:   15,
 		},
-		EthosBlackSheepProbability: 0.02, // Probability given at least one radical ethos change
+		EthosBlackSheepProbability:      0.02, // Probability given at least one radical ethos change
+		DeathInfantMortalityProbability: 0.4,
+		DeathAdultMortalityProbability:  0.1,
 		DeathCauseNaturalProbability: map[string]float64{
 			"malaria":       0.09, // natural diseases (50%)
 			"pox":           0.08,
@@ -51,8 +57,7 @@ func DemographicsFantasyHuman() *structs.Demographics {
 			"measles":       0.05,
 			"typoid":        0.03,
 			"scarlet fever": 0.03,
-			"flu":           0.01,
-			"ergotism":      0.01, // end diseases
+			"flu":           0.02, // end diseases
 			"accidental":    0.15,
 			"war":           0.15,
 			"starvation":    0.1,

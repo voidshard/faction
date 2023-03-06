@@ -10,6 +10,12 @@ type Demographics struct {
 	FamilySizeAverage   int
 	FamilySizeDeviation int
 
+	// Chances of various em, extra relations
+	FriendshipProbability      float64
+	FriendshipCloseProbability float64
+	EnemyProbability           float64
+	EnemyHatedProbability      float64
+
 	// The chance someone will marry (probably very high)
 	MarriageProbability float64
 	// The chance two people will divorce (hopefully very low)

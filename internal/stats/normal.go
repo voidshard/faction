@@ -31,8 +31,10 @@ func (n *normalised) SetSeed(seed int64) {
 // given by the normalised input on creation.
 func (n *normalised) Random() int {
 	roll := n.rng.Float64()
+	sofar := 0.0
 	for k, v := range n.given {
-		if roll <= v/n.total {
+		sofar += v / n.total
+		if roll <= sofar {
 			return k
 		}
 	}

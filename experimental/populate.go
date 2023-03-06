@@ -22,18 +22,10 @@ func main() {
 	areaIDs := []string{ // 10 areas
 		structs.NewID(),
 		structs.NewID(),
-		structs.NewID(),
-		structs.NewID(),
-		structs.NewID(),
-		structs.NewID(),
-		structs.NewID(),
-		structs.NewID(),
-		structs.NewID(),
-		structs.NewID(),
 	}
 
 	err = simulator.Populate(
-		100000*len(areaIDs), // roughly 100k (alive) in each area
+		10000*len(areaIDs), // roughly 100k (alive) in each area
 		premade.DemographicsFantasyHuman(),
 		areaIDs...,
 	)
