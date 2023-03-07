@@ -1,8 +1,6 @@
 package sim
 
 import (
-	"fmt"
-
 	"github.com/voidshard/faction/internal/db"
 	"github.com/voidshard/faction/pkg/config"
 	"github.com/voidshard/faction/pkg/structs"
@@ -49,48 +47,35 @@ func New(cfg *config.Simulation) (Simulation, error) {
 	}, nil
 }
 
-func (s *simulationImpl) AddGovernment(in *structs.Government) error {
-	if in.ID == "" {
-		in.ID = structs.NewID()
-	}
-	if !structs.IsValidID(in.ID) {
-		return fmt.Errorf("invalid government id: %s", in.ID)
-	}
+func (s *simulationImpl) SetAreas(in ...*structs.Area) error {
 	return s.dbconn.InTransaction(func(tx db.ReaderWriter) error {
-		return tx.SetGovernments(in)
+		return tx.SetAreas(in...)
 	})
 }
 
-func (s *simulationImpl) AddArea(in *structs.Area, resources ...string) error {
-	if in.ID == "" {
-		in.ID = structs.NewID()
-	}
-	if !structs.IsValidID(in.ID) {
-		return fmt.Errorf("invalid area id: %s", in.ID)
-	}
-	if in.GoverningFactionID != "" && !structs.IsValidID(in.GoverningFactionID) {
-		return fmt.Errorf("invalid government id: %s", in.GoverningFactionID)
-	}
+func (s *simulationImpl) SetLandRights(in ...*structs.LandRight) error {
 	return s.dbconn.InTransaction(func(tx db.ReaderWriter) error {
-		return tx.SetAreas(in)
+		return tx.SetLandRights(in...)
 	})
 }
 
-func (s *simulationImpl) AddRoutes(in []*structs.Route) error {
-	for _, r := range in {
-		if !structs.IsValidID(r.SourceAreaID) {
-			return fmt.Errorf("invalid source area id: %s", r.SourceAreaID)
-		}
-		if !structs.IsValidID(r.TargetAreaID) {
-			return fmt.Errorf("invalid target area id: %s", r.TargetAreaID)
-		}
-		if r.SourceAreaID == r.TargetAreaID {
-			return fmt.Errorf("source and target area ids are the same: %s", r.SourceAreaID)
-		}
-		if r.TravelTime < 0 { // we do not allow time travel, but instantaneous teleportation is fine
-			return fmt.Errorf("invalid travel time, expected >= 0: %d", r.TravelTime)
-		}
-	}
+func (s *simulationImpl) SetGovernments(in ...*structs.Government) error {
+	return s.dbconn.InTransaction(func(tx db.ReaderWriter) error {
+		return tx.SetGovernments(in...)
+	})
+}
+
+func (s *simulationImpl) SetFactions(in ...*structs.Faction) error {
+	return s.dbconn.InTransaction(func(tx db.ReaderWriter) error {
+		return tx.SetFactions(in...)
+	})
+}
+
+func (s *simulationImpl) SetGoverningFaction(factionID string, areas ...string) error {
+	return s.dbconn.ChangeGoverningFaction(factionID, areas)
+}
+
+func (s *simulationImpl) SetRoutes(in ...*structs.Route) error {
 	return s.dbconn.InTransaction(func(tx db.ReaderWriter) error {
 		return tx.SetRoutes(in...)
 	})

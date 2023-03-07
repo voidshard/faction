@@ -109,9 +109,11 @@ func (s *sqlDB) Close() error {
 // You *must* either call Commit() or Rollback() after calling this
 func (s *sqlDB) Transaction() (Transaction, error) {
 	tx, err := s.conn.Beginx()
+
 	if err != nil {
 		return nil, err
 	}
+
 	return &sqlTx{tx: tx}, nil
 }
 

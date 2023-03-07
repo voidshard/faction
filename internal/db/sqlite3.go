@@ -40,6 +40,8 @@ const (
 	    meta_val VARCHAR(255) NOT NULL DEFAULT "",
 	    meta_reason TEXT NOT NULL DEFAULT ""
 	);`
+
+	tupleIndexCreateTemplate = `CREATE INDEX IF NOT EXISTS subject_%s ON %s (subject);`
 )
 
 var (
@@ -74,7 +76,8 @@ var (
 	    governing_faction_id VARCHAR(36) NOT NULL DEFAULT "",
 	    controlling_faction_id VARCHAR(36) NOT NULL DEFAULT "",
 	    area_id VARCHAR(36) NOT NULL,
-	    resource VARCHAR(255) NOT NULL
+	    resource VARCHAR(255) NOT NULL,
+	    yield INTEGER NOT NULL DEFAULT 0
 	);`, tableLandRights)
 
 	createPlots = fmt.Sprintf(`CREATE TABLE IF NOT EXISTS %s (
@@ -173,7 +176,40 @@ var (
 
 	// indexes that we should create
 	// TODO
-	indexes = []string{}
+	indexes = []string{
+		// we look up laws by the government id
+		fmt.Sprintf(`CREATE INDEX IF NOT EXISTS laws_government_id ON %s (government_id);`, tableLaws),
+
+		// we look up land rights by either governing or controlling faction
+		fmt.Sprintf(`CREATE INDEX IF NOT EXISTS land_rights_gov ON %s (governing_faction_id);`, tableLandRights),
+		fmt.Sprintf(`CREATE INDEX IF NOT EXISTS land_rights_fact ON %s (controlling_faction_id);`, tableLandRights),
+
+		// we look up plots by their owner(s) in order to determine where faction(s) can perform actions
+		fmt.Sprintf(`CREATE INDEX IF NOT EXISTS plot_owner ON %s (owner_faction_id);`, tablePlots),
+
+		// jobs we want to search by area & state (to see if we need to add people)
+		fmt.Sprintf(`CREATE INDEX IF NOT EXISTS jobs_target_area ON %s (target_area_id, state);`, tableJobs),
+
+		// families we mostly run over to see if we need to add children on a tick, so area + child_bearing
+		fmt.Sprintf(`CREATE INDEX IF NOT EXISTS fam_child_bearing ON %s (area_id, is_child_bearing);`, tableFamilies),
+
+		// people is a big one; we need to hunt for people who; are in an area, are not employed
+		// and have some set of ethos values (matching a faction's job)
+		fmt.Sprintf(`CREATE INDEX IF NOT EXISTS peo_area_ethos ON %s (
+		    area_id, 
+		    job_id,
+		    ethos_altruism,
+		    ethos_ambition,
+		    ethos_tradition,
+		    ethos_pacifism,
+		    ethos_piety,
+		    ethos_caution
+		);`, tablePeople),
+
+		// factions we really only look up either by ID, by action_frequency or by government
+		fmt.Sprintf(`CREATE INDEX IF NOT EXISTS fact_government ON %s (government_id);`, tableFactions),
+		fmt.Sprintf(`CREATE INDEX IF NOT EXISTS fact_action_fq ON %s (action_frequency_ticks);`, tableFactions),
+	}
 )
 
 // Sqlite represents a DB connection to sqlite
@@ -237,14 +273,19 @@ func (s *Sqlite) createTables() error {
 		createPeople,
 		createFactions,
 	}
+	todoIx := []string{}
+
 	for _, r := range allRelations {
 		todo = append(todo, fmt.Sprintf(tupleTableCreateTemplate, r.tupleTable()))
+		todoIx = append(todoIx, fmt.Sprintf(tupleIndexCreateTemplate, r.tupleTable(), r.tupleTable()))
 		if r.supportsModifiers() {
 			todo = append(todo, fmt.Sprintf(modifierTableCreateTemplate, r.modTable()))
+			todoIx = append(todoIx, fmt.Sprintf(tupleIndexCreateTemplate, r.modTable(), r.modTable()))
 		}
 	}
 
 	todo = append(todo, indexes...)
+	todo = append(todo, todoIx...)
 
 	for _, ddl := range todo {
 		_, err := s.conn.Exec(ddl)

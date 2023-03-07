@@ -267,7 +267,9 @@ func sqlFromLandRightFilters(tk *dbutils.IterToken, in []*LandRightFilter) (stri
 	return fmt.Sprintf(`SELECT id
 		area_id,
 		governing_faction_id,
-		controlling_faction_id
+		controlling_faction_id,
+		resource,
+		yield
 	    FROM %s %s
 	    ORDER BY id LIMIT $%d OFFSET $%d;`,
 		tableLandRights, where,

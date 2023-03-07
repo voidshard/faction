@@ -3,7 +3,6 @@ package db
 import (
 	"log"
 	"sync"
-	"time"
 
 	"github.com/voidshard/faction/pkg/structs"
 )
@@ -83,11 +82,8 @@ func newPump(db *FactionDB) *Pump {
 // doPump is the main pump routine.
 func (p *Pump) doPump() {
 	defer p.done.Done()
-	ticker := time.NewTicker(time.Second * 10)
 	for {
 		select {
-		case <-ticker.C: // try to flush buffer every few seconds
-			p.errs <- p.write()
 		case exit := <-p.emit: // we've been explicitly told to flush
 			err := p.write()
 			if err != nil {

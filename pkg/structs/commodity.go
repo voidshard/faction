@@ -15,10 +15,14 @@ package structs
 // The simulator doesn't actually need to understand what these professions mean
 // it's simply a way of linking commodities -> professions -> factions.
 type Commodity struct {
-	Name            string // eg. wheat, iron, iron ingots, silk
-	Profession      string // eg. farmer, blacksmith (cannot be "" - meaning "no profession")
-	LandRequirement int    // some amount of land required to perform this task (units squared)
+	Name       string // eg. wheat, iron, iron ingots, silk
+	Profession string // eg. farmer, blacksmith (cannot be "" - meaning "no profession")
 
-	Requires  map[string]float64 // required input Commodity (names) + their amounts (if any)
-	BaseYield map[string]float64 // output Commoditiy (names) + their amounts
+	// Required input Commodity (names) + their amounts (if any) to `Craft` 1 unit of
+	// this commodity.
+	//
+	// Nb. this only makes sense for stuff that isn't harvested or mined directly.
+	// Ie. harvesting wheat doesn't have a requirement, but producing flour requires
+	// some units of wheat to hand.
+	Requires map[string]float64
 }

@@ -220,6 +220,12 @@ func setRoutes(op sqlOperator, in []*structs.Route) error {
 		if !dbutils.IsValidID(f.TargetAreaID) {
 			return fmt.Errorf("route target area id %s is invalid", f.TargetAreaID)
 		}
+		if f.SourceAreaID == f.TargetAreaID {
+			return fmt.Errorf("source and target area ids are the same: %s", f.SourceAreaID)
+		}
+		if f.TravelTime < 0 { // we do not allow time travel, but instantaneous teleportation is fine
+			return fmt.Errorf("invalid travel time, expected >= 0: %d", f.TravelTime)
+		}
 	}
 
 	qstr := fmt.Sprintf(`INSERT INTO %s (
@@ -339,15 +345,19 @@ func setLandRights(op sqlOperator, in []*structs.LandRight) error {
 		if !dbutils.IsValidID(f.AreaID) {
 			return fmt.Errorf("land right area id %s is invalid", f.AreaID)
 		}
+		if f.Yield < 0 {
+			f.Yield = 0
+		}
 	}
 
 	qstr := fmt.Sprintf(`INSERT INTO %s (
-	    id, governing_faction_id, controlling_faction_id, area_id, resource
+	    id, governing_faction_id, controlling_faction_id, area_id, resource, yield
 	) VALUES (
-	    :id, :governing_faction_id, :controlling_faction_id, :area_id, :resource
+	    :id, :governing_faction_id, :controlling_faction_id, :area_id, :resource, :yield
 	) ON CONFLICT (id) DO UPDATE SET
 	    governing_faction_id = EXCLUDED.governing_faction_id,
-	    controlling_faction_id = EXCLUDED.controlling_faction_id
+	    controlling_faction_id = EXCLUDED.controlling_faction_id,
+	    yield = EXCLUDED.yield
 	;`, tableLandRights)
 
 	_, err := op.NamedExec(qstr, in)

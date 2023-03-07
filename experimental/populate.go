@@ -19,13 +19,14 @@ func main() {
 		panic(err)
 	}
 
-	areaIDs := []string{ // 10 areas
+	areaIDs := []string{
+		structs.NewID(),
 		structs.NewID(),
 		structs.NewID(),
 	}
 
 	err = simulator.Populate(
-		10000*len(areaIDs), // roughly 100k (alive) in each area
+		10000*len(areaIDs),
 		premade.DemographicsFantasyHuman(),
 		areaIDs...,
 	)
