@@ -1,14 +1,12 @@
-package structs
+package config
 
 // Faith represents a single faith used in demographics
 type Faith struct {
+	Distribution
+
 	ReligionID string
 
 	Occurs float64
-
-	Average int
-
-	Deviation int
 
 	IsMonotheistic bool
 }

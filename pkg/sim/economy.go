@@ -11,6 +11,10 @@ import (
 // when kicking off a simulation. In light of that, we try to keep this interface fairly
 // straight forward to implement.
 type Economy interface {
+	// Commodities returns a list of all commodities known to the economy
+	// in the given area.
+	Commodities(area string) []*structs.Commodity
+
 	// Commodity looks up a commodity by name & returns it
 	Commodity(commodity string) *structs.Commodity
 

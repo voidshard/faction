@@ -1,4 +1,4 @@
-package structs
+package config
 
 // Profession currently serves to tie People's skillset to some Commodit(y/ies)
 // useful in Harvest / Craft actions (see action.go economy.go).
@@ -6,17 +6,13 @@ package structs
 // Note that the empty string profession "" always means "no profession" - such
 // people (if any) cannot be assigned work.
 type Profession struct {
+	Distribution
+
 	// Name of the profession (unique)
 	Name string
 
 	// Probability a given person has this profession
 	Occurs float64
-
-	// Average skill level (0-100)
-	Average int
-
-	// Deviation how far from the average skill people typically are
-	Deviation int
 
 	// ValidSideProfession indicates that someone may have this as a second / third
 	// profession.

@@ -8,6 +8,7 @@ import (
 
 	"github.com/voidshard/faction/internal/db"
 	"github.com/voidshard/faction/internal/stats"
+	"github.com/voidshard/faction/pkg/config"
 	"github.com/voidshard/faction/pkg/structs"
 )
 
@@ -35,7 +36,7 @@ type demographicsRand struct {
 	friendshipsProb  stats.Normalised
 }
 
-func (s *simulationImpl) randPerson(rng *rand.Rand, demo *structs.Demographics, dice *demographicsRand, areaID string) *structs.Person {
+func (s *simulationImpl) randPerson(rng *rand.Rand, demo *config.Demographics, dice *demographicsRand, areaID string) *structs.Person {
 	p := &structs.Person{
 		ID:     structs.NewID(),
 		Race:   demo.Race,
@@ -57,7 +58,7 @@ func (s *simulationImpl) randPerson(rng *rand.Rand, demo *structs.Demographics, 
 	return p
 }
 
-func (s *simulationImpl) randFaith(demo *structs.Demographics, dice *demographicsRand, subject string) []*structs.Tuple {
+func (s *simulationImpl) randFaith(demo *config.Demographics, dice *demographicsRand, subject string) []*structs.Tuple {
 	data := []*structs.Tuple{}
 
 	count := dice.faithCount.Random()
@@ -82,7 +83,7 @@ func (s *simulationImpl) randFaith(demo *structs.Demographics, dice *demographic
 	return data
 }
 
-func (s *simulationImpl) randProfession(demo *structs.Demographics, dice *demographicsRand, subject string) []*structs.Tuple {
+func (s *simulationImpl) randProfession(demo *config.Demographics, dice *demographicsRand, subject string) []*structs.Tuple {
 	data := []*structs.Tuple{}
 
 	count := dice.professionCount.Random()
@@ -109,7 +110,7 @@ func (s *simulationImpl) randProfession(demo *structs.Demographics, dice *demogr
 	return data
 }
 
-func (s *simulationImpl) spawnFamily(rng *rand.Rand, demo *structs.Demographics, dice *demographicsRand, areaID string, pump *db.Pump) ([]*structs.Person, []*structs.Person) {
+func (s *simulationImpl) spawnFamily(rng *rand.Rand, demo *config.Demographics, dice *demographicsRand, areaID string, pump *db.Pump) ([]*structs.Person, []*structs.Person) {
 	mum := s.randPerson(rng, demo, dice, areaID)
 	dad := s.randPerson(rng, demo, dice, areaID)
 
@@ -285,7 +286,7 @@ func randomRelationship(pump *db.Pump, personA, personB string, rng *rand.Rand, 
 	)
 }
 
-func (s *simulationImpl) SpawnPopulace(desiredTotal int, demo *structs.Demographics, areas ...string) error {
+func (s *simulationImpl) SpawnPopulace(desiredTotal int, demo *config.Demographics, areas ...string) error {
 	// TODO: support passing a 'Namer' to generate names
 	rng := rand.New(rand.NewSource(time.Now().UnixNano()))
 
@@ -430,12 +431,12 @@ func blacksheep(rng *rand.Rand, p *structs.Person) {
 	}
 }
 
-func newDemographicsRand(demo *structs.Demographics) *demographicsRand {
+func newDemographicsRand(demo *config.Demographics) *demographicsRand {
 	// professions
 	skills := map[string]*stats.Rand{}
 	profOccurProb := []float64{}
 	for _, profession := range demo.Professions {
-		skills[profession.Name] = stats.NewRand(0, 100, float64(profession.Average), float64(profession.Deviation))
+		skills[profession.Name] = stats.NewRand(0, 100, profession.Mean, profession.Deviation)
 		profOccurProb = append(profOccurProb, profession.Occurs)
 	}
 
@@ -443,7 +444,7 @@ func newDemographicsRand(demo *structs.Demographics) *demographicsRand {
 	faiths := map[string]*stats.Rand{}
 	faithOccurProb := []float64{}
 	for _, faith := range demo.Faiths {
-		faiths[faith.ReligionID] = stats.NewRand(0, 100, float64(faith.Average), float64(faith.Deviation))
+		faiths[faith.ReligionID] = stats.NewRand(0, 100, faith.Mean, faith.Deviation)
 		faithOccurProb = append(faithOccurProb, faith.Occurs)
 	}
 
@@ -457,19 +458,19 @@ func newDemographicsRand(demo *structs.Demographics) *demographicsRand {
 
 	return &demographicsRand{
 		familySize: stats.NewRand(
-			0, float64(demo.FamilySizeMax),
-			float64(demo.FamilySizeAverage), float64(demo.FamilySizeDeviation),
+			0, demo.FamilySize.Max,
+			demo.FamilySize.Mean, demo.FamilySize.Deviation,
 		),
 		childbearingAge: stats.NewRand(
-			float64(demo.ChildbearingAgeMin), float64(demo.ChildbearingAgeMax),
-			float64(demo.ChildbearingAgeAverage), float64(demo.ChildbearingAgeDeviation),
+			demo.ChildbearingAge.Min, demo.ChildbearingAge.Max,
+			demo.ChildbearingAge.Mean, demo.ChildbearingAge.Deviation,
 		),
-		ethosAltruism:    stats.NewRand(-100, 100, float64(demo.EthosAverage.Altruism), float64(demo.EthosDeviation.Altruism)),
-		ethosAmbition:    stats.NewRand(-100, 100, float64(demo.EthosAverage.Ambition), float64(demo.EthosDeviation.Ambition)),
-		ethosTradition:   stats.NewRand(-100, 100, float64(demo.EthosAverage.Tradition), float64(demo.EthosDeviation.Tradition)),
-		ethosPacifism:    stats.NewRand(-100, 100, float64(demo.EthosAverage.Pacifism), float64(demo.EthosDeviation.Pacifism)),
-		ethosPiety:       stats.NewRand(-100, 100, float64(demo.EthosAverage.Piety), float64(demo.EthosDeviation.Piety)),
-		ethosCaution:     stats.NewRand(-100, 100, float64(demo.EthosAverage.Caution), float64(demo.EthosDeviation.Caution)),
+		ethosAltruism:    stats.NewRand(-100, 100, float64(demo.EthosMean.Altruism), float64(demo.EthosDeviation.Altruism)),
+		ethosAmbition:    stats.NewRand(-100, 100, float64(demo.EthosMean.Ambition), float64(demo.EthosDeviation.Ambition)),
+		ethosTradition:   stats.NewRand(-100, 100, float64(demo.EthosMean.Tradition), float64(demo.EthosDeviation.Tradition)),
+		ethosPacifism:    stats.NewRand(-100, 100, float64(demo.EthosMean.Pacifism), float64(demo.EthosDeviation.Pacifism)),
+		ethosPiety:       stats.NewRand(-100, 100, float64(demo.EthosMean.Piety), float64(demo.EthosDeviation.Piety)),
+		ethosCaution:     stats.NewRand(-100, 100, float64(demo.EthosMean.Caution), float64(demo.EthosDeviation.Caution)),
 		professionLevel:  skills,
 		professionOccur:  stats.NewNormalised(profOccurProb),
 		professionCount:  stats.NewNormalised(demo.ProfessionProbability),

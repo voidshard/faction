@@ -19,6 +19,14 @@ type FantasyEconomy struct {
 	yieldFluctuation float64
 }
 
+func (e *FantasyEconomy) Commodities(area string) []*structs.Commodity {
+	var cs []*structs.Commodity
+	for _, c := range e.commodities {
+		cs = append(cs, c)
+	}
+	return cs
+}
+
 func (e *FantasyEconomy) Commodity(name string) *structs.Commodity {
 	c := e.commodities[name]
 	return c

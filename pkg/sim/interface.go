@@ -1,6 +1,7 @@
 package sim
 
 import (
+	"github.com/voidshard/faction/pkg/config"
 	"github.com/voidshard/faction/pkg/structs"
 )
 
@@ -66,7 +67,7 @@ type Simulation interface {
 	// of a family) in order to simulate some past family tragedy or something.
 	//
 	// TODO: consider a func to determine current demographics given an area id(s)
-	SpawnPopulace(people int, demo *structs.Demographics, areas ...string) error
+	SpawnPopulace(people int, demo *config.Demographics, areas ...string) error
 
 	// InspireFactionAffiliation will assign faction affliations to people with some probability.
 	//
@@ -93,6 +94,9 @@ type Simulation interface {
 
 	// Tick advances the simulation by one 'tick' and returns the current tick.
 	// This kicks off a full simulation loop asyncrhonously.
+	//
+	// The simulation uses "ticks" to track time, what that means depends on your settings.
+	// The simulation starts at tick 1.
 	Tick() (int, error)
 
 	//

@@ -1,4 +1,8 @@
-package structs
+package config
+
+import (
+	"github.com/voidshard/faction/pkg/structs"
+)
 
 // Demographics roughly describes a large population.
 //
@@ -6,9 +10,7 @@ package structs
 type Demographics struct {
 	// FamilySizeAverage is the average number of children in a family.
 	// A family always has parents ..
-	FamilySizeMax       int
-	FamilySizeAverage   int
-	FamilySizeDeviation int
+	FamilySize Distribution
 
 	// Chances of various em, extra relations
 	FriendshipProbability      float64
@@ -29,16 +31,13 @@ type Demographics struct {
 	Race string
 
 	// Ages min/max (in ticks) at which someone can have children.
-	ChildbearingAgeMin           int
-	ChildbearingAgeMax           int
-	ChildbearingAgeAverage       int
-	ChildbearingAgeDeviation     int
+	ChildbearingAge              Distribution
 	ChildbearingDeathProbability float64 // probability of (mother's) death during childbirth
 
-	// Ethos represents the average outlook of members of the population
-	EthosAverage *Ethos
+	// EthosMean represents the average outlook of members of the population
+	EthosMean structs.Ethos
 	// EthosDeviation is the standard deviation of the populace from the average (above).
-	EthosDeviation *Ethos
+	EthosDeviation structs.Ethos
 	// Probability of a person getting a wildly different Ethos ("black sheep")
 	EthosBlackSheepProbability float64
 
@@ -48,7 +47,7 @@ type Demographics struct {
 	DeathCauseNaturalProbability    map[string]float64 // what actually kills someone
 
 	// Professions to allocate to people.
-	Professions []*Profession
+	Professions []Profession
 	// ProfessionProbability is a list of probabilities such that a given person has the number
 	// of professions indicated by the index (index 0 means "" or "no profession").
 	//
@@ -72,6 +71,6 @@ type Demographics struct {
 	ProfessionProbability []float64
 
 	// Faiths to allocate to people.
-	Faiths           []*Faith
+	Faiths           []Faith
 	FaithProbability []float64 // likelihood of 0 or more faiths
 }
