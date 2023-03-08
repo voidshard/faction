@@ -18,14 +18,14 @@ type RouteFilter struct {
 	TargetAreaID string
 }
 
-type ethosFilter struct {
+type EthosFilter struct {
 	// provide some bounds for ethos matches
 	MinEthos *structs.Ethos
 	MaxEthos *structs.Ethos
 }
 
 type PersonFilter struct {
-	ethosFilter
+	EthosFilter
 
 	ID            string
 	JobID         string
@@ -44,7 +44,7 @@ type PlotFilter struct {
 }
 
 type FactionFilter struct {
-	ethosFilter
+	EthosFilter
 
 	ID              string
 	GovernmentID    string

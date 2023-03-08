@@ -74,6 +74,23 @@ func (e *Ethos) Add(v int) *Ethos {
 	}
 }
 
+// EthosDistance returns the distance between two ethos values
+func EthosDistance(a, b *Ethos) float64 {
+	values := []float64{
+		math.Pow(float64(a.Altruism-b.Altruism), 2),
+		math.Pow(float64(a.Ambition-b.Ambition), 2),
+		math.Pow(float64(a.Tradition-b.Tradition), 2),
+		math.Pow(float64(a.Pacifism-b.Pacifism), 2),
+		math.Pow(float64(a.Piety-b.Piety), 2),
+		math.Pow(float64(a.Caution-b.Caution), 2),
+	}
+	var sum float64
+	for _, v := range values {
+		sum += v
+	}
+	return math.Sqrt(sum)
+}
+
 // EthosAverage returns the average of the given ethos values
 func EthosAverage(in ...*Ethos) *Ethos {
 	e := &Ethos{}

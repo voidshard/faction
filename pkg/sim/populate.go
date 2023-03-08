@@ -285,7 +285,7 @@ func randomRelationship(pump *db.Pump, personA, personB string, rng *rand.Rand, 
 	)
 }
 
-func (s *simulationImpl) Populate(desiredTotal int, demo *structs.Demographics, areas ...string) error {
+func (s *simulationImpl) SpawnPopulace(desiredTotal int, demo *structs.Demographics, areas ...string) error {
 	// TODO: support passing a 'Namer' to generate names
 	rng := rand.New(rand.NewSource(time.Now().UnixNano()))
 

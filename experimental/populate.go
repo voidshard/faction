@@ -19,16 +19,30 @@ func main() {
 		panic(err)
 	}
 
-	areaIDs := []string{
-		structs.NewID(),
-		structs.NewID(),
-		structs.NewID(),
+	area1 := &structs.Area{ID: structs.NewID("area1")}
+	area2 := &structs.Area{ID: structs.NewID("area2")}
+	area3 := &structs.Area{ID: structs.NewID("area3")}
+
+	err = simulator.SetAreas(area1, area2, area3)
+	if err != nil {
+		panic(err)
 	}
 
-	err = simulator.Populate(
-		10000*len(areaIDs),
+	err = simulator.SetRoutes(
+		&structs.Route{SourceAreaID: area1.ID, TargetAreaID: area2.ID, TravelTime: 12},
+		&structs.Route{SourceAreaID: area2.ID, TargetAreaID: area3.ID, TravelTime: 16},
+		&structs.Route{SourceAreaID: area3.ID, TargetAreaID: area1.ID, TravelTime: 20},
+	)
+	if err != nil {
+		panic(err)
+	}
+
+	err = simulator.SpawnPopulace(
+		30000,
 		premade.DemographicsFantasyHuman(),
-		areaIDs...,
+		area1.ID,
+		area2.ID,
+		area3.ID,
 	)
 	if err != nil {
 		panic(err)
