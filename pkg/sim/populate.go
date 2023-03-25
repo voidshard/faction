@@ -436,7 +436,7 @@ func newDemographicsRand(demo *config.Demographics) *demographicsRand {
 	skills := map[string]*stats.Rand{}
 	profOccurProb := []float64{}
 	for _, profession := range demo.Professions {
-		skills[profession.Name] = stats.NewRand(0, 100, profession.Mean, profession.Deviation)
+		skills[profession.Name] = stats.NewRand(10, 100, profession.Mean, profession.Deviation)
 		profOccurProb = append(profOccurProb, profession.Occurs)
 	}
 
@@ -444,7 +444,7 @@ func newDemographicsRand(demo *config.Demographics) *demographicsRand {
 	faiths := map[string]*stats.Rand{}
 	faithOccurProb := []float64{}
 	for _, faith := range demo.Faiths {
-		faiths[faith.ReligionID] = stats.NewRand(0, 100, faith.Mean, faith.Deviation)
+		faiths[faith.ReligionID] = stats.NewRand(10, 100, faith.Mean, faith.Deviation)
 		faithOccurProb = append(faithOccurProb, faith.Occurs)
 	}
 

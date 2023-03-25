@@ -69,6 +69,11 @@ type Simulation interface {
 	// TODO: consider a func to determine current demographics given an area id(s)
 	SpawnPopulace(people int, demo *config.Demographics, areas ...string) error
 
+	//
+	FaithDemographics(areas ...string) (map[string]*structs.DemographicStats, error)
+	ProfessionDemographics(areas ...string) (map[string]*structs.DemographicStats, error)
+	AffiliationDemographics(areas ...string) (map[string]*structs.DemographicStats, error)
+
 	// InspireFactionAffiliation will assign faction affliations to people with some probability.
 	//
 	// [Setup Function] To grant people initial affiliation to factions.

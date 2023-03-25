@@ -3,6 +3,7 @@ package db
 import (
 	"fmt"
 
+	"github.com/voidshard/faction/internal/dbutils"
 	"github.com/voidshard/faction/pkg/structs"
 )
 
@@ -17,6 +18,14 @@ import (
 // rather we simply embed the Database into ourselves and build atop it.
 type FactionDB struct {
 	Database
+}
+
+type DemographicQuery struct {
+	// Only count people who are based in one of these areas
+	Areas []string
+
+	// Restrict count to these objects
+	Objects []string
 }
 
 // InTransaction is a helper function that adds automatic commit / rollback
@@ -34,6 +43,106 @@ func (f *FactionDB) InTransaction(do func(tx ReaderWriter) error) error {
 	}
 
 	return tx.Commit()
+}
+
+// Demographics returns a map of Relation -> DemographicStats for the given filter(s) (areas & objects).
+//
+// Since it's totally impractical / not too helpful to return this for all relations
+// (eg. inter personal trust), we only return a few relations, namely:
+// - RelationPersonReligionFaith
+// - RelationPersonProfessionSkill
+// - RelationPersonFactionAffiliation
+//
+// For each of these we return a count of the number of people with scores within some bounds
+// (see DemographicStats) for a given Object.
+//
+// We return a map of Relation -> Object -> DemographicStats
+func (f *FactionDB) Demographics(tables []Relation, in *DemographicQuery) (map[Relation]map[string]*structs.DemographicStats, error) {
+	pf := []*PersonFilter{}
+	if in != nil {
+		if in.Areas != nil {
+			pf = make([]*PersonFilter, len(in.Areas))
+			for i, area := range in.Areas {
+				pf[i] = &PersonFilter{AreaID: area}
+			}
+		}
+	}
+
+	demoRelations := []Relation{}
+	for _, r := range tables {
+		// whitelist allowed relations
+		if r == RelationPersonReligionFaith || r == RelationPersonProfessionSkill || r == RelationPersonFactionAffiliation {
+			demoRelations = append(demoRelations, r)
+		}
+	}
+
+	ret := map[Relation]map[string]*structs.DemographicStats{}
+	for _, r := range demoRelations {
+		ret[r] = map[string]*structs.DemographicStats{}
+	}
+
+	initialPToken := dbutils.NewToken()
+	initialPToken.Limit = 500
+	ptoken := initialPToken.String()
+
+	var (
+		people []*structs.Person
+		tuples []*structs.Tuple
+		ttoken string
+		err    error
+	)
+
+	for {
+		people, ptoken, err = f.People(ptoken, pf...)
+		if err != nil {
+			return ret, err
+		}
+
+		tf := []*TupleFilter{}
+		for _, p := range people {
+			if in != nil && in.Objects != nil {
+				for _, obj := range in.Objects {
+					tf = append(tf, &TupleFilter{Subject: p.ID, Object: obj})
+				}
+			} else {
+				tf = append(tf, &TupleFilter{Subject: p.ID})
+			}
+		}
+
+		for _, r := range demoRelations {
+			stats := ret[r] // we made sure to set these
+
+			for {
+				tuples, ttoken, err = f.Tuples(r, ttoken, tf...)
+				if err != nil {
+					return ret, err
+				}
+
+				for _, t := range tuples {
+					objStats, ok := stats[t.Object]
+					if !ok {
+						objStats = &structs.DemographicStats{}
+					}
+
+					objStats.Add(t.Value)
+
+					stats[t.Object] = objStats
+				}
+
+				if ttoken == "" {
+					break
+				}
+			}
+
+			ret[r] = stats
+		}
+
+		if ptoken == "" {
+			break
+		}
+	}
+
+	return ret, nil
 }
 
 // FactionAreas returns a map of FactionID -> AreaID -> true

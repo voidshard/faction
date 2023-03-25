@@ -17,8 +17,8 @@ type Rand struct {
 
 	min       float64
 	max       float64
-	deviation float64
 	mean      float64
+	deviation float64
 }
 
 // Float64 returns a new random value between min & max such that we stay reasonably
@@ -47,11 +47,12 @@ func (r *Rand) SetSeed(seed int64) {
 
 // NewRand creates a new random number generator that attempts to yield
 // values with some desired average (mean) and std deviation.
-func NewRand(min, max, average, mean float64) *Rand {
+func NewRand(min, max, mean, deviation float64) *Rand {
 	return &Rand{
-		rng:  rand.New(rand.NewSource(time.Now().UnixNano())),
-		min:  min,
-		max:  max,
-		mean: mean,
+		rng:       rand.New(rand.NewSource(time.Now().UnixNano())),
+		min:       min,
+		max:       max,
+		mean:      mean,
+		deviation: deviation,
 	}
 }
