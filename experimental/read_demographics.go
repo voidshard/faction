@@ -17,7 +17,7 @@ func printDemo(demo *structs.DemographicStats) {
 	fmt.Println("\t\tPoor", demo.Poor)
 	fmt.Println("\t\tAwful", demo.Awful)
 	fmt.Println("\t\tTerrible", demo.Terrible)
-	fmt.Println("\t\tAbsymal", demo.Absymal)
+	fmt.Println("\t\tAbysmal", demo.Abysmal)
 }
 
 func main() {

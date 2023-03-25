@@ -73,7 +73,7 @@ func main() {
 
 	err = simulator.InspireFactionAffiliation(
 		[]*structs.Faction{faction1, faction2, faction3},
-		10, 80, 25, 5,
+		10, 100, 20, 60,
 		0.2,
 		0, 250,
 	)

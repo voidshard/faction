@@ -82,7 +82,7 @@ func DemographicsFantasyHuman() *config.Demographics {
 					Min:       5,
 					Max:       100,
 					Mean:      20,
-					Deviation: 70,
+					Deviation: 80,
 				},
 			},
 			config.Profession{
@@ -92,8 +92,8 @@ func DemographicsFantasyHuman() *config.Demographics {
 				Distribution: config.Distribution{
 					Min:       5,
 					Max:       100,
-					Mean:      40,
-					Deviation: 70,
+					Mean:      20,
+					Deviation: 50,
 				},
 			},
 			config.Profession{
@@ -102,7 +102,7 @@ func DemographicsFantasyHuman() *config.Demographics {
 				ValidSideProfession: true,
 				Distribution: config.Distribution{
 					Mean:      20,
-					Deviation: 70,
+					Deviation: 50,
 				},
 			},
 			config.Profession{
@@ -111,7 +111,7 @@ func DemographicsFantasyHuman() *config.Demographics {
 				ValidSideProfession: true,
 				Distribution: config.Distribution{
 					Mean:      20,
-					Deviation: 70,
+					Deviation: 50,
 				},
 			},
 			config.Profession{
@@ -119,16 +119,16 @@ func DemographicsFantasyHuman() *config.Demographics {
 				Occurs:              0.05,
 				ValidSideProfession: true,
 				Distribution: config.Distribution{
-					Mean:      50,
-					Deviation: 45,
+					Mean:      25,
+					Deviation: 55,
 				},
 			},
 			config.Profession{
 				Name:   CLOTHIER,
 				Occurs: 0.03,
 				Distribution: config.Distribution{
-					Mean:      75,
-					Deviation: 25,
+					Mean:      25,
+					Deviation: 55,
 				},
 			},
 			config.Profession{
@@ -136,8 +136,8 @@ func DemographicsFantasyHuman() *config.Demographics {
 				Occurs:              0.10,
 				ValidSideProfession: true,
 				Distribution: config.Distribution{
-					Mean:      10,
-					Deviation: 60,
+					Mean:      20,
+					Deviation: 50,
 				},
 			},
 			config.Profession{
@@ -145,15 +145,15 @@ func DemographicsFantasyHuman() *config.Demographics {
 				Occurs: 0.05,
 				Distribution: config.Distribution{
 					Mean:      25,
-					Deviation: 50,
+					Deviation: 55,
 				},
 			},
 			config.Profession{
 				Name:   CARPENTER,
 				Occurs: 0.20,
 				Distribution: config.Distribution{
-					Mean:      50,
-					Deviation: 50,
+					Mean:      25,
+					Deviation: 55,
 				},
 			},
 			config.Profession{
@@ -161,16 +161,16 @@ func DemographicsFantasyHuman() *config.Demographics {
 				Occurs:              0.05,
 				ValidSideProfession: true,
 				Distribution: config.Distribution{
-					Mean:      25,
-					Deviation: 60,
+					Mean:      20,
+					Deviation: 50,
 				},
 			},
 			config.Profession{
 				Name:   SMITH,
 				Occurs: 0.005,
 				Distribution: config.Distribution{
-					Mean:      50,
-					Deviation: 50,
+					Mean:      25,
+					Deviation: 55,
 				},
 			},
 			config.Profession{
@@ -178,7 +178,7 @@ func DemographicsFantasyHuman() *config.Demographics {
 				Occurs:              0.20,
 				ValidSideProfession: true,
 				Distribution: config.Distribution{
-					Mean:      30,
+					Mean:      20,
 					Deviation: 50,
 				},
 			},
@@ -188,7 +188,7 @@ func DemographicsFantasyHuman() *config.Demographics {
 				ValidSideProfession: true,
 				Distribution: config.Distribution{
 					Mean:      30,
-					Deviation: 60,
+					Deviation: 50,
 				},
 			},
 			config.Profession{
@@ -197,15 +197,15 @@ func DemographicsFantasyHuman() *config.Demographics {
 				ValidSideProfession: true,
 				Distribution: config.Distribution{
 					Mean:      20,
-					Deviation: 60,
+					Deviation: 40,
 				},
 			},
 			config.Profession{
 				Name:   MAGE,
 				Occurs: 0.0005,
 				Distribution: config.Distribution{
-					Mean:      30,
-					Deviation: 70,
+					Mean:      40,
+					Deviation: 60,
 				},
 			},
 			config.Profession{
@@ -214,15 +214,15 @@ func DemographicsFantasyHuman() *config.Demographics {
 				ValidSideProfession: true,
 				Distribution: config.Distribution{
 					Mean:      30,
-					Deviation: 40,
+					Deviation: 60,
 				},
 			},
 			config.Profession{
 				Name:   PRIEST,
 				Occurs: 0.005,
 				Distribution: config.Distribution{
-					Mean:      80,
-					Deviation: 10,
+					Mean:      40,
+					Deviation: 60,
 				},
 			},
 			config.Profession{
@@ -231,15 +231,31 @@ func DemographicsFantasyHuman() *config.Demographics {
 				ValidSideProfession: true,
 				Distribution: config.Distribution{
 					Mean:      25,
-					Deviation: 70,
+					Deviation: 55,
 				},
 			},
 			config.Profession{
 				Name:   SCRIBE,
 				Occurs: 0.002,
 				Distribution: config.Distribution{
-					Mean:      20,
-					Deviation: 50,
+					Mean:      25,
+					Deviation: 55,
+				},
+			},
+			config.Profession{
+				Name:   ASSASSIN,
+				Occurs: 0.003,
+				Distribution: config.Distribution{
+					Mean:      40,
+					Deviation: 55,
+				},
+			},
+			config.Profession{
+				Name:   ALCHEMIST,
+				Occurs: 0.008,
+				Distribution: config.Distribution{
+					Mean:      40,
+					Deviation: 55,
 				},
 			},
 		},
