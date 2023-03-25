@@ -2,6 +2,7 @@ package premade
 
 const (
 	DEFAULT_TICKS_PER_YEAR = 365
+	DEFAULT_TICKS_PER_DAY  = 1
 )
 
 const (
@@ -49,5 +50,11 @@ const (
 	PRIEST   = "priest"
 	SCRIBE   = "scribe"
 	MERCHANT = "merchant"
-	MAGE     = "mage"
+	// - medieval
+	NOBLE = "noble"
+	// - more fantasy style professions
+	MAGE      = "mage"
+	SPY       = "spy"
+	ASSASSIN  = "assassin"
+	ALCHEMIST = "alchemist"
 )

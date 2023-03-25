@@ -16,7 +16,7 @@ type Simulation struct {
 	Database *Database
 
 	// Actions that do not appear in this are not permitted.
-	Actions map[structs.ActionType]Action
+	Actions map[structs.ActionType]*Action
 
 	// TODO: queue (fan out for faction job calculations)
 	// TODO: graph? (future w/ path calculations for trade)
