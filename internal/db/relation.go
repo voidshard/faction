@@ -73,6 +73,7 @@ const (
 
 	// RelationFactionActionTypeWeight holds how much weight a faction gives to an action type.
 	// This is used to weight the proability of a faction performing an action.
+	// Tuples are limited to -100 to 100, so each point here is a 1% increase / decrease in likelihood.
 	// So: <faction_id> <action_type> <weight_level>
 	RelationFactionActionTypeWeight Relation = "weight_faction_to_action_type"
 )
@@ -98,12 +99,15 @@ func (r Relation) modTable() string {
 	return fmt.Sprintf("modifiers_%s", r)
 }
 
-func (r Relation) supportsModifiers() bool {
+func (r Relation) SupportsModifiers() bool {
 	// modifiers complicate queries & add calculations but are a nice way of adding
 	// slow burn buffs / debuffs.
-	// In general we only support these on super important tuples.
+	// In general we only support these on super important tuples (where we have
+	// a use case).
 	switch r {
 	case RelationPersonFactionAffiliation:
+		return true
+	case RelationFactionActionTypeWeight:
 		return true
 	case RelationFactionFactionTrust:
 		return true

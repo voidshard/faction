@@ -72,8 +72,7 @@ func ActionsFantasy() map[structs.ActionType]*config.Action {
 				ASSASSIN: 2,
 				NOBLE:    2,
 			},
-			SecrecyWeight:      1.5,
-			IllegalProbability: 0.6,
+			SecrecyWeight: 1.5,
 		},
 		structs.ActionTypeFestival: {
 			MinPeople: 100,
@@ -173,8 +172,7 @@ func ActionsFantasy() map[structs.ActionType]*config.Action {
 				PRIEST: 2,
 				NOBLE:  5,
 			},
-			SecrecyWeight:      1.1,
-			IllegalProbability: 0.1,
+			SecrecyWeight: 1.1,
 		},
 		structs.ActionTypeRecruit: {
 			MinPeople:    1,
@@ -352,8 +350,7 @@ func ActionsFantasy() map[structs.ActionType]*config.Action {
 				Mean:      45 * DEFAULT_TICKS_PER_DAY,
 				Deviation: 60 * DEFAULT_TICKS_PER_DAY,
 			},
-			SecrecyWeight:      1.4,
-			IllegalProbability: 0.01,
+			SecrecyWeight: 1.4,
 		},
 		structs.ActionTypeExcommunicate: {
 			MinPeople:    1,
@@ -376,8 +373,7 @@ func ActionsFantasy() map[structs.ActionType]*config.Action {
 				Mean:      45 * DEFAULT_TICKS_PER_DAY,
 				Deviation: 30 * DEFAULT_TICKS_PER_DAY,
 			},
-			SecrecyWeight:      1.2,
-			IllegalProbability: 0.05,
+			SecrecyWeight: 1.2,
 		},
 		structs.ActionTypeConcealSecrets: {
 			MinPeople:    1,
@@ -403,8 +399,7 @@ func ActionsFantasy() map[structs.ActionType]*config.Action {
 				Mean:      7 * DEFAULT_TICKS_PER_DAY,
 				Deviation: 10 * DEFAULT_TICKS_PER_DAY,
 			},
-			SecrecyWeight:      1.5,
-			IllegalProbability: 0.05,
+			SecrecyWeight: 1.5,
 		},
 		structs.ActionTypeGatherSecrets: {
 			MinPeople:    2,
@@ -436,8 +431,7 @@ func ActionsFantasy() map[structs.ActionType]*config.Action {
 				Mean:      30 * DEFAULT_TICKS_PER_DAY,
 				Deviation: 30 * DEFAULT_TICKS_PER_DAY,
 			},
-			SecrecyWeight:      1.4,
-			IllegalProbability: 0.2,
+			SecrecyWeight: 1.4,
 		},
 		structs.ActionTypeRevokeLand: {
 			MinPeople: 1,
@@ -479,8 +473,7 @@ func ActionsFantasy() map[structs.ActionType]*config.Action {
 				PRIEST: 2,
 				NOBLE:  5,
 			},
-			SecrecyWeight:      1.3,
-			IllegalProbability: 0.2,
+			SecrecyWeight: 1.3,
 		},
 		structs.ActionTypeAssassinate: {
 			MinPeople: 1,
@@ -512,8 +505,7 @@ func ActionsFantasy() map[structs.ActionType]*config.Action {
 				MAGE:      4,
 				SOLDIER:   4,
 			},
-			SecrecyWeight:      1.2,
-			IllegalProbability: 0.95,
+			SecrecyWeight: 1.2,
 		},
 		structs.ActionTypeFrame: {
 			MinPeople: 1,
@@ -537,8 +529,7 @@ func ActionsFantasy() map[structs.ActionType]*config.Action {
 				Mean:      135 * DEFAULT_TICKS_PER_DAY,
 				Deviation: 60 * DEFAULT_TICKS_PER_DAY,
 			},
-			IllegalProbability: 0.96,
-			SecrecyWeight:      1.4,
+			SecrecyWeight: 1.4,
 		},
 		structs.ActionTypeRaid: {
 			MinPeople: 14,
@@ -570,10 +561,9 @@ func ActionsFantasy() map[structs.ActionType]*config.Action {
 				SAILOR:  1,
 				HUNTER:  1,
 			},
-			IllegalProbability: 0.94,
-			RefundOnCancel:     0.5,
-			RefundOnFailure:    0.2,
-			SecrecyWeight:      1.1,
+			RefundOnCancel:  0.5,
+			RefundOnFailure: 0.2,
+			SecrecyWeight:   1.1,
 		},
 		structs.ActionTypeSteal: {
 			MinPeople: 1,
@@ -599,8 +589,7 @@ func ActionsFantasy() map[structs.ActionType]*config.Action {
 				SAILOR: 1,
 				HUNTER: 1,
 			},
-			IllegalProbability: 0.98,
-			SecrecyWeight:      1.3,
+			SecrecyWeight: 1.3,
 		},
 		structs.ActionTypePillage: {
 			MinPeople: 14,
@@ -633,10 +622,9 @@ func ActionsFantasy() map[structs.ActionType]*config.Action {
 				SAILOR:  1,
 				HUNTER:  1,
 			},
-			IllegalProbability: 0.98,
-			RefundOnCancel:     0.5,
-			RefundOnFailure:    0.2,
-			SecrecyWeight:      1.1,
+			RefundOnCancel:  0.5,
+			RefundOnFailure: 0.2,
+			SecrecyWeight:   1.1,
 		},
 		structs.ActionTypeBlackmail: {
 			MinPeople: 1,
@@ -662,8 +650,7 @@ func ActionsFantasy() map[structs.ActionType]*config.Action {
 				NOBLE:  4,
 				THIEF:  4,
 			},
-			IllegalProbability: 0.9,
-			SecrecyWeight:      2,
+			SecrecyWeight: 2,
 		},
 		structs.ActionTypeKidnap: {
 			MinPeople: 3,
@@ -690,8 +677,7 @@ func ActionsFantasy() map[structs.ActionType]*config.Action {
 				ALCHEMIST: 2,
 				ASSASSIN:  2,
 			},
-			IllegalProbability: 0.95,
-			SecrecyWeight:      1.2,
+			SecrecyWeight: 1.2,
 		},
 		structs.ActionTypeShadowWar: {
 			MinPeople: 100,
@@ -728,8 +714,7 @@ func ActionsFantasy() map[structs.ActionType]*config.Action {
 				SMITH:         2,
 				LEATHERWORKER: 2,
 			},
-			IllegalProbability: 0.98,
-			SecrecyWeight:      1,
+			SecrecyWeight: 1,
 		},
 		structs.ActionTypeCrusade: {
 			MinPeople: 500,
@@ -765,7 +750,6 @@ func ActionsFantasy() map[structs.ActionType]*config.Action {
 				SMITH:         4,
 				LEATHERWORKER: 2,
 			},
-			IllegalProbability: 0.7,
 		},
 		structs.ActionTypeWar: {
 			MinPeople: 500,
@@ -801,7 +785,6 @@ func ActionsFantasy() map[structs.ActionType]*config.Action {
 				SMITH:         4,
 				LEATHERWORKER: 2,
 			},
-			IllegalProbability: 0.98,
 		},
 	}
 }

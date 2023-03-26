@@ -1,5 +1,12 @@
 package premade
 
+/*
+Constants here form the basis of our premade configuarations.
+
+These are only examples, your configuration can be as simple or as complex as you like,
+The engine doesn't actually care what these are, it only needs to understand how they relate.
+*/
+
 const (
 	DEFAULT_TICKS_PER_YEAR = 365
 	DEFAULT_TICKS_PER_DAY  = 1
@@ -26,6 +33,7 @@ const (
 	STEEL_WEAPON     = "steel-weapon"
 	STEEL_ARMOUR     = "steel-armour"
 	WOODEN_FURNITURE = "wooden-furniture"
+	OPIUM            = "opium"
 )
 
 const (

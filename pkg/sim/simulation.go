@@ -14,18 +14,19 @@ import (
 
 var (
 	minEthosDistance = 0.0
-	maxEthosDistance = structs.EthosDistance((&structs.Ethos{}).Sub(math.MaxInt), (&structs.Ethos{}).Add(math.MaxInt))
+	maxEthosDistance = structs.EthosDistance((&structs.Ethos{}).Sub(structs.MaxEthos), (&structs.Ethos{}).Add(structs.MaxEthos))
 )
 
 // simulationImpl implements Simulation
 type simulationImpl struct {
 	cfg *config.Simulation
+	eco Economy
 
 	dbconn *db.FactionDB
 }
 
 // New Simulation, the main doo-da
-func New(cfg *config.Simulation) (Simulation, error) {
+func New(cfg *config.Simulation, eco Economy) (Simulation, error) {
 	// apply default settings
 	if cfg == nil {
 		cfg = &config.Simulation{}
@@ -39,18 +40,6 @@ func New(cfg *config.Simulation) (Simulation, error) {
 	if err != nil {
 		return nil, err
 	}
-
-	// we always start at tick 1
-	err = dbconn.InTransaction(func(tx db.ReaderWriter) error {
-		tick, err := tx.Tick()
-		if err != nil {
-			return err
-		}
-		if tick <= 0 {
-			return tx.SetTick(1)
-		}
-		return nil
-	})
 
 	return &simulationImpl{
 		cfg:    cfg,
@@ -78,7 +67,7 @@ func (s *simulationImpl) Factions(ids ...string) ([]*structs.Faction, error) {
 //     (ie. they control a Plot(s) or LandRight(s))
 //   - if you want finer grain control, consider calling this on a per-faction basis,
 //     we're strictly going inserts so it should be fine to call simultaneously.
-func (s *simulationImpl) InspireFactionAffiliation(factions []*structs.Faction, min, max, mean, deviation, probability, minEthosDist, maxEthosDist float64) error {
+func (s *simulationImpl) InspireFactionAffiliation(factions []*structs.Faction, affdist *config.Distribution, probability, minEthosDist, maxEthosDist float64) error {
 	minEthosDist = math.Max(minEthosDistance, minEthosDist)
 	maxEthosDist = math.Min(maxEthosDistance, maxEthosDist)
 
@@ -122,7 +111,7 @@ func (s *simulationImpl) InspireFactionAffiliation(factions []*structs.Faction, 
 	// 3. now run through everyone and decide which faction(s) they join
 	var (
 		pump      = s.dbconn.NewPump()
-		affilDice = stats.NewRand(min, max, mean, deviation)
+		affilDice = stats.NewRand(affdist.Min, affdist.Max, affdist.Mean, affdist.Deviation)
 		rng       = rand.New(rand.NewSource(time.Now().UnixNano()))
 		people    []*structs.Person
 		token     string

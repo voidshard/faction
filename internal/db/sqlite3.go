@@ -277,7 +277,7 @@ func (s *Sqlite) createTables() error {
 	for _, r := range allRelations {
 		todo = append(todo, fmt.Sprintf(tupleTableCreateTemplate, r.tupleTable()))
 		todoIx = append(todoIx, fmt.Sprintf(tupleIndexCreateTemplate, r.tupleTable(), r.tupleTable()))
-		if r.supportsModifiers() {
+		if r.SupportsModifiers() {
 			todo = append(todo, fmt.Sprintf(modifierTableCreateTemplate, r.modTable()))
 			todoIx = append(todoIx, fmt.Sprintf(tupleIndexCreateTemplate, r.modTable(), r.modTable()))
 		}

@@ -70,6 +70,10 @@ func NewFantasyEconomy() *FantasyEconomy {
 				Name:       FISH,
 				Profession: FISHERMAN,
 			},
+			OPIUM: &structs.Commodity{
+				Name:       OPIUM,
+				Profession: FARMER,
+			},
 			FLAX: &structs.Commodity{
 				Name:       FLAX,
 				Profession: FARMER,
@@ -161,6 +165,7 @@ func NewFantasyEconomy() *FantasyEconomy {
 		// Values are in copper pieces.
 		baseValues: map[string]float64{ // base value per unit (in copper pieces)
 			FISH:             5.0,
+			OPIUM:            1000.0, // 1sp
 			FLAX:             3.0,
 			LINEN:            5000.0, // 5 sp
 			LINEN_CLOTHING:   7000.0, // 7 sp

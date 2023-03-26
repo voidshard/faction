@@ -41,10 +41,6 @@ type Action struct {
 	// them applies.
 	ProfessionWeights map[string]float64
 
-	// Probability that a government marks this as illegal
-	// (ie. when a government is formed)
-	IllegalProbability float64
-
 	// used as Key on Event object when the job with this Action has
 	// a state change.
 	// If not set, the string(ActionType) is used.

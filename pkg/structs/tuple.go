@@ -1,5 +1,10 @@
 package structs
 
+const (
+	MaxTuple = 10000
+	MinTuple = -10000
+)
+
 // Tuple is a way of storing a value for a generic a->b relationship,
 // or lists of items.
 //

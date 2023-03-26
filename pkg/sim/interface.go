@@ -48,8 +48,18 @@ type Simulation interface {
 	// SetRoutes upserts links between two areas
 	SetRoutes(r ...*structs.Route) error
 
+	// SpawnGovernment creates a new government and a faction for it.
+	//
+	// [Setup Function] Used to seed initial governments; governments are crafted from thin air,
+	// Probably this should be followed by SetGoverningFaction to assign this government area(s) of
+	// influence.
+	SpawnGovernment(g *config.Government, f *config.Faction) (*structs.Faction, *structs.Government, error)
+
 	// SetGoverningFaction sets the governing faction for the given area(s)
 	// including any resources / landrights in those areas.
+	//
+	// This probably follows SpawnGovernment, but could also represent a change in leadership
+	// if an area is conquered or similar.
 	SetGoverningFaction(factionID string, areas ...string) error
 
 	// SpawnPopulace adds people to area(s) based on a general 'Demographics' outline.
@@ -69,7 +79,9 @@ type Simulation interface {
 	// TODO: consider a func to determine current demographics given an area id(s)
 	SpawnPopulace(people int, demo *config.Demographics, areas ...string) error
 
-	SpawnFactions(number int) error
+	/*
+		SpawnFactions(number int, f *config.Faction, areas ...string) error
+	*/
 
 	// Read demographics for the given area(s).
 	//
@@ -103,6 +115,7 @@ type Simulation interface {
 
 	// Tick advances the simulation by one 'tick' and returns the current tick.
 	// This kicks off a full simulation loop asyncrhonously.
+	// Results are viewed via the Events() channel as required.
 	//
 	// The simulation uses "ticks" to track time, what that means depends on your settings.
 	// The simulation starts at tick 1.

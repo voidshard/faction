@@ -31,3 +31,13 @@ type Economy interface {
 	// within a city area, a small apartment or .. whatever.
 	LandValue(area string, ticks int) float64
 }
+
+func commodityToProfession(eco Economy, areas ...string) map[string]string {
+	prof := map[string]string{}
+	for _, a := range areas {
+		for _, c := range eco.Commodities(a) {
+			prof[c.Name] = c.Profession
+		}
+	}
+	return prof
+}

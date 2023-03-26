@@ -139,11 +139,14 @@ func (t *sqlTx) SetMeta(id, strv string, intv int) error {
 
 func (t *sqlTx) Tick() (int, error) {
 	_, tick, err := t.Meta(metaClock)
-	return tick, err
+	return tick + 1, err
 }
 
 func (t *sqlTx) SetTick(tick int) error {
-	return t.SetMeta(metaClock, "", tick)
+	if tick <= 1 {
+		return nil
+	}
+	return t.SetMeta(metaClock, "", tick-1)
 }
 
 func (t *sqlTx) Plots(token string, in ...*PlotFilter) ([]*structs.Plot, string, error) {

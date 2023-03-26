@@ -41,7 +41,7 @@ type lawStruct struct {
 }
 
 func deleteModifiers(op sqlOperator, r Relation, expires_before_tick int) error {
-	if !r.supportsModifiers() {
+	if !r.SupportsModifiers() {
 		return nil
 	}
 
@@ -54,7 +54,7 @@ func deleteModifiers(op sqlOperator, r Relation, expires_before_tick int) error 
 }
 
 func modifiersSum(op sqlOperator, r Relation, token string, in []*ModifierFilter) ([]*structs.Tuple, string, error) {
-	if !r.supportsModifiers() {
+	if !r.SupportsModifiers() {
 		return nil, token, fmt.Errorf("relation %s does not support modifiers", r)
 	}
 
@@ -75,7 +75,7 @@ func modifiersSum(op sqlOperator, r Relation, token string, in []*ModifierFilter
 }
 
 func modifiers(op sqlOperator, r Relation, token string, in []*ModifierFilter) ([]*structs.Modifier, string, error) {
-	if !r.supportsModifiers() {
+	if !r.SupportsModifiers() {
 		return nil, token, fmt.Errorf("relation %s does not support modifiers", r)
 	}
 	tk, err := dbutils.ParseToken(token)
@@ -95,11 +95,14 @@ func modifiers(op sqlOperator, r Relation, token string, in []*ModifierFilter) (
 }
 
 func setModifiers(op sqlOperator, r Relation, in []*structs.Modifier) error {
-	if !r.supportsModifiers() {
+	if !r.SupportsModifiers() {
 		return fmt.Errorf("relation %s does not support modifiers", r)
 	}
 	if len(in) == 0 {
 		return nil
+	}
+	for _, i := range in {
+		i.Value = clampInt(i.Value, structs.MinTuple, structs.MaxTuple)
 	}
 
 	qstr := fmt.Sprintf(`INSERT INTO %s (
@@ -121,8 +124,9 @@ func incrModifiers(op sqlOperator, r Relation, v int, in []*ModifierFilter) erro
 	args = append([]interface{}{v}, args...) // add our value to the front
 
 	qstr := fmt.Sprintf(
-		`UPDATE %s SET value = MAX(MIN(value + $1, 100), -100) %s;`,
+		`UPDATE %s SET value = MAX(MIN(value + $1, %d), %d) %s;`,
 		r.modTable(),
+		structs.MaxTuple, structs.MinTuple,
 		where,
 	)
 
@@ -151,6 +155,9 @@ func setTuples(op sqlOperator, r Relation, in []*structs.Tuple) error {
 	if len(in) == 0 {
 		return nil
 	}
+	for _, i := range in {
+		i.Value = clampInt(i.Value, structs.MinTuple, structs.MaxTuple)
+	}
 
 	qstr := fmt.Sprintf(`INSERT INTO %s (
 	    subject, object, value
@@ -162,6 +169,16 @@ func setTuples(op sqlOperator, r Relation, in []*structs.Tuple) error {
 	return err
 }
 
+func clampInt(v, min, max int) int {
+	if v < min {
+		return min
+	}
+	if v > max {
+		return max
+	}
+	return v
+}
+
 func incrTuples(op sqlOperator, r Relation, v int, in []*TupleFilter) error {
 	if len(in) == 0 {
 		return nil
@@ -171,8 +188,9 @@ func incrTuples(op sqlOperator, r Relation, v int, in []*TupleFilter) error {
 	args = append([]interface{}{v}, args...) // add our value to the front
 
 	qstr := fmt.Sprintf(
-		`UPDATE %s SET value = MAX(MIN(value + $1, 100), -100) %s;`,
+		`UPDATE %s SET value = MAX(MIN(value + $1, %d), %d) %s;`,
 		r.tupleTable(),
+		structs.MaxTuple, structs.MinTuple,
 		where,
 	)
 
@@ -311,6 +329,7 @@ func setPeople(op sqlOperator, in []*structs.Person) error {
 		if f.JobID != "" && !dbutils.IsValidID(f.JobID) {
 			return fmt.Errorf("person job id %s is invalid", f.JobID)
 		}
+		f.Clamp()
 	}
 
 	qstr := fmt.Sprintf(`INSERT INTO %s (
@@ -691,6 +710,7 @@ func setFactions(op sqlOperator, in []*structs.Faction) error {
 		if f.ReligionID != "" && !dbutils.IsValidID(f.ReligionID) {
 			return fmt.Errorf("faction religion id %s is invalid", f.ReligionID)
 		}
+		f.Clamp()
 	}
 
 	// We could make this shorter, but I like to be very specific in SQL :P

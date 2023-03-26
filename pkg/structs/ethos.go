@@ -5,8 +5,8 @@ import (
 )
 
 const (
-	maxEthos = 100
-	minEthos = -100
+	MaxEthos = 10000
+	MinEthos = -10000
 )
 
 // Ethos is a set of guiding principles that someone (or a faction) abides by,
@@ -50,28 +50,38 @@ type Ethos struct {
 	Caution int `db:"ethos_caution"`
 }
 
-// Sub v from Ethos values (clamped to minEthos), returning a new Ethos
+// Sub v from Ethos values (clamped to MinEthos), returning a new Ethos
 func (e *Ethos) Sub(v int) *Ethos {
 	return &Ethos{
-		Altruism:  int(math.Max(minEthos, float64(e.Altruism-v))),
-		Ambition:  int(math.Max(minEthos, float64(e.Ambition-v))),
-		Tradition: int(math.Max(minEthos, float64(e.Tradition-v))),
-		Pacifism:  int(math.Max(minEthos, float64(e.Pacifism-v))),
-		Piety:     int(math.Max(minEthos, float64(e.Piety-v))),
-		Caution:   int(math.Max(minEthos, float64(e.Caution-v))),
+		Altruism:  int(math.Max(MinEthos, float64(e.Altruism-v))),
+		Ambition:  int(math.Max(MinEthos, float64(e.Ambition-v))),
+		Tradition: int(math.Max(MinEthos, float64(e.Tradition-v))),
+		Pacifism:  int(math.Max(MinEthos, float64(e.Pacifism-v))),
+		Piety:     int(math.Max(MinEthos, float64(e.Piety-v))),
+		Caution:   int(math.Max(MinEthos, float64(e.Caution-v))),
 	}
 }
 
-// Add v to Ethos values (clamped to maxEthos), returning a new Ethos
+// Add v to Ethos values (clamped to MaxEthos), returning a new Ethos
 func (e *Ethos) Add(v int) *Ethos {
 	return &Ethos{
-		Ambition:  int(math.Min(maxEthos, float64(e.Ambition+v))),
-		Altruism:  int(math.Min(maxEthos, float64(e.Altruism+v))),
-		Tradition: int(math.Min(maxEthos, float64(e.Tradition+v))),
-		Pacifism:  int(math.Min(maxEthos, float64(e.Pacifism+v))),
-		Piety:     int(math.Min(maxEthos, float64(e.Piety+v))),
-		Caution:   int(math.Min(maxEthos, float64(e.Caution+v))),
+		Ambition:  int(math.Min(MaxEthos, float64(e.Ambition+v))),
+		Altruism:  int(math.Min(MaxEthos, float64(e.Altruism+v))),
+		Tradition: int(math.Min(MaxEthos, float64(e.Tradition+v))),
+		Pacifism:  int(math.Min(MaxEthos, float64(e.Pacifism+v))),
+		Piety:     int(math.Min(MaxEthos, float64(e.Piety+v))),
+		Caution:   int(math.Min(MaxEthos, float64(e.Caution+v))),
 	}
+}
+
+// Clamp ethos values to min / max values
+func (e *Ethos) Clamp() {
+	e.Ambition = int(math.Min(MaxEthos, math.Max(MinEthos, float64(e.Ambition))))
+	e.Altruism = int(math.Min(MaxEthos, math.Max(MinEthos, float64(e.Altruism))))
+	e.Tradition = int(math.Min(MaxEthos, math.Max(MinEthos, float64(e.Tradition))))
+	e.Pacifism = int(math.Min(MaxEthos, math.Max(MinEthos, float64(e.Pacifism))))
+	e.Piety = int(math.Min(MaxEthos, math.Max(MinEthos, float64(e.Piety))))
+	e.Caution = int(math.Min(MaxEthos, math.Max(MinEthos, float64(e.Caution))))
 }
 
 // EthosDistance returns the distance between two ethos values

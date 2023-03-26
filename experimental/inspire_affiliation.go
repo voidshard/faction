@@ -19,12 +19,12 @@ var (
 
 func randomEthos() structs.Ethos {
 	return structs.Ethos{
-		Altruism:  int(rng.Float64()*200) - 100,
-		Ambition:  int(rng.Float64()*200) - 100,
-		Tradition: int(rng.Float64()*200) - 100,
-		Pacifism:  int(rng.Float64()*200) - 100,
-		Piety:     int(rng.Float64()*200) - 100,
-		Caution:   int(rng.Float64()*200) - 100,
+		Altruism:  int(rng.Float64()*structs.MaxEthos*2) - structs.MaxEthos,
+		Ambition:  int(rng.Float64()*structs.MaxEthos*2) - structs.MaxEthos,
+		Tradition: int(rng.Float64()*structs.MaxEthos*2) - structs.MaxEthos,
+		Pacifism:  int(rng.Float64()*structs.MaxEthos*2) - structs.MaxEthos,
+		Piety:     int(rng.Float64()*structs.MaxEthos*2) - structs.MaxEthos,
+		Caution:   int(rng.Float64()*structs.MaxEthos*2) - structs.MaxEthos,
 	}
 }
 
@@ -36,7 +36,7 @@ func main() {
 		Location: "/tmp",
 	}
 
-	simulator, err := sim.New(&config.Simulation{Database: cfg})
+	simulator, err := sim.New(&config.Simulation{Database: cfg}, nil)
 	if err != nil {
 		panic(err)
 	}
@@ -73,9 +73,9 @@ func main() {
 
 	err = simulator.InspireFactionAffiliation(
 		[]*structs.Faction{faction1, faction2, faction3},
-		&config.Distribution{Min: 10, Max: 100, Mean: 20, Deviation: 60},
+		&config.Distribution{Min: 1000, Max: structs.MaxTuple, Mean: 2000, Deviation: 6000},
 		0.2,
-		0, 250,
+		0, 25000,
 	)
 	if err != nil {
 		panic(err)

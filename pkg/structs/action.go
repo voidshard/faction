@@ -23,6 +23,12 @@ type ActionType string
 // - attack / defense (espionage and/or military)
 // - affiliation (of people)
 // - research
+//
+// Government Only Actions (faction.IsGovernment must be true)
+// - grant land, revoke land
+//
+// Religion Only Actions (faction.IsReligion must be true):
+// - crusade, excommunicate
 const (
 	// Friendly actions (most of these target another faction)
 	ActionTypeTrade     ActionType = "trade"     // trade goods with another faction, everyone wins

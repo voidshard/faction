@@ -14,7 +14,7 @@ func main() {
 		Location: "/tmp",
 	}
 
-	simulator, err := sim.New(&config.Simulation{Database: cfg})
+	simulator, err := sim.New(&config.Simulation{Database: cfg}, nil)
 	if err != nil {
 		panic(err)
 	}

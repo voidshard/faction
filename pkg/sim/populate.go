@@ -410,7 +410,7 @@ func (s *simulationImpl) SpawnPopulace(desiredTotal int, demo *config.Demographi
 }
 
 func blacksheep(rng *rand.Rand, p *structs.Person) {
-	v := -100 + rng.Intn(5)
+	v := structs.MinTuple + rng.Intn(5)
 	if rng.Float64() < 0.5 {
 		v = 96 + rng.Intn(5)
 	}
@@ -436,7 +436,7 @@ func newDemographicsRand(demo *config.Demographics) *demographicsRand {
 	skills := map[string]*stats.Rand{}
 	profOccurProb := []float64{}
 	for _, profession := range demo.Professions {
-		skills[profession.Name] = stats.NewRand(10, 100, profession.Mean, profession.Deviation)
+		skills[profession.Name] = stats.NewRand(10, structs.MaxTuple, profession.Mean, profession.Deviation)
 		profOccurProb = append(profOccurProb, profession.Occurs)
 	}
 
@@ -444,7 +444,7 @@ func newDemographicsRand(demo *config.Demographics) *demographicsRand {
 	faiths := map[string]*stats.Rand{}
 	faithOccurProb := []float64{}
 	for _, faith := range demo.Faiths {
-		faiths[faith.ReligionID] = stats.NewRand(10, 100, faith.Mean, faith.Deviation)
+		faiths[faith.ReligionID] = stats.NewRand(10, structs.MaxTuple, faith.Mean, faith.Deviation)
 		faithOccurProb = append(faithOccurProb, faith.Occurs)
 	}
 
@@ -465,19 +465,19 @@ func newDemographicsRand(demo *config.Demographics) *demographicsRand {
 			demo.ChildbearingAge.Min, demo.ChildbearingAge.Max,
 			demo.ChildbearingAge.Mean, demo.ChildbearingAge.Deviation,
 		),
-		ethosAltruism:    stats.NewRand(-100, 100, float64(demo.EthosMean.Altruism), float64(demo.EthosDeviation.Altruism)),
-		ethosAmbition:    stats.NewRand(-100, 100, float64(demo.EthosMean.Ambition), float64(demo.EthosDeviation.Ambition)),
-		ethosTradition:   stats.NewRand(-100, 100, float64(demo.EthosMean.Tradition), float64(demo.EthosDeviation.Tradition)),
-		ethosPacifism:    stats.NewRand(-100, 100, float64(demo.EthosMean.Pacifism), float64(demo.EthosDeviation.Pacifism)),
-		ethosPiety:       stats.NewRand(-100, 100, float64(demo.EthosMean.Piety), float64(demo.EthosDeviation.Piety)),
-		ethosCaution:     stats.NewRand(-100, 100, float64(demo.EthosMean.Caution), float64(demo.EthosDeviation.Caution)),
+		ethosAltruism:    stats.NewRand(structs.MinEthos, structs.MaxEthos, float64(demo.EthosMean.Altruism), float64(demo.EthosDeviation.Altruism)),
+		ethosAmbition:    stats.NewRand(structs.MinEthos, structs.MaxEthos, float64(demo.EthosMean.Ambition), float64(demo.EthosDeviation.Ambition)),
+		ethosTradition:   stats.NewRand(structs.MinEthos, structs.MaxEthos, float64(demo.EthosMean.Tradition), float64(demo.EthosDeviation.Tradition)),
+		ethosPacifism:    stats.NewRand(structs.MinEthos, structs.MaxEthos, float64(demo.EthosMean.Pacifism), float64(demo.EthosDeviation.Pacifism)),
+		ethosPiety:       stats.NewRand(structs.MinEthos, structs.MaxEthos, float64(demo.EthosMean.Piety), float64(demo.EthosDeviation.Piety)),
+		ethosCaution:     stats.NewRand(structs.MinEthos, structs.MaxEthos, float64(demo.EthosMean.Caution), float64(demo.EthosDeviation.Caution)),
 		professionLevel:  skills,
 		professionOccur:  stats.NewNormalised(profOccurProb),
 		professionCount:  stats.NewNormalised(demo.ProfessionProbability),
 		faithLevel:       faiths,
 		faithOccur:       stats.NewNormalised(faithOccurProb),
 		faithCount:       stats.NewNormalised(demo.FaithProbability),
-		relationTrust:    stats.NewRand(20, 100, 65, 5),
+		relationTrust:    stats.NewRand(20, structs.MaxTuple, structs.MaxTuple/2, structs.MaxTuple/4),
 		deathCauseReason: deathReason,
 		deathCauseProb:   stats.NewNormalised(deathProb),
 		friendshipsProb: stats.NewNormalised([]float64{
