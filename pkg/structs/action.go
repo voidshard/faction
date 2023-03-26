@@ -50,6 +50,7 @@ const (
 	ActionTypeAssassinate   ActionType = "assassinate"    // someone is selected for elimination
 	ActionTypeFrame         ActionType = "frame"          // the non religious version of 'excommunicate,' but can involve legal .. entanglements
 	ActionTypeRaid          ActionType = "raid"           // small armed conflict with the aim of destroying as much as possible
+	ActionTypeSteal         ActionType = "steal"          // similar to raid, but with less stabbing
 	ActionTypePillage       ActionType = "pillage"        // small armed conflict with the aim of stealing wealth
 	ActionTypeBlackmail     ActionType = "blackmail"      // trade in a secret for a pile of gold, or ruin a reputation
 	ActionTypeKidnap        ActionType = "kidnap"         // similar to blackmail, but you trade back a person

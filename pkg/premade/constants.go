@@ -50,6 +50,7 @@ const (
 	PRIEST   = "priest"
 	SCRIBE   = "scribe"
 	MERCHANT = "merchant"
+	THIEF    = "thief"
 	// - medieval
 	NOBLE = "noble"
 	// - more fantasy style professions

@@ -69,7 +69,11 @@ type Simulation interface {
 	// TODO: consider a func to determine current demographics given an area id(s)
 	SpawnPopulace(people int, demo *config.Demographics, areas ...string) error
 
+	SpawnFactions(number int) error
+
+	// Read demographics for the given area(s).
 	//
+	// These are somewhat expensive to compute.
 	FaithDemographics(areas ...string) (map[string]*structs.DemographicStats, error)
 	ProfessionDemographics(areas ...string) (map[string]*structs.DemographicStats, error)
 	AffiliationDemographics(areas ...string) (map[string]*structs.DemographicStats, error)
@@ -95,7 +99,7 @@ type Simulation interface {
 	// with the highest Affiliation are considered the faction leader(s)).
 	//
 	// If the faction is a religion or has a religion, then faith is also added for the person.
-	InspireFactionAffiliation(factions []*structs.Faction, min, max, mean, deviation, probability, minEthosDistance, maxEthosDistance float64) error
+	InspireFactionAffiliation(in []*structs.Faction, px *config.Distribution, probability, minEthosDistance, maxEthosDistance float64) error
 
 	// Tick advances the simulation by one 'tick' and returns the current tick.
 	// This kicks off a full simulation loop asyncrhonously.

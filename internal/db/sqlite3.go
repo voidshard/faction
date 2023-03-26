@@ -160,7 +160,6 @@ var (
             cohesion INTEGER NOT NULL DEFAULT 0,
             corruption INTEGER NOT NULL DEFAULT 0,
             is_covert BOOLEAN NOT NULL DEFAULT FALSE,
-            is_illegal BOOLEAN NOT NULL DEFAULT FALSE,
             government_id VARCHAR(36) NOT NULL,
             is_government BOOLEAN NOT NULL DEFAULT FALSE,
             religion_id VARCHAR(36) NOT NULL DEFAULT "",

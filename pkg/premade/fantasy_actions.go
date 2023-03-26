@@ -18,19 +18,19 @@ func ActionsFantasy() map[structs.ActionType]*config.Action {
 				Min:       1000000,  // 100gp
 				Max:       50000000, // 5000gp
 				Mean:      10000000, // 1000gp
-				Deviation: 500000,   // 50gp
+				Deviation: 40000000, // 4000gp
 			},
 			TimeToPrepare: config.Distribution{
 				Min:       1 * DEFAULT_TICKS_PER_DAY,
 				Max:       5 * DEFAULT_TICKS_PER_DAY,
 				Mean:      2 * DEFAULT_TICKS_PER_DAY,
-				Deviation: 1 * DEFAULT_TICKS_PER_DAY,
+				Deviation: 4 * DEFAULT_TICKS_PER_DAY,
 			},
 			TimeToExecute: config.Distribution{
 				Min:       10 * DEFAULT_TICKS_PER_DAY,
 				Max:       90 * DEFAULT_TICKS_PER_DAY,
 				Mean:      30 * DEFAULT_TICKS_PER_DAY,
-				Deviation: 5 * DEFAULT_TICKS_PER_DAY,
+				Deviation: 60 * DEFAULT_TICKS_PER_DAY,
 			},
 			PersonWeight: 1,
 			ProfessionWeights: map[string]float64{
@@ -51,19 +51,19 @@ func ActionsFantasy() map[structs.ActionType]*config.Action {
 				Min:       20000000,  // 2000gp
 				Max:       100000000, // 10000gp
 				Mean:      25000000,  // 2500gp
-				Deviation: 500000,    // 50gp
+				Deviation: 70000000,  // 7000gp
 			},
 			TimeToPrepare: config.Distribution{
 				Min:       1 * DEFAULT_TICKS_PER_DAY,
 				Max:       14 * DEFAULT_TICKS_PER_DAY,
 				Mean:      7 * DEFAULT_TICKS_PER_DAY,
-				Deviation: 1 * DEFAULT_TICKS_PER_DAY,
+				Deviation: 7 * DEFAULT_TICKS_PER_DAY,
 			},
 			TimeToExecute: config.Distribution{
 				Min:       1 * DEFAULT_TICKS_PER_DAY,
 				Max:       3 * DEFAULT_TICKS_PER_DAY,
 				Mean:      2 * DEFAULT_TICKS_PER_DAY,
-				Deviation: 1 * DEFAULT_TICKS_PER_DAY,
+				Deviation: 2 * DEFAULT_TICKS_PER_DAY,
 			},
 			ProfessionWeights: map[string]float64{
 				CLERK:    1,
@@ -83,19 +83,19 @@ func ActionsFantasy() map[structs.ActionType]*config.Action {
 				Min:       1000000,  // 100gp
 				Max:       10000000, // 1000gp
 				Mean:      5000000,  // 500gp
-				Deviation: 500000,   // 50gp
+				Deviation: 5000000,  // 500gp
 			},
 			TimeToPrepare: config.Distribution{
 				Min:       14 * DEFAULT_TICKS_PER_DAY,
 				Max:       30 * DEFAULT_TICKS_PER_DAY,
 				Mean:      21 * DEFAULT_TICKS_PER_DAY,
-				Deviation: 3 * DEFAULT_TICKS_PER_DAY,
+				Deviation: 15 * DEFAULT_TICKS_PER_DAY,
 			},
 			TimeToExecute: config.Distribution{
 				Min:       1 * DEFAULT_TICKS_PER_DAY,
 				Max:       3 * DEFAULT_TICKS_PER_DAY,
 				Mean:      2 * DEFAULT_TICKS_PER_DAY,
-				Deviation: 1 * DEFAULT_TICKS_PER_DAY,
+				Deviation: 2 * DEFAULT_TICKS_PER_DAY,
 			},
 			PersonWeight: 1,
 			ProfessionWeights: map[string]float64{
@@ -111,13 +111,13 @@ func ActionsFantasy() map[structs.ActionType]*config.Action {
 				Min:       15 * DEFAULT_TICKS_PER_DAY,
 				Max:       30 * DEFAULT_TICKS_PER_DAY,
 				Mean:      20 * DEFAULT_TICKS_PER_DAY,
-				Deviation: 1 * DEFAULT_TICKS_PER_DAY,
+				Deviation: 15 * DEFAULT_TICKS_PER_DAY,
 			},
 			TimeToExecute: config.Distribution{
 				Min:       30 * DEFAULT_TICKS_PER_DAY,
 				Max:       90 * DEFAULT_TICKS_PER_DAY,
 				Mean:      60 * DEFAULT_TICKS_PER_DAY,
-				Deviation: 3 * DEFAULT_TICKS_PER_DAY,
+				Deviation: 60 * DEFAULT_TICKS_PER_DAY,
 			},
 		},
 		structs.ActionTypeCharity: {
@@ -128,19 +128,19 @@ func ActionsFantasy() map[structs.ActionType]*config.Action {
 				Min:       100000,   // 10gp
 				Max:       10000000, // 1000gp
 				Mean:      5000000,  // 500gp
-				Deviation: 10000,    // 10gp
+				Deviation: 5000000,  // 500gp
 			},
 			TimeToPrepare: config.Distribution{
 				Min:       14 * DEFAULT_TICKS_PER_DAY,
 				Max:       30 * DEFAULT_TICKS_PER_DAY,
 				Mean:      21 * DEFAULT_TICKS_PER_DAY,
-				Deviation: 2 * DEFAULT_TICKS_PER_DAY,
+				Deviation: 15 * DEFAULT_TICKS_PER_DAY,
 			},
 			TimeToExecute: config.Distribution{
 				Min:       7 * DEFAULT_TICKS_PER_DAY,
 				Max:       14 * DEFAULT_TICKS_PER_DAY,
 				Mean:      10 * DEFAULT_TICKS_PER_DAY,
-				Deviation: 1 * DEFAULT_TICKS_PER_DAY,
+				Deviation: 7 * DEFAULT_TICKS_PER_DAY,
 			},
 			PersonWeight: 2,
 		},
@@ -152,19 +152,19 @@ func ActionsFantasy() map[structs.ActionType]*config.Action {
 				Min:       50000000,  // 5000gp
 				Max:       100000000, // 10000gp
 				Mean:      75000000,  // 7500gp
-				Deviation: 1000000,   // 100gp
+				Deviation: 20000000,  // 2000gp
 			},
 			TimeToPrepare: config.Distribution{
 				Min:       14 * DEFAULT_TICKS_PER_DAY,
 				Max:       30 * DEFAULT_TICKS_PER_DAY,
 				Mean:      21 * DEFAULT_TICKS_PER_DAY,
-				Deviation: 2 * DEFAULT_TICKS_PER_DAY,
+				Deviation: 14 * DEFAULT_TICKS_PER_DAY,
 			},
 			TimeToExecute: config.Distribution{
 				Min:       90 * DEFAULT_TICKS_PER_DAY,
 				Max:       180 * DEFAULT_TICKS_PER_DAY,
 				Mean:      135 * DEFAULT_TICKS_PER_DAY,
-				Deviation: 3 * DEFAULT_TICKS_PER_DAY,
+				Deviation: 50 * DEFAULT_TICKS_PER_DAY,
 			},
 			PersonWeight: 1,
 			ProfessionWeights: map[string]float64{
@@ -177,15 +177,9 @@ func ActionsFantasy() map[structs.ActionType]*config.Action {
 			IllegalProbability: 0.1,
 		},
 		structs.ActionTypeRecruit: {
-			MinPeople: 1,
-			MaxPeople: 60,
-			Ethos:     structs.Ethos{Caution: 40},
-			Cost: config.Distribution{
-				Min:       100000,  // 10gp
-				Max:       1000000, // 100gp
-				Mean:      10000,   // 1gp
-				Deviation: 10000,   // 10gp
-			},
+			MinPeople:    1,
+			MaxPeople:    60,
+			Ethos:        structs.Ethos{Caution: 40},
 			PersonWeight: 1,
 			ProfessionWeights: map[string]float64{
 				CLERK:  2,
@@ -195,17 +189,17 @@ func ActionsFantasy() map[structs.ActionType]*config.Action {
 				Min:       1 * DEFAULT_TICKS_PER_DAY,
 				Max:       7 * DEFAULT_TICKS_PER_DAY,
 				Mean:      2 * DEFAULT_TICKS_PER_DAY,
-				Deviation: 1 * DEFAULT_TICKS_PER_DAY,
+				Deviation: 5 * DEFAULT_TICKS_PER_DAY,
 			},
 			TimeToExecute: config.Distribution{
 				Min:       30 * DEFAULT_TICKS_PER_DAY,
 				Max:       90 * DEFAULT_TICKS_PER_DAY,
 				Mean:      60 * DEFAULT_TICKS_PER_DAY,
-				Deviation: 3 * DEFAULT_TICKS_PER_DAY,
+				Deviation: 30 * DEFAULT_TICKS_PER_DAY,
 			},
 			SecrecyWeight: 1,
 		},
-		structs.ActionTypeExpand: {
+		structs.ActionTypeExpand: { // cost determined by land prices in economy
 			MinPeople:    1,
 			MaxPeople:    15,
 			Ethos:        structs.Ethos{Caution: 30},
@@ -216,16 +210,16 @@ func ActionsFantasy() map[structs.ActionType]*config.Action {
 				SCRIBE: 4,
 			},
 			TimeToPrepare: config.Distribution{
-				Min:       14 * DEFAULT_TICKS_PER_DAY,
+				Min:       3 * DEFAULT_TICKS_PER_DAY,
 				Max:       30 * DEFAULT_TICKS_PER_DAY,
-				Mean:      3 * DEFAULT_TICKS_PER_DAY,
-				Deviation: 1 * DEFAULT_TICKS_PER_DAY,
+				Mean:      14 * DEFAULT_TICKS_PER_DAY,
+				Deviation: 30 * DEFAULT_TICKS_PER_DAY,
 			},
 			TimeToExecute: config.Distribution{
-				Min:       14 * DEFAULT_TICKS_PER_DAY,
+				Min:       3 * DEFAULT_TICKS_PER_DAY,
 				Max:       30 * DEFAULT_TICKS_PER_DAY,
-				Mean:      3 * DEFAULT_TICKS_PER_DAY,
-				Deviation: 1 * DEFAULT_TICKS_PER_DAY,
+				Mean:      14 * DEFAULT_TICKS_PER_DAY,
+				Deviation: 30 * DEFAULT_TICKS_PER_DAY,
 			},
 			SecrecyWeight: 1,
 		},
@@ -240,16 +234,16 @@ func ActionsFantasy() map[structs.ActionType]*config.Action {
 				SCRIBE: 4,
 			},
 			TimeToPrepare: config.Distribution{
-				Min:       14 * DEFAULT_TICKS_PER_DAY,
-				Max:       30 * DEFAULT_TICKS_PER_DAY,
-				Mean:      3 * DEFAULT_TICKS_PER_DAY,
-				Deviation: 1 * DEFAULT_TICKS_PER_DAY,
+				Min:       1 * DEFAULT_TICKS_PER_DAY,
+				Max:       3 * DEFAULT_TICKS_PER_DAY,
+				Mean:      1 * DEFAULT_TICKS_PER_DAY,
+				Deviation: 2 * DEFAULT_TICKS_PER_DAY,
 			},
 			TimeToExecute: config.Distribution{
-				Min:       14 * DEFAULT_TICKS_PER_DAY,
+				Min:       1 * DEFAULT_TICKS_PER_DAY,
 				Max:       30 * DEFAULT_TICKS_PER_DAY,
-				Mean:      3 * DEFAULT_TICKS_PER_DAY,
-				Deviation: 1 * DEFAULT_TICKS_PER_DAY,
+				Mean:      7 * DEFAULT_TICKS_PER_DAY,
+				Deviation: 30 * DEFAULT_TICKS_PER_DAY,
 			},
 			SecrecyWeight: 1,
 		},
@@ -270,16 +264,16 @@ func ActionsFantasy() map[structs.ActionType]*config.Action {
 				MAGE:          3,
 			},
 			TimeToPrepare: config.Distribution{
-				Min:       7 * DEFAULT_TICKS_PER_DAY,
-				Max:       7 * DEFAULT_TICKS_PER_DAY,
-				Mean:      3 * DEFAULT_TICKS_PER_DAY,
+				Min:       1 * DEFAULT_TICKS_PER_DAY,
+				Max:       3 * DEFAULT_TICKS_PER_DAY,
+				Mean:      2 * DEFAULT_TICKS_PER_DAY,
 				Deviation: 1 * DEFAULT_TICKS_PER_DAY,
 			},
 			TimeToExecute: config.Distribution{
-				Min:       7 * DEFAULT_TICKS_PER_DAY,
+				Min:       3 * DEFAULT_TICKS_PER_DAY,
 				Max:       7 * DEFAULT_TICKS_PER_DAY,
-				Mean:      3 * DEFAULT_TICKS_PER_DAY,
-				Deviation: 1 * DEFAULT_TICKS_PER_DAY,
+				Mean:      4 * DEFAULT_TICKS_PER_DAY,
+				Deviation: 4 * DEFAULT_TICKS_PER_DAY,
 			},
 		},
 		structs.ActionTypeHarvest: {
@@ -295,16 +289,16 @@ func ActionsFantasy() map[structs.ActionType]*config.Action {
 				FORESTER:  4,
 			},
 			TimeToPrepare: config.Distribution{
-				Min:       7 * DEFAULT_TICKS_PER_DAY,
-				Max:       7 * DEFAULT_TICKS_PER_DAY,
-				Mean:      3 * DEFAULT_TICKS_PER_DAY,
+				Min:       1 * DEFAULT_TICKS_PER_DAY,
+				Max:       3 * DEFAULT_TICKS_PER_DAY,
+				Mean:      2 * DEFAULT_TICKS_PER_DAY,
 				Deviation: 1 * DEFAULT_TICKS_PER_DAY,
 			},
 			TimeToExecute: config.Distribution{
 				Min:       7 * DEFAULT_TICKS_PER_DAY,
 				Max:       7 * DEFAULT_TICKS_PER_DAY,
 				Mean:      3 * DEFAULT_TICKS_PER_DAY,
-				Deviation: 1 * DEFAULT_TICKS_PER_DAY,
+				Deviation: 4 * DEFAULT_TICKS_PER_DAY,
 			},
 		},
 		structs.ActionTypeConsolidate: {
@@ -317,15 +311,15 @@ func ActionsFantasy() map[structs.ActionType]*config.Action {
 				SCRIBE: 4,
 			},
 			TimeToPrepare: config.Distribution{
-				Min:       7 * DEFAULT_TICKS_PER_DAY,
-				Max:       7 * DEFAULT_TICKS_PER_DAY,
+				Min:       1 * DEFAULT_TICKS_PER_DAY,
+				Max:       3 * DEFAULT_TICKS_PER_DAY,
 				Mean:      2 * DEFAULT_TICKS_PER_DAY,
 				Deviation: 1 * DEFAULT_TICKS_PER_DAY,
 			},
 			TimeToExecute: config.Distribution{
-				Min:       14 * DEFAULT_TICKS_PER_DAY,
-				Max:       30 * DEFAULT_TICKS_PER_DAY,
-				Mean:      3 * DEFAULT_TICKS_PER_DAY,
+				Min:       3 * DEFAULT_TICKS_PER_DAY,
+				Max:       14 * DEFAULT_TICKS_PER_DAY,
+				Mean:      5 * DEFAULT_TICKS_PER_DAY,
 				Deviation: 1 * DEFAULT_TICKS_PER_DAY,
 			},
 			SecrecyWeight: 1,
@@ -333,7 +327,7 @@ func ActionsFantasy() map[structs.ActionType]*config.Action {
 		structs.ActionTypeResearch: {
 			MinPeople: 1,
 			MaxPeople: 100,
-			Ethos:     structs.Ethos{Piety: -10},
+			Ethos:     structs.Ethos{Piety: -10, Tradition: -20},
 			ProfessionWeights: map[string]float64{
 				MAGE:      5,
 				ALCHEMIST: 3,
@@ -341,22 +335,22 @@ func ActionsFantasy() map[structs.ActionType]*config.Action {
 				SCRIBE:    2,
 			},
 			Cost: config.Distribution{
-				Min:       5000000,  // 500gp
+				Min:       1000000,  // 100gp
 				Max:       20000000, // 2000gp
-				Mean:      1000000,  // 100gp
-				Deviation: 100000,   // 10gp
+				Mean:      5000000,  // 500gp
+				Deviation: 15000000, // 1500gp
 			},
 			TimeToPrepare: config.Distribution{
 				Min:       1 * DEFAULT_TICKS_PER_DAY,
 				Max:       7 * DEFAULT_TICKS_PER_DAY,
-				Mean:      1 * DEFAULT_TICKS_PER_DAY,
-				Deviation: 1 * DEFAULT_TICKS_PER_DAY,
+				Mean:      2 * DEFAULT_TICKS_PER_DAY,
+				Deviation: 7 * DEFAULT_TICKS_PER_DAY,
 			},
 			TimeToExecute: config.Distribution{
-				Min:       14 * DEFAULT_TICKS_PER_DAY,
-				Max:       21 * DEFAULT_TICKS_PER_DAY,
-				Mean:      3 * DEFAULT_TICKS_PER_DAY,
-				Deviation: 1 * DEFAULT_TICKS_PER_DAY,
+				Min:       7 * DEFAULT_TICKS_PER_DAY,
+				Max:       91 * DEFAULT_TICKS_PER_DAY,
+				Mean:      45 * DEFAULT_TICKS_PER_DAY,
+				Deviation: 60 * DEFAULT_TICKS_PER_DAY,
 			},
 			SecrecyWeight:      1.4,
 			IllegalProbability: 0.01,
@@ -374,13 +368,13 @@ func ActionsFantasy() map[structs.ActionType]*config.Action {
 				Min:       15 * DEFAULT_TICKS_PER_DAY,
 				Max:       30 * DEFAULT_TICKS_PER_DAY,
 				Mean:      20 * DEFAULT_TICKS_PER_DAY,
-				Deviation: 1 * DEFAULT_TICKS_PER_DAY,
+				Deviation: 15 * DEFAULT_TICKS_PER_DAY,
 			},
 			TimeToExecute: config.Distribution{
 				Min:       15 * DEFAULT_TICKS_PER_DAY,
 				Max:       60 * DEFAULT_TICKS_PER_DAY,
 				Mean:      45 * DEFAULT_TICKS_PER_DAY,
-				Deviation: 2 * DEFAULT_TICKS_PER_DAY,
+				Deviation: 30 * DEFAULT_TICKS_PER_DAY,
 			},
 			SecrecyWeight:      1.2,
 			IllegalProbability: 0.05,
@@ -401,13 +395,13 @@ func ActionsFantasy() map[structs.ActionType]*config.Action {
 				Min:       1 * DEFAULT_TICKS_PER_DAY,
 				Max:       7 * DEFAULT_TICKS_PER_DAY,
 				Mean:      1 * DEFAULT_TICKS_PER_DAY,
-				Deviation: 1 * DEFAULT_TICKS_PER_DAY,
+				Deviation: 7 * DEFAULT_TICKS_PER_DAY,
 			},
 			TimeToExecute: config.Distribution{
 				Min:       3 * DEFAULT_TICKS_PER_DAY,
 				Max:       14 * DEFAULT_TICKS_PER_DAY,
 				Mean:      7 * DEFAULT_TICKS_PER_DAY,
-				Deviation: 1 * DEFAULT_TICKS_PER_DAY,
+				Deviation: 10 * DEFAULT_TICKS_PER_DAY,
 			},
 			SecrecyWeight:      1.5,
 			IllegalProbability: 0.05,
@@ -415,7 +409,7 @@ func ActionsFantasy() map[structs.ActionType]*config.Action {
 		structs.ActionTypeGatherSecrets: {
 			MinPeople:    2,
 			MaxPeople:    14,
-			Ethos:        structs.Ethos{Ambition: 50},
+			Ethos:        structs.Ethos{Ambition: 50, Caution: 20},
 			PersonWeight: 1,
 			ProfessionWeights: map[string]float64{
 				SPY:       5,
@@ -425,22 +419,22 @@ func ActionsFantasy() map[structs.ActionType]*config.Action {
 				SCRIBE:    2,
 			},
 			Cost: config.Distribution{
-				Min:       5000000,  // 500gp
+				Min:       1000000,  // 500gp
 				Max:       20000000, // 2000gp
-				Mean:      1000000,  // 100gp
-				Deviation: 100000,   // 10gp
+				Mean:      2000000,  // 200gp
+				Deviation: 15000000, // 1500gp
 			},
 			TimeToPrepare: config.Distribution{
 				Min:       3 * DEFAULT_TICKS_PER_DAY,
 				Max:       14 * DEFAULT_TICKS_PER_DAY,
 				Mean:      7 * DEFAULT_TICKS_PER_DAY,
-				Deviation: 1 * DEFAULT_TICKS_PER_DAY,
+				Deviation: 7 * DEFAULT_TICKS_PER_DAY,
 			},
 			TimeToExecute: config.Distribution{
 				Min:       14 * DEFAULT_TICKS_PER_DAY,
 				Max:       60 * DEFAULT_TICKS_PER_DAY,
 				Mean:      30 * DEFAULT_TICKS_PER_DAY,
-				Deviation: 2 * DEFAULT_TICKS_PER_DAY,
+				Deviation: 30 * DEFAULT_TICKS_PER_DAY,
 			},
 			SecrecyWeight:      1.4,
 			IllegalProbability: 0.2,
@@ -453,13 +447,13 @@ func ActionsFantasy() map[structs.ActionType]*config.Action {
 				Min:       15 * DEFAULT_TICKS_PER_DAY,
 				Max:       30 * DEFAULT_TICKS_PER_DAY,
 				Mean:      20 * DEFAULT_TICKS_PER_DAY,
-				Deviation: 1 * DEFAULT_TICKS_PER_DAY,
+				Deviation: 15 * DEFAULT_TICKS_PER_DAY,
 			},
 			TimeToExecute: config.Distribution{
 				Min:       30 * DEFAULT_TICKS_PER_DAY,
 				Max:       90 * DEFAULT_TICKS_PER_DAY,
 				Mean:      60 * DEFAULT_TICKS_PER_DAY,
-				Deviation: 3 * DEFAULT_TICKS_PER_DAY,
+				Deviation: 30 * DEFAULT_TICKS_PER_DAY,
 			},
 		},
 		structs.ActionTypeSpreadRumors: {
@@ -476,7 +470,7 @@ func ActionsFantasy() map[structs.ActionType]*config.Action {
 				Min:       90 * DEFAULT_TICKS_PER_DAY,
 				Max:       180 * DEFAULT_TICKS_PER_DAY,
 				Mean:      135 * DEFAULT_TICKS_PER_DAY,
-				Deviation: 3 * DEFAULT_TICKS_PER_DAY,
+				Deviation: 70 * DEFAULT_TICKS_PER_DAY,
 			},
 			PersonWeight: 1,
 			ProfessionWeights: map[string]float64{
@@ -502,7 +496,7 @@ func ActionsFantasy() map[structs.ActionType]*config.Action {
 				Min:       7,
 				Max:       60,
 				Mean:      14,
-				Deviation: 2,
+				Deviation: 45,
 			},
 			TimeToExecute: config.Distribution{
 				Min:       1,
@@ -512,11 +506,11 @@ func ActionsFantasy() map[structs.ActionType]*config.Action {
 			},
 			PersonWeight: 0.001,
 			ProfessionWeights: map[string]float64{
-				ASSASSIN:  0.1,
-				SPY:       0.06,
-				ALCHEMIST: 0.05,
-				MAGE:      0.04,
-				SOLDIER:   0.02,
+				ASSASSIN:  8,
+				SPY:       5,
+				ALCHEMIST: 5,
+				MAGE:      4,
+				SOLDIER:   4,
 			},
 			SecrecyWeight:      1.2,
 			IllegalProbability: 0.95,
@@ -529,19 +523,19 @@ func ActionsFantasy() map[structs.ActionType]*config.Action {
 				Min:       10000000, // 1000gp
 				Max:       25000000, // 2500gp
 				Mean:      15000000, // 1500gp
-				Deviation: 500000,   // 50gp
+				Deviation: 10000000, // 1000gp
 			},
 			TimeToPrepare: config.Distribution{
 				Min:       14 * DEFAULT_TICKS_PER_DAY,
 				Max:       30 * DEFAULT_TICKS_PER_DAY,
 				Mean:      21 * DEFAULT_TICKS_PER_DAY,
-				Deviation: 2 * DEFAULT_TICKS_PER_DAY,
+				Deviation: 10 * DEFAULT_TICKS_PER_DAY,
 			},
 			TimeToExecute: config.Distribution{
 				Min:       90 * DEFAULT_TICKS_PER_DAY,
 				Max:       180 * DEFAULT_TICKS_PER_DAY,
 				Mean:      135 * DEFAULT_TICKS_PER_DAY,
-				Deviation: 3 * DEFAULT_TICKS_PER_DAY,
+				Deviation: 60 * DEFAULT_TICKS_PER_DAY,
 			},
 			IllegalProbability: 0.96,
 			SecrecyWeight:      1.4,
@@ -554,7 +548,7 @@ func ActionsFantasy() map[structs.ActionType]*config.Action {
 				Min:       10000000, // 1000gp
 				Max:       50000000, // 5000gp
 				Mean:      25000000, // 2500gp
-				Deviation: 500000,   // 50gp
+				Deviation: 25000000, // 2500gp
 			},
 			TimeToPrepare: config.Distribution{
 				Min:       14 * DEFAULT_TICKS_PER_DAY,
@@ -581,6 +575,33 @@ func ActionsFantasy() map[structs.ActionType]*config.Action {
 			RefundOnFailure:    0.2,
 			SecrecyWeight:      1.1,
 		},
+		structs.ActionTypeSteal: {
+			MinPeople: 1,
+			MaxPeople: 15,
+			Ethos:     structs.Ethos{Altruism: -20, Caution: 20},
+			TimeToPrepare: config.Distribution{
+				Min:       14 * DEFAULT_TICKS_PER_DAY,
+				Max:       30 * DEFAULT_TICKS_PER_DAY,
+				Mean:      3 * DEFAULT_TICKS_PER_DAY,
+				Deviation: 27 * DEFAULT_TICKS_PER_DAY,
+			},
+			TimeToExecute: config.Distribution{
+				Min:       1 * DEFAULT_TICKS_PER_DAY,
+				Max:       3 * DEFAULT_TICKS_PER_DAY,
+				Mean:      2 * DEFAULT_TICKS_PER_DAY,
+				Deviation: 2 * DEFAULT_TICKS_PER_DAY,
+			},
+			PersonWeight: 1,
+			ProfessionWeights: map[string]float64{
+				THIEF:  8,
+				SPY:    5,
+				MAGE:   2,
+				SAILOR: 1,
+				HUNTER: 1,
+			},
+			IllegalProbability: 0.98,
+			SecrecyWeight:      1.3,
+		},
 		structs.ActionTypePillage: {
 			MinPeople: 14,
 			MaxPeople: 120,
@@ -589,13 +610,13 @@ func ActionsFantasy() map[structs.ActionType]*config.Action {
 				Min:       10000000, // 1000gp
 				Max:       50000000, // 5000gp
 				Mean:      25000000, // 2500gp
-				Deviation: 500000,   // 50gp
+				Deviation: 25000000, // 2500gp
 			},
 			TimeToPrepare: config.Distribution{
 				Min:       14 * DEFAULT_TICKS_PER_DAY,
 				Max:       30 * DEFAULT_TICKS_PER_DAY,
 				Mean:      3 * DEFAULT_TICKS_PER_DAY,
-				Deviation: 1 * DEFAULT_TICKS_PER_DAY,
+				Deviation: 27 * DEFAULT_TICKS_PER_DAY,
 			},
 			TimeToExecute: config.Distribution{
 				Min:       1 * DEFAULT_TICKS_PER_DAY,
@@ -605,6 +626,7 @@ func ActionsFantasy() map[structs.ActionType]*config.Action {
 			},
 			PersonWeight: 1,
 			ProfessionWeights: map[string]float64{
+				THIEF:   2,
 				SOLDIER: 5,
 				SPY:     2,
 				MAGE:    5,
@@ -624,19 +646,21 @@ func ActionsFantasy() map[structs.ActionType]*config.Action {
 				Min:       1 * DEFAULT_TICKS_PER_DAY,
 				Max:       7 * DEFAULT_TICKS_PER_DAY,
 				Mean:      2 * DEFAULT_TICKS_PER_DAY,
-				Deviation: 1 * DEFAULT_TICKS_PER_DAY,
+				Deviation: 6 * DEFAULT_TICKS_PER_DAY,
 			},
 			TimeToExecute: config.Distribution{
 				Min:       1 * DEFAULT_TICKS_PER_DAY,
 				Max:       7 * DEFAULT_TICKS_PER_DAY,
 				Mean:      2 * DEFAULT_TICKS_PER_DAY,
-				Deviation: 1 * DEFAULT_TICKS_PER_DAY,
+				Deviation: 6 * DEFAULT_TICKS_PER_DAY,
 			},
 			PersonWeight: 1,
 			ProfessionWeights: map[string]float64{
 				CLERK:  2,
 				SCRIBE: 4,
 				SPY:    5,
+				NOBLE:  4,
+				THIEF:  4,
 			},
 			IllegalProbability: 0.9,
 			SecrecyWeight:      2,
@@ -644,23 +668,27 @@ func ActionsFantasy() map[structs.ActionType]*config.Action {
 		structs.ActionTypeKidnap: {
 			MinPeople: 3,
 			MaxPeople: 21,
-			Ethos:     structs.Ethos{Ambition: 30, Caution: 20},
+			Ethos:     structs.Ethos{Ambition: 30, Caution: 20, Altruism: -10},
 			TimeToPrepare: config.Distribution{
 				Min:       14 * DEFAULT_TICKS_PER_DAY,
 				Max:       30 * DEFAULT_TICKS_PER_DAY,
 				Mean:      3 * DEFAULT_TICKS_PER_DAY,
-				Deviation: 1 * DEFAULT_TICKS_PER_DAY,
+				Deviation: 20 * DEFAULT_TICKS_PER_DAY,
 			},
 			TimeToExecute: config.Distribution{
 				Min:       1 * DEFAULT_TICKS_PER_DAY,
 				Max:       7 * DEFAULT_TICKS_PER_DAY,
 				Mean:      2 * DEFAULT_TICKS_PER_DAY,
-				Deviation: 1 * DEFAULT_TICKS_PER_DAY,
+				Deviation: 6 * DEFAULT_TICKS_PER_DAY,
 			},
 			PersonWeight: 1,
 			ProfessionWeights: map[string]float64{
-				SPY:     5,
-				SOLDIER: 5,
+				THIEF:     5,
+				SPY:       4,
+				SOLDIER:   5,
+				HUNTER:    3,
+				ALCHEMIST: 2,
+				ASSASSIN:  2,
 			},
 			IllegalProbability: 0.95,
 			SecrecyWeight:      1.2,
@@ -673,7 +701,7 @@ func ActionsFantasy() map[structs.ActionType]*config.Action {
 				Min:       20000000,  // 2000gp
 				Max:       100000000, // 10000gp
 				Mean:      25000000,  // 2500gp
-				Deviation: 500000,    // 50gp
+				Deviation: 50000000,  // 5000gp
 			},
 			TimeToPrepare: config.Distribution{
 				Min:       60 * DEFAULT_TICKS_PER_DAY,
@@ -682,16 +710,17 @@ func ActionsFantasy() map[structs.ActionType]*config.Action {
 				Deviation: 30 * DEFAULT_TICKS_PER_DAY,
 			},
 			TimeToExecute: config.Distribution{
-				Min:       365 * DEFAULT_TICKS_PER_DAY,
-				Max:       365 * 5 * DEFAULT_TICKS_PER_DAY,
-				Mean:      365 * 3 * DEFAULT_TICKS_PER_DAY,
-				Deviation: 30 * DEFAULT_TICKS_PER_DAY,
+				Min:       DEFAULT_TICKS_PER_YEAR * DEFAULT_TICKS_PER_DAY,
+				Max:       DEFAULT_TICKS_PER_YEAR * 5 * DEFAULT_TICKS_PER_DAY,
+				Mean:      DEFAULT_TICKS_PER_YEAR * 3 * DEFAULT_TICKS_PER_DAY,
+				Deviation: DEFAULT_TICKS_PER_YEAR * 4 * DEFAULT_TICKS_PER_DAY,
 			},
 			PersonWeight: 1,
 			ProfessionWeights: map[string]float64{
 				SOLDIER:       4,
 				SPY:           5,
-				ASSASSIN:      5,
+				THIEF:         5,
+				ASSASSIN:      6,
 				MAGE:          5,
 				ALCHEMIST:     4,
 				SAILOR:        1,
@@ -707,10 +736,10 @@ func ActionsFantasy() map[structs.ActionType]*config.Action {
 			MaxPeople: -1,
 			Ethos:     structs.Ethos{Ambition: 20, Piety: 100, Caution: -10, Pacifism: -100},
 			Cost: config.Distribution{
-				Min:       50000000,  // 5000gp
-				Max:       250000000, // 25000gp
-				Mean:      150000000, // 15000gp
-				Deviation: 1000000,   // 100gp
+				Min:       500000000,  // 50000gp
+				Max:       2500000000, // 250000gp
+				Mean:      1500000000, // 150000gp
+				Deviation: 1000000000, // 100000gp
 			},
 			TimeToPrepare: config.Distribution{
 				Min:       60 * DEFAULT_TICKS_PER_DAY,
@@ -719,10 +748,10 @@ func ActionsFantasy() map[structs.ActionType]*config.Action {
 				Deviation: 30 * DEFAULT_TICKS_PER_DAY,
 			},
 			TimeToExecute: config.Distribution{
-				Min:       365 * DEFAULT_TICKS_PER_DAY,
-				Max:       365 * 5 * DEFAULT_TICKS_PER_DAY,
-				Mean:      365 * 3 * DEFAULT_TICKS_PER_DAY,
-				Deviation: 30 * DEFAULT_TICKS_PER_DAY,
+				Min:       DEFAULT_TICKS_PER_YEAR * DEFAULT_TICKS_PER_DAY,
+				Max:       DEFAULT_TICKS_PER_YEAR * 5 * DEFAULT_TICKS_PER_DAY,
+				Mean:      DEFAULT_TICKS_PER_YEAR * 3 * DEFAULT_TICKS_PER_DAY,
+				Deviation: DEFAULT_TICKS_PER_YEAR * 4 * DEFAULT_TICKS_PER_DAY,
 			},
 			PersonWeight: 1,
 			ProfessionWeights: map[string]float64{
@@ -743,10 +772,10 @@ func ActionsFantasy() map[structs.ActionType]*config.Action {
 			MaxPeople: -1,
 			Ethos:     structs.Ethos{Ambition: 80, Caution: -10, Pacifism: -100},
 			Cost: config.Distribution{
-				Min:       100000000, // 10000gp
-				Max:       400000000, // 40000gp
-				Mean:      200000000, // 20000gp
-				Deviation: 1000000,   // 100gp
+				Min:       500000000,  // 50000gp
+				Max:       2500000000, // 250000gp
+				Mean:      1500000000, // 150000gp
+				Deviation: 1000000000, // 100000gp
 			},
 			TimeToPrepare: config.Distribution{
 				Min:       60 * DEFAULT_TICKS_PER_DAY,
@@ -755,10 +784,10 @@ func ActionsFantasy() map[structs.ActionType]*config.Action {
 				Deviation: 30 * DEFAULT_TICKS_PER_DAY,
 			},
 			TimeToExecute: config.Distribution{
-				Min:       365 * DEFAULT_TICKS_PER_DAY,
-				Max:       365 * 5 * DEFAULT_TICKS_PER_DAY,
-				Mean:      365 * 3 * DEFAULT_TICKS_PER_DAY,
-				Deviation: 30 * DEFAULT_TICKS_PER_DAY,
+				Min:       DEFAULT_TICKS_PER_YEAR * DEFAULT_TICKS_PER_DAY,
+				Max:       DEFAULT_TICKS_PER_YEAR * 5 * DEFAULT_TICKS_PER_DAY,
+				Mean:      DEFAULT_TICKS_PER_YEAR * 3 * DEFAULT_TICKS_PER_DAY,
+				Deviation: DEFAULT_TICKS_PER_YEAR * 4 * DEFAULT_TICKS_PER_DAY,
 			},
 			PersonWeight: 1,
 			ProfessionWeights: map[string]float64{

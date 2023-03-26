@@ -243,6 +243,14 @@ func DemographicsFantasyHuman() *config.Demographics {
 				},
 			},
 			config.Profession{
+				Name:   THIEF,
+				Occurs: 0.009,
+				Distribution: config.Distribution{
+					Mean:      10,
+					Deviation: 75,
+				},
+			},
+			config.Profession{
 				Name:   ASSASSIN,
 				Occurs: 0.003,
 				Distribution: config.Distribution{

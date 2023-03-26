@@ -20,6 +20,7 @@ import (
 // As in, we can run the same code without having to worry about whether we are in a transaction or not.
 type sqlOperator interface {
 	NamedExec(query string, arg interface{}) (sql.Result, error)
+	Exec(query string, args ...interface{}) (sql.Result, error)
 	Select(dest interface{}, query string, args ...interface{}) error
 }
 
@@ -111,6 +112,24 @@ func setModifiers(op sqlOperator, r Relation, in []*structs.Modifier) error {
 	return err
 }
 
+func incrModifiers(op sqlOperator, r Relation, v int, in []*ModifierFilter) error {
+	if len(in) == 0 {
+		return nil
+	}
+
+	where, args := sqlWhereFromModifierFilters(in, 1)
+	args = append([]interface{}{v}, args...) // add our value to the front
+
+	qstr := fmt.Sprintf(
+		`UPDATE %s SET value = MAX(MIN(value + $1, 100), -100) %s;`,
+		r.modTable(),
+		where,
+	)
+
+	_, err := op.Exec(qstr, args...)
+	return err
+}
+
 func tuples(op sqlOperator, r Relation, token string, in []*TupleFilter) ([]*structs.Tuple, string, error) {
 	tk, err := dbutils.ParseToken(token)
 	if err != nil {
@@ -140,6 +159,24 @@ func setTuples(op sqlOperator, r Relation, in []*structs.Tuple) error {
 	) ON CONFLICT (subject, object) DO UPDATE SET value=EXCLUDED.value;`, r.tupleTable())
 
 	_, err := op.NamedExec(qstr, in)
+	return err
+}
+
+func incrTuples(op sqlOperator, r Relation, v int, in []*TupleFilter) error {
+	if len(in) == 0 {
+		return nil
+	}
+
+	where, args := sqlWhereFromTupleFilters(in, 1)
+	args = append([]interface{}{v}, args...) // add our value to the front
+
+	qstr := fmt.Sprintf(
+		`UPDATE %s SET value = MAX(MIN(value + $1, 100), -100) %s;`,
+		r.tupleTable(),
+		where,
+	)
+
+	_, err := op.Exec(qstr, args...)
 	return err
 }
 
@@ -662,7 +699,7 @@ func setFactions(op sqlOperator, in []*structs.Faction) error {
 	    ethos_altruism, ethos_ambition, ethos_tradition, ethos_pacifism, ethos_piety, ethos_caution,
             action_frequency_ticks,
             leadership, wealth, cohesion, corruption,
-	    is_covert, is_illegal,
+	    is_covert,
 	    government_id, is_government,
 	    religion_id, is_religion,
 	    is_member_by_birth,
@@ -675,7 +712,7 @@ func setFactions(op sqlOperator, in []*structs.Faction) error {
 	    :ethos_altruism, :ethos_ambition, :ethos_tradition, :ethos_pacifism, :ethos_piety, :ethos_caution,
 	    :action_frequency_ticks,
 	    :leadership, :wealth, :cohesion, :corruption,
-	    :is_covert, :is_illegal,
+	    :is_covert,
 	    :government_id, :is_government,
 	    :religion_id, :is_religion,
 	    :is_member_by_birth,
@@ -697,7 +734,6 @@ func setFactions(op sqlOperator, in []*structs.Faction) error {
 	    cohesion=EXCLUDED.cohesion,
 	    corruption=EXCLUDED.corruption,
 	    is_covert=EXCLUDED.is_covert,
-	    is_illegal=EXCLUDED.is_illegal,
 	    government_id=EXCLUDED.government_id,
 	    is_government=EXCLUDED.is_government,
 	    religion_id=EXCLUDED.religion_id,

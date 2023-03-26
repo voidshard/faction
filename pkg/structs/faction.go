@@ -17,8 +17,7 @@ type Faction struct {
 	Cohesion   int `db:"cohesion"`   // a metric for how united a faction is
 	Corruption int `db:"corruption"` // 'asset' corruption or how much money tends to go inexplicably missing
 
-	IsCovert  bool `db:"is_covert"`  // the faction actively avoids notice, discourages public action
-	IsIllegal bool `db:"is_illegal"` // explicitly illegal (by design or by running afoul of the government)
+	IsCovert bool `db:"is_covert"` // the faction actively avoids notice, discourages public action
 
 	GovernmentID string `db:"government_id"` // ID of Government that this faction is under (if only nominally)
 	IsGovernment bool   `db:"is_government"` // a government can modify the Government struct

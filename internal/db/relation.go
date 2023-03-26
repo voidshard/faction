@@ -70,6 +70,11 @@ const (
 	// RelationPersonPersonTrust holds how much trust a person has in another person
 	// So: <person_id> <person_id> <trust_level>
 	RelationPersonPersonTrust Relation = "trust_person_to_person"
+
+	// RelationFactionActionTypeWeight holds how much weight a faction gives to an action type.
+	// This is used to weight the proability of a faction performing an action.
+	// So: <faction_id> <action_type> <weight_level>
+	RelationFactionActionTypeWeight Relation = "weight_faction_to_action_type"
 )
 
 var (
@@ -81,6 +86,7 @@ var (
 		RelationPersonPersonRelationship,
 		RelationPersonReligionFaith,
 		RelationPersonPersonTrust,
+		RelationFactionActionTypeWeight,
 	}
 )
 

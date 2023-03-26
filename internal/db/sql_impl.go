@@ -238,6 +238,14 @@ func (t *sqlTx) SetModifiers(r Relation, mod ...*structs.Modifier) error {
 	return setModifiers(t.tx, r, mod)
 }
 
+func (t *sqlTx) IncrTuples(r Relation, v int, f ...*TupleFilter) error {
+	return incrTuples(t.tx, r, v, f)
+}
+
+func (t *sqlTx) IncrModifiers(r Relation, v int, f ...*ModifierFilter) error {
+	return incrModifiers(t.tx, r, v, f)
+}
+
 func (t *sqlTx) DeleteModifiers(r Relation, expires_before_tick int) error {
 	return deleteModifiers(t.tx, r, expires_before_tick)
 }

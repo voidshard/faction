@@ -65,7 +65,7 @@ func sqlSummationTuplesFromModifiers(r Relation, tk *dbutils.IterToken, in []*Mo
 	), append(args, tk.Limit, tk.Offset)
 }
 
-func sqlFromModifierFilters(r Relation, tk *dbutils.IterToken, in []*ModifierFilter) (string, []interface{}) {
+func sqlWhereFromModifierFilters(in []*ModifierFilter, offset int) (string, []interface{}) {
 	var (
 		ors   []string
 		args  []interface{}
@@ -77,27 +77,27 @@ func sqlFromModifierFilters(r Relation, tk *dbutils.IterToken, in []*ModifierFil
 
 		if f.Subject != "" {
 			args = append(args, f.Subject)
-			ands = append(ands, fmt.Sprintf("subject = $%d", len(args)))
+			ands = append(ands, fmt.Sprintf("subject = $%d", len(args)+offset))
 		}
 		if f.Object != "" {
 			args = append(args, f.Object)
-			ands = append(ands, fmt.Sprintf("object = $%d", len(args)))
+			ands = append(ands, fmt.Sprintf("object = $%d", len(args)+offset))
 		}
 		if f.MinTickExpires > 0 {
 			args = append(args, f.MinTickExpires)
-			ands = append(ands, fmt.Sprintf("tick_expires >= $%d", len(args)))
+			ands = append(ands, fmt.Sprintf("tick_expires >= $%d", len(args)+offset))
 		}
 		if f.MaxTickExpires > 0 {
 			args = append(args, f.MaxTickExpires)
-			ands = append(ands, fmt.Sprintf("tick_expires <= $%d", len(args)))
+			ands = append(ands, fmt.Sprintf("tick_expires <= $%d", len(args)+offset))
 		}
 		if f.MetaKey != "" {
 			args = append(args, f.MetaKey)
-			ands = append(ands, fmt.Sprintf("meta_key = $%d", len(args)))
+			ands = append(ands, fmt.Sprintf("meta_key = $%d", len(args)+offset))
 		}
 		if f.MetaVal != "" {
 			args = append(args, f.MetaVal)
-			ands = append(ands, fmt.Sprintf("meta_val = $%d", len(args)))
+			ands = append(ands, fmt.Sprintf("meta_val = $%d", len(args)+offset))
 		}
 
 		if len(ands) > 0 {
@@ -109,6 +109,11 @@ func sqlFromModifierFilters(r Relation, tk *dbutils.IterToken, in []*ModifierFil
 		where = fmt.Sprintf("WHERE %s", strings.Join(ors, " OR "))
 	}
 
+	return where, args
+}
+
+func sqlFromModifierFilters(r Relation, tk *dbutils.IterToken, in []*ModifierFilter) (string, []interface{}) {
+	where, args := sqlWhereFromModifierFilters(in, 0)
 	return fmt.Sprintf(`SELECT
 		    subject, object, value, tick_expires, meta_key, meta_val, meta_reason
 		FROM %s %s LIMIT $%d OFFSET $%d;`,
@@ -116,7 +121,7 @@ func sqlFromModifierFilters(r Relation, tk *dbutils.IterToken, in []*ModifierFil
 	), append(args, tk.Limit, tk.Offset)
 }
 
-func sqlFromTupleFilters(r Relation, tk *dbutils.IterToken, in []*TupleFilter) (string, []interface{}) {
+func sqlWhereFromTupleFilters(in []*TupleFilter, offset int) (string, []interface{}) {
 	var (
 		ors   []string
 		args  []interface{}
@@ -128,11 +133,11 @@ func sqlFromTupleFilters(r Relation, tk *dbutils.IterToken, in []*TupleFilter) (
 
 		if f.Subject != "" {
 			args = append(args, f.Subject)
-			ands = append(ands, fmt.Sprintf("subject = $%d", len(args)))
+			ands = append(ands, fmt.Sprintf("subject = $%d", len(args)+offset))
 		}
 		if f.Object != "" {
 			args = append(args, f.Object)
-			ands = append(ands, fmt.Sprintf("object = $%d", len(args)))
+			ands = append(ands, fmt.Sprintf("object = $%d", len(args)+offset))
 		}
 
 		if len(ands) > 0 {
@@ -144,6 +149,11 @@ func sqlFromTupleFilters(r Relation, tk *dbutils.IterToken, in []*TupleFilter) (
 		where = fmt.Sprintf("WHERE %s", strings.Join(ors, " OR "))
 	}
 
+	return where, args
+}
+
+func sqlFromTupleFilters(r Relation, tk *dbutils.IterToken, in []*TupleFilter) (string, []interface{}) {
+	where, args := sqlWhereFromTupleFilters(in, 0)
 	return fmt.Sprintf(
 		"SELECT subject, object, value FROM %s %s LIMIT $%d OFFSET $%d;",
 		r.tupleTable(), where, len(args)+1, len(args)+2,
@@ -474,7 +484,6 @@ func sqlFromFactionFilters(tk *dbutils.IterToken, in []*FactionFilter) (string, 
 		wealth,
 		cohesion,
 		is_covert,
-		is_illegal,
 		government_id,
 		is_government,
 		religion_id,
