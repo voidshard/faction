@@ -11,7 +11,7 @@ import (
 // The input spread is normalised so you don't have to ensure they add up to 100.
 // At least one item must be given for this to make sense.
 type Normalised interface {
-	Random() int
+	Int() int
 	SetSeed(seed int64)
 }
 
@@ -27,9 +27,9 @@ func (n *normalised) SetSeed(seed int64) {
 	n.rng = rand.New(rand.NewSource(seed))
 }
 
-// Random returns a random index, with the probability
+// Int returns a random index, with the probability
 // given by the normalised input on creation.
-func (n *normalised) Random() int {
+func (n *normalised) Int() int {
 	roll := n.rng.Float64()
 	sofar := 0.0
 	for k, v := range n.given {

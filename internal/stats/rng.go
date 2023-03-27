@@ -35,6 +35,9 @@ func (r *Rand) Int() int {
 
 // value returns a new random value
 func (r *Rand) value() float64 {
+	if r.max <= r.min {
+		return r.min
+	}
 	// go-recipes.dev/generating-random-numbers-with-go-616d30ccc926?gi=471026f18bf6
 	// Can't believe I didn't see this NormFloat64() func before :smh:
 	return math.Max(math.Min(r.rng.NormFloat64()*r.deviation+r.mean, r.max), r.min)

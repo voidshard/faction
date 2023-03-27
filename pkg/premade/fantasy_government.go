@@ -33,5 +33,12 @@ func GovernmentFantasy() *config.Government {
 		ProbabilityOutlawCommodity: map[string]float64{
 			OPIUM: 0.95,
 		},
+		TaxFrequency:          config.Distribution{Min: DEFAULT_TICKS_PER_DAY * 90, Max: DEFAULT_TICKS_PER_DAY * 90, Mean: DEFAULT_TICKS_PER_DAY * 90, Deviation: 0},
+		TaxRate:               config.Distribution{Min: 1, Max: 15, Mean: 10, Deviation: 5},
+		ActionWeight:          config.Distribution{Min: structs.MaxEthos / 5, Max: structs.MaxEthos, Mean: structs.MaxEthos / 3, Deviation: structs.MaxEthos / 2},
+		MilitaryOffenseBonus:  0.25,
+		MilitaryDefenseBonus:  0.25,
+		EspionageOffenseBonus: 0.10,
+		EspionageDefenseBonus: 0.25,
 	}
 }

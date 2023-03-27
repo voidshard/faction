@@ -1,3 +1,6 @@
+/*
+random_populate.go - Randomly populate the world with people and families.
+*/
 package sim
 
 import (
