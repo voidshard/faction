@@ -1,6 +1,7 @@
 package db
 
 import (
+	"math"
 	"strings"
 
 	"github.com/voidshard/faction/internal/dbutils"
@@ -707,10 +708,17 @@ func setFactions(op sqlOperator, in []*structs.Faction) error {
 		if f.ParentFactionID != "" && !dbutils.IsValidID(f.ParentFactionID) {
 			return fmt.Errorf("faction parent id %s is invalid", f.ParentFactionID)
 		}
-		if f.ReligionID != "" && !dbutils.IsValidID(f.ReligionID) {
+		if (f.IsReligion || f.ReligionID != "") && !dbutils.IsValidID(f.ReligionID) {
 			return fmt.Errorf("faction religion id %s is invalid", f.ReligionID)
 		}
-		f.Clamp()
+		f.Clamp() // for ethos
+		f.Cohesion = clampInt(f.Cohesion, 0, structs.MaxTuple)
+		f.Corruption = clampInt(f.Corruption, 0, structs.MaxTuple)
+		f.Wealth = clampInt(f.Wealth, 0, math.MaxInt64)
+		f.EspionageOffense = clampInt(f.EspionageOffense, 0, math.MaxInt64)
+		f.EspionageDefense = clampInt(f.EspionageDefense, 0, math.MaxInt64)
+		f.MilitaryOffense = clampInt(f.MilitaryOffense, 0, math.MaxInt64)
+		f.MilitaryDefense = clampInt(f.MilitaryDefense, 0, math.MaxInt64)
 	}
 
 	// We could make this shorter, but I like to be very specific in SQL :P

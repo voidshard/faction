@@ -55,7 +55,6 @@ type Writer interface {
 	SetRoutes(in ...*structs.Route) error
 	SetMeta(id, str_val string, int_val int) error
 	IncrTuples(table Relation, v int, f ...*TupleFilter) error
-	IncrModifiers(table Relation, v int, f ...*ModifierFilter) error
 }
 
 type ReaderWriter interface {

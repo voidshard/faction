@@ -99,6 +99,8 @@ func (r Relation) modTable() string {
 	return fmt.Sprintf("modifiers_%s", r)
 }
 
+// SupportsModifiers returns if the relation supports modifiers,
+// ie. the Tuple has a matching Modifer table.
 func (r Relation) SupportsModifiers() bool {
 	// modifiers complicate queries & add calculations but are a nice way of adding
 	// slow burn buffs / debuffs.

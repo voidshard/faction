@@ -28,9 +28,9 @@ type Guild struct {
 }
 
 // Focus represents a set of actions that a faction prefers to perform.
-// A faction might have multiple focuses.
+// A faction can have multiple focuses.
 //
-// A Focus can have a set of actions;
+// A Focus is a set of (at least one) actions;
 // Eg.
 // a Temple might prefer Festival, Excommunicate, Charity
 // a Guild of Thieves might prefer Steal, Kidnap
@@ -53,6 +53,12 @@ type Focus struct {
 	// Action weight to apply to these actions.
 	// Ie. how much to weight the faction in favour of these.
 	Weight Distribution
+
+	// Bonuses to apply to given values if this Focus is used
+	EspionageOffenseBonus float64
+	EspionageDefenseBonus float64
+	MilitaryOffenseBonus  float64
+	MilitaryDefenseBonus  float64
 }
 
 // Faction represents configuration for randomly creating a faction.
@@ -64,6 +70,7 @@ type Faction struct {
 	// Probabilities to associate with each type of leadership
 	LeadershipProbability map[structs.LeaderType]float64
 
+	// starting values for wealth / cohesion / corruption.
 	Wealth     Distribution
 	Cohesion   Distribution
 	Corruption Distribution

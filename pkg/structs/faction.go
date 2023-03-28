@@ -13,9 +13,9 @@ type Faction struct {
 
 	Leadership LeaderType `db:"leadership"` // how faction is run
 
-	Wealth     int `db:"wealth"`     // money/liquid wealth the faction has available to spend
-	Cohesion   int `db:"cohesion"`   // a metric for how united a faction is
-	Corruption int `db:"corruption"` // 'asset' corruption or how much money tends to go inexplicably missing
+	Wealth     int `db:"wealth"`     // money/liquid wealth the faction has available to spend. Min:0
+	Cohesion   int `db:"cohesion"`   // a metric for how united a faction is. Min:0, Max:MaxTuple
+	Corruption int `db:"corruption"` // 'asset' corruption or how much money tends to go inexplicably missing. Min:0, Max:MaxTuple
 
 	IsCovert bool `db:"is_covert"` // the faction actively avoids notice, discourages public action
 
@@ -27,10 +27,10 @@ type Faction struct {
 
 	IsMemberByBirth bool `db:"is_member_by_birth"` // if having parent(s) in the faction auto joins children
 
-	EspionageOffense int `db:"espionage_offense"` // how good the faction is at spying on others
-	EspionageDefense int `db:"espionage_defense"` // how good the faction is at defending against spying
-	MilitaryOffense  int `db:"military_offense"`  // how good the faction is at attacking others
-	MilitaryDefense  int `db:"military_defense"`  // how good the faction is at defending against attacks
+	EspionageOffense int `db:"espionage_offense"` // how good the faction is at spying on others, Min:0
+	EspionageDefense int `db:"espionage_defense"` // how good the faction is at defending against spying, Min:0
+	MilitaryOffense  int `db:"military_offense"`  // how good the faction is at attacking others. Min:0
+	MilitaryDefense  int `db:"military_defense"`  // how good the faction is at defending against attacks. Min:0
 
 	ParentFactionID       string          `db:"parent_faction_id"`       // ID of parent faction (if any)
 	ParentFactionRelation FactionRelation `db:"parent_faction_relation"` // relation to parent faction (if any)
