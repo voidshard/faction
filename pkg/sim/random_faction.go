@@ -137,24 +137,29 @@ func (s *simulationImpl) SpawnFactions(count int, cfg *config.Faction, areas ...
 	govsToWrite := map[string]*structs.Government{}
 	for i := 0; i < count; i++ {
 		f := s.randFaction(dice)
+
 		govtID, _ := areaToGovt[f.faction.HomeAreaID]
 		govt, _ := govtToGovt[govtID]
 
-		factionOutlawed := false
-		for _, act := range f.actions {
-			illegal, _ := govt.Outlawed.Actions[act]
-			if illegal {
-				factionOutlawed = true
-				break
+		if govt != nil {
+			factionOutlawed := false
+
+			for _, act := range f.actions {
+				illegal, _ := govt.Outlawed.Actions[act]
+				if illegal {
+					factionOutlawed = true
+					break
+				}
 			}
-		}
 
-		f.faction.GovernmentID = govtID
-		f.faction.IsCovert = factionOutlawed
+			f.faction.GovernmentID = govtID
+			f.faction.IsCovert = factionOutlawed
 
-		if factionOutlawed {
-			govt.Outlawed.Factions[f.faction.ID] = true
-			govsToWrite[govtID] = govt
+			if factionOutlawed {
+				govt.Outlawed.Factions[f.faction.ID] = true
+				govsToWrite[govtID] = govt
+			}
+
 		}
 
 		err = writeMetaFaction(s.dbconn, f)
@@ -254,18 +259,18 @@ func (s *simulationImpl) randFaction(fr *factionRand) *metaFaction {
 		mf.faction.MilitaryDefense += int(focus.MilitaryDefenseBonus * float64(mf.faction.MilitaryDefense))
 
 		for _, act := range focus.Actions {
-			mf.actionWeights = append(mf.actionWeights, &structs.Tuple{
-				Subject: mf.faction.ID,
-				Object:  string(act),
-				Value:   weight.Int(),
-			})
-
 			actionCfg, ok := s.cfg.Actions[act]
 			if !ok {
 				continue
 			}
 
+			mf.actionWeights = append(mf.actionWeights, &structs.Tuple{
+				Subject: mf.faction.ID,
+				Object:  string(act),
+				Value:   weight.Int(),
+			})
 			actions = append(actions, act)
+
 			actionsEthos = append(actionsEthos, &actionCfg.Ethos)
 			for prof := range actionCfg.ProfessionWeights {
 				professions = append(professions, prof)

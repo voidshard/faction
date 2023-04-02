@@ -9,7 +9,7 @@ func FactionFantasy() *config.Faction {
 	dev := &structs.Ethos{}
 	return &config.Faction{
 		EthosMean:      structs.Ethos{},
-		EthosDeviation: *dev.Add(structs.MaxEthos),
+		EthosDeviation: *dev.Add(structs.MaxEthos / 4), // ethos is further weighted by favoured actions
 		LeadershipProbability: map[structs.LeaderType]float64{
 			structs.LeaderTypeSingle:  0.4,
 			structs.LeaderTypeCouncil: 0.3,
@@ -26,7 +26,7 @@ func FactionFantasy() *config.Faction {
 			// min here is around the base land value
 			Min:       120000000,  // 12,000 gp
 			Max:       1000000000, // 100,000 gp
-			Mean:      150000000,  // 15,000 gp
+			Mean:      15000000,   // 15,000 gp
 			Deviation: 900000000,  // 90,000 gp
 		},
 		Cohesion: config.Distribution{

@@ -10,13 +10,16 @@ import (
 )
 
 func main() {
-	cfg := &config.Database{
-		Driver:   config.DatabaseSQLite3,
-		Name:     "test.sqlite",
-		Location: "/tmp",
+	cfg := &config.Simulation{
+		Database: &config.Database{
+			Driver:   config.DatabaseSQLite3,
+			Name:     "test.sqlite",
+			Location: "/tmp",
+		},
+		Actions: premade.ActionsFantasy(),
 	}
 
-	simulator, err := sim.New(&config.Simulation{Database: cfg}, premade.NewFantasyEconomy())
+	simulator, err := sim.New(cfg, premade.NewFantasyEconomy())
 	if err != nil {
 		panic(err)
 	}
@@ -54,7 +57,7 @@ func main() {
 	}
 
 	for _, f := range factions {
-		fmt.Println("ID:", f.ID, "\nHomeAreaID:", f.HomeAreaID, "\nIsCovert:", f.IsCovert, "\nGovernmentID:", f.GovernmentID)
+		fmt.Println("ID:", f.ID, "\n\tHomeAreaID:", f.HomeAreaID, "\n\tIsCovert:", f.IsCovert, "\n\tGovernmentID:", f.GovernmentID)
 		fmt.Println("\tAltruism:", f.Altruism, "Ambition:", f.Ambition, "Tradition:", f.Tradition, "Pacifism:", f.Pacifism, "Piety:", f.Piety, "Caution:", f.Caution)
 		fmt.Println("\tEspionageOffense", f.EspionageOffense, "EspionageDefense", f.EspionageDefense)
 		fmt.Println("\tMilitaryOffense", f.MilitaryOffense, "MilitaryDefense", f.MilitaryDefense)
