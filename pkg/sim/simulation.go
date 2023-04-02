@@ -1,13 +1,7 @@
 package sim
 
 import (
-	"fmt"
-	"math"
-	"math/rand"
-	"time"
-
 	"github.com/voidshard/faction/internal/db"
-	"github.com/voidshard/faction/internal/stats"
 	"github.com/voidshard/faction/pkg/config"
 	"github.com/voidshard/faction/pkg/structs"
 )
@@ -43,6 +37,7 @@ func New(cfg *config.Simulation, eco Economy) (Simulation, error) {
 
 	return &simulationImpl{
 		cfg:    cfg,
+		eco:    eco,
 		dbconn: dbconn,
 	}, nil
 }
@@ -59,6 +54,11 @@ func (s *simulationImpl) Factions(ids ...string) ([]*structs.Faction, error) {
 	return out, err
 }
 
+func (s *simulationImpl) FactionSummaries(in ...string) ([]*structs.FactionSummary, error) {
+	return s.dbconn.FactionSummary(in...)
+}
+
+/*
 // InspireFactionAffiliation adds affiliaton to the given factions in regions they have influence.
 //
 // Nb.
@@ -66,7 +66,7 @@ func (s *simulationImpl) Factions(ids ...string) ([]*structs.Faction, error) {
 //   - people can only gain affiliation if they're in areas where the factions have influence
 //     (ie. they control a Plot(s) or LandRight(s))
 //   - if you want finer grain control, consider calling this on a per-faction basis,
-//     we're strictly going inserts so it should be fine to call simultaneously.
+//     we're strictly doing inserts so it should be fine to call simultaneously.
 func (s *simulationImpl) InspireFactionAffiliation(factions []*structs.Faction, affdist *config.Distribution, probability, minEthosDist, maxEthosDist float64) error {
 	minEthosDist = math.Max(minEthosDistance, minEthosDist)
 	maxEthosDist = math.Min(maxEthosDistance, maxEthosDist)
@@ -110,27 +110,12 @@ func (s *simulationImpl) InspireFactionAffiliation(factions []*structs.Faction, 
 
 	// 3. now run through everyone and decide which faction(s) they join
 	var (
-		pump      = s.dbconn.NewPump()
 		affilDice = stats.NewRand(affdist.Min, affdist.Max, affdist.Mean, affdist.Deviation)
 		rng       = rand.New(rand.NewSource(time.Now().UnixNano()))
 		people    []*structs.Person
 		token     string
 		pumpErr   error
 	)
-	defer pump.Close()
-
-	go func() {
-		for e := range pump.Errors() {
-			if e == nil {
-				continue
-			}
-			if pumpErr == nil {
-				pumpErr = e
-			} else {
-				pumpErr = fmt.Errorf("%w %v", pumpErr, e)
-			}
-		}
-	}()
 
 	for {
 		people, token, err = s.dbconn.People(token, pfilters...)
@@ -187,6 +172,7 @@ func (s *simulationImpl) InspireFactionAffiliation(factions []*structs.Faction, 
 
 	return pumpErr
 }
+*/
 
 func (s *simulationImpl) SetAreas(in ...*structs.Area) error {
 	return s.dbconn.InTransaction(func(tx db.ReaderWriter) error {
@@ -218,8 +204,8 @@ func (s *simulationImpl) SetFactions(in ...*structs.Faction) error {
 	})
 }
 
-func (s *simulationImpl) SetGoverningFaction(factionID string, areas ...string) error {
-	return s.dbconn.ChangeGoverningFaction(factionID, areas)
+func (s *simulationImpl) SetAreaGovernment(governmentID string, areas ...string) error {
+	return s.dbconn.SetAreaGovernment(governmentID, areas)
 }
 
 func (s *simulationImpl) SetRoutes(in ...*structs.Route) error {

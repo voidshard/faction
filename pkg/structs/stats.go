@@ -16,23 +16,24 @@ type DemographicStats struct {
 	Abysmal  int // -75 -> -100
 }
 
-func (d *DemographicStats) Add(v int) {
+func (d *DemographicStats) Add(in int) {
+	v := float64(in)
 	switch {
-	case v >= 95:
+	case v >= float64(MaxTuple)*0.95:
 		d.Exemplary++
-	case v >= 75:
+	case v >= float64(MaxTuple)*0.75:
 		d.Excellent++
-	case v >= 50:
+	case v >= float64(MaxTuple)*0.5:
 		d.Good++
-	case v >= 25:
+	case v >= float64(MaxTuple)*0.25:
 		d.Fine++
 	case v >= 0:
 		d.Average++
-	case v >= -25:
+	case v >= float64(MinTuple)*0.25:
 		d.Poor++
-	case v >= -50:
+	case v >= float64(MinTuple)*0.5:
 		d.Awful++
-	case v >= -75:
+	case v >= float64(MinTuple)*0.75:
 		d.Terrible++
 	default:
 		d.Abysmal++

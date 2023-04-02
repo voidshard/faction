@@ -54,7 +54,7 @@ var (
 
 	createArea = fmt.Sprintf(`CREATE TABLE IF NOT EXISTS %s (
 	    id VARCHAR(36) PRIMARY KEY,
-	    governing_faction_id VARCHAR(36)
+	    government_id VARCHAR(36)
 	);`, tableAreas)
 
 	createGovernments = fmt.Sprintf(`CREATE TABLE IF NOT EXISTS %s (
@@ -73,18 +73,16 @@ var (
 
 	createLandRights = fmt.Sprintf(`CREATE TABLE IF NOT EXISTS %s (
 	    id VARCHAR(36) PRIMARY KEY,
-	    governing_faction_id VARCHAR(36) NOT NULL DEFAULT "",
-	    controlling_faction_id VARCHAR(36) NOT NULL DEFAULT "",
 	    area_id VARCHAR(36) NOT NULL,
-	    resource VARCHAR(255) NOT NULL,
+	    faction_id VARCHAR(36) NOT NULL DEFAULT "",
+	    commodity VARCHAR(255) NOT NULL,
 	    yield INTEGER NOT NULL DEFAULT 0
 	);`, tableLandRights)
 
 	createPlots = fmt.Sprintf(`CREATE TABLE IF NOT EXISTS %s (
 	    id VARCHAR(36) PRIMARY KEY,
-	    is_headquarters BOOLEAN NOT NULL DEFAULT FALSE,
 	    area_id VARCHAR(36) NOT NULL,
-	    owner_faction_id VARCHAR(36) NOT NULL DEFAULT "",
+	    faction_id VARCHAR(36) NOT NULL DEFAULT "",
 	    size INTEGER NOT NULL DEFAULT 1
 	);`, tablePlots)
 
@@ -148,6 +146,7 @@ var (
 	createFactions = fmt.Sprintf(`CREATE TABLE IF NOT EXISTS %s (
             id VARCHAR(36) PRIMARY KEY,
 	    name VARCHAR(255) NOT NULL default "",
+	    home_area_id VARCHAR(36) NOT NULL,
             ethos_altruism INTEGER NOT NULL DEFAULT 0,
             ethos_ambition INTEGER NOT NULL DEFAULT 0,
             ethos_tradition INTEGER NOT NULL DEFAULT 0,
@@ -156,6 +155,7 @@ var (
             ethos_caution INTEGER NOT NULL DEFAULT 0,
             action_frequency_ticks INTEGER NOT NULL DEFAULT 1,
             leadership INTEGER NOT NULL DEFAULT 0,
+	    structure INTEGER NOT NULL DEFAULT 0,
             wealth INTEGER NOT NULL DEFAULT 0,
             cohesion INTEGER NOT NULL DEFAULT 0,
             corruption INTEGER NOT NULL DEFAULT 0,
@@ -179,12 +179,11 @@ var (
 		// we look up laws by the government id
 		fmt.Sprintf(`CREATE INDEX IF NOT EXISTS laws_government_id ON %s (government_id);`, tableLaws),
 
-		// we look up land rights by either governing or controlling faction
-		fmt.Sprintf(`CREATE INDEX IF NOT EXISTS land_rights_gov ON %s (governing_faction_id);`, tableLandRights),
-		fmt.Sprintf(`CREATE INDEX IF NOT EXISTS land_rights_fact ON %s (controlling_faction_id);`, tableLandRights),
+		// we look up land rights by controlling faction
+		fmt.Sprintf(`CREATE INDEX IF NOT EXISTS land_rights_fact ON %s (faction_id);`, tableLandRights),
 
 		// we look up plots by their owner(s) in order to determine where faction(s) can perform actions
-		fmt.Sprintf(`CREATE INDEX IF NOT EXISTS plot_owner ON %s (owner_faction_id);`, tablePlots),
+		fmt.Sprintf(`CREATE INDEX IF NOT EXISTS plot_owner ON %s (faction_id);`, tablePlots),
 
 		// jobs we want to search by area & state (to see if we need to add people)
 		fmt.Sprintf(`CREATE INDEX IF NOT EXISTS jobs_target_area ON %s (target_area_id, state);`, tableJobs),

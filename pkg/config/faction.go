@@ -13,18 +13,18 @@ type Guild struct {
 	// Probability of this profession being selected (at all)
 	Probability float64
 
-	// Min number of skill (of members) for us to consider a guild.
+	// MinYield is the minimum yield that a guild will accept, that assuming
+	// the resource is attached to a LandRight.
 	//
-	// Ie. low skill with high members might imply a relatively
-	// easy to join guild (eg. a guild of farmers).
+	// That is, if the land we're looking at when randomly building factions
+	// yields only 1 iron ore, then that may not be enough for a guild of
+	// miners to form -- since it's not a large enough part of the economy
+	// to form a guild around.
 	//
-	// A high skill, low members might imply some faction of
-	// elite warriors, mages etc.
-	MinSkill int
-
-	// Min number of members for us to even consider forming a guild
-	// See. MinSkill above
-	MinMembers int
+	// A 0 here can make sense if a land yield isn't relevant for guild formation;
+	// ie. a silversmiths guild can form even if silver is imported from elsewhere.
+	// But a guild of silver-ore miners require silver mines to operate.
+	MinYield int
 }
 
 // Focus represents a set of actions that a faction prefers to perform.
@@ -70,20 +70,19 @@ type Faction struct {
 	// Probabilities to associate with each type of leadership
 	LeadershipProbability map[structs.LeaderType]float64
 
+	// Probabilities to associate with each type of structure
+	LeadershipStructureProbability map[structs.LeaderStructure]float64
+
 	// starting values for wealth / cohesion / corruption.
 	Wealth     Distribution
 	Cohesion   Distribution
 	Corruption Distribution
 
 	// starting values for espionage offense / defense.
-	// Factions marked "IsCovert" (illegal factions) will be given another 25% buff to both
 	EspionageOffense Distribution
 	EspionageDefense Distribution
 
 	// starting values for military offense / defense.
-	//
-	// Government factions will be given another 25% buff to both.
-	// Trade guilds will recieve a -25% debuff to both.
 	MilitaryOffense Distribution
 	MilitaryDefense Distribution
 
@@ -109,22 +108,18 @@ type Faction struct {
 	// professions, a 40% chance of including two professions (etc)
 	GuildProbability []float64
 
-	// Probability that a faction will be in some number of areas (count by index + 1).
-	// Minimum of 1.
-	//
-	// Ie.
-	// - [0.5, 0.3, 0.2] means a faction has a 50% chance of being in 1 area (index 0 + 1)
-	// and a 30% chance of being in 2 areas (index 1 + 1) etc.
-	//
-	// Factions are marked IsCovert if one of their Focus actions are illegal in at least
-	// one area they are in.
-	AreaProbability []float64
-
-	// Number of Plots/LandRights a faction will have in each area (count by index + 1).
+	// Number of Plots/LandRights a faction wil own (count by index + 1).
 	// Minimum of 1.
 	//
 	// This can include
 	// - LandRight(s)
 	// - Plot(s)
+	//
+	// Note that the Guild 'MinYield' superceeds this.
+	// ie. a guild will be given property to meet MinYield first, then will
+	// acquire extra land (plots) if this isn't met.
 	PropertyProbability []float64
+
+	// Size of plots that can be allocated
+	PlotSize Distribution
 }

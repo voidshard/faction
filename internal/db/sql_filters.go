@@ -256,13 +256,9 @@ func sqlFromLandRightFilters(tk *dbutils.IterToken, in []*LandRightFilter) (stri
 			args = append(args, f.ID)
 			ands = append(ands, fmt.Sprintf("id = $%d", len(args)))
 		}
-		if dbutils.IsValidID(f.GoverningFactionID) {
-			args = append(args, f.GoverningFactionID)
-			ands = append(ands, fmt.Sprintf("governing_faction_id = $%d", len(args)))
-		}
-		if dbutils.IsValidID(f.ControllingFactionID) {
-			args = append(args, f.ControllingFactionID)
-			ands = append(ands, fmt.Sprintf("controlling_faction_id = $%d", len(args)))
+		if dbutils.IsValidID(f.FactionID) {
+			args = append(args, f.FactionID)
+			ands = append(ands, fmt.Sprintf("faction_id = $%d", len(args)))
 		}
 
 		if len(ands) > 0 {
@@ -274,11 +270,10 @@ func sqlFromLandRightFilters(tk *dbutils.IterToken, in []*LandRightFilter) (stri
 		where = "WHERE " + strings.Join(ors, " OR ")
 	}
 
-	return fmt.Sprintf(`SELECT id
+	return fmt.Sprintf(`SELECT id,
 		area_id,
-		governing_faction_id,
-		controlling_faction_id,
-		resource,
+		faction_id,
+		commodity,
 		yield
 	    FROM %s %s
 	    ORDER BY id LIMIT $%d OFFSET $%d;`,
@@ -439,6 +434,10 @@ func sqlFromFactionFilters(tk *dbutils.IterToken, in []*FactionFilter) (string, 
 			args = append(args, f.ParentFactionID)
 			ands = append(ands, fmt.Sprintf("parent_faction_id = $%d", len(args)))
 		}
+		if dbutils.IsValidID(f.HomeAreaID) {
+			args = append(args, f.HomeAreaID)
+			ands = append(ands, fmt.Sprintf("home_area_id = $%d", len(args)))
+		}
 		if f.MinEthos != nil {
 			args = append(args, f.MinEthos.Altruism)
 			ands = append(ands, fmt.Sprintf("ethos_altruism >= $%d", len(args)))
@@ -478,9 +477,11 @@ func sqlFromFactionFilters(tk *dbutils.IterToken, in []*FactionFilter) (string, 
 	}
 
 	return fmt.Sprintf(`SELECT id, name,
+		home_area_id,
 		ethos_altruism, ethos_ambition, ethos_tradition, ethos_pacifism, ethos_piety, ethos_caution,
 		action_frequency_ticks,
 		leadership,
+		structure,
 		wealth,
 		cohesion,
 		is_covert,
@@ -513,9 +514,9 @@ func sqlFromPlotFilters(tk *dbutils.IterToken, in []*PlotFilter) (string, []inte
 			args = append(args, f.ID)
 			ands = append(ands, fmt.Sprintf("id = $%d", len(args)))
 		}
-		if dbutils.IsValidID(f.OwnerFactionID) {
-			args = append(args, f.OwnerFactionID)
-			ands = append(ands, fmt.Sprintf("owner_faction_id = $%d", len(args)))
+		if dbutils.IsValidID(f.FactionID) {
+			args = append(args, f.FactionID)
+			ands = append(ands, fmt.Sprintf("faction_id = $%d", len(args)))
 		}
 		if dbutils.IsValidID(f.AreaID) {
 			args = append(args, f.AreaID)
@@ -532,7 +533,7 @@ func sqlFromPlotFilters(tk *dbutils.IterToken, in []*PlotFilter) (string, []inte
 	}
 
 	return fmt.Sprintf(`SELECT
-		id, is_headquarters, area_id, owner_faction_id, size
+		id, area_id, faction_id, size
 	    FROM %s
 	    %s
 	    ORDER BY id LIMIT $%d OFFSET $%d;`,
@@ -649,9 +650,9 @@ func sqlFromAreaFilters(tk *dbutils.IterToken, in []*AreaFilter) (string, []inte
 			args = append(args, f.ID)
 			ands = append(ands, fmt.Sprintf("id = $%d", len(args)))
 		}
-		if dbutils.IsValidID(f.GoverningFactionID) {
-			args = append(args, f.GoverningFactionID)
-			ands = append(ands, fmt.Sprintf("governing_faction_id = $%d", len(args)))
+		if dbutils.IsValidID(f.GovernmentID) {
+			args = append(args, f.GovernmentID)
+			ands = append(ands, fmt.Sprintf("government_id = $%d", len(args)))
 		}
 
 		if len(ands) > 0 {
@@ -663,7 +664,7 @@ func sqlFromAreaFilters(tk *dbutils.IterToken, in []*AreaFilter) (string, []inte
 		where = fmt.Sprintf("WHERE %s", strings.Join(ors, " OR "))
 	}
 
-	return fmt.Sprintf(`SELECT id, governing_faction_id
+	return fmt.Sprintf(`SELECT id, government_id
 		FROM %s
 		%s 
 		ORDER BY id ASC LIMIT $%d OFFSET $%d;`,

@@ -9,9 +9,12 @@ type Faction struct {
 	ID   string `db:"id"`
 	Name string `db:"name"`
 
+	HomeAreaID string `db:"home_area_id"` // the area where the faction is based
+
 	ActionFrequencyTicks int `db:"action_frequency_ticks"` // faction offers new jobs every X ticks
 
-	Leadership LeaderType `db:"leadership"` // how faction is run
+	Leadership LeaderType      `db:"leadership"` // how faction is run
+	Structure  LeaderStructure `db:"structure"`  // how faction is structured
 
 	Wealth     int `db:"wealth"`     // money/liquid wealth the faction has available to spend. Min:0
 	Cohesion   int `db:"cohesion"`   // a metric for how united a faction is. Min:0, Max:MaxTuple
@@ -34,4 +37,13 @@ type Faction struct {
 
 	ParentFactionID       string          `db:"parent_faction_id"`       // ID of parent faction (if any)
 	ParentFactionRelation FactionRelation `db:"parent_faction_relation"` // relation to parent faction (if any)
+}
+
+type FactionSummary struct {
+	Faction
+
+	Professions map[string]int
+	Actions     map[ActionType]int
+	Research    map[string]int
+	Trust       map[string]int
 }

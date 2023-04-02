@@ -45,6 +45,131 @@ func (f *FactionDB) InTransaction(do func(tx ReaderWriter) error) error {
 	return tx.Commit()
 }
 
+// FactionSummary is a helper function that returns a summary of a faction,
+// including related tuples summed with their corresponding modifiers.
+func (f *FactionDB) FactionSummary(in ...string) ([]*structs.FactionSummary, error) {
+	tick, err := f.Database.Tick()
+	if err != nil {
+		return nil, err
+	}
+
+	ff := []*FactionFilter{}
+	tf := []*TupleFilter{}
+	mf := []*ModifierFilter{}
+
+	for _, id := range in {
+		ff = append(ff, &FactionFilter{ID: id})
+		tf = append(tf, &TupleFilter{Subject: id})
+		mf = append(mf, &ModifierFilter{MinTickExpires: tick, TupleFilter: TupleFilter{Subject: id}})
+	}
+
+	fdata := map[string]*structs.FactionSummary{}
+	var (
+		factions []*structs.Faction
+		token    string
+		tuples   []*structs.Tuple
+	)
+
+	for {
+		factions, token, err = f.Factions(token, ff...)
+		if err != nil {
+			return nil, err
+		}
+
+		for _, f := range factions {
+			fdata[f.ID] = &structs.FactionSummary{
+				Faction:     *f,
+				Professions: map[string]int{},
+				Actions:     map[structs.ActionType]int{},
+				Research:    map[string]int{},
+				Trust:       map[string]int{},
+			}
+		}
+
+		if token == "" {
+			break
+		}
+	}
+
+	for _, r := range []Relation{
+		RelationFactionProfessionWeight,
+		RelationFactionActionTypeWeight,
+		RelationFactionTopicResearch,
+		RelationFactionFactionTrust,
+	} {
+		for {
+			tuples, token, err = f.Tuples(r, token, tf...)
+			if err != nil {
+				return nil, err
+			}
+
+			for _, t := range tuples {
+				f, ok := fdata[t.Subject]
+				if !ok {
+					continue
+				}
+
+				switch r {
+				case RelationFactionProfessionWeight:
+					f.Professions[t.Object] += t.Value
+				case RelationFactionActionTypeWeight:
+					f.Actions[structs.ActionType(t.Object)] += t.Value
+				case RelationFactionTopicResearch:
+					f.Research[t.Object] += t.Value
+				case RelationFactionFactionTrust:
+					f.Trust[t.Object] += t.Value
+				}
+
+			}
+
+			if token == "" {
+				break
+			}
+		}
+
+		if !r.SupportsModifiers() {
+			continue
+		}
+
+		for {
+			tuples, token, err = f.ModifiersSum(r, token, mf...)
+			if err != nil {
+				return nil, err
+			}
+
+			for _, t := range tuples {
+				f, ok := fdata[t.Subject]
+				if !ok {
+					continue
+				}
+				switch r {
+				case RelationFactionProfessionWeight:
+					f.Professions[t.Object] += t.Value
+				case RelationFactionActionTypeWeight:
+					f.Actions[structs.ActionType(t.Object)] += t.Value
+				case RelationFactionTopicResearch:
+					f.Research[t.Object] += t.Value
+				case RelationFactionFactionTrust:
+					f.Trust[t.Object] += t.Value
+				}
+			}
+
+			if token == "" {
+				break
+			}
+		}
+	}
+
+	final := make([]*structs.FactionSummary, len(fdata))
+	i := 0
+	for _, f := range fdata {
+		final[i] = f
+		i++
+	}
+
+	return final, nil
+}
+
 // Demographics returns a map of Relation -> DemographicStats for the given filter(s) (areas & objects).
 //
 // Since it's totally impractical / not too helpful to return this for all relations
@@ -156,8 +281,8 @@ func (f *FactionDB) FactionAreas(factionIDs ...string) (map[string]map[string]bo
 	lfilters := make([]*LandRightFilter, len(factionIDs))
 
 	for i, id := range factionIDs {
-		pfilters[i] = &PlotFilter{OwnerFactionID: id}
-		lfilters[i] = &LandRightFilter{ControllingFactionID: id}
+		pfilters[i] = &PlotFilter{FactionID: id}
+		lfilters[i] = &LandRightFilter{FactionID: id}
 	}
 
 	var (
@@ -174,12 +299,12 @@ func (f *FactionDB) FactionAreas(factionIDs ...string) (map[string]map[string]bo
 			return nil, err
 		}
 		for _, l := range land {
-			farea, ok := result[l.ControllingFactionID]
+			farea, ok := result[l.FactionID]
 			if !ok {
 				farea = map[string]bool{}
 			}
 			farea[l.AreaID] = true
-			result[l.ControllingFactionID] = farea
+			result[l.FactionID] = farea
 		}
 		if token == "" {
 			break
@@ -192,12 +317,12 @@ func (f *FactionDB) FactionAreas(factionIDs ...string) (map[string]map[string]bo
 			return nil, err
 		}
 		for _, p := range plots {
-			farea, ok := result[p.OwnerFactionID]
+			farea, ok := result[p.FactionID]
 			if !ok {
 				farea = map[string]bool{}
 			}
 			farea[p.AreaID] = true
-			result[p.OwnerFactionID] = farea
+			result[p.FactionID] = farea
 		}
 		if token == "" {
 			break
@@ -207,75 +332,47 @@ func (f *FactionDB) FactionAreas(factionIDs ...string) (map[string]map[string]bo
 	return result, nil
 }
 
-// ChangeGoverningFaction is a helper function that changes the governing faction of some area(s)
-// and any LandRight(s) they contain to the given governing faction.
-func (f *FactionDB) ChangeGoverningFaction(govID string, areaIDs []string) error {
+// SetAreaGovernment is a helper function that changes the government id of some area(s)
+func (f *FactionDB) SetAreaGovernment(govID string, areaIDs []string) error {
 	if !structs.IsValidID(govID) {
-		return fmt.Errorf("invalid faction id: %s", govID)
+		return fmt.Errorf("invalid goverment id: %s", govID)
 	}
+
+	af := []*AreaFilter{}
 	for _, a := range areaIDs {
 		if !structs.IsValidID(a) {
 			return fmt.Errorf("invalid area id: %s", a)
 		}
+		af = append(af, &AreaFilter{ID: a})
+	}
 
-		// TODO: we could make this more efficient.
-		//
-		// We do it this way because although we know there will be
-		// at most one area per ID, there could be any number of land rights.
-		//
-		// In this fashion we make sure a given area is consistent (an area
-		// and any rights it contains will have the same governing faction),
-		// but we don't apply the entire change government operation in a single
-		// transaction.
+	var (
+		areas []*structs.Area
+		token string
+		err   error
+	)
 
-		areas, _, err := f.Areas("", &AreaFilter{ID: a})
+	for {
+		areas, token, err = f.Areas(token, af...)
 		if err != nil {
 			return err
 		}
-		if len(areas) != 1 {
-			return fmt.Errorf("area %s not found", a)
+
+		for _, a := range areas {
+			a.GovernmentID = govID
 		}
 
-		areas[0].GoverningFactionID = govID
-		lf := &LandRightFilter{AreaID: a}
-
 		err = f.InTransaction(func(tx ReaderWriter) error {
-			err = tx.SetAreas(areas[0])
-			if err != nil {
-				return nil
-			}
-
-			var (
-				land  []*structs.LandRight
-				token string
-			)
-			for {
-				land, token, err = tx.LandRights(token, lf)
-				if err != nil {
-					return err
-				}
-				for _, l := range land {
-					l.GoverningFactionID = govID
-				}
-				err = tx.SetLandRights(land...)
-				if err != nil {
-					return err
-				}
-				if token == "" {
-					break
-				}
-			}
-			return nil
+			return tx.SetAreas(areas...)
 		})
 		if err != nil {
 			return err
 		}
+
+		if token == "" {
+			break
+		}
 	}
 
 	return nil
-}
-
-// NewPump returns a pump - a buffered writer for the database.
-func (f *FactionDB) NewPump() *Pump {
-	return newPump(f)
 }

@@ -9,11 +9,15 @@ import (
 //
 // This could be useful as a starting point for your own configuration.
 func ActionsFantasy() map[structs.ActionType]*config.Action {
+	minor := structs.MaxEthos / 10
+	modest := structs.MaxEthos / 2
+	major := structs.MaxEthos
+
 	return map[structs.ActionType]*config.Action{
 		structs.ActionTypeTrade: {
 			MinPeople: 3,
 			MaxPeople: 150,
-			Ethos:     structs.Ethos{Altruism: -10},
+			Ethos:     structs.Ethos{Altruism: -1 * minor},
 			Cost: config.Distribution{
 				Min:       1000000,  // 100gp
 				Max:       50000000, // 5000gp
@@ -46,7 +50,7 @@ func ActionsFantasy() map[structs.ActionType]*config.Action {
 		structs.ActionTypeBribe: {
 			MinPeople: 1,
 			MaxPeople: 15,
-			Ethos:     structs.Ethos{Tradition: -20, Ambition: 20, Caution: 20},
+			Ethos:     structs.Ethos{Tradition: -2 * minor, Ambition: 2 * minor, Caution: 2 * minor},
 			Cost: config.Distribution{
 				Min:       20000000,  // 2000gp
 				Max:       100000000, // 10000gp
@@ -77,7 +81,7 @@ func ActionsFantasy() map[structs.ActionType]*config.Action {
 		structs.ActionTypeFestival: {
 			MinPeople: 100,
 			MaxPeople: -1,
-			Ethos:     structs.Ethos{Altruism: 60, Tradition: 10, Piety: 40},
+			Ethos:     structs.Ethos{Altruism: modest, Tradition: minor, Piety: modest},
 			Cost: config.Distribution{
 				Min:       1000000,  // 100gp
 				Max:       10000000, // 1000gp
@@ -105,7 +109,7 @@ func ActionsFantasy() map[structs.ActionType]*config.Action {
 		structs.ActionTypeGrantLand: {
 			MinPeople: 1,
 			MaxPeople: 15,
-			Ethos:     structs.Ethos{Altruism: 60, Tradition: 20},
+			Ethos:     structs.Ethos{Altruism: modest, Tradition: 2 * minor},
 			TimeToPrepare: config.Distribution{
 				Min:       15 * DEFAULT_TICKS_PER_DAY,
 				Max:       30 * DEFAULT_TICKS_PER_DAY,
@@ -122,7 +126,7 @@ func ActionsFantasy() map[structs.ActionType]*config.Action {
 		structs.ActionTypeCharity: {
 			MinPeople: 5,
 			MaxPeople: 1500,
-			Ethos:     structs.Ethos{Altruism: 100, Piety: 20},
+			Ethos:     structs.Ethos{Altruism: major, Piety: minor},
 			Cost: config.Distribution{
 				Min:       100000,   // 10gp
 				Max:       10000000, // 1000gp
@@ -146,7 +150,7 @@ func ActionsFantasy() map[structs.ActionType]*config.Action {
 		structs.ActionTypePropoganda: {
 			MinPeople: 30,
 			MaxPeople: -1,
-			Ethos:     structs.Ethos{Tradition: -10, Ambition: 30},
+			Ethos:     structs.Ethos{Tradition: -1 * minor, Ambition: modest},
 			Cost: config.Distribution{
 				Min:       50000000,  // 5000gp
 				Max:       100000000, // 10000gp
@@ -177,7 +181,7 @@ func ActionsFantasy() map[structs.ActionType]*config.Action {
 		structs.ActionTypeRecruit: {
 			MinPeople:    1,
 			MaxPeople:    60,
-			Ethos:        structs.Ethos{Caution: 40},
+			Ethos:        structs.Ethos{Caution: modest},
 			PersonWeight: 1,
 			ProfessionWeights: map[string]float64{
 				CLERK:  2,
@@ -200,7 +204,7 @@ func ActionsFantasy() map[structs.ActionType]*config.Action {
 		structs.ActionTypeExpand: { // cost determined by land prices in economy
 			MinPeople:    1,
 			MaxPeople:    15,
-			Ethos:        structs.Ethos{Caution: 30},
+			Ethos:        structs.Ethos{Caution: 3 * minor},
 			PersonWeight: 1,
 			ProfessionWeights: map[string]float64{
 				CLERK:  2,
@@ -224,7 +228,7 @@ func ActionsFantasy() map[structs.ActionType]*config.Action {
 		structs.ActionTypeDownsize: {
 			MinPeople:    1,
 			MaxPeople:    15,
-			Ethos:        structs.Ethos{Caution: -40},
+			Ethos:        structs.Ethos{Caution: -1 * modest},
 			PersonWeight: 1,
 			ProfessionWeights: map[string]float64{
 				CLERK:  2,
@@ -248,7 +252,7 @@ func ActionsFantasy() map[structs.ActionType]*config.Action {
 		structs.ActionTypeCraft: {
 			MinPeople:    1,
 			MaxPeople:    -1,
-			Ethos:        structs.Ethos{Altruism: -15},
+			Ethos:        structs.Ethos{Altruism: -1 * minor},
 			PersonWeight: 1,
 			ProfessionWeights: map[string]float64{
 				WEAVER:        3,
@@ -302,7 +306,7 @@ func ActionsFantasy() map[structs.ActionType]*config.Action {
 		structs.ActionTypeConsolidate: {
 			MinPeople:    1,
 			MaxPeople:    15,
-			Ethos:        structs.Ethos{Caution: 40},
+			Ethos:        structs.Ethos{Caution: modest},
 			PersonWeight: 1,
 			ProfessionWeights: map[string]float64{
 				CLERK:  2,
@@ -325,7 +329,7 @@ func ActionsFantasy() map[structs.ActionType]*config.Action {
 		structs.ActionTypeResearch: {
 			MinPeople: 1,
 			MaxPeople: 100,
-			Ethos:     structs.Ethos{Piety: -10, Tradition: -20},
+			Ethos:     structs.Ethos{Piety: -1 * minor, Tradition: -2 * minor},
 			ProfessionWeights: map[string]float64{
 				MAGE:      5,
 				ALCHEMIST: 3,
@@ -355,7 +359,7 @@ func ActionsFantasy() map[structs.ActionType]*config.Action {
 		structs.ActionTypeExcommunicate: {
 			MinPeople:    1,
 			MaxPeople:    100,
-			Ethos:        structs.Ethos{Piety: 75, Caution: -10},
+			Ethos:        structs.Ethos{Piety: major, Caution: -1 * minor},
 			PersonWeight: 1,
 			ProfessionWeights: map[string]float64{
 				PRIEST: 5,
@@ -378,7 +382,7 @@ func ActionsFantasy() map[structs.ActionType]*config.Action {
 		structs.ActionTypeConcealSecrets: {
 			MinPeople:    1,
 			MaxPeople:    100,
-			Ethos:        structs.Ethos{Caution: 90},
+			Ethos:        structs.Ethos{Caution: major},
 			PersonWeight: 1,
 			ProfessionWeights: map[string]float64{
 				SPY:       5,
@@ -404,7 +408,7 @@ func ActionsFantasy() map[structs.ActionType]*config.Action {
 		structs.ActionTypeGatherSecrets: {
 			MinPeople:    2,
 			MaxPeople:    14,
-			Ethos:        structs.Ethos{Ambition: 50, Caution: 20},
+			Ethos:        structs.Ethos{Ambition: modest, Caution: 2 * minor},
 			PersonWeight: 1,
 			ProfessionWeights: map[string]float64{
 				SPY:       5,
@@ -436,7 +440,7 @@ func ActionsFantasy() map[structs.ActionType]*config.Action {
 		structs.ActionTypeRevokeLand: {
 			MinPeople: 1,
 			MaxPeople: 15,
-			Ethos:     structs.Ethos{Tradition: 20, Caution: -10, Altruism: -50},
+			Ethos:     structs.Ethos{Tradition: 2 * minor, Caution: -1 * minor, Altruism: -1 * modest},
 			TimeToPrepare: config.Distribution{
 				Min:       15 * DEFAULT_TICKS_PER_DAY,
 				Max:       30 * DEFAULT_TICKS_PER_DAY,
@@ -453,7 +457,7 @@ func ActionsFantasy() map[structs.ActionType]*config.Action {
 		structs.ActionTypeSpreadRumors: {
 			MinPeople: 1,
 			MaxPeople: -1,
-			Ethos:     structs.Ethos{Ambition: 30, Tradition: -10},
+			Ethos:     structs.Ethos{Ambition: 3 * minor, Tradition: -1 * minor},
 			TimeToPrepare: config.Distribution{
 				Min:       14 * DEFAULT_TICKS_PER_DAY,
 				Max:       30 * DEFAULT_TICKS_PER_DAY,
@@ -478,7 +482,7 @@ func ActionsFantasy() map[structs.ActionType]*config.Action {
 		structs.ActionTypeAssassinate: {
 			MinPeople: 1,
 			MaxPeople: 21,
-			Ethos:     structs.Ethos{Ambition: 60, Tradition: -10, Altruism: -50, Pacifism: -50},
+			Ethos:     structs.Ethos{Ambition: modest, Tradition: -1 * minor, Altruism: -1 * modest, Pacifism: -1 * minor},
 			Cost: config.Distribution{
 				Min:       50000000,  // 5000gp
 				Max:       200000000, // 20000gp
@@ -510,7 +514,7 @@ func ActionsFantasy() map[structs.ActionType]*config.Action {
 		structs.ActionTypeFrame: {
 			MinPeople: 1,
 			MaxPeople: 15,
-			Ethos:     structs.Ethos{Ambition: 40, Tradition: -10, Pacifism: -20},
+			Ethos:     structs.Ethos{Ambition: modest, Tradition: -1 * minor, Pacifism: minor},
 			Cost: config.Distribution{
 				Min:       10000000, // 1000gp
 				Max:       25000000, // 2500gp
@@ -534,7 +538,7 @@ func ActionsFantasy() map[structs.ActionType]*config.Action {
 		structs.ActionTypeRaid: {
 			MinPeople: 14,
 			MaxPeople: 120,
-			Ethos:     structs.Ethos{Ambition: 20, Pacifism: -70, Caution: -50},
+			Ethos:     structs.Ethos{Ambition: 2 * minor, Pacifism: -1 * modest, Caution: -1 * modest},
 			Cost: config.Distribution{
 				Min:       10000000, // 1000gp
 				Max:       50000000, // 5000gp
@@ -568,7 +572,7 @@ func ActionsFantasy() map[structs.ActionType]*config.Action {
 		structs.ActionTypeSteal: {
 			MinPeople: 1,
 			MaxPeople: 15,
-			Ethos:     structs.Ethos{Altruism: -20, Caution: 20},
+			Ethos:     structs.Ethos{Altruism: -2 * minor, Caution: 2 * minor},
 			TimeToPrepare: config.Distribution{
 				Min:       14 * DEFAULT_TICKS_PER_DAY,
 				Max:       30 * DEFAULT_TICKS_PER_DAY,
@@ -594,7 +598,7 @@ func ActionsFantasy() map[structs.ActionType]*config.Action {
 		structs.ActionTypePillage: {
 			MinPeople: 14,
 			MaxPeople: 120,
-			Ethos:     structs.Ethos{Ambition: 20, Pacifism: -70, Caution: -50},
+			Ethos:     structs.Ethos{Ambition: 2 * minor, Pacifism: -1 * modest, Caution: -1 * modest},
 			Cost: config.Distribution{
 				Min:       10000000, // 1000gp
 				Max:       50000000, // 5000gp
@@ -629,7 +633,7 @@ func ActionsFantasy() map[structs.ActionType]*config.Action {
 		structs.ActionTypeBlackmail: {
 			MinPeople: 1,
 			MaxPeople: 7,
-			Ethos:     structs.Ethos{Ambition: 30, Caution: 20},
+			Ethos:     structs.Ethos{Ambition: modest, Caution: 2 * minor, Altruism: -1 * minor},
 			TimeToPrepare: config.Distribution{
 				Min:       1 * DEFAULT_TICKS_PER_DAY,
 				Max:       7 * DEFAULT_TICKS_PER_DAY,
@@ -655,7 +659,7 @@ func ActionsFantasy() map[structs.ActionType]*config.Action {
 		structs.ActionTypeKidnap: {
 			MinPeople: 3,
 			MaxPeople: 21,
-			Ethos:     structs.Ethos{Ambition: 30, Caution: 20, Altruism: -10},
+			Ethos:     structs.Ethos{Ambition: modest, Caution: 2 * minor, Altruism: -1 * minor},
 			TimeToPrepare: config.Distribution{
 				Min:       14 * DEFAULT_TICKS_PER_DAY,
 				Max:       30 * DEFAULT_TICKS_PER_DAY,
@@ -682,7 +686,7 @@ func ActionsFantasy() map[structs.ActionType]*config.Action {
 		structs.ActionTypeShadowWar: {
 			MinPeople: 100,
 			MaxPeople: -1,
-			Ethos:     structs.Ethos{Ambition: 80, Caution: 80, Pacifism: -100},
+			Ethos:     structs.Ethos{Ambition: major, Caution: -1 * minor, Pacifism: -1 * major},
 			Cost: config.Distribution{
 				Min:       20000000,  // 2000gp
 				Max:       100000000, // 10000gp
@@ -719,7 +723,7 @@ func ActionsFantasy() map[structs.ActionType]*config.Action {
 		structs.ActionTypeCrusade: {
 			MinPeople: 500,
 			MaxPeople: -1,
-			Ethos:     structs.Ethos{Ambition: 20, Piety: 100, Caution: -10, Pacifism: -100},
+			Ethos:     structs.Ethos{Ambition: major, Piety: major, Caution: -1 * major, Pacifism: -1 * major},
 			Cost: config.Distribution{
 				Min:       500000000,  // 50000gp
 				Max:       2500000000, // 250000gp
@@ -754,7 +758,7 @@ func ActionsFantasy() map[structs.ActionType]*config.Action {
 		structs.ActionTypeWar: {
 			MinPeople: 500,
 			MaxPeople: -1,
-			Ethos:     structs.Ethos{Ambition: 80, Caution: -10, Pacifism: -100},
+			Ethos:     structs.Ethos{Ambition: major, Caution: -1 * major, Pacifism: -1 * major},
 			Cost: config.Distribution{
 				Min:       500000000,  // 50000gp
 				Max:       2500000000, // 250000gp

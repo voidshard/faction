@@ -10,3 +10,19 @@ const (
 	FactionRelationVassal                           // strictly subordinate, but with regin over it's own affairs
 	FactionRelationPuppet                           // strictly subordinate, very little self rule
 )
+
+type FactionRank int
+
+// FactionRank denotes the rank of a person in a faction
+const (
+	FactionRankMemberAssosciate FactionRank = iota // barely a member
+	FactionRankMemberApprentice
+	FactionRankMemberNovice
+	FactionRankMemberJourneyman
+	FactionRankMemberAdept
+	FactionRankMemberExpert
+	FactionRankMemberMaster
+	FactionRankMemberGrandMaster
+	FactionRankMemberElder
+	FactionRankMemberRuler
+)

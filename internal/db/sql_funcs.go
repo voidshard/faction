@@ -228,18 +228,17 @@ func setPlots(op sqlOperator, in []*structs.Plot) error {
 		if !dbutils.IsValidID(f.AreaID) {
 			return fmt.Errorf("plot area id %s is invalid", f.AreaID)
 		}
-		if f.OwnerFactionID != "" && !dbutils.IsValidID(f.OwnerFactionID) {
-			return fmt.Errorf("plot owner faction id %s is invalid", f.OwnerFactionID)
+		if f.FactionID != "" && !dbutils.IsValidID(f.FactionID) {
+			return fmt.Errorf("plot faction id %s is invalid", f.FactionID)
 		}
 	}
 
 	qstr := fmt.Sprintf(`INSERT INTO %s (
-	    id, is_headquarters, area_id, owner_faction_id, size
+	    id, area_id, faction_id, size
 	) VALUES (
-	    :id, :is_headquarters, :area_id, :owner_faction_id, :size
+	    :id, :area_id, :faction_id, :size
 	) ON CONFLICT (id) DO UPDATE SET 
-	    is_headquarters=EXCLUDED.is_headquarters,
-	    owner_faction_id=EXCLUDED.owner_faction_id,
+	    faction_id=EXCLUDED.faction_id,
 	    size=EXCLUDED.size
 	;`, tablePlots)
 
@@ -393,11 +392,8 @@ func setLandRights(op sqlOperator, in []*structs.LandRight) error {
 		if !dbutils.IsValidID(f.ID) {
 			return fmt.Errorf("land right id %s is invalid", f.ID)
 		}
-		if f.GoverningFactionID != "" && !dbutils.IsValidID(f.GoverningFactionID) {
-			return fmt.Errorf("land right governing faction id %s is invalid", f.GoverningFactionID)
-		}
-		if f.ControllingFactionID != "" && !dbutils.IsValidID(f.ControllingFactionID) {
-			return fmt.Errorf("land right controlling faction id %s is invalid", f.ControllingFactionID)
+		if f.FactionID != "" && !dbutils.IsValidID(f.FactionID) {
+			return fmt.Errorf("land right faction id %s is invalid", f.FactionID)
 		}
 		if !dbutils.IsValidID(f.AreaID) {
 			return fmt.Errorf("land right area id %s is invalid", f.AreaID)
@@ -408,12 +404,12 @@ func setLandRights(op sqlOperator, in []*structs.LandRight) error {
 	}
 
 	qstr := fmt.Sprintf(`INSERT INTO %s (
-	    id, governing_faction_id, controlling_faction_id, area_id, resource, yield
+	    id, faction_id, area_id, commodity, yield
 	) VALUES (
-	    :id, :governing_faction_id, :controlling_faction_id, :area_id, :resource, :yield
+	    :id, :faction_id, :area_id, :commodity, :yield
 	) ON CONFLICT (id) DO UPDATE SET
-	    governing_faction_id = EXCLUDED.governing_faction_id,
-	    controlling_faction_id = EXCLUDED.controlling_faction_id,
+	    faction_id = EXCLUDED.faction_id,
+	    commodity = EXCLUDED.commodity,
 	    yield = EXCLUDED.yield
 	;`, tableLandRights)
 
@@ -702,7 +698,10 @@ func setFactions(op sqlOperator, in []*structs.Faction) error {
 		if !dbutils.IsValidID(f.ID) {
 			return fmt.Errorf("faction id %s is invalid", f.ID)
 		}
-		if !dbutils.IsValidID(f.GovernmentID) {
+		if !dbutils.IsValidID(f.HomeAreaID) {
+			return fmt.Errorf("faction home area id %s is invalid", f.HomeAreaID)
+		}
+		if f.GovernmentID != "" && !dbutils.IsValidID(f.GovernmentID) {
 			return fmt.Errorf("faction government id %s is invalid", f.GovernmentID)
 		}
 		if f.ParentFactionID != "" && !dbutils.IsValidID(f.ParentFactionID) {
@@ -723,10 +722,10 @@ func setFactions(op sqlOperator, in []*structs.Faction) error {
 
 	// We could make this shorter, but I like to be very specific in SQL :P
 	qstr := fmt.Sprintf(`INSERT INTO %s (
-            id, name,
+            id, name, home_area_id,
 	    ethos_altruism, ethos_ambition, ethos_tradition, ethos_pacifism, ethos_piety, ethos_caution,
             action_frequency_ticks,
-            leadership, wealth, cohesion, corruption,
+            leadership, structure, wealth, cohesion, corruption,
 	    is_covert,
 	    government_id, is_government,
 	    religion_id, is_religion,
@@ -737,9 +736,10 @@ func setFactions(op sqlOperator, in []*structs.Faction) error {
 	    parent_faction_relation
 	) VALUES (
 	    :id, :name,
+	    :home_area_id,
 	    :ethos_altruism, :ethos_ambition, :ethos_tradition, :ethos_pacifism, :ethos_piety, :ethos_caution,
 	    :action_frequency_ticks,
-	    :leadership, :wealth, :cohesion, :corruption,
+	    :leadership, :structure, :wealth, :cohesion, :corruption,
 	    :is_covert,
 	    :government_id, :is_government,
 	    :religion_id, :is_religion,
@@ -750,6 +750,7 @@ func setFactions(op sqlOperator, in []*structs.Faction) error {
 	    :parent_faction_relation
 	) ON CONFLICT (id) DO UPDATE SET
 	    name=EXCLUDED.name,
+	    home_area_id=EXCLUDED.home_area_id,
 	    ethos_altruism=EXCLUDED.ethos_altruism,
 	    ethos_ambition=EXCLUDED.ethos_ambition,
 	    ethos_tradition=EXCLUDED.ethos_tradition,
@@ -758,6 +759,7 @@ func setFactions(op sqlOperator, in []*structs.Faction) error {
 	    ethos_caution=EXCLUDED.ethos_caution,
 	    action_frequency_ticks=EXCLUDED.action_frequency_ticks,
 	    leadership=EXCLUDED.leadership,
+	    structure=EXCLUDED.structure,
 	    wealth=EXCLUDED.wealth,
 	    cohesion=EXCLUDED.cohesion,
 	    corruption=EXCLUDED.corruption,
@@ -807,10 +809,10 @@ func setAreas(op sqlOperator, in []*structs.Area) error {
 		}
 	}
 
-	qstr := fmt.Sprintf(`INSERT INTO %s (id, governing_faction_id)
-		        VALUES (:id, :governing_faction_id)
+	qstr := fmt.Sprintf(`INSERT INTO %s (id, government_id)
+		        VALUES (:id, :government_id)
 		        ON CONFLICT (id) DO UPDATE SET
-		            governing_faction_id=EXCLUDED.governing_faction_id
+		            government_id=EXCLUDED.government_id
 		        ;`,
 		tableAreas,
 	)

@@ -27,6 +27,15 @@ func (e *FantasyEconomy) Commodities(area string) []*structs.Commodity {
 	return cs
 }
 
+func (e *FantasyEconomy) IsHarvestable(commodity string) bool {
+	comm := e.Commodity(commodity)
+	return comm.Requires == nil || len(comm.Requires) == 0
+}
+
+func (e *FantasyEconomy) IsCraftable(commodity string) bool {
+	return !e.IsHarvestable(commodity)
+}
+
 func (e *FantasyEconomy) Commodity(name string) *structs.Commodity {
 	c := e.commodities[name]
 	return c

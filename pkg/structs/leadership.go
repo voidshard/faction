@@ -10,3 +10,25 @@ const (
 	LeaderTypeCouncil                   // all those with "great" to "excellent" (75+) affiliation
 	LeaderTypeAll                       // everyone in the faction can vote
 )
+
+type LeaderStructure int
+
+// LeaderStructure represents how a faction is structured
+const (
+	// LeaderStructurePyramid is a pyramid structure, with each rank up the structure getting
+	// successively smaller in size at a constant rate.
+	// Ie. 1 -> 3 -> 9 -> 27 -> 81
+	// Example use: an organised army, government
+	LeaderStructurePyramid LeaderStructure = iota
+
+	// LeaderStructureLoose is a loose structure, where people are given rank based on
+	// affiliation alone. Ie there isn't a limited number of slots per rank.
+	// Example use: a mob, where rank is defined by how many kills / battles you've been in
+	LeaderStructureLoose
+
+	// LeaderStructureCell is a cell structure, each group of members functions autonomously
+	// with only the cell leader knowing the next highest in rank.
+	// In addition a few ranks are simply go betweens to the next level, hiding leadership.
+	// Example use: a criminal organisation, cult
+	LeaderStructureCell
+)

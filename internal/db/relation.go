@@ -73,9 +73,19 @@ const (
 
 	// RelationFactionActionTypeWeight holds how much weight a faction gives to an action type.
 	// This is used to weight the proability of a faction performing an action.
-	// Tuples are limited to -100 to 100, so each point here is a 1% increase / decrease in likelihood.
+	// Tuples are limited to MAX_TUPLE to MIN_TUPLE, currently -10k to 10k so each point here
+	// is a 1/100th (0.01) of a percent increase / decrease in likelihood.
 	// So: <faction_id> <action_type> <weight_level>
 	RelationFactionActionTypeWeight Relation = "weight_faction_to_action_type"
+
+	// RelationFactionProfessionWeight holds how much a faction desires a profession.
+	// This is based on the factions owned land and favored actions.
+	RelationFactionProfessionWeight Relation = "weight_faction_to_profession"
+
+	// RelationPersonFactionRank holds the rank of a person in a faction.
+	// If not given people are assumed to be at 0 (ie. "not a member")
+	// So: <person_id> <faction_id> <rank>
+	RelationPersonFactionRank Relation = "rank_person_to_faction"
 )
 
 var (
@@ -88,6 +98,8 @@ var (
 		RelationPersonReligionFaith,
 		RelationPersonPersonTrust,
 		RelationFactionActionTypeWeight,
+		RelationFactionProfessionWeight,
+		RelationPersonFactionRank,
 	}
 )
 

@@ -17,6 +17,11 @@ func FactionFantasy() *config.Faction {
 			structs.LeaderTypeTriad:   0.1,
 			structs.LeaderTypeAll:     0.05,
 		},
+		LeadershipStructureProbability: map[structs.LeaderStructure]float64{
+			structs.LeaderStructurePyramid: 0.60,
+			structs.LeaderStructureLoose:   0.35,
+			structs.LeaderStructureCell:    0.05,
+		},
 		Wealth: config.Distribution{
 			// min here is around the base land value
 			Min:       120000000,  // 12,000 gp
@@ -31,24 +36,35 @@ func FactionFantasy() *config.Faction {
 			Deviation: 1000,
 		},
 		Corruption: config.Distribution{
-			Min:       0,
+			Min:       10,
 			Max:       3000,
 			Mean:      500,
 			Deviation: 2000,
 		},
 		EspionageOffense: config.Distribution{
-			Min:       0,
+			Min:       100,
 			Max:       2000,
 			Mean:      1000,
 			Deviation: 1000,
 		},
 		EspionageDefense: config.Distribution{
-			Min:       0,
+			Min:       100,
 			Max:       4000,
 			Mean:      2000,
 			Deviation: 2000,
 		},
-		AreaProbability:     []float64{0.65, 0.2, 0.1, 0.05},
+		MilitaryOffense: config.Distribution{
+			Min:       100,
+			Max:       500,
+			Mean:      100,
+			Deviation: 400,
+		},
+		MilitaryDefense: config.Distribution{
+			Min:       100,
+			Max:       2000,
+			Mean:      200,
+			Deviation: 1800,
+		},
 		PropertyProbability: []float64{0.40, 0.3, 0.25, 0.10, 0.05},
 		Focuses: []config.Focus{
 			config.Focus{
@@ -64,38 +80,6 @@ func FactionFantasy() *config.Faction {
 				},
 				EspionageOffenseBonus: 0.0,
 				EspionageDefenseBonus: 0.0,
-				MilitaryOffenseBonus:  0.0,
-				MilitaryDefenseBonus:  0.0,
-			},
-			config.Focus{
-				Actions: []structs.ActionType{ // harvesters
-					structs.ActionTypeHarvest,
-				},
-				Probability: 0.20,
-				Weight: config.Distribution{
-					Min:       3000,
-					Max:       7000,
-					Mean:      5000,
-					Deviation: 2000,
-				},
-				EspionageOffenseBonus: 0.1,
-				EspionageDefenseBonus: 0.1,
-				MilitaryOffenseBonus:  0.0,
-				MilitaryDefenseBonus:  0.0,
-			},
-			config.Focus{
-				Actions: []structs.ActionType{ // crafters
-					structs.ActionTypeCraft,
-				},
-				Probability: 0.50,
-				Weight: config.Distribution{
-					Min:       3000,
-					Max:       7000,
-					Mean:      5000,
-					Deviation: 2000,
-				},
-				EspionageOffenseBonus: 0.1,
-				EspionageDefenseBonus: 0.1,
 				MilitaryOffenseBonus:  0.0,
 				MilitaryDefenseBonus:  0.0,
 			},
@@ -293,5 +277,52 @@ func FactionFantasy() *config.Faction {
 			},
 		},
 		FocusProbability: []float64{0.0, 0.05, 0.65, 0.25, 0.05},
+		Guilds: []config.Guild{
+			config.Guild{
+				Profession:  MERCHANT,
+				Probability: 0.5,
+			},
+			config.Guild{
+				Profession:  SMITH,
+				Probability: 0.2,
+			},
+			config.Guild{
+				Profession:  ALCHEMIST,
+				Probability: 0.1,
+			},
+			config.Guild{
+				Profession:  MAGE,
+				Probability: 0.02,
+			},
+			config.Guild{
+				Profession:  CLOTHIER,
+				Probability: 0.05,
+			},
+			config.Guild{
+				Profession:  CARPENTER,
+				Probability: 0.05,
+			},
+			config.Guild{
+				Profession:  SCRIBE,
+				Probability: 0.05,
+			},
+			config.Guild{
+				Profession:  MINER,
+				Probability: 0.9,
+				MinYield:    100,
+			},
+			config.Guild{
+				Profession:  FARMER,
+				Probability: 0.9,
+				MinYield:    200,
+			},
+		},
+		GuildProbability: []float64{0.30, 0.55, 0.1, 0.05},
+		PlotSize: config.Distribution{
+			Min:       100,
+			Max:       10000,
+			Mean:      500,
+			Deviation: 9500,
+		},
 	}
 }

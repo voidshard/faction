@@ -30,6 +30,10 @@ func (n *normalised) SetSeed(seed int64) {
 // Int returns a random index, with the probability
 // given by the normalised input on creation.
 func (n *normalised) Int() int {
+	if len(n.given) <= 0 {
+		return -1
+	}
+
 	roll := n.rng.Float64()
 	sofar := 0.0
 	for k, v := range n.given {

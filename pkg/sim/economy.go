@@ -24,12 +24,28 @@ type Economy interface {
 
 	// CommodityYield returns the yield (or forecasted yield) of a commodity in
 	// some area at some time offset in ticks (ie. '0' is 'now').
+	//
+	// The returned value is some number representing how good the yield is.
+	// Ie. 1.0 is average, 2.0 is double, 0.5 is half, etc.
+	//
+	// This together with LandRight (Area - Commodity - Yield) is used to determine
+	// how successful a venture (harvest / craft) is.
 	CommodityYield(commodity, area string, ticks, professionSkill int) float64
 
 	// LandValue returns the value of 1 unit squared of land in the area.
 	// This might be a farm + attached building(s) in a rural area, a large complex
 	// within a city area, a small apartment or .. whatever.
 	LandValue(area string, ticks int) float64
+
+	// True if the commodity is produced by crafting, generally
+	// this requires input commodities.
+	// Ie. iron ingots
+	IsCraftable(commodity string) bool
+
+	// True if the commodity is produced by harvesting, generally
+	// base resources.
+	// Ie. iron ore
+	IsHarvestable(commodity string) bool
 }
 
 func commodityToProfession(eco Economy, areas ...string) map[string]string {

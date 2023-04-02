@@ -5,8 +5,8 @@ import (
 )
 
 type AreaFilter struct {
-	ID                 string
-	GoverningFactionID string
+	ID           string
+	GovernmentID string
 }
 
 type GovernmentFilter struct {
@@ -38,9 +38,9 @@ type PersonFilter struct {
 }
 
 type PlotFilter struct {
-	ID             string
-	OwnerFactionID string
-	AreaID         string
+	ID        string
+	FactionID string
+	AreaID    string
 }
 
 type FactionFilter struct {
@@ -50,6 +50,7 @@ type FactionFilter struct {
 	GovernmentID    string
 	ReligionID      string
 	ParentFactionID string
+	HomeAreaID      string
 }
 
 type FamilyFilter struct {
@@ -75,11 +76,9 @@ type JobFilter struct {
 }
 
 type LandRightFilter struct {
-	ID     string
-	AreaID string
-
-	GoverningFactionID   string
-	ControllingFactionID string
+	ID        string
+	AreaID    string
+	FactionID string
 }
 
 type TupleFilter struct {

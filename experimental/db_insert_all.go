@@ -28,24 +28,26 @@ func main() {
 		Actions:     map[structs.ActionType]bool{structs.ActionTypeWar: true, structs.ActionTypeHarvest: false},
 	}}
 
-	area1 := &structs.Area{ID: structs.NewID(), GoverningFactionID: govt1.ID}
+	area1 := &structs.Area{ID: structs.NewID(), GovernmentID: govt1.ID}
 	area2 := &structs.Area{ID: structs.NewID()}
-	landright1 := &structs.LandRight{
-		ID: structs.NewID(), AreaID: area2.ID, GoverningFactionID: govt1.ID, Resource: "apples",
-	}
-	landright2 := &structs.LandRight{
-		ID: structs.NewID(), AreaID: area1.ID, GoverningFactionID: govt1.ID, Resource: "fur",
-	}
-
-	route1 := &structs.Route{SourceAreaID: area1.ID, TargetAreaID: area2.ID, TravelTime: 3}  // downhill
-	route2 := &structs.Route{SourceAreaID: area2.ID, TargetAreaID: area1.ID, TravelTime: 50} // uphill
 
 	faction1 := &structs.Faction{
 		ID:           structs.NewID(),
 		Name:         "Genesis",
 		GovernmentID: govt1.ID,
+		HomeAreaID:   area1.ID,
 		IsGovernment: true,
 	}
+
+	landright1 := &structs.LandRight{
+		ID: structs.NewID(), AreaID: area2.ID, FactionID: faction1.ID, Commodity: "apples",
+	}
+	landright2 := &structs.LandRight{
+		ID: structs.NewID(), AreaID: area1.ID, FactionID: faction1.ID, Commodity: "fur",
+	}
+
+	route1 := &structs.Route{SourceAreaID: area1.ID, TargetAreaID: area2.ID, TravelTime: 3}  // downhill
+	route2 := &structs.Route{SourceAreaID: area2.ID, TargetAreaID: area1.ID, TravelTime: 50} // uphill
 
 	husband1 := &structs.Person{
 		ID:            structs.NewID(),
@@ -122,7 +124,7 @@ func main() {
 
 	// A house for our family
 	plot1 := &structs.Plot{
-		ID: structs.NewID(), AreaID: area1.ID, OwnerFactionID: faction1.ID, Size: 10,
+		ID: structs.NewID(), AreaID: area1.ID, FactionID: faction1.ID, Size: 10,
 	}
 
 	job1 := &structs.Job{

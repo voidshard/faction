@@ -48,19 +48,40 @@ type Simulation interface {
 	// SetRoutes upserts links between two areas
 	SetRoutes(r ...*structs.Route) error
 
-	// SpawnGovernment creates a new government and a faction for it.
+	// SpawnGovernment creates a new government.
+	//
+	// This does not create a faction nor grant the government any area(s).
 	//
 	// [Setup Function] Used to seed initial governments; governments are crafted from thin air,
-	// Probably this should be followed by SetGoverningFaction to assign this government area(s) of
+	// Probably this should be followed by SetAreaGovernment to assign this government area(s) of
 	// influence.
-	SpawnGovernment(g *config.Government, f *config.Faction) (*structs.Faction, *structs.Government, error)
+	SpawnGovernment(g *config.Government) (*structs.Government, error)
 
-	// SetGoverningFaction sets the governing faction for the given area(s)
-	// including any resources / landrights in those areas.
+	// SetAreaGovernment sets the government ID for the given area(s)
+	//
+	// That is, these lands are marked as under the sway of the given government.
 	//
 	// This probably follows SpawnGovernment, but could also represent a change in leadership
 	// if an area is conquered or similar.
-	SetGoverningFaction(factionID string, areas ...string) error
+	SetAreaGovernment(governmentID string, areas ...string) error
+
+	// SpawnFactions creates `number` of new faction(s) within the given area(s).
+	//
+	// Note that factions settings will depend on landrights in these areas and government.
+	// That is, if there are no mines in the area, then it makes no sense to spawn mining based
+	// factions.
+	//
+	// Similarly the government laws in these area(s) will dictate that some factions are marked
+	// `covert` (as their favoured activities are illegal) or not.
+	//
+	// Note that none of these factions will be marked as the Government itself, so you'll
+	// want to explicitly pick one to set that, or spawn a new faction for that reason.
+	SpawnFactions(number int, f *config.Faction, areas ...string) ([]*structs.Faction, error)
+
+	// FactionSummaries returns a summary of the given faction(s).
+	// These can contain a lot of data, so it's probably best to limit the number of factions
+	// you pass in here.
+	FactionSummaries(factionIDs ...string) ([]*structs.FactionSummary, error)
 
 	// SpawnPopulace adds people to area(s) based on a general 'Demographics' outline.
 	//
@@ -79,13 +100,7 @@ type Simulation interface {
 	// TODO: consider a func to determine current demographics given an area id(s)
 	SpawnPopulace(people int, demo *config.Demographics, areas ...string) error
 
-	/*
-		SpawnFactions(number int, f *config.Faction, areas ...string) error
-	*/
-
 	// Read demographics for the given area(s).
-	//
-	// These are somewhat expensive to compute.
 	FaithDemographics(areas ...string) (map[string]*structs.DemographicStats, error)
 	ProfessionDemographics(areas ...string) (map[string]*structs.DemographicStats, error)
 	AffiliationDemographics(areas ...string) (map[string]*structs.DemographicStats, error)
@@ -111,7 +126,7 @@ type Simulation interface {
 	// with the highest Affiliation are considered the faction leader(s)).
 	//
 	// If the faction is a religion or has a religion, then faith is also added for the person.
-	InspireFactionAffiliation(in []*structs.Faction, px *config.Distribution, probability, minEthosDistance, maxEthosDistance float64) error
+	//	InspireFactionAffiliation(in []*structs.Faction, px *config.Distribution, probability, minEthosDistance, maxEthosDistance float64) error
 
 	// Tick advances the simulation by one 'tick' and returns the current tick.
 	// This kicks off a full simulation loop asyncrhonously.

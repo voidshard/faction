@@ -19,6 +19,9 @@ import (
 // We need quite a few with various average / deviation values so
 // this helps keep things tidy.
 type demographicsRand struct {
+	cfg *config.Demographics
+	rng *rand.Rand
+
 	familySize       *stats.Rand
 	childbearingAge  *stats.Rand
 	ethosAltruism    *stats.Rand
@@ -39,10 +42,32 @@ type demographicsRand struct {
 	friendshipsProb  stats.Normalised
 }
 
-func (s *simulationImpl) randPerson(rng *rand.Rand, demo *config.Demographics, dice *demographicsRand, areaID string) *structs.Person {
+type metaPeople struct {
+	adults    []*structs.Person
+	children  []*structs.Person
+	skills    []*structs.Tuple
+	faith     []*structs.Tuple
+	trust     []*structs.Tuple
+	relations []*structs.Tuple
+	families  []*structs.Family
+}
+
+func newMetaPeople() *metaPeople {
+	return &metaPeople{
+		adults:    []*structs.Person{},
+		children:  []*structs.Person{},
+		skills:    []*structs.Tuple{},
+		faith:     []*structs.Tuple{},
+		trust:     []*structs.Tuple{},
+		relations: []*structs.Tuple{},
+		families:  []*structs.Family{},
+	}
+}
+
+func (s *simulationImpl) randPerson(dice *demographicsRand, areaID string) *structs.Person {
 	p := &structs.Person{
 		ID:     structs.NewID(),
-		Race:   demo.Race,
+		Race:   dice.cfg.Race,
 		AreaID: areaID,
 		Ethos: structs.Ethos{
 			Altruism:  dice.ethosAltruism.Int(),
@@ -53,24 +78,24 @@ func (s *simulationImpl) randPerson(rng *rand.Rand, demo *config.Demographics, d
 			Caution:   dice.ethosCaution.Int(),
 		},
 		BirthTick: -1 * dice.childbearingAge.Int(),
-		IsMale:    rng.Float64() <= 0.5,
+		IsMale:    dice.rng.Float64() <= 0.5,
 	}
-	if rng.Float64() <= demo.EthosBlackSheepProbability {
-		blacksheep(rng, p)
+	if dice.rng.Float64() <= dice.cfg.EthosBlackSheepProbability {
+		blacksheep(dice.rng, p)
 	}
 	return p
 }
 
-func (s *simulationImpl) randFaith(demo *config.Demographics, dice *demographicsRand, subject string) []*structs.Tuple {
+func (s *simulationImpl) randFaith(dice *demographicsRand, subject string) []*structs.Tuple {
 	data := []*structs.Tuple{}
 
-	count := dice.faithCount.Random()
+	count := dice.faithCount.Int()
 	if count <= 0 {
 		return data
 	}
 
 	for i := 0; i < count*2; i++ {
-		faith := demo.Faiths[dice.faithOccur.Random()]
+		faith := dice.cfg.Faiths[dice.faithOccur.Int()]
 		if len(data) > 0 && faith.IsMonotheistic { // can't add monotheistic faiths if we already have a faith
 			continue
 		}
@@ -86,17 +111,17 @@ func (s *simulationImpl) randFaith(demo *config.Demographics, dice *demographics
 	return data
 }
 
-func (s *simulationImpl) randProfession(demo *config.Demographics, dice *demographicsRand, subject string) []*structs.Tuple {
+func (s *simulationImpl) randProfession(dice *demographicsRand, subject string) []*structs.Tuple {
 	data := []*structs.Tuple{}
 
-	count := dice.professionCount.Random()
+	count := dice.professionCount.Int()
 	if count <= 0 {
 		return data
 	}
 
 	hasPrimaryProfession := false
 	for i := 0; i < count*2; i++ {
-		prof := demo.Professions[dice.professionOccur.Random()]
+		prof := dice.cfg.Professions[dice.professionOccur.Int()]
 		if hasPrimaryProfession && prof.ValidSideProfession {
 			continue
 		}
@@ -113,9 +138,12 @@ func (s *simulationImpl) randProfession(demo *config.Demographics, dice *demogra
 	return data
 }
 
-func (s *simulationImpl) spawnFamily(rng *rand.Rand, demo *config.Demographics, dice *demographicsRand, areaID string, pump *db.Pump) ([]*structs.Person, []*structs.Person) {
-	mum := s.randPerson(rng, demo, dice, areaID)
-	dad := s.randPerson(rng, demo, dice, areaID)
+func (s *simulationImpl) spawnFamily(dice *demographicsRand, areaID string) *metaPeople {
+	mp := newMetaPeople()
+
+	mum := s.randPerson(dice, areaID)
+	dad := s.randPerson(dice, areaID)
+	mp.adults = append(mp.adults, mum, dad)
 
 	mum.IsMale = false
 	dad.IsMale = true
@@ -126,57 +154,56 @@ func (s *simulationImpl) spawnFamily(rng *rand.Rand, demo *config.Demographics, 
 		MaleID:         dad.ID,
 		FemaleID:       mum.ID,
 	}
-	adults := []*structs.Person{mum, dad}
+	mp.families = append(mp.families, family)
 
-	mumFaiths := s.randFaith(demo, dice, mum.ID)
-	dadFaiths := s.randFaith(demo, dice, dad.ID)
+	mumFaiths := s.randFaith(dice, mum.ID)
+	dadFaiths := s.randFaith(dice, dad.ID)
 
-	pump.SetTuples(db.RelationPersonProfessionSkill, s.randProfession(demo, dice, mum.ID)...)
-	pump.SetTuples(db.RelationPersonProfessionSkill, s.randProfession(demo, dice, dad.ID)...)
-	pump.SetTuples(db.RelationPersonReligionFaith, mumFaiths...)
-	pump.SetTuples(db.RelationPersonReligionFaith, dadFaiths...)
+	mp.skills = append(mp.skills, s.randProfession(dice, mum.ID)...)
+	mp.skills = append(mp.skills, s.randProfession(dice, dad.ID)...)
+	mp.faith = append(mp.faith, mumFaiths...)
+	mp.faith = append(mp.faith, dadFaiths...)
 
-	havingAffair := rng.Float64() <= demo.MarriageAffairProbability
+	havingAffair := dice.rng.Float64() <= dice.cfg.MarriageAffairProbability
 	if havingAffair {
-		affair := s.randPerson(rng, demo, dice, areaID)
-		adults = append(adults, affair)
-
-		pump.SetTuples(db.RelationPersonProfessionSkill, s.randProfession(demo, dice, affair.ID)...)
-		pump.SetTuples(db.RelationPersonReligionFaith, s.randFaith(demo, dice, affair.ID)...)
+		affair := s.randPerson(dice, areaID)
+		mp.adults = append(mp.adults, affair)
+		mp.skills = append(mp.skills, s.randProfession(dice, affair.ID)...)
+		mp.faith = append(mp.faith, s.randFaith(dice, affair.ID)...)
 		if affair.IsMale {
-			pump.SetTuples(
-				db.RelationPersonPersonTrust,
+			mp.relations = append(
+				mp.relations,
 				&structs.Tuple{Subject: mum.ID, Object: affair.ID, Value: int(structs.PersonalRelationLover)},
 				&structs.Tuple{Subject: affair.ID, Object: mum.ID, Value: int(structs.PersonalRelationLover)},
 			)
-			pump.SetTuples(
-				db.RelationPersonPersonRelationship,
+			mp.trust = append(
+				mp.trust,
 				&structs.Tuple{Subject: mum.ID, Object: affair.ID, Value: dice.relationTrust.Int()},
 				&structs.Tuple{Subject: affair.ID, Object: mum.ID, Value: dice.relationTrust.Int()},
 			)
 		} else {
-			pump.SetTuples(db.RelationPersonPersonTrust,
+			mp.relations = append(
+				mp.relations,
 				&structs.Tuple{Subject: dad.ID, Object: affair.ID, Value: int(structs.PersonalRelationLover)},
 				&structs.Tuple{Subject: affair.ID, Object: dad.ID, Value: int(structs.PersonalRelationLover)},
 			)
-			pump.SetTuples(
-				db.RelationPersonPersonRelationship,
+			mp.trust = append(
+				mp.trust,
 				&structs.Tuple{Subject: dad.ID, Object: affair.ID, Value: dice.relationTrust.Int()},
 				&structs.Tuple{Subject: affair.ID, Object: dad.ID, Value: dice.relationTrust.Int()},
 			)
 		}
 	}
 
-	children := []*structs.Person{}
 	for i := 0; i < dice.familySize.Int(); i++ {
 		if mum.DeathTick > 0 {
 			break
 		}
 
-		child := s.randPerson(rng, demo, dice, areaID)
+		child := s.randPerson(dice, areaID)
 		child.Ethos = *structs.EthosAverage(&child.Ethos, &mum.Ethos, &dad.Ethos) // average out parents
 
-		child.BirthTick = -1 * rng.Intn(5) // TODO: add config around this
+		child.BirthTick = -1 * dice.rng.Intn(5) // TODO: add config around this
 		if child.BirthTick < mum.BirthTick {
 			child.BirthTick = 0
 		}
@@ -186,35 +213,35 @@ func (s *simulationImpl) spawnFamily(rng *rand.Rand, demo *config.Demographics, 
 			rel = structs.PersonalRelationSon
 		}
 
-		pump.SetTuples(
-			db.RelationPersonPersonRelationship,
+		mp.relations = append(
+			mp.relations,
 			&structs.Tuple{Subject: mum.ID, Object: child.ID, Value: int(rel)},
 			&structs.Tuple{Subject: dad.ID, Object: child.ID, Value: int(rel)},
 			&structs.Tuple{Subject: child.ID, Object: mum.ID, Value: int(structs.PersonalRelationMother)},
 			&structs.Tuple{Subject: child.ID, Object: dad.ID, Value: int(structs.PersonalRelationFather)},
 		)
-		pump.SetTuples(
-			db.RelationPersonPersonTrust,
+		mp.trust = append(
+			mp.trust,
 			&structs.Tuple{Subject: mum.ID, Object: child.ID, Value: dice.relationTrust.Int()},
 			&structs.Tuple{Subject: dad.ID, Object: child.ID, Value: dice.relationTrust.Int()},
 			&structs.Tuple{Subject: child.ID, Object: mum.ID, Value: dice.relationTrust.Int()},
 			&structs.Tuple{Subject: child.ID, Object: dad.ID, Value: dice.relationTrust.Int()},
 		)
 
-		if i == 0 && rng.Float64() <= demo.ChildbearingDeathProbability { // check if mother dies
+		if i == 0 && dice.rng.Float64() <= dice.cfg.ChildbearingDeathProbability { // check if mother dies
 			mum.DeathTick = 1
 			mum.DeathMetaReason = "died in childbirth"
 			mum.DeathMetaKey = structs.MetaKeyPerson
 			mum.DeathMetaVal = child.ID
 		}
 
-		if rng.Float64() <= demo.DeathInfantMortalityProbability { // check if child dies
-			child.DeathMetaReason = dice.deathCauseReason[dice.deathCauseProb.Random()]
+		if dice.rng.Float64() <= dice.cfg.DeathInfantMortalityProbability { // check if child dies
+			child.DeathMetaReason = dice.deathCauseReason[dice.deathCauseProb.Int()]
 			child.DeathTick = 1
 		}
 
 		childFaiths := []*structs.Tuple{}
-		if rng.Float64() <= 0.5 && mum.DeathTick <= 0 { // child takes faith from either mum or dad
+		if dice.rng.Float64() <= 0.5 && mum.DeathTick <= 0 { // child takes faith from either mum or dad
 			for _, f := range mumFaiths {
 				childFaiths = append(childFaiths, &structs.Tuple{Subject: child.ID, Object: f.Object, Value: f.Value / 2})
 			}
@@ -223,18 +250,18 @@ func (s *simulationImpl) spawnFamily(rng *rand.Rand, demo *config.Demographics, 
 				childFaiths = append(childFaiths, &structs.Tuple{Subject: child.ID, Object: f.Object, Value: f.Value / 2})
 			}
 		}
-		pump.SetTuples(db.RelationPersonReligionFaith, childFaiths...)
-		children = append(children, child)
+		mp.faith = append(mp.faith, childFaiths...)
+		mp.children = append(mp.children, child)
 	}
 
-	if mum.DeathTick > 0 || rng.Float64() <= demo.MarriageDivorceProbability {
-		pump.SetTuples(
-			db.RelationPersonPersonRelationship,
+	if mum.DeathTick > 0 || dice.rng.Float64() <= dice.cfg.MarriageDivorceProbability {
+		mp.relations = append(
+			mp.relations,
 			&structs.Tuple{Subject: mum.ID, Object: dad.ID, Value: int(structs.PersonalRelationExHusband)},
 			&structs.Tuple{Subject: dad.ID, Object: mum.ID, Value: int(structs.PersonalRelationExWife)},
 		)
-		pump.SetTuples(
-			db.RelationPersonPersonTrust,
+		mp.trust = append(
+			mp.trust,
 			&structs.Tuple{Subject: mum.ID, Object: dad.ID, Value: dice.relationTrust.Int() / 2},
 			&structs.Tuple{Subject: mum.ID, Object: dad.ID, Value: dice.relationTrust.Int() / 2},
 		)
@@ -243,28 +270,26 @@ func (s *simulationImpl) spawnFamily(rng *rand.Rand, demo *config.Demographics, 
 		if havingAffair {
 			div = 4
 		}
-		pump.SetTuples(db.RelationPersonPersonRelationship,
+		mp.relations = append(
+			mp.relations,
 			&structs.Tuple{Subject: mum.ID, Object: dad.ID, Value: int(structs.PersonalRelationHusband)},
 			&structs.Tuple{Subject: dad.ID, Object: mum.ID, Value: int(structs.PersonalRelationWife)},
 		)
-		pump.SetTuples(db.RelationPersonPersonTrust,
+		mp.trust = append(
+			mp.trust,
 			&structs.Tuple{Subject: mum.ID, Object: dad.ID, Value: dice.relationTrust.Int() / div},
 			&structs.Tuple{Subject: mum.ID, Object: dad.ID, Value: dice.relationTrust.Int() / div},
 		)
 	}
 
-	pump.SetPeople(adults...)
-	pump.SetPeople(children...)
-	pump.SetFamilies(family)
-
-	return adults, children
+	return mp
 }
 
-func randomRelationship(pump *db.Pump, personA, personB string, rng *rand.Rand, dice *demographicsRand) {
+func randomRelationship(personA, personB string, dice *demographicsRand) ([]*structs.Tuple, []*structs.Tuple) {
 	trust := 1
 	rel := structs.PersonalRelationCloseFriend
 
-	switch dice.friendshipsProb.Random() {
+	switch dice.friendshipsProb.Int() {
 	case 0: // default set above
 		break
 	case 1:
@@ -277,42 +302,34 @@ func randomRelationship(pump *db.Pump, personA, personB string, rng *rand.Rand, 
 		rel = structs.PersonalRelationHatedEnemy
 	}
 
-	pump.SetTuples(
-		db.RelationPersonPersonRelationship,
-		&structs.Tuple{Subject: personA, Object: personB, Value: int(rel)},
-		&structs.Tuple{Subject: personB, Object: personA, Value: int(rel)},
-	)
-	pump.SetTuples(
-		db.RelationPersonPersonTrust,
-		&structs.Tuple{Subject: personA, Object: personB, Value: trust * dice.relationTrust.Int()},
-		&structs.Tuple{Subject: personB, Object: personA, Value: trust * dice.relationTrust.Int()},
-	)
+	return []*structs.Tuple{
+			&structs.Tuple{Subject: personA, Object: personB, Value: int(rel)},
+			&structs.Tuple{Subject: personB, Object: personA, Value: int(rel)},
+		}, []*structs.Tuple{
+			&structs.Tuple{Subject: personA, Object: personB, Value: trust * dice.relationTrust.Int()},
+			&structs.Tuple{Subject: personB, Object: personA, Value: trust * dice.relationTrust.Int()},
+		}
 }
 
 func (s *simulationImpl) SpawnPopulace(desiredTotal int, demo *config.Demographics, areas ...string) error {
-	// TODO: support passing a 'Namer' to generate names
-	rng := rand.New(rand.NewSource(time.Now().UnixNano()))
+	var finalerr error
+	errs := make(chan error)
 
-	pump := s.dbconn.NewPump()
-	defer pump.Close()
-
-	var err error
 	go func() {
-		for e := range pump.Errors() {
-			if e == nil {
+		for err := range errs {
+			if err == nil {
 				continue
 			}
-			if err == nil {
-				err = e
+			if finalerr == nil {
+				finalerr = err
 			} else {
-				err = fmt.Errorf("%v %w", err, e)
+				finalerr = fmt.Errorf("%w %v", finalerr, err)
 			}
 		}
 	}()
 
-	wg := &sync.WaitGroup{}
-
 	desiredArea := desiredTotal / len(areas)
+	wg := &sync.WaitGroup{}
 
 	// we place people one area at a time because it feels more natural as this results in more
 	// links between people within a given area than between areas.
@@ -326,92 +343,124 @@ func (s *simulationImpl) SpawnPopulace(desiredTotal int, demo *config.Demographi
 			prevChildren := []*structs.Person{}
 			aliveArea := 0
 			for {
-				if err != nil || aliveArea >= desiredArea {
+				if finalerr != nil || aliveArea >= desiredArea {
 					break
 				}
 
-				var adults, children []*structs.Person
+				mp := newMetaPeople()
 
-				family := rng.Float64() <= demo.MarriageProbability
+				family := dice.rng.Float64() <= demo.MarriageProbability
 				if family {
-					adults, children = s.spawnFamily(rng, demo, dice, areaID, pump)
-
-					for _, p := range append(adults, children...) {
+					mp = s.spawnFamily(dice, areaID)
+					for _, p := range append(mp.adults, mp.children...) {
 						if p.DeathTick <= 0 {
 							aliveArea++
 						}
 					}
 				} else {
-					for i := 0; i < rng.Intn(5)+1; i++ {
-						person := s.randPerson(rng, demo, dice, areaID)
-						pump.SetTuples(db.RelationPersonProfessionSkill, s.randProfession(demo, dice, person.ID)...)
-						pump.SetTuples(db.RelationPersonReligionFaith, s.randFaith(demo, dice, person.ID)...)
+					for i := 0; i < dice.rng.Intn(5)+1; i++ {
+						person := s.randPerson(dice, areaID)
+						mp.adults = append(mp.adults, person)
 
-						if rng.Float64() < demo.DeathAdultMortalityProbability {
+						mp.skills = append(mp.skills, s.randProfession(dice, person.ID)...)
+						mp.faith = append(mp.faith, s.randFaith(dice, person.ID)...)
+
+						if dice.rng.Float64() < demo.DeathAdultMortalityProbability {
 							person.DeathTick = 1
-							person.DeathMetaReason = dice.deathCauseReason[dice.deathCauseProb.Random()]
+							person.DeathMetaReason = dice.deathCauseReason[dice.deathCauseProb.Int()]
 						} else {
 							aliveArea++
 						}
 
-						pump.SetPeople(person)
-						adults = append(adults, person)
-
-						if rng.Float64() > demo.MarriageProbability || person.DeathTick > 0 {
+						if dice.rng.Float64() > demo.MarriageProbability || person.DeathTick > 0 {
 							continue
 						}
 
-						lover := s.randPerson(rng, demo, dice, areaID)
+						lover := s.randPerson(dice, areaID)
 						lover.IsMale = !person.IsMale
 
-						pump.SetTuples(db.RelationPersonProfessionSkill, s.randProfession(demo, dice, lover.ID)...)
-						pump.SetTuples(db.RelationPersonReligionFaith, s.randFaith(demo, dice, lover.ID)...)
+						mp.adults = append(mp.adults, lover)
+						mp.skills = append(mp.skills, s.randProfession(dice, lover.ID)...)
+						mp.faith = append(mp.faith, s.randFaith(dice, lover.ID)...)
 
 						rel := structs.PersonalRelationLover
-						if rng.Float64() <= 0.1 {
+						if dice.rng.Float64() <= 0.1 {
 							rel = structs.PersonalRelationFiance
 						}
 
-						pump.SetTuples(
-							db.RelationPersonPersonRelationship,
+						mp.relations = append(
+							mp.relations,
 							&structs.Tuple{Subject: person.ID, Object: lover.ID, Value: int(rel)},
 							&structs.Tuple{Subject: lover.ID, Object: person.ID, Value: int(rel)},
 						)
-						pump.SetTuples(
-							db.RelationPersonPersonTrust,
+						mp.trust = append(
+							mp.trust,
 							&structs.Tuple{Subject: person.ID, Object: lover.ID, Value: dice.relationTrust.Int()},
 							&structs.Tuple{Subject: lover.ID, Object: person.ID, Value: dice.relationTrust.Int()},
 						)
-						pump.SetPeople(lover)
-						adults = append(adults, lover)
 					}
 				}
 
-				if len(prevAdults) > 0 && len(adults) > 0 {
-					for _, a := range adults {
-						for _, p := range stats.ChooseIndexes(len(prevAdults), rng.Intn(3)) {
-							randomRelationship(pump, a.ID, prevAdults[p].ID, rng, dice)
+				if len(prevAdults) > 0 && len(mp.adults) > 0 {
+					for _, a := range mp.adults {
+						for _, p := range stats.ChooseIndexes(len(prevAdults), dice.rng.Intn(3)) {
+							relationships, trust := randomRelationship(a.ID, prevAdults[p].ID, dice)
+							mp.relations = append(mp.relations, relationships...)
+							mp.trust = append(mp.trust, trust...)
 						}
 					}
 				}
-				if len(prevChildren) > 0 && len(children) > 0 {
-					for _, a := range children {
-						for _, p := range stats.ChooseIndexes(len(prevChildren), rng.Intn(2)) {
-							randomRelationship(pump, a.ID, prevChildren[p].ID, rng, dice)
+				if len(prevChildren) > 0 && len(mp.children) > 0 {
+					for _, a := range mp.children {
+						for _, p := range stats.ChooseIndexes(len(prevChildren), dice.rng.Intn(2)) {
+							relationships, trust := randomRelationship(a.ID, prevChildren[p].ID, dice)
+							mp.relations = append(mp.relations, relationships...)
+							mp.trust = append(mp.trust, trust...)
 						}
 					}
 				}
 
-				prevAdults = adults
-				prevChildren = children
+				prevAdults = mp.adults
+				prevChildren = mp.children
+
+				errs <- writeMetaPeople(s.dbconn, mp)
 			}
 		}(a)
 	}
 
 	wg.Wait()
-	return err
+	close(errs)
+
+	return finalerr
 }
 
+func writeMetaPeople(conn *db.FactionDB, p *metaPeople) error {
+	return conn.InTransaction(func(tx db.ReaderWriter) error {
+		err := tx.SetPeople(append(p.adults, p.children...)...)
+		if err != nil {
+			return err
+		}
+		err = tx.SetTuples(db.RelationPersonProfessionSkill, p.skills...)
+		if err != nil {
+			return err
+		}
+		err = tx.SetTuples(db.RelationPersonReligionFaith, p.faith...)
+		if err != nil {
+			return err
+		}
+		err = tx.SetTuples(db.RelationPersonPersonTrust, p.trust...)
+		if err != nil {
+			return err
+		}
+		err = tx.SetTuples(db.RelationPersonPersonRelationship, p.relations...)
+		if err != nil {
+			return err
+		}
+		return tx.SetFamilies(p.families...)
+	})
+}
+
+// blacksheep randomly changes a single attribute of a person to some extreme value.
 func blacksheep(rng *rand.Rand, p *structs.Person) {
 	v := structs.MinTuple + rng.Intn(5)
 	if rng.Float64() < 0.5 {
@@ -460,6 +509,8 @@ func newDemographicsRand(demo *config.Demographics) *demographicsRand {
 	}
 
 	return &demographicsRand{
+		cfg: demo,
+		rng: rand.New(rand.NewSource(time.Now().UnixNano())),
 		familySize: stats.NewRand(
 			0, demo.FamilySize.Max,
 			demo.FamilySize.Mean, demo.FamilySize.Deviation,

@@ -15,6 +15,6 @@ type Area struct {
 	// a unique reference for this area
 	ID string `db:"id"`
 
-	// Faction ID (if any)
-	GoverningFactionID string `db:"governing_faction_id"`
+	// Government ID (if any)
+	GovernmentID string `db:"government_id"`
 }
