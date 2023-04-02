@@ -1,8 +1,6 @@
 package sim
 
 import (
-	"fmt"
-
 	"github.com/voidshard/faction/internal/db"
 	"github.com/voidshard/faction/internal/dbutils"
 	"github.com/voidshard/faction/pkg/structs"
@@ -41,7 +39,6 @@ func (s *simulationImpl) areaYields(in []*db.LandRightFilter, includeOwned bool)
 				// someone already runs this
 				continue
 			}
-			fmt.Println(lr.ID, "F:", lr.FactionID, "A:", lr.AreaID, lr.Commodity, lr.Yield)
 
 			commodity := s.eco.Commodity(lr.Commodity)
 			if commodity == nil {
