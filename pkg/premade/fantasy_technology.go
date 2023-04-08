@@ -12,7 +12,7 @@ type FantasyTechnology struct {
 	allTopics map[string]*structs.ResearchTopic
 }
 
-func (f *FantasyTechnology) Topics() []*structs.ResearchTopic {
+func (f *FantasyTechnology) Topics(areaID string) []*structs.ResearchTopic {
 	ret := []*structs.ResearchTopic{}
 	for _, t := range f.allTopics {
 		ret = append(ret, t)
@@ -23,28 +23,6 @@ func (f *FantasyTechnology) Topics() []*structs.ResearchTopic {
 func (f *FantasyTechnology) Topic(name string) *structs.ResearchTopic {
 	t, _ := f.allTopics[name]
 	return t
-}
-
-func (f *FantasyTechnology) Research(jobID string, currentLevel int) int {
-	// Nb. in an actual implementation we probably want to
-	// - look at who is performing the research
-	// - decide on how much research is done / achieved
-	// - add side effects based on research & the level
-	// Ie. research into dark magic might have a chance of causing some
-	// calamity, or research into a new technology might have a chance
-	// of adding new commodities to our economy.
-	//
-	// For our premade fantasy technology, we'll just rolls some dice ..
-
-	v := f.rng.Float64()
-	if v <= 0.01 {
-		// some sort of break through
-		return currentLevel + f.rng.Intn(100) + f.rng.Intn(100)
-	} else if v <= 0.02 {
-		// some sort of disaster
-		return currentLevel - f.rng.Intn(20)
-	}
-	return currentLevel + f.rng.Intn(10) + f.rng.Intn(10)
 }
 
 func NewFantasyTechnology() *FantasyTechnology {
