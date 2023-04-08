@@ -335,6 +335,7 @@ func ActionsFantasy() map[structs.ActionType]*config.Action {
 				ALCHEMIST: 3,
 				PRIEST:    3,
 				SCRIBE:    2,
+				SCHOLAR:   4,
 			},
 			Cost: config.Distribution{
 				Min:       1000000,  // 100gp

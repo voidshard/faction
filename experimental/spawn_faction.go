@@ -19,7 +19,7 @@ func main() {
 		Actions: premade.ActionsFantasy(),
 	}
 
-	simulator, err := sim.New(cfg, premade.NewFantasyEconomy())
+	simulator, err := sim.New(cfg)
 	if err != nil {
 		panic(err)
 	}

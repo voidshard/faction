@@ -5,7 +5,10 @@ import (
 )
 
 const (
+	// MaxEthos is the highest possible ethos value
 	MaxEthos = 10000
+
+	// MinEthos is the lowest possible ethos value
 	MinEthos = -10000
 )
 

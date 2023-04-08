@@ -3,6 +3,7 @@ package sim
 import (
 	"github.com/voidshard/faction/internal/db"
 	"github.com/voidshard/faction/pkg/config"
+	"github.com/voidshard/faction/pkg/premade"
 	"github.com/voidshard/faction/pkg/structs"
 )
 
@@ -13,14 +14,15 @@ var (
 
 // simulationImpl implements Simulation
 type simulationImpl struct {
-	cfg *config.Simulation
-	eco Economy
+	cfg  *config.Simulation
+	eco  Economy
+	tech Technology
 
 	dbconn *db.FactionDB
 }
 
 // New Simulation, the main doo-da
-func New(cfg *config.Simulation, eco Economy) (Simulation, error) {
+func New(cfg *config.Simulation, opts ...simOption) (Simulation, error) {
 	// apply default settings
 	if cfg == nil {
 		cfg = &config.Simulation{}
@@ -35,11 +37,23 @@ func New(cfg *config.Simulation, eco Economy) (Simulation, error) {
 		return nil, err
 	}
 
-	return &simulationImpl{
+	me := &simulationImpl{
 		cfg:    cfg,
-		eco:    eco,
 		dbconn: dbconn,
-	}, nil
+		// default economy / tech
+		eco:  premade.NewFantasyEconomy(),
+		tech: premade.NewFantasyTechnology(),
+	}
+
+	// apply given options
+	for _, opt := range opts {
+		err = opt(me)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return me, nil
 }
 
 func (s *simulationImpl) Factions(ids ...string) ([]*structs.Faction, error) {

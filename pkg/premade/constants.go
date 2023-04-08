@@ -37,6 +37,41 @@ const (
 )
 
 const (
+	// Research topics
+	// - ancient
+	AGRICULTURE = "agriculture"
+	WARFARE     = "warfare"    // starting with Sargon of Akkad (c. 2334 BC)
+	ASTRONOMY   = "astronomy"  // Greek, Babylonian, Egyptian ..
+	METALLURGY  = "metallurgy" // starting with copper -> bronze -> iron -> steel
+
+	// - classical
+	PHILOSOPHY   = "philosophy"   // plato, aristotle, socrates
+	MEDICINE     = "medicine"     // hippocrates, galen
+	MATHEMATICS  = "mathematics"  // euclid, pythagoras
+	LITERATURE   = "literature"   // homer, virgil
+	LAW          = "law"          // plato, aristotle, socrates
+	ARCHITECTURE = "architecture" // ionic / doric schools of greek architecture
+
+	// - medieval
+	THEOLOGY    = "theology" // ie. the formal study of theology distinct from philosophy / metaphysics
+	PHYSICS     = "physics"
+	ENGINEERING = "engineering"
+
+	// - renessaince
+	HISTORY   = "history"
+	ECONOMICS = "economics"
+
+	// - industrial
+	CHEMISTRY = "chemistry"
+	BIOLOGY   = "biology"
+
+	// - fantasy
+	MAGIC_ARCANA = "magic-arcana" // acceptable magic
+	MAGIC_OCCULT = "magic-occult" // forbidden magic
+	ALCHEMY      = "alchemy"
+)
+
+const (
 	// Professions
 	// - people who craft / harvest
 	FARMER        = "farmer"
@@ -59,6 +94,7 @@ const (
 	SCRIBE   = "scribe"
 	MERCHANT = "merchant"
 	THIEF    = "thief"
+	SCHOLAR  = "scholar"
 	// - medieval
 	NOBLE = "noble"
 	// - more fantasy style professions
