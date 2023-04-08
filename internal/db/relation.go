@@ -55,6 +55,12 @@ const (
 	// So: <faction_id> <topic> <research_level>
 	RelationFactionTopicResearch Relation = "research_faction_to_topic"
 
+	// RelationFactionTopicResearchWeight holds how much weight a faction gives to a topic.
+	// Where RelationFactionTopicResearch is the actual research done, this is how likely a
+	// faction is to research this topic over other(s) (if any) when performing research.
+	// So: <faction_id> <topic> <weight_level>
+	RelationFactionTopicResearchWeight Relation = "weight_faction_to_topic"
+
 	// RelationPProfessionSkill holds how skilled people are in professions
 	// So: <person_id> <profession> <skill_level>
 	RelationPersonProfessionSkill Relation = "skill_person_to_profession"
@@ -92,6 +98,7 @@ var (
 	allRelations = []Relation{
 		RelationFactionFactionTrust,
 		RelationFactionTopicResearch,
+		RelationFactionTopicResearchWeight,
 		RelationPersonFactionAffiliation,
 		RelationPersonProfessionSkill,
 		RelationPersonPersonRelationship,

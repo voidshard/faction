@@ -99,6 +99,18 @@ type Faction struct {
 	// Nb. you almost certainly want a faction to have at least one focus
 	FocusProbability []float64
 
+	// Probability of a given topic being researched by a faction.
+	//
+	// Where factions have no favoured profession, research will be chosen
+	// at random from the given probabilities.
+	//
+	// Where factions have favoured profession(s) that have matching topics
+	// (ie. Smith -> METALLURGY) then a topic will be chosen from the
+	// favoured professions topics first.
+	// If there are favoured professions but no matching topics, then
+	// a topic will be chosen at random from all topics.
+	ResearchProbability map[string]float64
+
 	// Guilds are profession based factions; eg. a guild of blacksmiths,
 	// a guild of assassins etc.
 	Guilds []Guild

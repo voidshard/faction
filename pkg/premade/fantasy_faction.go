@@ -324,5 +324,21 @@ func FactionFantasy() *config.Faction {
 			Mean:      500,
 			Deviation: 9500,
 		},
+		ResearchProbability: map[string]float64{
+			AGRICULTURE:  0.01,
+			ASTRONOMY:    0.2,
+			WARFARE:      0.05,
+			METALLURGY:   0.04,
+			PHILOSOPHY:   0.1,
+			MEDICINE:     0.1,
+			MATHEMATICS:  0.08,
+			LITERATURE:   0.02,
+			LAW:          0.1,
+			ARCHITECTURE: 0.04,
+			THEOLOGY:     0.06,
+			MAGIC_ARCANA: 0.15,
+			MAGIC_OCCULT: 0.04,
+			ALCHEMY:      0.05,
+		},
 	}
 }

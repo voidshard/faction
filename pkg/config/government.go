@@ -15,6 +15,9 @@ type Government struct {
 	// Probability that the given research topic will be outlawed
 	ProbabilityOutlawResearch map[string]float64
 
+	// Probability that the given religion will be outlawed
+	ProbabilityOutlawReligion map[string]float64
+
 	// How often (in ticks) the government will collect taxes
 	// Min: 1 (every tick)
 	// Probably you want this to be every month, quarter or something

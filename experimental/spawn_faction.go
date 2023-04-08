@@ -51,7 +51,7 @@ func main() {
 
 	fcfg := premade.FactionFantasy()
 
-	factions, err := simulator.SpawnFactions(1, fcfg, area1.ID, area2.ID, area3.ID)
+	factions, err := simulator.SpawnFactions(10, fcfg, area1.ID, area2.ID, area3.ID)
 	if err != nil {
 		panic(err)
 	}
@@ -75,6 +75,7 @@ func main() {
 		fmt.Println("\t\tProfessions:", sum.Professions)
 		fmt.Println("\t\tActions:", sum.Actions)
 		fmt.Println("\t\tResearch:", sum.Research)
+		fmt.Println("\t\tResearchWeight:", sum.ResearchWeight)
 		fmt.Println("\t\tTrust:", sum.Trust)
 	}
 }

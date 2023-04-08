@@ -5,6 +5,7 @@ random_government.go - random government generation
 package sim
 
 import (
+	"math"
 	"math/rand"
 	"time"
 
@@ -28,9 +29,11 @@ func (s *simulationImpl) SpawnGovernment(g *config.Government) (*structs.Governm
 		g.TaxFrequency.Min = 1
 	}
 
+	rate := stats.NewRand(g.TaxRate.Min, g.TaxRate.Max, g.TaxRate.Mean, g.TaxRate.Deviation).Float64()
+
 	govt := &structs.Government{
 		ID:           structs.NewID(),
-		TaxRate:      stats.NewRand(g.TaxRate.Min, g.TaxRate.Max, g.TaxRate.Mean, g.TaxRate.Deviation).Float64() / 100,
+		TaxRate:      math.Round(rate) / 100,
 		TaxFrequency: stats.NewRand(g.TaxFrequency.Min, g.TaxFrequency.Max, g.TaxFrequency.Mean, g.TaxFrequency.Deviation).Int(),
 		Outlawed:     structs.NewLaws(),
 	}
@@ -44,6 +47,16 @@ func (s *simulationImpl) SpawnGovernment(g *config.Government) (*structs.Governm
 	for item, prob := range g.ProbabilityOutlawCommodity {
 		if rng.Float64() <= prob {
 			govt.Outlawed.Commodities[item] = true
+		}
+	}
+	for topic, prob := range g.ProbabilityOutlawResearch {
+		if rng.Float64() <= prob {
+			govt.Outlawed.Research[topic] = true
+		}
+	}
+	for religion, prob := range g.ProbabilityOutlawReligion {
+		if rng.Float64() <= prob {
+			govt.Outlawed.Religions[religion] = true
 		}
 	}
 

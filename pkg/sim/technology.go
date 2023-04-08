@@ -5,8 +5,8 @@ import (
 )
 
 type Technology interface {
-	// Topics returns all topics that can be researched in the given area
-	Topics(area string) []*structs.ResearchTopic
+	// Topics returns all topics that can be researched in the given areas
+	Topics(areas ...string) []*structs.ResearchTopic
 
 	// Topic returns the topic with the given name
 	Topic(name string) *structs.ResearchTopic

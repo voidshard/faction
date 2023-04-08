@@ -526,10 +526,62 @@ func governments(op sqlOperator, token string, in []*GovernmentFilter) ([]*struc
 			g.Outlawed.Commodities[l.MetaVal] = l.Illegal
 		case structs.MetaKeyAction:
 			g.Outlawed.Actions[structs.ActionType(l.MetaVal)] = l.Illegal
+		case structs.MetaKeyResearch:
+			g.Outlawed.Research[l.MetaVal] = l.Illegal
+		case structs.MetaKeyReligion:
+			g.Outlawed.Religions[l.MetaVal] = l.Illegal
 		}
 	}
 
 	return out, nextToken(tk, len(out)), nil
+}
+
+// toLaws converts a Government object to a slice of lawStructs.
+// Internally we save the laws in their own table, but we don't expose this because we expect the laws
+// to be reasonbly small in number and reasonably static.
+func toLaws(f *structs.Government) []*lawStruct {
+	laws := []*lawStruct{}
+	if f.Outlawed.Factions != nil {
+		for k, v := range f.Outlawed.Factions {
+			if !v {
+				continue
+			}
+			laws = append(laws, &lawStruct{GovernmentID: f.ID, MetaKey: structs.MetaKeyFaction, MetaVal: k, Illegal: v})
+		}
+	}
+	if f.Outlawed.Commodities != nil {
+		for k, v := range f.Outlawed.Commodities {
+			if !v {
+				continue
+			}
+			laws = append(laws, &lawStruct{GovernmentID: f.ID, MetaKey: structs.MetaKeyCommodity, MetaVal: k, Illegal: v})
+		}
+	}
+	if f.Outlawed.Actions != nil {
+		for k, v := range f.Outlawed.Actions {
+			if !v {
+				continue
+			}
+			laws = append(laws, &lawStruct{GovernmentID: f.ID, MetaKey: structs.MetaKeyAction, MetaVal: string(k), Illegal: v})
+		}
+	}
+	if f.Outlawed.Research != nil {
+		for k, v := range f.Outlawed.Research {
+			if !v {
+				continue
+			}
+			laws = append(laws, &lawStruct{GovernmentID: f.ID, MetaKey: structs.MetaKeyResearch, MetaVal: k, Illegal: v})
+		}
+	}
+	if f.Outlawed.Religions != nil {
+		for k, v := range f.Outlawed.Religions {
+			if !v {
+				continue
+			}
+			laws = append(laws, &lawStruct{GovernmentID: f.ID, MetaKey: structs.MetaKeyReligion, MetaVal: k, Illegal: v})
+		}
+	}
+	return laws
 }
 
 func setGovernments(op sqlOperator, in []*structs.Government) error {
@@ -552,33 +604,8 @@ func setGovernments(op sqlOperator, in []*structs.Government) error {
 		idNames[i] = fmt.Sprintf(":%d", i)
 		idArgs[fmt.Sprintf("%d", i)] = f.ID
 
-		if f.Outlawed == nil { // technically it doesn't *have* to have laws
-			continue
-		}
-
-		if f.Outlawed.Factions != nil {
-			for k, v := range f.Outlawed.Factions {
-				if !v {
-					continue
-				}
-				laws = append(laws, &lawStruct{GovernmentID: f.ID, MetaKey: structs.MetaKeyFaction, MetaVal: k, Illegal: v})
-			}
-		}
-		if f.Outlawed.Commodities != nil {
-			for k, v := range f.Outlawed.Commodities {
-				if !v {
-					continue
-				}
-				laws = append(laws, &lawStruct{GovernmentID: f.ID, MetaKey: structs.MetaKeyCommodity, MetaVal: k, Illegal: v})
-			}
-		}
-		if f.Outlawed.Actions != nil {
-			for k, v := range f.Outlawed.Actions {
-				if !v {
-					continue
-				}
-				laws = append(laws, &lawStruct{GovernmentID: f.ID, MetaKey: structs.MetaKeyAction, MetaVal: string(k), Illegal: v})
-			}
+		if f.Outlawed != nil {
+			laws = append(laws, toLaws(f)...)
 		}
 	}
 

@@ -42,8 +42,9 @@ type Faction struct {
 type FactionSummary struct {
 	Faction
 
-	Professions map[string]int
-	Actions     map[ActionType]int
-	Research    map[string]int
-	Trust       map[string]int
+	Professions    map[string]int
+	Actions        map[ActionType]int
+	Research       map[string]int
+	ResearchWeight map[string]int
+	Trust          map[string]int
 }

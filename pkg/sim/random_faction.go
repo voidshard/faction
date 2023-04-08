@@ -4,6 +4,7 @@ random_faction.go - random faction / government generation
 package sim
 
 import (
+	"fmt"
 	"math/rand"
 	"time"
 
@@ -18,6 +19,7 @@ import (
 type factionRand struct {
 	yieldRand      *yieldRand
 	cfg            *config.Faction
+	tech           Technology
 	rng            *rand.Rand
 	ethosAltruism  *stats.Rand
 	ethosAmbition  *stats.Rand
@@ -48,12 +50,104 @@ type factionRand struct {
 
 // faction + associated metadata used during creation
 type metaFaction struct {
-	faction       *structs.Faction
-	actions       []structs.ActionType
-	actionWeights []*structs.Tuple
-	land          []*structs.LandRight
-	plots         []*structs.Plot
-	profWeights   []*structs.Tuple
+	faction         *structs.Faction
+	actions         []structs.ActionType
+	actionWeights   []*structs.Tuple
+	land            []*structs.LandRight
+	plots           []*structs.Plot
+	profWeights     []*structs.Tuple
+	researchWeights []*structs.Tuple
+	areas           map[string]bool
+}
+
+func (fr *factionRand) randResearch(f *metaFaction, count int) []*structs.Tuple {
+	fmt.Println("randResearch", count, f.areas, f.profWeights)
+
+	if count <= 0 {
+		return []*structs.Tuple{}
+	}
+
+	areas := []string{} // all areas faction has presence in
+	for area := range f.areas {
+		areas = append(areas, area)
+	}
+
+	topics := fr.tech.Topics(areas...) // all possible topics
+	probs := []float64{}
+	byProfession := map[string][]string{}
+	for _, topic := range topics {
+		prob, ok := fr.cfg.ResearchProbability[topic.Name]
+		if !ok {
+			prob = 0.0
+		}
+		probs = append(probs, prob)
+
+		ptopics, ok := byProfession[topic.Profession]
+		if !ok {
+			ptopics = []string{}
+		}
+		byProfession[topic.Profession] = append(ptopics, topic.Name)
+	}
+
+	favouredTopics := map[string]bool{}
+	for _, weight := range f.profWeights {
+		//  consider favoured professions for the faction
+		ptopics, ok := byProfession[weight.Object]
+		if !ok { // profession has no research topics
+			continue
+		}
+
+		// professions that have matching research topic(s)
+		for _, topic := range ptopics {
+			favouredTopics[topic] = true
+		}
+	}
+	fmt.Println("favouredTopics", favouredTopics)
+	if len(favouredTopics) > 0 {
+		// set non-favoured topics to 0 probability
+		for i, topic := range topics {
+			safe, _ := favouredTopics[topic.Name]
+			if !safe {
+				probs[i] = 0.0
+			}
+		}
+	}
+	fmt.Println("probs", probs)
+
+	// finally, we can choose actual research topics
+	norm := stats.NewNormalised(probs)
+	seen := map[int]bool{}
+	weight := stats.NewRand(
+		// TODO: could expose this in config
+		structs.MaxEthos/8,
+		structs.MaxEthos,
+		structs.MaxEthos/2,
+		structs.MaxEthos,
+	)
+
+	weights := []*structs.Tuple{}
+	for i := 0; i < count; i++ {
+		choice := norm.Int()
+		if choice < 0 {
+			break
+		}
+
+		_, ok := seen[choice]
+		if ok {
+			continue
+		}
+		seen[choice] = true
+
+		topic := topics[choice]
+		weights = append(weights, &structs.Tuple{
+			Subject: f.faction.ID,
+			Object:  topic.Name,
+			Value:   weight.Int(),
+		})
+	}
+	fmt.Println("research", weights)
+
+	return weights
 }
 
 func (fr *factionRand) randLandForGuild(g *config.Guild) []*structs.LandRight {
@@ -94,6 +188,8 @@ func (fr *factionRand) randLandForGuild(g *config.Guild) []*structs.LandRight {
 }
 
 func (fr *factionRand) recalcGuildProb() {
+	// as we hand out land, it becomes increasingly unlikely that some commodities
+	// form the backbone of a(nother) guild.
 	guildProb := []float64{}
 	if fr.yieldRand != nil {
 		for _, guild := range fr.cfg.Guilds {
@@ -124,7 +220,7 @@ func (s *simulationImpl) SpawnFactions(count int, cfg *config.Faction, areas ...
 	}
 
 	// dice based on faction cfg + land yields
-	dice := newFactionRand(cfg, yields, areas)
+	dice := newFactionRand(cfg, s.tech, yields, areas)
 
 	// lookup which areas are run by which governments (determines faction legality / covert status)
 	areaToGovt, govtToGovt, err := s.areaGovernments(arf)
@@ -142,15 +238,7 @@ func (s *simulationImpl) SpawnFactions(count int, cfg *config.Faction, areas ...
 		govt, _ := govtToGovt[govtID]
 
 		if govt != nil {
-			factionOutlawed := false
-
-			for _, act := range f.actions {
-				illegal, _ := govt.Outlawed.Actions[act]
-				if illegal {
-					factionOutlawed = true
-					break
-				}
-			}
+			factionOutlawed := isFactionIllegal(govt, f)
 
 			f.faction.GovernmentID = govtID
 			f.faction.IsCovert = factionOutlawed
@@ -170,7 +258,7 @@ func (s *simulationImpl) SpawnFactions(count int, cfg *config.Faction, areas ...
 		factions = append(factions, f.faction)
 	}
 
-	// finally, flush law change(s) to govt.
+	// finally, flush law change(s) to govt (if needed)
 	govs := []*structs.Government{}
 	for _, govt := range govsToWrite {
 		govs = append(govs, govt)
@@ -184,6 +272,29 @@ func (s *simulationImpl) SpawnFactions(count int, cfg *config.Faction, areas ...
 	return factions, err
 }
 
+func isFactionIllegal(govt *structs.Government, f *metaFaction) bool {
+	// look for any reason to mark the faction as illegal
+	if f.faction.ReligionID != "" {
+		illegal, _ := govt.Outlawed.Religions[f.faction.ReligionID]
+		if illegal {
+			return true
+		}
+	}
+	for _, act := range f.actions {
+		illegal, _ := govt.Outlawed.Actions[act]
+		if illegal {
+			return true
+		}
+	}
+	for _, research := range f.researchWeights {
+		illegal, _ := govt.Outlawed.Research[research.Object]
+		if illegal {
+			return true
+		}
+	}
+	return false
+}
+
 func writeMetaFaction(conn *db.FactionDB, f *metaFaction) error {
 	return conn.InTransaction(func(tx db.ReaderWriter) error {
 		err := tx.SetFactions(f.faction)
@@ -195,6 +306,10 @@ func writeMetaFaction(conn *db.FactionDB, f *metaFaction) error {
 			return err
 		}
 		err = tx.SetPlots(f.plots...)
+		if err != nil {
+			return err
+		}
+		err = tx.SetTuples(db.RelationFactionTopicResearchWeight, f.researchWeights...)
 		if err != nil {
 			return err
 		}
@@ -230,11 +345,13 @@ func (s *simulationImpl) randFaction(fr *factionRand) *metaFaction {
 			MilitaryOffense:  fr.milOffense.Int(),
 			MilitaryDefense:  fr.milDefense.Int(),
 		},
-		actions:       []structs.ActionType{},
-		actionWeights: []*structs.Tuple{},
-		land:          []*structs.LandRight{},
-		plots:         []*structs.Plot{},
-		profWeights:   []*structs.Tuple{},
+		actions:         []structs.ActionType{},
+		actionWeights:   []*structs.Tuple{},
+		land:            []*structs.LandRight{},
+		plots:           []*structs.Plot{},
+		profWeights:     []*structs.Tuple{},
+		researchWeights: []*structs.Tuple{},
+		areas:           map[string]bool{},
 	}
 
 	// consider action focuses
@@ -242,6 +359,7 @@ func (s *simulationImpl) randFaction(fr *factionRand) *metaFaction {
 	actions := []structs.ActionType{}
 	seen := map[int]bool{}
 	actionsEthos := []*structs.Ethos{&mf.faction.Ethos}
+	researchCount := 0
 	for i := 0; i < fr.focusCount.Int(); i++ {
 		choice := fr.focusOccur.Int()
 		_, ok := seen[choice]
@@ -262,6 +380,10 @@ func (s *simulationImpl) randFaction(fr *factionRand) *metaFaction {
 			actionCfg, ok := s.cfg.Actions[act]
 			if !ok {
 				continue
+			}
+
+			if act == structs.ActionTypeResearch {
+				researchCount++
 			}
 
 			mf.actionWeights = append(mf.actionWeights, &structs.Tuple{
@@ -295,6 +417,7 @@ func (s *simulationImpl) randFaction(fr *factionRand) *metaFaction {
 		if ok {
 			continue
 		}
+		seen[choice] = true
 
 		guild := fr.cfg.Guilds[choice]
 		landrights := fr.randLandForGuild(&guild)
@@ -312,6 +435,7 @@ func (s *simulationImpl) randFaction(fr *factionRand) *metaFaction {
 			if s.eco.IsHarvestable(land.Commodity) {
 				countHarvest++
 			}
+			mf.areas[land.AreaID] = true
 		}
 		mf.land = append(mf.land, landrights...)
 		professions = append(professions, guild.Profession)
@@ -354,13 +478,19 @@ func (s *simulationImpl) randFaction(fr *factionRand) *metaFaction {
 
 	// give faction land if we're still below the min
 	for i := len(mf.land); i < fr.propertyCount.Int()+1; i++ {
+		area := fr.areas[fr.rng.Intn(len(fr.areas))]
 		mf.plots = append(mf.plots, &structs.Plot{
 			ID:        structs.NewID(),
-			AreaID:    fr.areas[fr.rng.Intn(len(fr.areas))],
+			AreaID:    area,
 			FactionID: mf.faction.ID,
 			Size:      fr.plotSize.Int(),
 		})
+		mf.areas[area] = true
 	}
+
+	// if we need to pick research topics, we can do so now sensibly
+	// (since we know where the faction is and what professions it prefers)
+	mf.researchWeights = fr.randResearch(mf, researchCount)
 
 	// pick a headquarters
 	switch len(mf.plots) {
@@ -377,7 +507,7 @@ func (s *simulationImpl) randFaction(fr *factionRand) *metaFaction {
 
 // newFactionRand creates a new dice roller for creationg factions based on faction config
 // and the available land rights in some area(s).
-func newFactionRand(f *config.Faction, yields *yieldRand, areas []string) *factionRand {
+func newFactionRand(f *config.Faction, tech Technology, yields *yieldRand, areas []string) *factionRand {
 	focusOccurProb := []float64{}
 	focusWeights := []*stats.Rand{}
 	for _, focus := range f.Focuses {
@@ -402,6 +532,7 @@ func newFactionRand(f *config.Faction, yields *yieldRand, areas []string) *facti
 	fr := &factionRand{
 		yieldRand:      yields,
 		cfg:            f,
+		tech:           tech,
 		rng:            rand.New(rand.NewSource(time.Now().UnixNano())),
 		ethosAltruism:  stats.NewRand(structs.MinEthos, structs.MaxEthos, float64(f.EthosMean.Altruism), float64(f.EthosDeviation.Altruism)),
 		ethosAmbition:  stats.NewRand(structs.MinEthos, structs.MaxEthos, float64(f.EthosMean.Ambition), float64(f.EthosDeviation.Ambition)),

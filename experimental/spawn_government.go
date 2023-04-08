@@ -31,4 +31,6 @@ func main() {
 	fmt.Println("\t\tFactions:", govt.Outlawed.Factions)
 	fmt.Println("\t\tActions:", govt.Outlawed.Actions)
 	fmt.Println("\t\tCommodities:", govt.Outlawed.Commodities)
+	fmt.Println("\t\tResearch:", govt.Outlawed.Research)
+	fmt.Println("\t\tReligions:", govt.Outlawed.Religions)
 }

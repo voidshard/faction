@@ -78,11 +78,12 @@ func (f *FactionDB) FactionSummary(in ...string) ([]*structs.FactionSummary, err
 
 		for _, f := range factions {
 			fdata[f.ID] = &structs.FactionSummary{
-				Faction:     *f,
-				Professions: map[string]int{},
-				Actions:     map[structs.ActionType]int{},
-				Research:    map[string]int{},
-				Trust:       map[string]int{},
+				Faction:        *f,
+				Professions:    map[string]int{},
+				Actions:        map[structs.ActionType]int{},
+				Research:       map[string]int{},
+				ResearchWeight: map[string]int{},
+				Trust:          map[string]int{},
 			}
 		}
 
@@ -95,6 +96,7 @@ func (f *FactionDB) FactionSummary(in ...string) ([]*structs.FactionSummary, err
 		RelationFactionProfessionWeight,
 		RelationFactionActionTypeWeight,
 		RelationFactionTopicResearch,
+		RelationFactionTopicResearchWeight,
 		RelationFactionFactionTrust,
 	} {
 		for {
@@ -116,6 +118,8 @@ func (f *FactionDB) FactionSummary(in ...string) ([]*structs.FactionSummary, err
 					f.Actions[structs.ActionType(t.Object)] += t.Value
 				case RelationFactionTopicResearch:
 					f.Research[t.Object] += t.Value
+				case RelationFactionTopicResearchWeight:
+					f.ResearchWeight[t.Object] += t.Value
 				case RelationFactionFactionTrust:
 					f.Trust[t.Object] += t.Value
 				}

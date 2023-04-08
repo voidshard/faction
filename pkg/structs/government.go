@@ -57,6 +57,13 @@ type Laws struct {
 	// IllegalCommodities are commodities that are illegal to trade, harvest or produce
 	// if within the jurisdiction of the government.
 	Commodities map[string]bool `db:"-"`
+
+	// IllegalResearch is research that is illegal to perform.
+	Research map[string]bool `db:"-"`
+
+	// Religions that are outright banned (heretical, generally considered harmful or maybe
+	// the ruler(s) are just .. bigots?).
+	Religions map[string]bool `db:"-"`
 }
 
 // NewLaws returns a new Laws struct with all maps initialised.
@@ -65,5 +72,6 @@ func NewLaws() *Laws {
 		Factions:    map[string]bool{},
 		Actions:     map[ActionType]bool{},
 		Commodities: map[string]bool{},
+		Research:    map[string]bool{},
 	}
 }
