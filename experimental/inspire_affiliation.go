@@ -54,18 +54,18 @@ func main() {
 	}
 
 	err = simulator.SetPlots(
-		&structs.Plot{ID: structs.NewID("plot1"), OwnerFactionID: faction1.ID, AreaID: area1},
-		&structs.Plot{ID: structs.NewID("plot2"), OwnerFactionID: faction1.ID, AreaID: area1},
-		&structs.Plot{ID: structs.NewID("plot3"), OwnerFactionID: faction1.ID, AreaID: area2},
-		&structs.Plot{ID: structs.NewID("plot4"), OwnerFactionID: faction2.ID, AreaID: area2},
+		&structs.Plot{ID: structs.NewID("plot1"), FactionID: faction1.ID, AreaID: area1},
+		&structs.Plot{ID: structs.NewID("plot2"), FactionID: faction1.ID, AreaID: area1},
+		&structs.Plot{ID: structs.NewID("plot3"), FactionID: faction1.ID, AreaID: area2},
+		&structs.Plot{ID: structs.NewID("plot4"), FactionID: faction2.ID, AreaID: area2},
 	)
 	if err != nil {
 		panic(err)
 	}
 
-	err = simulator.SetLandRights(
-		&structs.LandRight{ID: structs.NewID("lr1"), ControllingFactionID: faction2.ID, AreaID: area3, Resource: "wood"},
-		&structs.LandRight{ID: structs.NewID("lr2"), ControllingFactionID: faction3.ID, AreaID: area3, Resource: "wood"},
+	err = simulator.SetPlots(
+		&structs.Plot{ID: structs.NewID("lr1"), FactionID: faction2.ID, AreaID: area3, Commodity: "wood"},
+		&structs.Plot{ID: structs.NewID("lr2"), FactionID: faction3.ID, AreaID: area3, Commodity: "wood"},
 	)
 	if err != nil {
 		panic(err)

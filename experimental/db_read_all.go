@@ -38,13 +38,6 @@ func main() {
 		fmt.Printf("\t%v\n", i)
 	}
 
-	fmt.Println("landrights")
-	land, _, err := conn.LandRights("")
-	perr(err)
-	for _, i := range land {
-		fmt.Printf("\t%v\n", i)
-	}
-
 	fmt.Println("routes")
 	routes, _, err := conn.Routes("")
 	perr(err)

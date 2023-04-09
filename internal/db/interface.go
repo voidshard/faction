@@ -29,7 +29,6 @@ type Reader interface {
 	Families(token string, f ...*FamilyFilter) ([]*structs.Family, string, error)
 	Governments(token string, f ...*GovernmentFilter) ([]*structs.Government, string, error)
 	Jobs(token string, f ...*JobFilter) ([]*structs.Job, string, error)
-	LandRights(token string, f ...*LandRightFilter) ([]*structs.LandRight, string, error)
 	People(token string, f ...*PersonFilter) ([]*structs.Person, string, error)
 	Plots(token string, f ...*PlotFilter) ([]*structs.Plot, string, error)
 	Tuples(table Relation, token string, f ...*TupleFilter) ([]*structs.Tuple, string, error)
@@ -46,7 +45,6 @@ type Writer interface {
 	SetFamilies(in ...*structs.Family) error
 	SetGovernments(in ...*structs.Government) error
 	SetJobs(in ...*structs.Job) error
-	SetLandRights(in ...*structs.LandRight) error
 	SetPeople(in ...*structs.Person) error
 	SetPlots(in ...*structs.Plot) error
 	SetTuples(table Relation, in ...*structs.Tuple) error

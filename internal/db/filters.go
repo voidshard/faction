@@ -41,6 +41,8 @@ type PlotFilter struct {
 	ID        string
 	FactionID string
 	AreaID    string
+
+	HasCommodity bool // True if commodity is not empty, otherwise false
 }
 
 type FactionFilter struct {
@@ -73,12 +75,6 @@ type JobFilter struct {
 	MaxSecrecy      int // values <= 0 are ignored
 	State           structs.JobState
 	TickEndsBefore  int
-}
-
-type LandRightFilter struct {
-	ID        string
-	AreaID    string
-	FactionID string
 }
 
 type TupleFilter struct {

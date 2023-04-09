@@ -14,7 +14,7 @@ type Guild struct {
 	Probability float64
 
 	// MinYield is the minimum yield that a guild will accept, that assuming
-	// the resource is attached to a LandRight.
+	// the resource is attached to a Plot.
 	//
 	// That is, if the land we're looking at when randomly building factions
 	// yields only 1 iron ore, then that may not be enough for a guild of
@@ -120,16 +120,12 @@ type Faction struct {
 	// professions, a 40% chance of including two professions (etc)
 	GuildProbability []float64
 
-	// Number of Plots/LandRights a faction wil own (count by index + 1).
+	// Number of Plots a faction wil own (count by index + 1).
 	// Minimum of 1.
-	//
-	// This can include
-	// - LandRight(s)
-	// - Plot(s)
 	//
 	// Note that the Guild 'MinYield' superceeds this.
 	// ie. a guild will be given property to meet MinYield first, then will
-	// acquire extra land (plots) if this isn't met.
+	// acquire extra land if this isn't met.
 	PropertyProbability []float64
 
 	// Size of plots that can be allocated

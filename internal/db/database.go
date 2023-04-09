@@ -47,6 +47,13 @@ func (f *FactionDB) InTransaction(do func(tx ReaderWriter) error) error {
 
 // FactionSummary is a helper function that returns a summary of a faction,
 // including related tuples summed with their corresponding modifiers.
+//
+// Basically this is an amalgamation of the Faction, Tuple(s) and Modifier(s) tables.
+//
+// Warning: This requires quite a few queries, so it's probably wise to limit exactly
+// when & where this is called.
+// It's useful for getting a high level view of a faction & all related info, but it's
+// excessive for when you only need a small snippet of info.
 func (f *FactionDB) FactionSummary(in ...string) ([]*structs.FactionSummary, error) {
 	tick, err := f.Database.Tick()
 	if err != nil {
@@ -54,12 +61,14 @@ func (f *FactionDB) FactionSummary(in ...string) ([]*structs.FactionSummary, err
 	}
 
 	ff := []*FactionFilter{}
-	tf := []*TupleFilter{}
+	tfSub := []*TupleFilter{}
+	tfObj := []*TupleFilter{}
 	mf := []*ModifierFilter{}
 
 	for _, id := range in {
 		ff = append(ff, &FactionFilter{ID: id})
-		tf = append(tf, &TupleFilter{Subject: id})
+		tfSub = append(tfSub, &TupleFilter{Subject: id})
+		tfObj = append(tfObj, &TupleFilter{Object: id})
 		mf = append(mf, &ModifierFilter{MinTickExpires: tick, TupleFilter: TupleFilter{Subject: id}})
 	}
 
@@ -77,14 +86,7 @@ func (f *FactionDB) FactionSummary(in ...string) ([]*structs.FactionSummary, err
 		}
 
 		for _, f := range factions {
-			fdata[f.ID] = &structs.FactionSummary{
-				Faction:        *f,
-				Professions:    map[string]int{},
-				Actions:        map[structs.ActionType]int{},
-				Research:       map[string]int{},
-				ResearchWeight: map[string]int{},
-				Trust:          map[string]int{},
-			}
+			fdata[f.ID] = structs.NewFactionSummary(f)
 		}
 
 		if token == "" {
@@ -98,7 +100,13 @@ func (f *FactionDB) FactionSummary(in ...string) ([]*structs.FactionSummary, err
 		RelationFactionTopicResearch,
 		RelationFactionTopicResearchWeight,
 		RelationFactionFactionTrust,
+		RelationPersonFactionRank,
 	} {
+		tf := tfSub
+		if r == RelationPersonFactionRank {
+			tf = tfObj
+		}
+
 		for {
 			tuples, token, err = f.Tuples(r, token, tf...)
 			if err != nil {
@@ -106,7 +114,16 @@ func (f *FactionDB) FactionSummary(in ...string) ([]*structs.FactionSummary, err
 			}
 
 			for _, t := range tuples {
-				f, ok := fdata[t.Subject]
+				var (
+					f  *structs.FactionSummary
+					ok bool
+				)
+
+				if r == RelationPersonFactionRank {
+					f, ok = fdata[t.Object]
+				} else {
+					f, ok = fdata[t.Subject]
+				}
 				if !ok {
 					continue
 				}
@@ -117,13 +134,14 @@ func (f *FactionDB) FactionSummary(in ...string) ([]*structs.FactionSummary, err
 				case RelationFactionActionTypeWeight:
 					f.Actions[structs.ActionType(t.Object)] += t.Value
 				case RelationFactionTopicResearch:
-					f.Research[t.Object] += t.Value
+					f.ResearchProgress[t.Object] += t.Value
 				case RelationFactionTopicResearchWeight:
-					f.ResearchWeight[t.Object] += t.Value
+					f.Research[t.Object] += t.Value
 				case RelationFactionFactionTrust:
 					f.Trust[t.Object] += t.Value
+				case RelationPersonFactionRank:
+					f.Ranks.Add(structs.FactionRank(t.Value))
 				}
-
 			}
 
 			if token == "" {
@@ -174,19 +192,18 @@ func (f *FactionDB) FactionSummary(in ...string) ([]*structs.FactionSummary, err
 	return final, nil
 }
 
-// Demographics returns a map of Relation -> DemographicStats for the given filter(s) (areas & objects).
+// Demographics return information for the given filter(s) (areas & objects).
 //
 // Since it's totally impractical / not too helpful to return this for all relations
 // (eg. inter personal trust), we only return a few relations, namely:
 // - RelationPersonReligionFaith
 // - RelationPersonProfessionSkill
 // - RelationPersonFactionAffiliation
+// - RelationPersonFactionRank
 //
 // For each of these we return a count of the number of people with scores within some bounds
 // (see DemographicStats) for a given Object.
-//
-// We return a map of Relation -> Object -> DemographicStats
-func (f *FactionDB) Demographics(tables []Relation, in *DemographicQuery) (map[Relation]map[string]*structs.DemographicStats, error) {
+func (f *FactionDB) Demographics(in *DemographicQuery) (*structs.Demographics, error) {
 	pf := []*PersonFilter{}
 	if in != nil {
 		if in.Areas != nil {
@@ -197,18 +214,14 @@ func (f *FactionDB) Demographics(tables []Relation, in *DemographicQuery) (map[R
 		}
 	}
 
-	demoRelations := []Relation{}
-	for _, r := range tables {
-		// whitelist allowed relations
-		if r == RelationPersonReligionFaith || r == RelationPersonProfessionSkill || r == RelationPersonFactionAffiliation {
-			demoRelations = append(demoRelations, r)
-		}
+	demoRelations := []Relation{
+		RelationPersonReligionFaith,
+		RelationPersonProfessionSkill,
+		RelationPersonFactionAffiliation,
+		RelationPersonFactionRank,
 	}
 
-	ret := map[Relation]map[string]*structs.DemographicStats{}
-	for _, r := range demoRelations {
-		ret[r] = map[string]*structs.DemographicStats{}
-	}
+	ret := structs.NewDemographics()
 
 	initialPToken := dbutils.NewToken()
 	initialPToken.Limit = 500
@@ -239,8 +252,6 @@ func (f *FactionDB) Demographics(tables []Relation, in *DemographicQuery) (map[R
 		}
 
 		for _, r := range demoRelations {
-			stats := ret[r] // we made sure to set these
-
 			for {
 				tuples, ttoken, err = f.Tuples(r, ttoken, tf...)
 				if err != nil {
@@ -248,22 +259,22 @@ func (f *FactionDB) Demographics(tables []Relation, in *DemographicQuery) (map[R
 				}
 
 				for _, t := range tuples {
-					objStats, ok := stats[t.Object]
-					if !ok {
-						objStats = &structs.DemographicStats{}
+					switch r {
+					case RelationPersonReligionFaith:
+						ret.AddFaith(t.Object, t.Value)
+					case RelationPersonProfessionSkill:
+						ret.AddProfession(t.Object, t.Value)
+					case RelationPersonFactionAffiliation:
+						ret.AddAffiliation(t.Object, t.Value)
+					case RelationPersonFactionRank:
+						ret.AddRank(t.Object, structs.FactionRank(t.Value))
 					}
-
-					objStats.Add(t.Value)
-
-					stats[t.Object] = objStats
 				}
 
 				if ttoken == "" {
 					break
 				}
 			}
-
-			ret[r] = stats
 		}
 
 		if ptoken == "" {
@@ -274,46 +285,64 @@ func (f *FactionDB) Demographics(tables []Relation, in *DemographicQuery) (map[R
 	return ret, nil
 }
 
-// FactionAreas returns a map of FactionID -> AreaID -> true
-// for all areas that the given faction either has a Plot (a building of some kind) or a
-// LandRight (a claim to work the land).
+// AreaFactions returns a map of AreaID -> []*Faction
 //
-// That is, the faction A with Plot in Area B and LandRight in Area C would return:
-// map[A]map[B:true, C:true]
-func (f *FactionDB) FactionAreas(factionIDs ...string) (map[string]map[string]bool, error) {
-	pfilters := make([]*PlotFilter, len(factionIDs))
-	lfilters := make([]*LandRightFilter, len(factionIDs))
+// That is, given a set of areas, which factions have influence there.
+// (Inverse of FactionAreas)
+func (f *FactionDB) AreaFactions(areaIDs ...string) (map[string]map[string]bool, error) {
+	pfilters := make([]*PlotFilter, len(areaIDs))
 
-	for i, id := range factionIDs {
-		pfilters[i] = &PlotFilter{FactionID: id}
-		lfilters[i] = &LandRightFilter{FactionID: id}
+	for i, id := range areaIDs {
+		pfilters[i] = &PlotFilter{AreaID: id}
 	}
 
 	var (
-		land  []*structs.LandRight
 		plots []*structs.Plot
 		token string
 		err   error
 	)
 
 	result := map[string]map[string]bool{}
+
 	for {
-		land, token, err = f.LandRights(token, lfilters...)
+		plots, token, err = f.Plots(token, pfilters...)
 		if err != nil {
 			return nil, err
 		}
-		for _, l := range land {
-			farea, ok := result[l.FactionID]
+		for _, p := range plots {
+			areaf, ok := result[p.AreaID]
 			if !ok {
-				farea = map[string]bool{}
+				areaf = map[string]bool{}
 			}
-			farea[l.AreaID] = true
-			result[l.FactionID] = farea
+			areaf[p.FactionID] = true
+			result[p.AreaID] = areaf
 		}
 		if token == "" {
 			break
 		}
 	}
+
+	return result, nil
+}
+
+// FactionAreas returns a map of FactionID -> AreaID -> true
+//
+// That is, given a set of factions, this is where factions have influence.
+// (Inverse of AreaFactions)
+func (f *FactionDB) FactionAreas(factionIDs ...string) (map[string]map[string]bool, error) {
+	pfilters := make([]*PlotFilter, len(factionIDs))
+
+	for i, id := range factionIDs {
+		pfilters[i] = &PlotFilter{FactionID: id}
+	}
+
+	var (
+		plots []*structs.Plot
+		token string
+		err   error
+	)
+
+	result := map[string]map[string]bool{}
 
 	for {
 		plots, token, err = f.Plots(token, pfilters...)

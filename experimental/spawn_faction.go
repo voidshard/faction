@@ -39,12 +39,12 @@ func main() {
 		panic(err)
 	}
 
-	land1 := &structs.LandRight{ID: structs.NewID(), AreaID: area1.ID, Commodity: premade.WHEAT, Yield: 120}
-	land2 := &structs.LandRight{ID: structs.NewID(), AreaID: area2.ID, Commodity: premade.WHEAT, Yield: 200}
-	land3 := &structs.LandRight{ID: structs.NewID(), AreaID: area2.ID, Commodity: premade.IRON_ORE, Yield: 20}
-	land4 := &structs.LandRight{ID: structs.NewID(), AreaID: area3.ID, Commodity: premade.WHEAT, Yield: 50}
-	land5 := &structs.LandRight{ID: structs.NewID(), AreaID: area3.ID, Commodity: premade.IRON_ORE, Yield: 500}
-	err = simulator.SetLandRights(land1, land2, land3, land4, land5)
+	land1 := &structs.Plot{ID: structs.NewID(), AreaID: area1.ID, Commodity: premade.WHEAT, Yield: 120}
+	land2 := &structs.Plot{ID: structs.NewID(), AreaID: area2.ID, Commodity: premade.WHEAT, Yield: 200}
+	land3 := &structs.Plot{ID: structs.NewID(), AreaID: area2.ID, Commodity: premade.IRON_ORE, Yield: 20}
+	land4 := &structs.Plot{ID: structs.NewID(), AreaID: area3.ID, Commodity: premade.WHEAT, Yield: 50}
+	land5 := &structs.Plot{ID: structs.NewID(), AreaID: area3.ID, Commodity: premade.IRON_ORE, Yield: 500}
+	err = simulator.SetPlots(land1, land2, land3, land4, land5)
 	if err != nil {
 		panic(err)
 	}
@@ -75,7 +75,8 @@ func main() {
 		fmt.Println("\t\tProfessions:", sum.Professions)
 		fmt.Println("\t\tActions:", sum.Actions)
 		fmt.Println("\t\tResearch:", sum.Research)
-		fmt.Println("\t\tResearchWeight:", sum.ResearchWeight)
 		fmt.Println("\t\tTrust:", sum.Trust)
+		fmt.Println("\t\tResearchProgress:", sum.ResearchProgress)
+		fmt.Println("\t\tRanks:", sum.Ranks)
 	}
 }

@@ -15,14 +15,15 @@ type FactionRank int
 
 // FactionRank denotes the rank of a person in a faction
 const (
-	FactionRankMemberAssosciate FactionRank = iota // barely a member
-	FactionRankMemberApprentice
-	FactionRankMemberNovice
-	FactionRankMemberJourneyman
-	FactionRankMemberAdept
-	FactionRankMemberExpert
-	FactionRankMemberMaster
-	FactionRankMemberGrandMaster
-	FactionRankMemberElder
-	FactionRankMemberRuler
+	FactionRankAssociate FactionRank = iota
+	FactionRankInitiate
+	FactionRankApprentice
+	FactionRankNovice
+	FactionRankJourneyman
+	FactionRankAdept
+	FactionRankExpert
+	FactionRankMaster
+	FactionRankGrandMaster
+	FactionRankElder
+	FactionRankRuler
 )

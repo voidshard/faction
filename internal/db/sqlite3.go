@@ -71,19 +71,13 @@ var (
 	    UNIQUE(government_id, meta_key, meta_val)
 	);`, tableLaws)
 
-	createLandRights = fmt.Sprintf(`CREATE TABLE IF NOT EXISTS %s (
-	    id VARCHAR(36) PRIMARY KEY,
-	    area_id VARCHAR(36) NOT NULL,
-	    faction_id VARCHAR(36) NOT NULL DEFAULT "",
-	    commodity VARCHAR(255) NOT NULL,
-	    yield INTEGER NOT NULL DEFAULT 0
-	);`, tableLandRights)
-
 	createPlots = fmt.Sprintf(`CREATE TABLE IF NOT EXISTS %s (
 	    id VARCHAR(36) PRIMARY KEY,
 	    area_id VARCHAR(36) NOT NULL,
 	    faction_id VARCHAR(36) NOT NULL DEFAULT "",
-	    size INTEGER NOT NULL DEFAULT 1
+	    size INTEGER NOT NULL DEFAULT 1,
+	    commodity VARCHAR(255) NOT NULL DEFAULT "",
+	    yield INTEGER NOT NULL DEFAULT 0
 	);`, tablePlots)
 
 	createRoutes = fmt.Sprintf(`CREATE TABLE IF NOT EXISTS %s (
@@ -179,9 +173,6 @@ var (
 		// we look up laws by the government id
 		fmt.Sprintf(`CREATE INDEX IF NOT EXISTS laws_government_id ON %s (government_id);`, tableLaws),
 
-		// we look up land rights by controlling faction
-		fmt.Sprintf(`CREATE INDEX IF NOT EXISTS land_rights_fact ON %s (faction_id);`, tableLandRights),
-
 		// we look up plots by their owner(s) in order to determine where faction(s) can perform actions
 		fmt.Sprintf(`CREATE INDEX IF NOT EXISTS plot_owner ON %s (faction_id);`, tablePlots),
 
@@ -264,7 +255,6 @@ func (s *Sqlite) createTables() error {
 		createPlots,
 		createGovernments,
 		createLaws,
-		createLandRights,
 		createRoutes,
 		createJobs,
 		createFamilies,

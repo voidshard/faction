@@ -24,25 +24,10 @@ type Simulation interface {
 	// SetAreas upserts area(s).
 	SetAreas(a ...*structs.Area) error
 
-	// SetLandRights upserts land rights.
-	//
-	// A land right is the legally awarded right to work some particular resource
-	// in a given area.
-	SetLandRights(l ...*structs.LandRight) error
-
 	// SetPlots upserts plot(s).
 	//
-	// Plots here refers to plots of land / buildings. Some centre of operations
-	// for the faction in a given area that isn't associated with a LandRight.
-	// (ie. a factory for smelting iron ore into ingots, a shop for selling produce).
-	//
-	// The other distinction here; a landright represents a limited resource
-	// which is ultimately controlled by a government (who can grant / revoke rights)
-	// where as a plot is something a faction can own privately, which a government
-	// doesn't have any particular rights over.
-	//
-	// A faction can go out & buy a plot assuming it has enough money, but one
-	// must lobby / bribe / otherwise deal with the govt to get a land right.
+	// Plots might be a single building, land + buildings, an open tract of land
+	// or a combination of the above.
 	SetPlots(p ...*structs.Plot) error
 
 	// SetRoutes upserts links between two areas
@@ -94,16 +79,12 @@ type Simulation interface {
 	// - If you're aiming for unevenly distributed population centres (ie. large cities)
 	// then probably you want to call this again for those (or dedicate a call for each).
 	// - The people count here is the number of people we want *alive* at the end
-	// we can create more people than this; as we sometimes create people dead (as part
-	// of a family) in order to simulate some past family tragedy or something.
-	//
-	// TODO: consider a func to determine current demographics given an area id(s)
+	// we can create more people than this; as we sometimes create people dead
+	// in order to simulate some past family tragedy or something.
 	SpawnPopulace(people int, demo *config.Demographics, areas ...string) error
 
-	// Read demographics for the given area(s).
-	FaithDemographics(areas ...string) (map[string]*structs.DemographicStats, error)
-	ProfessionDemographics(areas ...string) (map[string]*structs.DemographicStats, error)
-	AffiliationDemographics(areas ...string) (map[string]*structs.DemographicStats, error)
+	// Demographics for the given area(s).
+	Demographics(areas ...string) (*structs.Demographics, error)
 
 	// InspireFactionAffiliation will assign faction affliations to people with some probability.
 	//
@@ -119,7 +100,7 @@ type Simulation interface {
 	// be less.
 	//
 	// Factions only inspire affiliation in areas they have influence (they must control
-	// a Plot [building] or LandRight [land + work rights] in the area).
+	// a Plot at least).
 	//
 	// (To recap: people are more like to work for factions with whom they have high
 	// affiliation. People gain affiliation working for a given faction. The people

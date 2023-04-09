@@ -14,4 +14,18 @@ type Plot struct {
 	FactionID string `db:"faction_id"` // the owner
 
 	Size int `db:"size"` // in land units
+
+	// Commodity that can be harvested from this land (if any)
+	Commodity string `db:"commodity"`
+
+	// Yield of the resource, ie how many "units" of `resource` are produced
+	// (or expected to be produced) from this land.
+	//
+	// (If Commodity is set, otherwise this is 0).
+	//
+	// Nb. this land could be a small but super productive area, or a
+	// massive expanse. It doesn't really matter .. all we mean here is that
+	// this land is productive for a given purpose, and can be owned & run
+	// by a faction.
+	Yield int `db:"yield"`
 }

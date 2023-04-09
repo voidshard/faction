@@ -231,15 +231,26 @@ func setPlots(op sqlOperator, in []*structs.Plot) error {
 		if f.FactionID != "" && !dbutils.IsValidID(f.FactionID) {
 			return fmt.Errorf("plot faction id %s is invalid", f.FactionID)
 		}
+		if f.Commodity == "" {
+			f.Yield = 0
+		}
+		if f.Yield < 0 {
+			f.Yield = 0
+		}
+		if f.Size < 1 {
+			f.Size = 1
+		}
 	}
 
 	qstr := fmt.Sprintf(`INSERT INTO %s (
-	    id, area_id, faction_id, size
+	    id, area_id, faction_id, size, commodity, yield
 	) VALUES (
-	    :id, :area_id, :faction_id, :size
+	    :id, :area_id, :faction_id, :size, :commodity, :yield
 	) ON CONFLICT (id) DO UPDATE SET 
 	    faction_id=EXCLUDED.faction_id,
-	    size=EXCLUDED.size
+	    size=EXCLUDED.size,
+	    commodity=EXCLUDED.commodity,
+	    yield=EXCLUDED.yield
 	;`, tablePlots)
 
 	_, err := op.NamedExec(qstr, in)
@@ -361,57 +372,6 @@ func setPeople(op sqlOperator, in []*structs.Person) error {
 	    death_meta_key=EXCLUDED.death_meta_key,
 	    death_meta_val=EXCLUDED.death_meta_val
 	;`, tablePeople)
-
-	_, err := op.NamedExec(qstr, in)
-	return err
-}
-
-func landRights(op sqlOperator, token string, in []*LandRightFilter) ([]*structs.LandRight, string, error) {
-	tk, err := dbutils.ParseToken(token)
-	if err != nil {
-		return nil, token, err
-	}
-
-	q, args := sqlFromLandRightFilters(tk, in)
-
-	var out []*structs.LandRight
-	err = op.Select(&out, q, args...)
-	if err != nil {
-		return nil, token, err
-	}
-
-	return out, nextToken(tk, len(out)), nil
-}
-
-func setLandRights(op sqlOperator, in []*structs.LandRight) error {
-	if len(in) == 0 {
-		return nil
-	}
-
-	for _, f := range in {
-		if !dbutils.IsValidID(f.ID) {
-			return fmt.Errorf("land right id %s is invalid", f.ID)
-		}
-		if f.FactionID != "" && !dbutils.IsValidID(f.FactionID) {
-			return fmt.Errorf("land right faction id %s is invalid", f.FactionID)
-		}
-		if !dbutils.IsValidID(f.AreaID) {
-			return fmt.Errorf("land right area id %s is invalid", f.AreaID)
-		}
-		if f.Yield < 0 {
-			f.Yield = 0
-		}
-	}
-
-	qstr := fmt.Sprintf(`INSERT INTO %s (
-	    id, faction_id, area_id, commodity, yield
-	) VALUES (
-	    :id, :faction_id, :area_id, :commodity, :yield
-	) ON CONFLICT (id) DO UPDATE SET
-	    faction_id = EXCLUDED.faction_id,
-	    commodity = EXCLUDED.commodity,
-	    yield = EXCLUDED.yield
-	;`, tableLandRights)
 
 	_, err := op.NamedExec(qstr, in)
 	return err

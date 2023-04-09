@@ -28,7 +28,7 @@ type Economy interface {
 	// The returned value is some number representing how good the yield is.
 	// Ie. 1.0 is average, 2.0 is double, 0.5 is half, etc.
 	//
-	// This together with LandRight (Area - Commodity - Yield) is used to determine
+	// This together with Plot (Area - Commodity - Yield) is used to determine
 	// how successful a venture (harvest / craft) is.
 	CommodityYield(commodity, area string, ticks, professionSkill int) float64
 

@@ -78,7 +78,7 @@ func (s *simulationImpl) FactionSummaries(in ...string) ([]*structs.FactionSumma
 // Nb.
 //   - people can gain affiliation with all given factions, or none.
 //   - people can only gain affiliation if they're in areas where the factions have influence
-//     (ie. they control a Plot(s) or LandRight(s))
+//     (ie. they control a Plot(s))
 //   - if you want finer grain control, consider calling this on a per-faction basis,
 //     we're strictly doing inserts so it should be fine to call simultaneously.
 func (s *simulationImpl) InspireFactionAffiliation(factions []*structs.Faction, affdist *config.Distribution, probability, minEthosDist, maxEthosDist float64) error {
@@ -200,12 +200,6 @@ func (s *simulationImpl) SetPlots(in ...*structs.Plot) error {
 	})
 }
 
-func (s *simulationImpl) SetLandRights(in ...*structs.LandRight) error {
-	return s.dbconn.InTransaction(func(tx db.ReaderWriter) error {
-		return tx.SetLandRights(in...)
-	})
-}
-
 func (s *simulationImpl) SetGovernments(in ...*structs.Government) error {
 	return s.dbconn.InTransaction(func(tx db.ReaderWriter) error {
 		return tx.SetGovernments(in...)
@@ -240,28 +234,6 @@ func (s *simulationImpl) Tick() (tick int, err error) {
 	return
 }
 
-func (s *simulationImpl) FaithDemographics(areas ...string) (map[string]*structs.DemographicStats, error) {
-	return s.singleDemographic(db.RelationPersonReligionFaith, areas)
-}
-
-func (s *simulationImpl) ProfessionDemographics(areas ...string) (map[string]*structs.DemographicStats, error) {
-	return s.singleDemographic(db.RelationPersonProfessionSkill, areas)
-}
-
-func (s *simulationImpl) AffiliationDemographics(areas ...string) (map[string]*structs.DemographicStats, error) {
-	return s.singleDemographic(db.RelationPersonFactionAffiliation, areas)
-}
-
-// singleDemographic is a helper function that returns a single demographic, which is essentially a
-// weaker version of our internal func.
-//
-// Internally we can collect more and different stats for internal use, but externally we keep things
-// a bit neater, less dangerous and hide internal details.
-func (s *simulationImpl) singleDemographic(r db.Relation, areas []string) (map[string]*structs.DemographicStats, error) {
-	stats, err := s.dbconn.Demographics([]db.Relation{r}, &db.DemographicQuery{Areas: areas})
-	if err != nil {
-		return nil, err
-	}
-	res, _ := stats[r]
-	return res, nil
+func (s *simulationImpl) Demographics(areas ...string) (*structs.Demographics, error) {
+	return s.dbconn.Demographics(&db.DemographicQuery{Areas: areas})
 }

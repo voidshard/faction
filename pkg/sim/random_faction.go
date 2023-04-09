@@ -53,7 +53,6 @@ type metaFaction struct {
 	faction         *structs.Faction
 	actions         []structs.ActionType
 	actionWeights   []*structs.Tuple
-	land            []*structs.LandRight
 	plots           []*structs.Plot
 	profWeights     []*structs.Tuple
 	researchWeights []*structs.Tuple
@@ -150,7 +149,7 @@ func (fr *factionRand) randResearch(f *metaFaction, count int) []*structs.Tuple 
 	return weights
 }
 
-func (fr *factionRand) randLandForGuild(g *config.Guild) []*structs.LandRight {
+func (fr *factionRand) randLandForGuild(g *config.Guild) []*structs.Plot {
 	options, ok := fr.yieldRand.professionLand[g.Profession]
 	if !ok {
 		return nil
@@ -207,10 +206,10 @@ func (fr *factionRand) recalcGuildProb() {
 func (s *simulationImpl) SpawnFactions(count int, cfg *config.Faction, areas ...string) ([]*structs.Faction, error) {
 	// prep some filters
 	arf := []*db.AreaFilter{}
-	lrf := []*db.LandRightFilter{}
+	lrf := []*db.PlotFilter{}
 	for _, area := range areas {
 		arf = append(arf, &db.AreaFilter{ID: area})
-		lrf = append(lrf, &db.LandRightFilter{AreaID: area})
+		lrf = append(lrf, &db.PlotFilter{AreaID: area, HasCommodity: true})
 	}
 
 	// what land is good for what / who
@@ -301,10 +300,6 @@ func writeMetaFaction(conn *db.FactionDB, f *metaFaction) error {
 		if err != nil {
 			return err
 		}
-		err = tx.SetLandRights(f.land...)
-		if err != nil {
-			return err
-		}
 		err = tx.SetPlots(f.plots...)
 		if err != nil {
 			return err
@@ -347,7 +342,6 @@ func (s *simulationImpl) randFaction(fr *factionRand) *metaFaction {
 		},
 		actions:         []structs.ActionType{},
 		actionWeights:   []*structs.Tuple{},
-		land:            []*structs.LandRight{},
 		plots:           []*structs.Plot{},
 		profWeights:     []*structs.Tuple{},
 		researchWeights: []*structs.Tuple{},
@@ -437,7 +431,7 @@ func (s *simulationImpl) randFaction(fr *factionRand) *metaFaction {
 			}
 			mf.areas[land.AreaID] = true
 		}
-		mf.land = append(mf.land, landrights...)
+		mf.plots = append(mf.plots, landrights...)
 		professions = append(professions, guild.Profession)
 	}
 
@@ -477,7 +471,7 @@ func (s *simulationImpl) randFaction(fr *factionRand) *metaFaction {
 	}
 
 	// give faction land if we're still below the min
-	for i := len(mf.land); i < fr.propertyCount.Int()+1; i++ {
+	for i := len(mf.plots); i < fr.propertyCount.Int()+1; i++ {
 		area := fr.areas[fr.rng.Intn(len(fr.areas))]
 		mf.plots = append(mf.plots, &structs.Plot{
 			ID:        structs.NewID(),
@@ -495,8 +489,6 @@ func (s *simulationImpl) randFaction(fr *factionRand) *metaFaction {
 	// pick a headquarters
 	switch len(mf.plots) {
 	case 0:
-		mf.faction.HomeAreaID = mf.land[fr.rng.Intn(len(mf.land))].AreaID
-	case 1:
 		mf.faction.HomeAreaID = mf.plots[0].AreaID
 	default:
 		mf.faction.HomeAreaID = mf.plots[fr.rng.Intn(len(mf.plots))].AreaID

@@ -7,29 +7,29 @@ import (
 )
 
 type yieldRand struct {
-	professionYield map[string]int                  // profession -> yield
-	professionLand  map[string][]*structs.LandRight // profession -> land
+	professionYield map[string]int             // profession -> yield
+	professionLand  map[string][]*structs.Plot // profession -> land
 }
 
 func newYieldRand() *yieldRand {
 	return &yieldRand{
 		professionYield: map[string]int{},
-		professionLand:  map[string][]*structs.LandRight{},
+		professionLand:  map[string][]*structs.Plot{},
 	}
 }
 
 // areaYields returns the total yield of all land in the given areas, used to
 // determine guild type factions.
-func (s *simulationImpl) areaYields(in []*db.LandRightFilter, includeOwned bool) (*yieldRand, error) {
+func (s *simulationImpl) areaYields(in []*db.PlotFilter, includeOwned bool) (*yieldRand, error) {
 	var (
-		land  []*structs.LandRight
+		land  []*structs.Plot
 		token string
 		err   error
 	)
 
 	yield := newYieldRand()
 	for {
-		land, token, err = s.dbconn.LandRights(token, in...)
+		land, token, err = s.dbconn.Plots(token, in...)
 		if err != nil {
 			return nil, err
 		}
@@ -55,7 +55,7 @@ func (s *simulationImpl) areaYields(in []*db.LandRightFilter, includeOwned bool)
 
 			lands, ok := yield.professionLand[prof]
 			if !ok {
-				lands = []*structs.LandRight{}
+				lands = []*structs.Plot{}
 			}
 			yield.professionLand[prof] = append(lands, lr)
 		}

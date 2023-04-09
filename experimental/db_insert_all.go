@@ -39,11 +39,11 @@ func main() {
 		IsGovernment: true,
 	}
 
-	landright1 := &structs.LandRight{
-		ID: structs.NewID(), AreaID: area2.ID, FactionID: faction1.ID, Commodity: "apples",
+	plotland1 := &structs.Plot{
+		ID: structs.NewID(), AreaID: area2.ID, FactionID: faction1.ID, Commodity: "apples", Yield: 10,
 	}
-	landright2 := &structs.LandRight{
-		ID: structs.NewID(), AreaID: area1.ID, FactionID: faction1.ID, Commodity: "fur",
+	plotland2 := &structs.Plot{
+		ID: structs.NewID(), AreaID: area1.ID, FactionID: faction1.ID, Commodity: "fur", Yield: 5,
 	}
 
 	route1 := &structs.Route{SourceAreaID: area1.ID, TargetAreaID: area2.ID, TravelTime: 3}  // downhill
@@ -164,10 +164,6 @@ func main() {
 	errRollback(err)
 	fmt.Println("Areas set")
 
-	err = tx.SetLandRights(landright1, landright2)
-	errRollback(err)
-	fmt.Println("Land rights set")
-
 	err = tx.SetRoutes(route1, route2)
 	errRollback(err)
 	fmt.Println("Routes set")
@@ -188,7 +184,7 @@ func main() {
 	errRollback(err)
 	fmt.Println("Families set")
 
-	err = tx.SetPlots(plot1)
+	err = tx.SetPlots(plot1, plotland1, plotland2)
 	errRollback(err)
 	fmt.Println("Plots set")
 

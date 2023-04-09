@@ -15,7 +15,6 @@ const (
 	tableGovernments = "governments"
 	tableLaws        = "laws"
 	tableJobs        = "jobs"
-	tableLandRights  = "landrights"
 	tablePeople      = "people"
 	tableRoutes      = "routes"
 	tablePlots       = "plots"
@@ -62,10 +61,6 @@ func (s *sqlDB) Routes(token string, in ...*RouteFilter) ([]*structs.Route, stri
 
 func (s *sqlDB) People(token string, in ...*PersonFilter) ([]*structs.Person, string, error) {
 	return people(s.conn, token, in)
-}
-
-func (s *sqlDB) LandRights(token string, in ...*LandRightFilter) ([]*structs.LandRight, string, error) {
-	return landRights(s.conn, token, in)
 }
 
 func (s *sqlDB) Jobs(token string, in ...*JobFilter) ([]*structs.Job, string, error) {
@@ -161,10 +156,6 @@ func (t *sqlTx) People(token string, in ...*PersonFilter) ([]*structs.Person, st
 	return people(t.tx, token, in)
 }
 
-func (t *sqlTx) LandRights(token string, in ...*LandRightFilter) ([]*structs.LandRight, string, error) {
-	return landRights(t.tx, token, in)
-}
-
 func (t *sqlTx) Jobs(token string, in ...*JobFilter) ([]*structs.Job, string, error) {
 	return jobs(t.tx, token, in)
 }
@@ -207,10 +198,6 @@ func (t *sqlTx) SetRoutes(routes ...*structs.Route) error {
 
 func (t *sqlTx) SetPeople(people ...*structs.Person) error {
 	return setPeople(t.tx, people)
-}
-
-func (t *sqlTx) SetLandRights(landRights ...*structs.LandRight) error {
-	return setLandRights(t.tx, landRights)
 }
 
 func (t *sqlTx) SetJobs(jobs ...*structs.Job) error {

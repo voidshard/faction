@@ -39,12 +39,32 @@ type Faction struct {
 	ParentFactionRelation FactionRelation `db:"parent_faction_relation"` // relation to parent faction (if any)
 }
 
+// FactionSummary is a high level overview of a faction, including related tuples
+// (weights), information on current faction leadership (Ranks) and any research (ResearchProgress).
 type FactionSummary struct {
 	Faction
 
-	Professions    map[string]int
-	Actions        map[ActionType]int
-	Research       map[string]int
-	ResearchWeight map[string]int
-	Trust          map[string]int
+	// ammassed research (per topic)
+	ResearchProgress map[string]int
+
+	// weights
+	Professions map[string]int
+	Actions     map[ActionType]int
+	Research    map[string]int
+	Trust       map[string]int
+
+	// counts of people in each rank
+	Ranks *DemographicRankSpread
+}
+
+func NewFactionSummary(f *Faction) *FactionSummary {
+	return &FactionSummary{
+		Faction:          *f,
+		ResearchProgress: map[string]int{},
+		Professions:      map[string]int{},
+		Actions:          map[ActionType]int{},
+		Research:         map[string]int{},
+		Trust:            map[string]int{},
+		Ranks:            &DemographicRankSpread{},
+	}
 }

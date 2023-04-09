@@ -242,46 +242,6 @@ func sqlFromRouteFilters(tk *dbutils.IterToken, in []*RouteFilter) (string, []in
 	), append(args, tk.Limit, tk.Offset)
 }
 
-func sqlFromLandRightFilters(tk *dbutils.IterToken, in []*LandRightFilter) (string, []interface{}) {
-	var (
-		ors   []string
-		args  []interface{}
-		where string
-	)
-
-	for _, f := range in {
-		ands := []string{}
-
-		if dbutils.IsValidID(f.ID) {
-			args = append(args, f.ID)
-			ands = append(ands, fmt.Sprintf("id = $%d", len(args)))
-		}
-		if dbutils.IsValidID(f.FactionID) {
-			args = append(args, f.FactionID)
-			ands = append(ands, fmt.Sprintf("faction_id = $%d", len(args)))
-		}
-
-		if len(ands) > 0 {
-			ors = append(ors, "("+strings.Join(ands, " AND ")+")")
-		}
-	}
-
-	if len(ors) > 0 {
-		where = "WHERE " + strings.Join(ors, " OR ")
-	}
-
-	return fmt.Sprintf(`SELECT id,
-		area_id,
-		faction_id,
-		commodity,
-		yield
-	    FROM %s %s
-	    ORDER BY id LIMIT $%d OFFSET $%d;`,
-		tableLandRights, where,
-		len(args)+1, len(args)+2,
-	), append(args, tk.Limit, tk.Offset)
-}
-
 func sqlFromJobFilters(tk *dbutils.IterToken, in []*JobFilter) (string, []interface{}) {
 	var (
 		ors   []string
@@ -522,6 +482,9 @@ func sqlFromPlotFilters(tk *dbutils.IterToken, in []*PlotFilter) (string, []inte
 			args = append(args, f.AreaID)
 			ands = append(ands, fmt.Sprintf("area_id = $%d", len(args)))
 		}
+		if f.HasCommodity {
+			ands = append(ands, "(commodity <> '')")
+		}
 
 		if len(ands) > 0 {
 			ors = append(ors, fmt.Sprintf("(%s)", strings.Join(ands, " AND ")))
@@ -533,7 +496,7 @@ func sqlFromPlotFilters(tk *dbutils.IterToken, in []*PlotFilter) (string, []inte
 	}
 
 	return fmt.Sprintf(`SELECT
-		id, area_id, faction_id, size
+		id, area_id, faction_id, size, commodity, yield
 	    FROM %s
 	    %s
 	    ORDER BY id LIMIT $%d OFFSET $%d;`,

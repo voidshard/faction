@@ -17,16 +17,4 @@ type LandRight struct {
 
 	// Area ID
 	AreaID string `db:"area_id"`
-
-	// Commodity that can be harvested from this land
-	Commodity string `db:"commodity"`
-
-	// Yield of the resource, ie how many "units" of `resource` are produced
-	// (or expected to be produced) from this land.
-	//
-	// Nb. this land could be a small but super productive area, or a
-	// massive expanse. It doesn't really matter .. all we mean here is that
-	// this land is productive for a given purpose, and can be owned & run
-	// by a faction.
-	Yield int `db:"yield"`
 }

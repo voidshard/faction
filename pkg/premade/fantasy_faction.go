@@ -24,13 +24,13 @@ func FactionFantasy() *config.Faction {
 		},
 		Wealth: config.Distribution{
 			// min here is around the base land value
-			Min:       120000000,  // 12,000 gp
-			Max:       1000000000, // 100,000 gp
-			Mean:      15000000,   // 15,000 gp
-			Deviation: 900000000,  // 90,000 gp
+			Min:       20000000,  // 2,000 gp
+			Max:       200000000, // 20,000 gp
+			Mean:      12000000,  // 12,000 gp
+			Deviation: 100000000, // 10,000 gp
 		},
 		Cohesion: config.Distribution{
-			Min:       8000,
+			Min:       8000, // higher min to begin with so factions don't immediately split
 			Max:       10000,
 			Mean:      9000,
 			Deviation: 1000,
@@ -71,7 +71,7 @@ func FactionFantasy() *config.Faction {
 				Actions: []structs.ActionType{ // hedonists
 					structs.ActionTypeFestival,
 				},
-				Probability: 0.10,
+				Probability: 0.05,
 				Weight: config.Distribution{
 					Min:       1000,
 					Max:       5000,
@@ -90,7 +90,7 @@ func FactionFantasy() *config.Faction {
 					structs.ActionTypeBribe,
 					structs.ActionTypeRaid,
 				},
-				Probability: 0.10,
+				Probability: 0.02,
 				Weight: config.Distribution{
 					Min:       1000,
 					Max:       5000,
@@ -196,7 +196,7 @@ func FactionFantasy() *config.Faction {
 					structs.ActionTypeKidnap,
 					structs.ActionTypeConcealSecrets,
 				},
-				Probability: 0.2,
+				Probability: 0.06,
 				Weight: config.Distribution{
 					Min:       1000,
 					Max:       5000,
@@ -213,7 +213,7 @@ func FactionFantasy() *config.Faction {
 					structs.ActionTypeBribe,
 					structs.ActionTypeBlackmail,
 				},
-				Probability: 0.2,
+				Probability: 0.1,
 				Weight: config.Distribution{
 					Min:       1500,
 					Max:       5500,
@@ -230,7 +230,7 @@ func FactionFantasy() *config.Faction {
 					structs.ActionTypeSpreadRumors,
 					structs.ActionTypePropoganda,
 				},
-				Probability: 0.2,
+				Probability: 0.15,
 				Weight: config.Distribution{
 					Min:       2500,
 					Max:       6500,
@@ -331,14 +331,14 @@ func FactionFantasy() *config.Faction {
 			METALLURGY:   0.04,
 			PHILOSOPHY:   0.1,
 			MEDICINE:     0.1,
-			MATHEMATICS:  0.08,
+			MATHEMATICS:  0.03,
 			LITERATURE:   0.02,
 			LAW:          0.1,
 			ARCHITECTURE: 0.04,
 			THEOLOGY:     0.06,
 			MAGIC_ARCANA: 0.15,
-			MAGIC_OCCULT: 0.04,
-			ALCHEMY:      0.05,
+			MAGIC_OCCULT: 0.03,
+			ALCHEMY:      0.03,
 		},
 	}
 }
