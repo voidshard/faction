@@ -132,6 +132,9 @@ var (
 	    birth_tick INTEGER NOT NULL DEFAULT 1,
 	    death_tick INTEGER NOT NULL DEFAULT 0,
 	    is_male BOOLEAN NOT NULL DEFAULT FALSE,
+	    is_child BOOLEAN NOT NULL DEFAULT FALSE,
+	    preferred_profession VARCHAR(255) NOT NULL DEFAULT "",
+	    preferred_faction_id VARCHAR(36) NOT NULL DEFAULT "",
 	    death_meta_reason TEXT NOT NULL DEFAULT "",
 	    death_meta_key VARCHAR(255) NOT NULL DEFAULT "",
 	    death_meta_val VARCHAR(255) NOT NULL DEFAULT ""
@@ -182,18 +185,10 @@ var (
 		// families we mostly run over to see if we need to add children on a tick, so area + child_bearing
 		fmt.Sprintf(`CREATE INDEX IF NOT EXISTS fam_child_bearing ON %s (area_id, is_child_bearing);`, tableFamilies),
 
-		// people is a big one; we need to hunt for people who; are in an area, are not employed
-		// and have some set of ethos values (matching a faction's job)
-		fmt.Sprintf(`CREATE INDEX IF NOT EXISTS peo_area_ethos ON %s (
-		    area_id, 
-		    job_id,
-		    ethos_altruism,
-		    ethos_ambition,
-		    ethos_tradition,
-		    ethos_pacifism,
-		    ethos_piety,
-		    ethos_caution
-		);`, tablePeople),
+		// hunt for people in given areas, by job, or their preferred_profession & area
+		fmt.Sprintf(`CREATE INDEX IF NOT EXISTS peo_area ON %s (area_id);`, tablePeople),
+		fmt.Sprintf(`CREATE INDEX IF NOT EXISTS peo_prof ON %s (area_id, preferred_profession);`, tablePeople),
+		fmt.Sprintf(`CREATE INDEX IF NOT EXISTS peo_job ON %s (job_id);`, tablePeople),
 
 		// factions we really only look up either by ID, by action_frequency or by government
 		fmt.Sprintf(`CREATE INDEX IF NOT EXISTS fact_government ON %s (government_id);`, tableFactions),

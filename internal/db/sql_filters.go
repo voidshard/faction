@@ -533,12 +533,23 @@ func sqlFromPersonFilters(tk *dbutils.IterToken, in []*PersonFilter) (string, []
 			args = append(args, f.BirthFamilyID)
 			ands = append(ands, fmt.Sprintf("birth_family_id = $%d", len(args)))
 		}
+		if dbutils.IsValidID(f.PreferredFactionID) {
+			args = append(args, f.PreferredFactionID)
+			ands = append(ands, fmt.Sprintf("preferred_faction_id = $%d", len(args)))
+		}
+		if f.PreferredProfession != "" {
+			args = append(args, f.PreferredProfession)
+			ands = append(ands, fmt.Sprintf("preferred_profession = $%d", len(args)))
+		}
 		if f.Race != "" {
 			args = append(args, f.Race)
 			ands = append(ands, fmt.Sprintf("race = $%d", len(args)))
 		}
 		if !f.IncludeDead { // add this by default
 			ands = append(ands, fmt.Sprintf("death_tick > 0"))
+		}
+		if !f.IncludeChildren { // add this by default
+			ands = append(ands, fmt.Sprintf("is_child = 'FALSE'"))
 		}
 		if f.MinEthos != nil {
 			args = append(args, f.MinEthos.Altruism)
@@ -579,15 +590,13 @@ func sqlFromPersonFilters(tk *dbutils.IterToken, in []*PersonFilter) (string, []
 	}
 
 	return fmt.Sprintf(`SELECT
-		    id,
-		    birth_family_id,
+		    id, birth_family_id,
 		    first_name, last_name,
 		    ethos_altruism, ethos_ambition, ethos_tradition, ethos_pacifism, ethos_piety, ethos_caution,
-		    area_id,
-		    job_id,
-		    birth_tick,
-		    death_tick,
-		    is_male,
+		    area_id, job_id,
+		    preferred_profession, preferred_faction_id,
+		    birth_tick, death_tick,
+		    is_male, is_child,
 		    death_meta_reason, death_meta_key, death_meta_val
 		FROM %s
 		%s

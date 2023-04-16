@@ -111,6 +111,14 @@ func (s *simulationImpl) randFaith(dice *demographicsRand, subject string) []*st
 	return data
 }
 
+// randProfession returns a slice of tuples representing a person's skills at various professions.
+// The first tuple is the person's preferred profession, which isn't necessarily what they're
+// *best* at, but what they probably want to do.
+//
+// TODO: we should weight this based on personal ethos, currently we assume what they're best
+// at weighted heavily towards (*2) non side professions (ie. more dedicated / high skill trades).
+// That is, we assume the 'side professions' are what someone worked at when younger, does in order
+// to cover costs or whatever while training for their desired profession.
 func (s *simulationImpl) randProfession(dice *demographicsRand, subject string) []*structs.Tuple {
 	data := []*structs.Tuple{}
 
@@ -118,6 +126,10 @@ func (s *simulationImpl) randProfession(dice *demographicsRand, subject string) 
 	if count <= 0 {
 		return data
 	}
+
+	// preferred profession / trade
+	score := -1
+	preferrence := -1
 
 	hasPrimaryProfession := false
 	for i := 0; i < count*2; i++ {
@@ -129,10 +141,26 @@ func (s *simulationImpl) randProfession(dice *demographicsRand, subject string) 
 
 		profDice := dice.professionLevel[prof.Name]
 
-		data = append(data, &structs.Tuple{Subject: subject, Object: prof.Name, Value: profDice.Int()})
+		last := &structs.Tuple{Subject: subject, Object: prof.Name, Value: profDice.Int()}
+
+		newScore := last.Value
+		if !prof.ValidSideProfession { // implies dedicated trade
+			newScore *= 2
+		}
+		if newScore > score {
+			score = newScore
+			preferrence = len(data) - 1 // preferred profession index
+		}
+
+		data = append(data, last)
 		if len(data) >= count {
 			break
 		}
+	}
+
+	if preferrence > 0 {
+		// move preffered role to the front
+		data[0], data[preferrence] = data[preferrence], data[0]
 	}
 
 	return data
@@ -156,11 +184,19 @@ func (s *simulationImpl) spawnFamily(dice *demographicsRand, areaID string) *met
 	}
 	mp.families = append(mp.families, family)
 
+	skills := s.randProfession(dice, mum.ID)
+	if len(skills) > 0 {
+		mp.skills = append(mp.skills, skills...)
+		mum.PreferredProfession = skills[0].Object
+	}
+	skills = s.randProfession(dice, dad.ID)
+	if len(skills) > 0 {
+		mp.skills = append(mp.skills, skills...)
+		dad.PreferredProfession = skills[0].Object
+	}
+
 	mumFaiths := s.randFaith(dice, mum.ID)
 	dadFaiths := s.randFaith(dice, dad.ID)
-
-	mp.skills = append(mp.skills, s.randProfession(dice, mum.ID)...)
-	mp.skills = append(mp.skills, s.randProfession(dice, dad.ID)...)
 	mp.faith = append(mp.faith, mumFaiths...)
 	mp.faith = append(mp.faith, dadFaiths...)
 
@@ -168,7 +204,11 @@ func (s *simulationImpl) spawnFamily(dice *demographicsRand, areaID string) *met
 	if havingAffair {
 		affair := s.randPerson(dice, areaID)
 		mp.adults = append(mp.adults, affair)
-		mp.skills = append(mp.skills, s.randProfession(dice, affair.ID)...)
+		skills = s.randProfession(dice, affair.ID)
+		if len(skills) > 0 {
+			mp.skills = append(mp.skills, skills...)
+			affair.PreferredProfession = skills[0].Object
+		}
 		mp.faith = append(mp.faith, s.randFaith(dice, affair.ID)...)
 		if affair.IsMale {
 			mp.relations = append(
@@ -202,6 +242,7 @@ func (s *simulationImpl) spawnFamily(dice *demographicsRand, areaID string) *met
 
 		child := s.randPerson(dice, areaID)
 		child.Ethos = *structs.EthosAverage(&child.Ethos, &mum.Ethos, &dad.Ethos) // average out parents
+		child.IsChild = true
 
 		child.BirthTick = -1 * dice.rng.Intn(5) // TODO: add config around this
 		if child.BirthTick < mum.BirthTick {
@@ -362,7 +403,11 @@ func (s *simulationImpl) SpawnPopulace(desiredTotal int, demo *config.Demographi
 						person := s.randPerson(dice, areaID)
 						mp.adults = append(mp.adults, person)
 
-						mp.skills = append(mp.skills, s.randProfession(dice, person.ID)...)
+						skills := s.randProfession(dice, person.ID)
+						if len(skills) > 0 {
+							mp.skills = append(mp.skills, skills...)
+							person.PreferredProfession = skills[0].Object
+						}
 						mp.faith = append(mp.faith, s.randFaith(dice, person.ID)...)
 
 						if dice.rng.Float64() < demo.DeathAdultMortalityProbability {
@@ -380,7 +425,11 @@ func (s *simulationImpl) SpawnPopulace(desiredTotal int, demo *config.Demographi
 						lover.IsMale = !person.IsMale
 
 						mp.adults = append(mp.adults, lover)
-						mp.skills = append(mp.skills, s.randProfession(dice, lover.ID)...)
+						skills = s.randProfession(dice, lover.ID)
+						if len(skills) > 0 {
+							mp.skills = append(mp.skills, skills...)
+							lover.PreferredProfession = skills[0].Object
+						}
 						mp.faith = append(mp.faith, s.randFaith(dice, lover.ID)...)
 
 						rel := structs.PersonalRelationLover

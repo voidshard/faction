@@ -18,9 +18,13 @@ type Person struct {
 	BirthTick int `db:"birth_tick"`
 	DeathTick int `db:"death_tick"`
 
-	IsMale bool `db:"is_male"`
+	IsMale  bool `db:"is_male"`
+	IsChild bool `db:"is_child"` // person is too young for much of anything
 
 	DeathMetaReason string  `db:"death_meta_reason"`
 	DeathMetaKey    MetaKey `db:"death_meta_key"`
 	DeathMetaVal    string  `db:"death_meta_val"`
+
+	PreferredProfession string `db:"preferred_profession"` // ie. what they want to do for a living
+	PreferredFactionID  string `db:"preferred_faction_id"` // ie. who they want to work for
 }

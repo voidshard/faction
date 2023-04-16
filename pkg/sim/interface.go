@@ -64,6 +64,7 @@ type Simulation interface {
 	SpawnFactions(number int, f *config.Faction, areas ...string) ([]*structs.Faction, error)
 
 	// FactionSummaries returns a summary of the given faction(s).
+	//
 	// These can contain a lot of data, so it's probably best to limit the number of factions
 	// you pass in here.
 	FactionSummaries(factionIDs ...string) ([]*structs.FactionSummary, error)
@@ -87,27 +88,13 @@ type Simulation interface {
 	Demographics(areas ...string) (*structs.Demographics, error)
 
 	// InspireFactionAffiliation will assign faction affliations to people with some probability.
+	// This ties together a lot of information & is expensive to compute.
 	//
-	// [Setup Function] To grant people initial affiliation to factions.
+	// If the faction is a religion or has a religion, then faith is also added.
 	//
-	// The affiliation level is dictated by (min, max, mean, deviation).
-	// If someone gains affiliation is controlled by (probability, minEthosDistance, maxEthosDistance).
-	//
-	// Ethos distance is defined in pkg/structs/ethos.go - in short a distance of 0-100 is very close;
-	// it means across all ethics the person is very similar to the factions, differing by at most half
-	// (-100 -> 100) on one ethic. For very loose / non extreme factions probably higher max ethos
-	// distances are ok. For super tight nit cult type factions, the max ethos distance should probably
-	// be less.
-	//
-	// Factions only inspire affiliation in areas they have influence (they must control
-	// a Plot at least).
-	//
-	// (To recap: people are more like to work for factions with whom they have high
-	// affiliation. People gain affiliation working for a given faction. The people
-	// with the highest Affiliation are considered the faction leader(s)).
-	//
-	// If the faction is a religion or has a religion, then faith is also added for the person.
-	//	InspireFactionAffiliation(in []*structs.Faction, px *config.Distribution, probability, minEthosDistance, maxEthosDistance float64) error
+	// This doesn't create people, though it can modify them, so it should be called after
+	// SpawnPopulace.
+	InspireFactionAffiliation(cfg *config.Affiliation, factionID string) error
 
 	// Tick advances the simulation by one 'tick' and returns the current tick.
 	// This kicks off a full simulation loop asyncrhonously.

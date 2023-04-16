@@ -348,7 +348,8 @@ func setPeople(op sqlOperator, in []*structs.Person) error {
 	    ethos_altruism, ethos_ambition, ethos_tradition, ethos_pacifism, ethos_piety, ethos_caution,
 	    first_name, last_name, birth_family_id, race,
 	    area_id, job_id,
-	    birth_tick, death_tick, is_male,
+	    birth_tick, death_tick, is_male, is_child,
+	    preferred_profession, preferred_faction_id,
 	    death_meta_reason, death_meta_key, death_meta_val
 	) VALUES (
 	    :id,
@@ -356,7 +357,8 @@ func setPeople(op sqlOperator, in []*structs.Person) error {
 	    :first_name, :last_name, :birth_family_id, :race,
 	    :area_id, :job_id,
 	    :birth_tick, :death_tick,
-	    :is_male,
+	    :is_male, :is_child,
+	    :preferred_profession, :preferred_faction_id,
 	    :death_meta_reason, :death_meta_key, :death_meta_val
 	) ON CONFLICT (id) DO UPDATE SET
 	    ethos_altruism=EXCLUDED.ethos_altruism,
@@ -367,6 +369,9 @@ func setPeople(op sqlOperator, in []*structs.Person) error {
 	    ethos_caution=EXCLUDED.ethos_caution,
 	    area_id=EXCLUDED.area_id,
 	    job_id=EXCLUDED.job_id,
+	    is_child=EXCLUDED.is_child,
+	    preferred_profession=EXCLUDED.preferred_profession,
+	    preferred_faction_id=EXCLUDED.preferred_faction_id,
 	    death_tick=EXCLUDED.death_tick,
 	    death_meta_reason=EXCLUDED.death_meta_reason,
 	    death_meta_key=EXCLUDED.death_meta_key,

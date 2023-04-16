@@ -32,9 +32,13 @@ type PersonFilter struct {
 	AreaID        string
 	BirthFamilyID string
 
+	PreferredProfession string
+	PreferredFactionID  string
+
 	Race string
 
-	IncludeDead bool // by default we do not infact see dead people
+	IncludeDead     bool // by default we do not infact see dead people
+	IncludeChildren bool // by default we do not see children
 }
 
 type PlotFilter struct {

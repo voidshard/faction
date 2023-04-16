@@ -7,6 +7,19 @@ import (
 	"github.com/voidshard/faction/pkg/structs"
 )
 
+var (
+	// FactionSummaryRelations are the default relations we consider when
+	// building a faction summary.
+	FactionSummaryRelations = []Relation{
+		RelationFactionProfessionWeight,
+		RelationFactionActionTypeWeight,
+		RelationFactionTopicResearch,
+		RelationFactionTopicResearchWeight,
+		RelationFactionFactionTrust,
+		RelationPersonFactionRank,
+	}
+)
+
 // FactionDB is a helper struct that extends a Database implementation
 // with helpful additional functions.
 //
@@ -24,8 +37,14 @@ type DemographicQuery struct {
 	// Only count people who are based in one of these areas
 	Areas []string
 
-	// Restrict count to these objects
-	Objects []string
+	// Restrict Rank / Affiliation to these factions
+	Factions []string
+
+	// Restict faith to these religions
+	Religions []string
+
+	// Restrict skills to these professions
+	Professions []string
 }
 
 // InTransaction is a helper function that adds automatic commit / rollback
@@ -54,7 +73,11 @@ func (f *FactionDB) InTransaction(do func(tx ReaderWriter) error) error {
 // when & where this is called.
 // It's useful for getting a high level view of a faction & all related info, but it's
 // excessive for when you only need a small snippet of info.
-func (f *FactionDB) FactionSummary(in ...string) ([]*structs.FactionSummary, error) {
+func (f *FactionDB) FactionSummary(rels []Relation, in ...string) ([]*structs.FactionSummary, error) {
+	if rels == nil {
+		rels = FactionSummaryRelations
+	}
+
 	tick, err := f.Database.Tick()
 	if err != nil {
 		return nil, err
@@ -94,14 +117,7 @@ func (f *FactionDB) FactionSummary(in ...string) ([]*structs.FactionSummary, err
 		}
 	}
 
-	for _, r := range []Relation{
-		RelationFactionProfessionWeight,
-		RelationFactionActionTypeWeight,
-		RelationFactionTopicResearch,
-		RelationFactionTopicResearchWeight,
-		RelationFactionFactionTrust,
-		RelationPersonFactionRank,
-	} {
+	for _, r := range rels {
 		tf := tfSub
 		if r == RelationPersonFactionRank {
 			tf = tfObj
@@ -205,6 +221,11 @@ func (f *FactionDB) FactionSummary(in ...string) ([]*structs.FactionSummary, err
 // (see DemographicStats) for a given Object.
 func (f *FactionDB) Demographics(in *DemographicQuery) (*structs.Demographics, error) {
 	pf := []*PersonFilter{}
+	var (
+		onlyFactions    map[string]bool
+		onlyReligions   map[string]bool
+		onlyProfessions map[string]bool
+	)
 	if in != nil {
 		if in.Areas != nil {
 			pf = make([]*PersonFilter, len(in.Areas))
@@ -212,6 +233,29 @@ func (f *FactionDB) Demographics(in *DemographicQuery) (*structs.Demographics, e
 				pf[i] = &PersonFilter{AreaID: area}
 			}
 		}
+		if in.Factions != nil {
+			for _, id := range in.Factions {
+				onlyFactions[id] = true
+			}
+		}
+		if in.Religions != nil {
+			for _, id := range in.Religions {
+				onlyReligions[id] = true
+			}
+		}
+		if in.Professions != nil {
+			for _, id := range in.Professions {
+				onlyProfessions[id] = true
+			}
+		}
+	}
+
+	permit := func(item string, set map[string]bool) bool {
+		if set == nil {
+			return true
+		}
+		v, _ := set[item]
+		return v
 	}
 
 	demoRelations := []Relation{
@@ -242,14 +286,9 @@ func (f *FactionDB) Demographics(in *DemographicQuery) (*structs.Demographics, e
 
 		tf := []*TupleFilter{}
 		for _, p := range people {
-			if in != nil && in.Objects != nil {
-				for _, obj := range in.Objects {
-					tf = append(tf, &TupleFilter{Subject: p.ID, Object: obj})
-				}
-			} else {
-				tf = append(tf, &TupleFilter{Subject: p.ID})
-			}
+			tf = append(tf, &TupleFilter{Subject: p.ID})
 		}
+		// TODO: we probably should expand the filters so this is not needed
 
 		for _, r := range demoRelations {
 			for {
@@ -261,13 +300,21 @@ func (f *FactionDB) Demographics(in *DemographicQuery) (*structs.Demographics, e
 				for _, t := range tuples {
 					switch r {
 					case RelationPersonReligionFaith:
-						ret.AddFaith(t.Object, t.Value)
+						if permit(t.Object, onlyReligions) {
+							ret.AddFaith(t.Object, t.Value)
+						}
 					case RelationPersonProfessionSkill:
-						ret.AddProfession(t.Object, t.Value)
+						if permit(t.Object, onlyProfessions) {
+							ret.AddProfession(t.Object, t.Value)
+						}
 					case RelationPersonFactionAffiliation:
-						ret.AddAffiliation(t.Object, t.Value)
+						if permit(t.Object, onlyFactions) {
+							ret.AddAffiliation(t.Object, t.Value)
+						}
 					case RelationPersonFactionRank:
-						ret.AddRank(t.Object, structs.FactionRank(t.Value))
+						if permit(t.Object, onlyFactions) {
+							ret.AddRank(t.Object, structs.FactionRank(t.Value))
+						}
 					}
 				}
 
@@ -363,6 +410,85 @@ func (f *FactionDB) FactionAreas(factionIDs ...string) (map[string]map[string]bo
 	}
 
 	return result, nil
+}
+
+func (f *FactionDB) AreaGovernments(in ...string) (map[string]*structs.Government, error) {
+	if len(in) == 0 {
+		return nil, nil
+	}
+
+	// look up areas
+	af := make([]*AreaFilter, len(in))
+	for i, a := range in {
+		if !dbutils.IsValidID(a) {
+			return nil, fmt.Errorf("invalid area id: %s", a)
+		}
+		af[i] = &AreaFilter{ID: a}
+	}
+
+	var (
+		govIDs     map[string]bool
+		areaToGovt map[string]string
+		areas      []*structs.Area
+		token      string
+		err        error
+	)
+	for {
+		areas, token, err = f.Areas(token, af...)
+		if err != nil {
+			return nil, err
+		}
+
+		for _, a := range areas {
+			// nb. areas don't have to have a government
+			if dbutils.IsValidID(a.GovernmentID) {
+				govIDs[a.GovernmentID] = true
+				areaToGovt[a.ID] = a.GovernmentID
+			}
+		}
+
+		if token == "" {
+			break
+		}
+	}
+
+	// collect governments
+	gf := make([]*GovernmentFilter, len(govIDs))
+	i := 0
+	for id := range govIDs {
+		gf[i] = &GovernmentFilter{ID: id}
+		i++
+	}
+	var (
+		govs    []*structs.Government
+		govById map[string]*structs.Government
+	)
+	for {
+		govs, token, err = f.Governments(token, gf...)
+		if err != nil {
+			return nil, err
+		}
+
+		for _, g := range govs {
+			govById[g.ID] = g
+		}
+
+		if token == "" {
+			break
+		}
+	}
+
+	// zip up area -> gov
+	ret := map[string]*structs.Government{}
+	for areaID, govtID := range areaToGovt {
+		gov, ok := govById[govtID]
+		if !ok {
+			continue
+		}
+		ret[areaID] = gov
+	}
+
+	return ret, nil
 }
 
 // SetAreaGovernment is a helper function that changes the government id of some area(s)
