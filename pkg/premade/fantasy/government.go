@@ -5,11 +5,11 @@ import (
 	"github.com/voidshard/faction/pkg/structs"
 )
 
-// GovernmentFantasy returns a fantasy government configuration.
+// Government returns a fantasy government configuration.
 //
 // Well, for a human type setup.
 // We could have a much more extreme setup for Drow or something.
-func GovernmentFantasy() *config.Government {
+func Government() *config.Government {
 	return &config.Government{
 		ProbabilityOutlawAction: map[structs.ActionType]float64{
 			structs.ActionTypeBribe:          0.6,

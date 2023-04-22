@@ -14,15 +14,15 @@ type Demographics struct {
 // some population.
 type DemographicStatSpread struct {
 	// See: MaxTuple, MinTuple in tuple.go
-	Exemplary int // 95+
-	Excellent int // 75+
-	Good      int // 50+
-	Fine      int // 25+
-	Average   int // 0+
-	Poor      int // 0 -> -25
-	Awful     int // -25 -> -50
-	Terrible  int // -50 -> -75
-	Abysmal   int // -75 -> -100
+	Exemplary int // 9500 -> 10000
+	Excellent int // 7500 -> 9500
+	Good      int // 5000 -> 7500
+	Fine      int // 2500 -> 5000
+	Average   int // 0 -> 2500
+	Poor      int // 0 -> -2500
+	Awful     int // -2500 -> -5000
+	Terrible  int // -5000 -> -7500
+	Abysmal   int // -7500 -> -10000
 
 	Total int
 }
@@ -43,6 +43,32 @@ type DemographicRankSpread struct {
 	Associate   int
 
 	Total int
+}
+
+// Count returns the number of people of a given rank.
+func (d *DemographicRankSpread) Count(r FactionRank) int {
+	// TODO: I'm sure there's a smarter way
+	switch r {
+	case FactionRankRuler:
+		return d.Ruler
+	case FactionRankElder:
+		return d.Elder
+	case FactionRankGrandMaster:
+		return d.GrandMaster
+	case FactionRankMaster:
+		return d.Master
+	case FactionRankExpert:
+		return d.Expert
+	case FactionRankAdept:
+		return d.Adept
+	case FactionRankJourneyman:
+		return d.Journeyman
+	case FactionRankNovice:
+		return d.Novice
+	case FactionRankApprentice:
+		return d.Apprentice
+	}
+	return d.Associate
 }
 
 // NewDemographics
@@ -80,34 +106,33 @@ func (d *Demographics) AddRank(in string, val FactionRank) {
 	if _, ok := d.Rank[in]; !ok {
 		d.Rank[in] = &DemographicRankSpread{}
 	}
-	d.Rank[in].Add(val)
-
+	d.Rank[in].Add(val, 1)
 }
 
-func (d *DemographicRankSpread) Add(val FactionRank) {
+func (d *DemographicRankSpread) Add(val FactionRank, i int) {
 	switch val {
 	case FactionRankRuler:
-		d.Ruler++
+		d.Ruler += i
 	case FactionRankElder:
-		d.Elder++
+		d.Elder += i
 	case FactionRankGrandMaster:
-		d.GrandMaster++
+		d.GrandMaster += i
 	case FactionRankMaster:
-		d.Master++
+		d.Master += i
 	case FactionRankExpert:
-		d.Expert++
+		d.Expert += i
 	case FactionRankAdept:
-		d.Adept++
+		d.Adept += i
 	case FactionRankJourneyman:
-		d.Journeyman++
+		d.Journeyman += i
 	case FactionRankNovice:
-		d.Novice++
+		d.Novice += i
 	case FactionRankApprentice:
-		d.Apprentice++
+		d.Apprentice += i
 	case FactionRankAssociate:
-		d.Associate++
+		d.Associate += i
 	}
-	d.Total++
+	d.Total += i
 }
 
 func (d *DemographicStatSpread) Add(in int) {

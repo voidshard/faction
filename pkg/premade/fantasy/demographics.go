@@ -11,7 +11,7 @@ var (
 	religion3 = structs.NewID("3")
 )
 
-// DemographicsFantasyHuman returns a set of demographics for a fantasy human
+// DemographicsHuman returns a set of demographics for a fantasy human
 // population.
 //
 // In general users are expected to create their own demographics, but this
@@ -19,7 +19,7 @@ var (
 //
 // Seriously please load these from a config or something .. this is just for
 // playing around.
-func DemographicsFantasyHuman() *config.Demographics {
+func DemographicsHuman() *config.Demographics {
 	return &config.Demographics{
 		FamilySize: config.Distribution{
 			Min:       1,

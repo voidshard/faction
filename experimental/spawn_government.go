@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/voidshard/faction/pkg/config"
-	"github.com/voidshard/faction/pkg/premade"
+	fantasy "github.com/voidshard/faction/pkg/premade/fantasy"
 	"github.com/voidshard/faction/pkg/sim"
 )
 
@@ -20,9 +20,7 @@ func main() {
 		panic(err)
 	}
 
-	govt, err := simulator.SpawnGovernment(
-		premade.GovernmentFantasy(),
-	)
+	govt, err := simulator.SpawnGovernment(fantasy.Government())
 	if err != nil {
 		panic(err)
 	}

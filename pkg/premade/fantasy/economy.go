@@ -6,10 +6,10 @@ import (
 	"github.com/voidshard/faction/pkg/structs"
 )
 
-// FantasyEconomy is a simple economy that is used for testing and demonstration purposes.
+// Economy is a simple economy that is used for testing and demonstration purposes.
 //
 // In general a user is expected to provide their own.
-type FantasyEconomy struct {
+type Economy struct {
 	commodities      map[string]*structs.Commodity
 	baseValues       map[string]float64
 	baseLandValue    float64
@@ -19,7 +19,7 @@ type FantasyEconomy struct {
 	yieldFluctuation float64
 }
 
-func (e *FantasyEconomy) Commodities(area string) []*structs.Commodity {
+func (e *Economy) Commodities(area string) []*structs.Commodity {
 	var cs []*structs.Commodity
 	for _, c := range e.commodities {
 		cs = append(cs, c)
@@ -27,21 +27,21 @@ func (e *FantasyEconomy) Commodities(area string) []*structs.Commodity {
 	return cs
 }
 
-func (e *FantasyEconomy) IsHarvestable(commodity string) bool {
+func (e *Economy) IsHarvestable(commodity string) bool {
 	comm := e.Commodity(commodity)
 	return comm.Requires == nil || len(comm.Requires) == 0
 }
 
-func (e *FantasyEconomy) IsCraftable(commodity string) bool {
+func (e *Economy) IsCraftable(commodity string) bool {
 	return !e.IsHarvestable(commodity)
 }
 
-func (e *FantasyEconomy) Commodity(name string) *structs.Commodity {
+func (e *Economy) Commodity(name string) *structs.Commodity {
 	c := e.commodities[name]
 	return c
 }
 
-func (e *FantasyEconomy) CommodityValue(name, areaID string, ticks int) float64 {
+func (e *Economy) CommodityValue(name, areaID string, ticks int) float64 {
 	// the addtional Pi here makes Yield & Value opposite each other
 	// ie. max yield -> min value, min yield -> max value
 	flux := math.Sin(math.Pi+float64(ticks)+floatHash(areaID)) * e.valueFluctuation
@@ -49,13 +49,13 @@ func (e *FantasyEconomy) CommodityValue(name, areaID string, ticks int) float64 
 	return base + base*flux
 }
 
-func (e *FantasyEconomy) CommodityYield(name, areaID string, ticks, skill int) float64 {
+func (e *Economy) CommodityYield(name, areaID string, ticks, skill int) float64 {
 	flux := math.Sin(float64(ticks)+floatHash(areaID)) * e.valueFluctuation
 	base := e.baseValues[name]
 	return base + base*flux
 }
 
-func (e *FantasyEconomy) LandValue(areaID string, ticks int) float64 {
+func (e *Economy) LandValue(areaID string, ticks int) float64 {
 	// some areas are just more / less than others irrespective of time
 	fh := floatHash(areaID)
 	areaWeight := math.Cos(fh) * e.areaFluctuation
@@ -63,11 +63,11 @@ func (e *FantasyEconomy) LandValue(areaID string, ticks int) float64 {
 	return e.baseLandValue + e.baseLandValue*flux*areaWeight
 }
 
-func NewFantasyEconomy() *FantasyEconomy {
+func NewEconomy() *Economy {
 	// www.dandwiki.com/wiki/5e_Trade_Goods
 	// 100 cp -> 1 sp
 	// 10 sp -> 1 gp
-	return &FantasyEconomy{
+	return &Economy{
 		valueFluctuation: 0.15,      // values fluctuate by +/- 15%
 		yieldFluctuation: 0.30,      // yields fluctuate by +/- 30%
 		landFluctuation:  0.05,      // land values fluctuate by +/- 10%

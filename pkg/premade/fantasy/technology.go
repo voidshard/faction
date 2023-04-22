@@ -7,13 +7,13 @@ import (
 	"github.com/voidshard/faction/pkg/structs"
 )
 
-type FantasyTechnology struct {
+type Technology struct {
 	rng       *rand.Rand
 	allTopics map[string]*structs.ResearchTopic
 	topicList []*structs.ResearchTopic
 }
 
-func (f *FantasyTechnology) Topics(areas ...string) []*structs.ResearchTopic {
+func (f *Technology) Topics(areas ...string) []*structs.ResearchTopic {
 	if f.topicList != nil {
 		return f.topicList
 	}
@@ -26,13 +26,13 @@ func (f *FantasyTechnology) Topics(areas ...string) []*structs.ResearchTopic {
 	return f.topicList
 }
 
-func (f *FantasyTechnology) Topic(name string) *structs.ResearchTopic {
+func (f *Technology) Topic(name string) *structs.ResearchTopic {
 	t, _ := f.allTopics[name]
 	return t
 }
 
-func NewFantasyTechnology() *FantasyTechnology {
-	return &FantasyTechnology{
+func NewTechnology() *Technology {
+	return &Technology{
 		rng: rand.New(rand.NewSource(time.Now().UnixNano())),
 		allTopics: map[string]*structs.ResearchTopic{
 			// Nb. these aren't all topics in constants.go just the ones

@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/voidshard/faction/pkg/config"
-	"github.com/voidshard/faction/pkg/premade"
+	fantasy "github.com/voidshard/faction/pkg/premade/fantasy"
 	"github.com/voidshard/faction/pkg/sim"
 	"github.com/voidshard/faction/pkg/structs"
 )
@@ -16,7 +16,7 @@ func main() {
 			Name:     "test.sqlite",
 			Location: "/tmp",
 		},
-		Actions: premade.ActionsFantasy(),
+		Actions: fantasy.Actions(),
 	}
 
 	simulator, err := sim.New(cfg)
@@ -24,9 +24,7 @@ func main() {
 		panic(err)
 	}
 
-	govt, err := simulator.SpawnGovernment(
-		premade.GovernmentFantasy(),
-	)
+	govt, err := simulator.SpawnGovernment(fantasy.Government())
 	if err != nil {
 		panic(err)
 	}
@@ -39,17 +37,17 @@ func main() {
 		panic(err)
 	}
 
-	land1 := &structs.Plot{ID: structs.NewID(), AreaID: area1.ID, Commodity: premade.WHEAT, Yield: 120}
-	land2 := &structs.Plot{ID: structs.NewID(), AreaID: area2.ID, Commodity: premade.WHEAT, Yield: 200}
-	land3 := &structs.Plot{ID: structs.NewID(), AreaID: area2.ID, Commodity: premade.IRON_ORE, Yield: 20}
-	land4 := &structs.Plot{ID: structs.NewID(), AreaID: area3.ID, Commodity: premade.WHEAT, Yield: 50}
-	land5 := &structs.Plot{ID: structs.NewID(), AreaID: area3.ID, Commodity: premade.IRON_ORE, Yield: 500}
+	land1 := &structs.Plot{ID: structs.NewID(), AreaID: area1.ID, Commodity: fantasy.WHEAT, Yield: 120}
+	land2 := &structs.Plot{ID: structs.NewID(), AreaID: area2.ID, Commodity: fantasy.WHEAT, Yield: 200}
+	land3 := &structs.Plot{ID: structs.NewID(), AreaID: area2.ID, Commodity: fantasy.IRON_ORE, Yield: 20}
+	land4 := &structs.Plot{ID: structs.NewID(), AreaID: area3.ID, Commodity: fantasy.WHEAT, Yield: 50}
+	land5 := &structs.Plot{ID: structs.NewID(), AreaID: area3.ID, Commodity: fantasy.IRON_ORE, Yield: 500}
 	err = simulator.SetPlots(land1, land2, land3, land4, land5)
 	if err != nil {
 		panic(err)
 	}
 
-	fcfg := premade.FactionFantasy()
+	fcfg := fantasy.Faction()
 
 	factions, err := simulator.SpawnFactions(10, fcfg, area1.ID, area2.ID, area3.ID)
 	if err != nil {

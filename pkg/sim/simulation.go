@@ -3,7 +3,7 @@ package sim
 import (
 	"github.com/voidshard/faction/internal/db"
 	"github.com/voidshard/faction/pkg/config"
-	"github.com/voidshard/faction/pkg/premade"
+	fantasy "github.com/voidshard/faction/pkg/premade/fantasy"
 	"github.com/voidshard/faction/pkg/structs"
 )
 
@@ -36,8 +36,8 @@ func New(cfg *config.Simulation, opts ...simOption) (Simulation, error) {
 		cfg:    cfg,
 		dbconn: dbconn,
 		// default economy / tech
-		eco:  premade.NewFantasyEconomy(),
-		tech: premade.NewFantasyTechnology(),
+		eco:  fantasy.NewEconomy(),
+		tech: fantasy.NewTechnology(),
 	}
 
 	// apply given options

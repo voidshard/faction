@@ -5,10 +5,10 @@ import (
 	"github.com/voidshard/faction/pkg/structs"
 )
 
-// ActionsFantasy returns a default action configuration for fantasy type settings.
+// Actions returns a default action configuration for fantasy type settings.
 //
 // This could be useful as a starting point for your own configuration.
-func ActionsFantasy() map[structs.ActionType]*config.Action {
+func Actions() map[structs.ActionType]*config.Action {
 	minor := structs.MaxEthos / 10
 	modest := structs.MaxEthos / 2
 	major := structs.MaxEthos

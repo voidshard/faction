@@ -156,7 +156,7 @@ func (f *FactionDB) FactionSummary(rels []Relation, in ...string) ([]*structs.Fa
 				case RelationFactionFactionTrust:
 					f.Trust[t.Object] += t.Value
 				case RelationPersonFactionRank:
-					f.Ranks.Add(structs.FactionRank(t.Value))
+					f.Ranks.Add(structs.FactionRank(t.Value), 1)
 				}
 			}
 

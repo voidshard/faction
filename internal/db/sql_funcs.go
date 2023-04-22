@@ -690,9 +690,6 @@ func setFactions(op sqlOperator, in []*structs.Faction) error {
 		if !dbutils.IsValidID(f.ID) {
 			return fmt.Errorf("faction id %s is invalid", f.ID)
 		}
-		if !dbutils.IsValidID(f.HomeAreaID) {
-			return fmt.Errorf("faction home area id %s is invalid", f.HomeAreaID)
-		}
 		if f.GovernmentID != "" && !dbutils.IsValidID(f.GovernmentID) {
 			return fmt.Errorf("faction government id %s is invalid", f.GovernmentID)
 		}

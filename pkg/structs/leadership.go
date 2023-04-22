@@ -32,3 +32,21 @@ const (
 	// Example use: a criminal organisation, cult
 	LeaderStructureCell
 )
+
+// Rulers returns the number of rulers for a given leader type.
+// For 'All' this will always return 1 (technically, everyone).
+func (t LeaderType) Rulers() int {
+	switch t {
+	case LeaderTypeSingle:
+		return 1
+	case LeaderTypeDual:
+		return 2
+	case LeaderTypeTriad:
+		return 3
+	case LeaderTypeCouncil:
+		return 7
+	case LeaderTypeAll:
+		return 1
+	}
+	return 0
+}

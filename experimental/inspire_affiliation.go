@@ -1,10 +1,12 @@
 package main
 
 import (
+	"fmt"
 	"math/rand"
 	"time"
 
 	"github.com/voidshard/faction/pkg/config"
+	fantasy "github.com/voidshard/faction/pkg/premade/fantasy"
 	"github.com/voidshard/faction/pkg/sim"
 	"github.com/voidshard/faction/pkg/structs"
 )
@@ -36,7 +38,7 @@ func main() {
 		Location: "/tmp",
 	}
 
-	simulator, err := sim.New(&config.Simulation{Database: cfg}, nil)
+	simulator, err := sim.New(&config.Simulation{Database: cfg})
 	if err != nil {
 		panic(err)
 	}
@@ -71,13 +73,21 @@ func main() {
 		panic(err)
 	}
 
-	err = simulator.InspireFactionAffiliation(
-		[]*structs.Faction{faction1, faction2, faction3},
-		&config.Distribution{Min: 1000, Max: structs.MaxTuple, Mean: 2000, Deviation: 6000},
-		0.2,
-		0, 25000,
-	)
-	if err != nil {
-		panic(err)
+	affil := fantasy.Affiliation()
+
+	summaries, err := simulator.FactionSummaries(faction1.ID, faction2.ID, faction3.ID)
+	for _, f := range summaries {
+		err = simulator.InspireFactionAffiliation(affil, f.ID)
+		if err != nil {
+			panic(err)
+		}
+
+		summaries, err := simulator.FactionSummaries(f.ID)
+		if err != nil {
+			panic(err)
+		}
+
+		summary := summaries[0]
+		fmt.Println("Faction", f.ID, "summary:", summary.Ranks)
 	}
 }

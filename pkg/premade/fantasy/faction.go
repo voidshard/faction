@@ -5,7 +5,7 @@ import (
 	"github.com/voidshard/faction/pkg/structs"
 )
 
-func FactionFantasy() *config.Faction {
+func Faction() *config.Faction {
 	dev := &structs.Ethos{}
 	return &config.Faction{
 		EthosMean:      structs.Ethos{},
