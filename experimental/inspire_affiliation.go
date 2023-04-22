@@ -46,9 +46,29 @@ func main() {
 	gid := structs.NewID("government1")
 	rid := structs.NewID("religion1")
 
-	faction1 := &structs.Faction{ID: structs.NewID("faction1"), GovernmentID: gid, Ethos: randomEthos()}
-	faction2 := &structs.Faction{ID: structs.NewID("faction2"), GovernmentID: gid, Ethos: randomEthos(), IsReligion: true, ReligionID: rid}
-	faction3 := &structs.Faction{ID: structs.NewID("faction3"), GovernmentID: gid, Ethos: randomEthos()}
+	faction1 := &structs.Faction{
+		ID:           structs.NewID("faction1"),
+		GovernmentID: gid,
+		Ethos:        randomEthos(),
+		Leadership:   structs.LeaderTypeSingle, // classic pyramid ruler -> officials -> ...
+		Structure:    structs.LeaderStructurePyramid,
+	}
+	faction2 := &structs.Faction{
+		ID:           structs.NewID("faction2"),
+		GovernmentID: gid,
+		Ethos:        randomEthos(),
+		IsReligion:   true,
+		ReligionID:   rid,
+		Leadership:   structs.LeaderTypeTriad,      // three equal leaders
+		Structure:    structs.LeaderStructureLoose, // there isn't really a structure to speak of
+	}
+	faction3 := &structs.Faction{
+		ID:           structs.NewID("faction3"),
+		GovernmentID: gid,
+		Ethos:        randomEthos(),
+		Leadership:   structs.LeaderTypeCouncil,   // a group of leaders
+		Structure:    structs.LeaderStructureCell, // each leader has their own cell
+	}
 
 	err = simulator.SetFactions(faction1, faction2, faction3)
 	if err != nil {

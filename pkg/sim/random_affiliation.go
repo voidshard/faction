@@ -118,6 +118,7 @@ func (s *simulationImpl) InspireFactionAffiliation(cfg *config.Affiliation, fact
 	rng := rand.New(rand.NewSource(time.Now().UnixNano()))
 	affdice := stats.NewRand(cfg.Affiliation.Min, cfg.Affiliation.Max, cfg.Affiliation.Mean, cfg.Affiliation.Deviation)
 	trustdice := stats.NewRand(cfg.Trust.Min, cfg.Trust.Max, cfg.Trust.Mean, cfg.Trust.Deviation)
+	faithdice := stats.NewRand(cfg.Faith.Min, cfg.Faith.Max, cfg.Faith.Mean, cfg.Faith.Deviation)
 
 	go func() {
 		// rolls up error(s)
@@ -152,6 +153,7 @@ func (s *simulationImpl) InspireFactionAffiliation(cfg *config.Affiliation, fact
 			rels := []*structs.Tuple{}
 			affils := []*structs.Tuple{}
 			ranks := []*structs.Tuple{}
+			faith := []*structs.Tuple{}
 
 			people := []*structs.Person{}
 			for _, p := range candidates {
@@ -168,6 +170,17 @@ func (s *simulationImpl) InspireFactionAffiliation(cfg *config.Affiliation, fact
 				ranks = append(ranks, &structs.Tuple{Subject: p.ID, Object: factionID, Value: int(rank)})
 				people = append(people, p)
 				done += 1
+
+				if ctx.Summary.ReligionID == "" {
+					continue // we don't need to consider faith
+				}
+
+				fth := faithdice.Int()
+				if ctx.Summary.IsReligion {
+					fth += int(float64(fth) * cfg.ReligionWeight)
+				}
+
+				faith = append(faith, &structs.Tuple{Subject: p.ID, Object: ctx.Summary.ReligionID, Value: fth})
 			}
 
 			if len(people) > 1 {
@@ -196,6 +209,10 @@ func (s *simulationImpl) InspireFactionAffiliation(cfg *config.Affiliation, fact
 			}
 
 			errors <- s.dbconn.InTransaction(func(tx db.ReaderWriter) error {
+				err = tx.SetTuples(db.RelationPersonReligionFaith, faith...)
+				if err != nil {
+					return err
+				}
 				err = tx.SetTuples(db.RelationPersonPersonTrust, trust...)
 				if err != nil {
 					return err
