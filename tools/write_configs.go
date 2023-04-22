@@ -6,13 +6,15 @@ import (
 
 	"gopkg.in/yaml.v3"
 
-	"github.com/voidshard/faction/pkg/premade"
+	fantasy "github.com/voidshard/faction/pkg/premade/fantasy"
 )
 
 func main() {
 	for key, value := range map[string]interface{}{
-		"demographics_fantasy_human": premade.DemographicsFantasyHuman(),
-		"actions_fantasy":            premade.ActionsFantasy(),
+		"demographics_fantasy_human": fantasy.DemographicsHuman(),
+		"actions_fantasy":            fantasy.Actions(),
+		"affiliation_fantasy":        fantasy.Affiliation(),
+		"faction_fantasy":            fantasy.Faction(),
 	} {
 		data, err := yaml.Marshal(value)
 		if err != nil {

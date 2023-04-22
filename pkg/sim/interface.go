@@ -87,8 +87,8 @@ type Simulation interface {
 	// Demographics for the given area(s).
 	Demographics(areas ...string) (*structs.Demographics, error)
 
-	// InspireFactionAffiliation will assign faction affliations to people with some probability.
-	// This ties together a lot of information & is expensive to compute.
+	// InspireFactionAffiliation will assign faction affliation & rank(s) to people with
+	// some probability.
 	//
 	// If the faction is a religion or has a religion, then faith is also added.
 	//

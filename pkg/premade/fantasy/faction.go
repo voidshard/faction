@@ -212,6 +212,7 @@ func Faction() *config.Faction {
 				Actions: []structs.ActionType{
 					structs.ActionTypeBribe,
 					structs.ActionTypeBlackmail,
+					structs.ActionTypeHireMercenaries,
 				},
 				Probability: 0.1,
 				Weight: config.Distribution{
@@ -246,6 +247,7 @@ func Faction() *config.Faction {
 				Actions: []structs.ActionType{
 					structs.ActionTypeRecruit,
 					structs.ActionTypeExpand,
+					structs.ActionTypeHireMercenaries,
 				},
 				Probability: 0.3,
 				Weight: config.Distribution{
@@ -262,6 +264,7 @@ func Faction() *config.Faction {
 			config.Focus{ // trade
 				Actions: []structs.ActionType{
 					structs.ActionTypeTrade,
+					structs.ActionTypeHireMercenaries,
 				},
 				Probability: 0.30,
 				Weight: config.Distribution{

@@ -298,7 +298,7 @@ func sqlFromJobFilters(tk *dbutils.IterToken, in []*JobFilter) (string, []interf
 		where = fmt.Sprintf("WHERE %s", strings.Join(ors, " OR "))
 	}
 
-	return fmt.Sprintf(`SELECT id
+	return fmt.Sprintf(`SELECT id, parent_job_id,
 		source_faction_id, source_area_id,
 		action,
 		target_area_id, target_meta_key, target_meta_val,
@@ -333,8 +333,7 @@ func sqlFromFamilyFilters(tk *dbutils.IterToken, in []*FamilyFilter) (string, []
 			ands = append(ands, fmt.Sprintf("faction_id = $%d", len(args)))
 		}
 		if f.OnlyChildBearing {
-			args = append(args, f.OnlyChildBearing)
-			ands = append(ands, fmt.Sprintf("is_child_bearing = $%d", len(args)))
+			ands = append(ands, fmt.Sprintf("is_child_bearing = 1"))
 		}
 		if dbutils.IsValidID(f.MaleID) {
 			args = append(args, f.MaleID)

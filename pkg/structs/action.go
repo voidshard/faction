@@ -50,16 +50,17 @@ const (
 	ActionTypeConcealSecrets ActionType = "conceal-secrets" // bribes are paid, people are silenced, documents burned (+secrecy)
 
 	// Unfriendly actions (all of these have a target faction)
-	ActionTypeGatherSecrets ActionType = "gather-secrets" // attempt to discover secrets of target faction
-	ActionTypeRevokeLand    ActionType = "revoke-land"    // government retracts right to use some land
-	ActionTypeSpreadRumors  ActionType = "spread-rumors"  // inverse of Propoganda; decrease general favor toward target
-	ActionTypeAssassinate   ActionType = "assassinate"    // someone is selected for elimination
-	ActionTypeFrame         ActionType = "frame"          // the non religious version of 'excommunicate,' but can involve legal .. entanglements
-	ActionTypeRaid          ActionType = "raid"           // small armed conflict with the aim of destroying as much as possible
-	ActionTypeSteal         ActionType = "steal"          // similar to raid, but with less stabbing
-	ActionTypePillage       ActionType = "pillage"        // small armed conflict with the aim of stealing wealth
-	ActionTypeBlackmail     ActionType = "blackmail"      // trade in a secret for a pile of gold, or ruin a reputation
-	ActionTypeKidnap        ActionType = "kidnap"         // similar to blackmail, but you trade back a person
+	ActionTypeGatherSecrets   ActionType = "gather-secrets"   // attempt to discover secrets of target faction
+	ActionTypeRevokeLand      ActionType = "revoke-land"      // government retracts right to use some land
+	ActionTypeHireMercenaries ActionType = "hire-mercenaries" // hire another faction to do something for you
+	ActionTypeSpreadRumors    ActionType = "spread-rumors"    // inverse of Propoganda; decrease general favor toward target
+	ActionTypeAssassinate     ActionType = "assassinate"      // someone is selected for elimination
+	ActionTypeFrame           ActionType = "frame"            // the non religious version of 'excommunicate,' but can involve legal .. entanglements
+	ActionTypeRaid            ActionType = "raid"             // small armed conflict with the aim of destroying as much as possible
+	ActionTypeSteal           ActionType = "steal"            // similar to raid, but with less stabbing
+	ActionTypePillage         ActionType = "pillage"          // small armed conflict with the aim of stealing wealth
+	ActionTypeBlackmail       ActionType = "blackmail"        // trade in a secret for a pile of gold, or ruin a reputation
+	ActionTypeKidnap          ActionType = "kidnap"           // similar to blackmail, but you trade back a person
 
 	// Hostile actions
 	ActionTypeShadowWar ActionType = "shadow-war" // shadow war is a full armed conflict carried out between one or more covert factions

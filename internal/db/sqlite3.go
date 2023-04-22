@@ -89,6 +89,7 @@ var (
 
 	createJobs = fmt.Sprintf(`CREATE TABLE IF NOT EXISTS %s (
 	    id VARCHAR(36) PRIMARY KEY,
+	    parent_job_id VARCHAR(36) NOT NULL DEFAULT "",
 	    source_faction_id VARCHAR(36) NOT NULL,
 	    source_area_id VARCHAR(36) NOT NULL,
 	    action INTEGER NOT NULL,

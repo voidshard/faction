@@ -418,7 +418,7 @@ func setJobs(op sqlOperator, in []*structs.Job) error {
 
 	// we only need to update the job state.
 	qstr := fmt.Sprintf(`INSERT INTO %s (
-	    id,
+	    id, parent_job_id,
 	    source_faction_id, source_area_id,
 	    action,
 	    target_area_id, target_meta_key, target_meta_val,
@@ -428,7 +428,7 @@ func setJobs(op sqlOperator, in []*structs.Job) error {
 	    is_illegal,
 	    state
 	) VALUES (
-	    :id,
+	    :id, :parent_job_id,
 	    :source_faction_id, :source_area_id,
 	    :action,
 	    :target_area_id, :target_meta_key, :target_meta_val,
@@ -438,7 +438,7 @@ func setJobs(op sqlOperator, in []*structs.Job) error {
 	    :is_illegal,
 	    :state
 	) ON CONFLICT (id) DO UPDATE SET 
-	   state=EXCLUDED.state 
+	   state=EXCLUDED.state
 	;`, tableJobs)
 
 	_, err := op.NamedExec(qstr, in)

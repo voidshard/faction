@@ -21,9 +21,8 @@ const (
 // jobs. If enough people signon by the time the job is registered to start then
 // it goes ahead (ie. the action is attempted).
 type Job struct {
-	// TODO: consider if it is worth coping the faction ethos here for matching vs. jub hunters
-
-	ID string `db:"id"`
+	ID          string `db:"id"`
+	ParentJobID string `db:"parent_job_id"` // if this job is a sub-job, this is the parent job ID
 
 	SourceFactionID string `db:"source_faction_id"` // ID of the faction posting the job
 	SourceAreaID    string `db:"source_area_id"`    // where people will be recruited from

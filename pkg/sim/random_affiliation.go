@@ -145,10 +145,6 @@ func (s *simulationImpl) InspireFactionAffiliation(cfg *config.Affiliation, fact
 		done := 0
 
 		for candidates := range consider {
-			if done >= members {
-				continue
-			}
-
 			trust := []*structs.Tuple{}
 			rels := []*structs.Tuple{}
 			affils := []*structs.Tuple{}
@@ -157,19 +153,22 @@ func (s *simulationImpl) InspireFactionAffiliation(cfg *config.Affiliation, fact
 
 			people := []*structs.Person{}
 			for _, p := range candidates {
-				if done >= members {
-					break
-				}
-
 				affil := affdice.Int()
 				desiredRank := rankFromAffiliation(affil)
 				rank := ctx.closestOpenRank(desiredRank)
 
-				p.PreferredFactionID = factionID
-				affils = append(affils, &structs.Tuple{Subject: p.ID, Object: factionID, Value: affil})
-				ranks = append(ranks, &structs.Tuple{Subject: p.ID, Object: factionID, Value: int(rank)})
 				people = append(people, p)
-				done += 1
+
+				if done < members {
+					p.PreferredFactionID = factionID
+					ranks = append(ranks, &structs.Tuple{Subject: p.ID, Object: factionID, Value: int(rank)})
+					done += 1
+				} else {
+					// we've added full members, so we'll just set some affiliation on the rest
+					// ie. this person isn't a full member, but they're sympathetic to the faction
+					affil /= rng.Intn(4) + 2
+				}
+				affils = append(affils, &structs.Tuple{Subject: p.ID, Object: factionID, Value: affil})
 
 				if ctx.Summary.ReligionID == "" {
 					continue // we don't need to consider faith

@@ -455,6 +455,37 @@ func Actions() map[structs.ActionType]*config.Action {
 				Deviation: 30 * DEFAULT_TICKS_PER_DAY,
 			},
 		},
+		structs.ActionTypeHireMercenaries: {
+			MinPeople: 1,
+			MaxPeople: 5,
+			Ethos:     structs.Ethos{Ambition: 3 * minor, Tradition: 1 * minor, Pacifism: 1 * minor},
+			Cost: config.Distribution{
+				Min:       20000000, // 2000gp
+				Max:       25000000, // 4000gp
+				Mean:      30000000, // 3000gp
+				Deviation: 10000000, // 1000gp
+			},
+			TimeToPrepare: config.Distribution{
+				Min:       7 * DEFAULT_TICKS_PER_DAY,
+				Max:       14 * DEFAULT_TICKS_PER_DAY,
+				Mean:      10 * DEFAULT_TICKS_PER_DAY,
+				Deviation: 5 * DEFAULT_TICKS_PER_DAY,
+			},
+			TimeToExecute: config.Distribution{
+				Min:       30 * DEFAULT_TICKS_PER_DAY,
+				Max:       60 * DEFAULT_TICKS_PER_DAY,
+				Mean:      45 * DEFAULT_TICKS_PER_DAY,
+				Deviation: 15 * DEFAULT_TICKS_PER_DAY,
+			},
+			PersonWeight: 1,
+			ProfessionWeights: map[string]float64{
+				CLERK:   4,
+				SCRIBE:  2,
+				NOBLE:   2,
+				SOLDIER: 5,
+			},
+			SecrecyWeight: 1.2,
+		},
 		structs.ActionTypeSpreadRumors: {
 			MinPeople: 1,
 			MaxPeople: -1,
@@ -480,6 +511,7 @@ func Actions() map[structs.ActionType]*config.Action {
 			},
 			SecrecyWeight: 1.3,
 		},
+
 		structs.ActionTypeAssassinate: {
 			MinPeople: 1,
 			MaxPeople: 21,
