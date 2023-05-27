@@ -2,7 +2,7 @@
 random_government.go - random government generation
 */
 
-package sim
+package base
 
 import (
 	"math"
@@ -18,7 +18,7 @@ import (
 // factionRand is a helper struct to generate random factions
 // using dice / distributions provided in configs
 
-func (s *simulationImpl) SpawnGovernment(g *config.Government) (*structs.Government, error) {
+func (s *Base) SpawnGovernment(g *config.Government) (*structs.Government, error) {
 	if g.TaxRate.Min < 0 {
 		g.TaxRate.Min = 0
 	}

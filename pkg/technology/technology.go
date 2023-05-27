@@ -1,4 +1,4 @@
-package sim
+package technology
 
 import (
 	"github.com/voidshard/faction/pkg/structs"

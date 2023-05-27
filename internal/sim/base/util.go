@@ -1,4 +1,4 @@
-package sim
+package base
 
 import (
 	"github.com/voidshard/faction/internal/db"
@@ -20,7 +20,7 @@ func newYieldRand() *yieldRand {
 
 // areaYields returns the total yield of all land in the given areas, used to
 // determine guild type factions.
-func (s *simulationImpl) areaYields(in []*db.PlotFilter, includeOwned bool) (*yieldRand, error) {
+func (s *Base) areaYields(in []*db.PlotFilter, includeOwned bool) (*yieldRand, error) {
 	var (
 		land  []*structs.Plot
 		token string
@@ -71,7 +71,7 @@ func (s *simulationImpl) areaYields(in []*db.PlotFilter, includeOwned bool) (*yi
 // areaGovernments returns
 // 1. a map of area id to government id
 // 2. a map of government id to government
-func (s *simulationImpl) areaGovernments(in []*db.AreaFilter) (map[string]string, map[string]*structs.Government, error) {
+func (s *Base) areaGovernments(in []*db.AreaFilter) (map[string]string, map[string]*structs.Government, error) {
 	areaToGovt := map[string]string{}
 	govtToGovt := map[string]*structs.Government{}
 

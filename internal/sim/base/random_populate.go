@@ -1,7 +1,7 @@
 /*
 random_populate.go - Randomly populate the world with people and families.
 */
-package sim
+package base
 
 import (
 	"fmt"
@@ -24,6 +24,7 @@ type demographicsRand struct {
 
 	familySize       *stats.Rand
 	childbearingAge  *stats.Rand
+	childbearingTerm *stats.Rand
 	ethosAltruism    *stats.Rand
 	ethosAmbition    *stats.Rand
 	ethosTradition   *stats.Rand
@@ -64,7 +65,7 @@ func newMetaPeople() *metaPeople {
 	}
 }
 
-func (s *simulationImpl) randPerson(dice *demographicsRand, areaID string) *structs.Person {
+func (s *Base) randPerson(dice *demographicsRand, areaID string) *structs.Person {
 	p := &structs.Person{
 		ID:     structs.NewID(),
 		Race:   dice.cfg.Race,
@@ -86,7 +87,7 @@ func (s *simulationImpl) randPerson(dice *demographicsRand, areaID string) *stru
 	return p
 }
 
-func (s *simulationImpl) randFaith(dice *demographicsRand, subject string) []*structs.Tuple {
+func (s *Base) randFaith(dice *demographicsRand, subject string) []*structs.Tuple {
 	data := []*structs.Tuple{}
 
 	count := dice.faithCount.Int()
@@ -119,7 +120,7 @@ func (s *simulationImpl) randFaith(dice *demographicsRand, subject string) []*st
 // at weighted heavily towards (*2) non side professions (ie. more dedicated / high skill trades).
 // That is, we assume the 'side professions' are what someone worked at when younger, does in order
 // to cover costs or whatever while training for their desired profession.
-func (s *simulationImpl) randProfession(dice *demographicsRand, subject string) []*structs.Tuple {
+func (s *Base) randProfession(dice *demographicsRand, subject string) []*structs.Tuple {
 	data := []*structs.Tuple{}
 
 	count := dice.professionCount.Int()
@@ -166,7 +167,7 @@ func (s *simulationImpl) randProfession(dice *demographicsRand, subject string) 
 	return data
 }
 
-func (s *simulationImpl) spawnFamily(dice *demographicsRand, areaID string) *metaPeople {
+func (s *Base) spawnFamily(dice *demographicsRand, areaID string) *metaPeople {
 	mp := newMetaPeople()
 
 	mum := s.randPerson(dice, areaID)
@@ -244,10 +245,8 @@ func (s *simulationImpl) spawnFamily(dice *demographicsRand, areaID string) *met
 		child.Ethos = *structs.EthosAverage(&child.Ethos, &mum.Ethos, &dad.Ethos) // average out parents
 		child.IsChild = true
 
-		child.BirthTick = -1 * dice.rng.Intn(5) // TODO: add config around this
-		if child.BirthTick < mum.BirthTick {
-			child.BirthTick = 0
-		}
+		// nb. currently all children at the start are born at the same time .. oddly enough
+		child.BirthTick = -1
 
 		rel := structs.PersonalRelationDaughter
 		if child.IsMale {
@@ -352,7 +351,16 @@ func randomRelationship(personA, personB string, dice *demographicsRand) ([]*str
 		}
 }
 
-func (s *simulationImpl) SpawnPopulace(desiredTotal int, demo *config.Demographics, areas ...string) error {
+func (s *Base) SpawnPopulace(desiredTotal int, name string, areas ...string) error {
+	if len(areas) < 1 {
+		return nil
+	}
+
+	demo, ok := s.cfg.Demographics[name]
+	if !ok {
+		return fmt.Errorf("unknown demographics %q", name)
+	}
+
 	var finalerr error
 	errs := make(chan error)
 
@@ -567,6 +575,10 @@ func newDemographicsRand(demo *config.Demographics) *demographicsRand {
 		childbearingAge: stats.NewRand(
 			demo.ChildbearingAge.Min, demo.ChildbearingAge.Max,
 			demo.ChildbearingAge.Mean, demo.ChildbearingAge.Deviation,
+		),
+		childbearingTerm: stats.NewRand(
+			demo.ChildbearingTerm.Min, demo.ChildbearingTerm.Max,
+			demo.ChildbearingTerm.Mean, demo.ChildbearingTerm.Deviation,
 		),
 		ethosAltruism:    stats.NewRand(structs.MinEthos, structs.MaxEthos, float64(demo.EthosMean.Altruism), float64(demo.EthosDeviation.Altruism)),
 		ethosAmbition:    stats.NewRand(structs.MinEthos, structs.MaxEthos, float64(demo.EthosMean.Ambition), float64(demo.EthosDeviation.Ambition)),

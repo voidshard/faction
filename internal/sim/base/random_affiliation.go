@@ -1,4 +1,4 @@
-package sim
+package base
 
 import (
 	"fmt"
@@ -47,7 +47,7 @@ func (f *factionContext) closestOpenRank(desired structs.FactionRank) structs.Fa
 
 // getFactionContext returns (pretty much) everything about a given faction and
 // the regions / governments in which it has influence.
-func (s *simulationImpl) getFactionContext(factionID string) (*factionContext, error) {
+func (s *Base) getFactionContext(factionID string) (*factionContext, error) {
 	if !dbutils.IsValidID(factionID) {
 		return nil, fmt.Errorf("invalid faction id %s", factionID)
 	}
@@ -95,7 +95,7 @@ func (s *simulationImpl) getFactionContext(factionID string) (*factionContext, e
 }
 
 // InspireFactionAffiliation adds affiliaton to the given factions in regions they have influence.
-func (s *simulationImpl) InspireFactionAffiliation(cfg *config.Affiliation, factionID string) error {
+func (s *Base) InspireFactionAffiliation(cfg *config.Affiliation, factionID string) error {
 	ctx, err := s.getFactionContext(factionID)
 	if err != nil {
 		return err

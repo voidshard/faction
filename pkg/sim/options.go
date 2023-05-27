@@ -1,5 +1,10 @@
 package sim
 
+import (
+	"github.com/voidshard/faction/pkg/economy"
+	"github.com/voidshard/faction/pkg/technology"
+)
+
 // simOption controls internal settings of the simulation beyond a
 // what is contained in a config file.
 //
@@ -11,17 +16,15 @@ package sim
 type simOption func(Simulation) error
 
 // SetTechnology registers the given technology tree with the simulation.
-func SetTechnology(tech Technology) simOption {
+func SetTechnology(tech technology.Technology) simOption {
 	return func(s Simulation) error {
-		s.(*simulationImpl).tech = tech
-		return nil
+		return s.SetTechnology(tech)
 	}
 }
 
 // SetEconomy registers the given economy with the simulation.
-func SetEconomy(eco Economy) simOption {
+func SetEconomy(eco economy.Economy) simOption {
 	return func(s Simulation) error {
-		s.(*simulationImpl).eco = eco
-		return nil
+		return s.SetEconomy(eco)
 	}
 }

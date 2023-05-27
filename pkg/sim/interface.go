@@ -2,12 +2,18 @@ package sim
 
 import (
 	"github.com/voidshard/faction/pkg/config"
+	"github.com/voidshard/faction/pkg/economy"
 	"github.com/voidshard/faction/pkg/structs"
+	"github.com/voidshard/faction/pkg/technology"
 )
 
 // Simulation is our raison d'être and provides a single interface for any action a
 // user might want to perform.
 type Simulation interface {
+	// Options
+	SetTechnology(tech technology.Technology) error
+	SetEconomy(eco economy.Economy) error
+
 	// SetGovernments upserts government(s).
 	//
 	// Nb. remember that a Government for us isn't a faction, it's the set of laws / rules.
@@ -82,7 +88,7 @@ type Simulation interface {
 	// - The people count here is the number of people we want *alive* at the end
 	// we can create more people than this; as we sometimes create people dead
 	// in order to simulate some past family tragedy or something.
-	SpawnPopulace(people int, demo *config.Demographics, areas ...string) error
+	SpawnPopulace(people int, demographicName string, areas ...string) error
 
 	// Demographics for the given area(s).
 	Demographics(areas ...string) (*structs.Demographics, error)
@@ -96,14 +102,6 @@ type Simulation interface {
 	// SpawnPopulace.
 	InspireFactionAffiliation(cfg *config.Affiliation, factionID string) error
 
-	// Tick advances the simulation by one 'tick' and returns the current tick.
-	// This kicks off a full simulation loop asyncrhonously.
-	// Results are viewed via the Events() channel as required.
-	//
-	// The simulation uses "ticks" to track time, what that means depends on your settings.
-	// The simulation starts at tick 1.
+	// Tick updates internal time by one tick, returns the current tick.
 	Tick() (int, error)
-
-	//
-	//	Events() <-chan *structs.Event
 }

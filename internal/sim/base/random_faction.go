@@ -1,7 +1,7 @@
 /*
 random_faction.go - random faction / government generation
 */
-package sim
+package base
 
 import (
 	"fmt"
@@ -12,6 +12,7 @@ import (
 	"github.com/voidshard/faction/internal/stats"
 	"github.com/voidshard/faction/pkg/config"
 	"github.com/voidshard/faction/pkg/structs"
+	"github.com/voidshard/faction/pkg/technology"
 )
 
 // factionRand is a helper struct to generate random factions
@@ -19,7 +20,7 @@ import (
 type factionRand struct {
 	yieldRand      *yieldRand
 	cfg            *config.Faction
-	tech           Technology
+	tech           technology.Technology
 	rng            *rand.Rand
 	ethosAltruism  *stats.Rand
 	ethosAmbition  *stats.Rand
@@ -203,7 +204,7 @@ func (fr *factionRand) recalcGuildProb() {
 	fr.guildOccur = stats.NewNormalised(guildProb)
 }
 
-func (s *simulationImpl) SpawnFactions(count int, cfg *config.Faction, areas ...string) ([]*structs.Faction, error) {
+func (s *Base) SpawnFactions(count int, cfg *config.Faction, areas ...string) ([]*structs.Faction, error) {
 	// prep some filters
 	arf := []*db.AreaFilter{}
 	lrf := []*db.PlotFilter{}
@@ -317,7 +318,7 @@ func writeMetaFaction(conn *db.FactionDB, f *metaFaction) error {
 }
 
 // randFaction spits out a random faction.
-func (s *simulationImpl) randFaction(fr *factionRand) *metaFaction {
+func (s *Base) randFaction(fr *factionRand) *metaFaction {
 	// start with a lot of randomly inserted fields
 	mf := &metaFaction{
 		faction: &structs.Faction{

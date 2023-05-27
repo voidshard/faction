@@ -41,6 +41,12 @@ func DemographicsHuman() *config.Demographics {
 			Mean:      22 * DEFAULT_TICKS_PER_YEAR,
 			Deviation: 5 * DEFAULT_TICKS_PER_YEAR,
 		},
+		ChildbearingTerm: config.Distribution{ // 9 months-ish
+			Min:       8 * 30 * DEFAULT_TICKS_PER_DAY,
+			Max:       10 * 30 * DEFAULT_TICKS_PER_DAY,
+			Mean:      9 * 30 * DEFAULT_TICKS_PER_DAY,
+			Deviation: 30 * DEFAULT_TICKS_PER_DAY,
+		},
 		ChildbearingDeathProbability: 0.10,
 		EthosMean:                    structs.Ethos{},
 		EthosDeviation: structs.Ethos{

@@ -32,7 +32,8 @@ type Demographics struct {
 
 	// Ages min/max (in ticks) at which someone can have children.
 	ChildbearingAge              Distribution
-	ChildbearingDeathProbability float64 // probability of (mother's) death during childbirth
+	ChildbearingTerm             Distribution // how long it takes to have a child
+	ChildbearingDeathProbability float64      // probability of (mother's) death during childbirth
 
 	// EthosMean represents the average outlook of members of the population
 	EthosMean structs.Ethos

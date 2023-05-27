@@ -1,4 +1,4 @@
-package sim
+package economy
 
 import (
 	"github.com/voidshard/faction/pkg/structs"

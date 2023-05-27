@@ -2,7 +2,6 @@ package main
 
 import (
 	"github.com/voidshard/faction/pkg/config"
-	fantasy "github.com/voidshard/faction/pkg/premade/fantasy"
 	"github.com/voidshard/faction/pkg/sim"
 	"github.com/voidshard/faction/pkg/structs"
 )
@@ -39,7 +38,7 @@ func main() {
 
 	err = simulator.SpawnPopulace(
 		30000,
-		fantasy.DemographicsHuman(),
+		"human",
 		area1.ID,
 		area2.ID,
 		area3.ID,
