@@ -343,6 +343,14 @@ func sqlFromFamilyFilters(tk *dbutils.IterToken, in []*FamilyFilter) (string, []
 			args = append(args, f.FemaleID)
 			ands = append(ands, fmt.Sprintf("female_id = $%d", len(args)))
 		}
+		if dbutils.IsValidID(f.AreaID) {
+			args = append(args, f.AreaID)
+			ands = append(ands, fmt.Sprintf("area_id = $%d", len(args)))
+		}
+		if f.PregnancyEnd > 0 {
+			args = append(args, f.PregnancyEnd)
+			ands = append(ands, fmt.Sprintf("pregnancy_end = $%d", len(args)))
+		}
 
 		if len(ands) > 0 {
 			ors = append(ors, fmt.Sprintf("(%s)", strings.Join(ands, " AND ")))
@@ -354,11 +362,16 @@ func sqlFromFamilyFilters(tk *dbutils.IterToken, in []*FamilyFilter) (string, []
 	}
 
 	return fmt.Sprintf(`SELECT id
+		ethos_altruism, ethos_ambition, ethos_tradition, ethos_pacifism, ethos_piety, ethos_caution,
 		area_id,
 		faction_id,
 		is_child_bearing,
+		max_child_bearing_tick,
+		pregnancy_end,
 		male_id,
-		female_id
+		female_id,
+		ma_grandma_id, ma_grandpa_id, pa_grandma_id, pa_grandpa_id,
+		number_of_children
 	    FROM %s %s ORDER BY id LIMIT $%d OFFSET $%d;`,
 		tableFamilies,
 		where,

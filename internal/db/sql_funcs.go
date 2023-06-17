@@ -652,13 +652,31 @@ func setFamilies(op sqlOperator, in []*structs.Family) error {
 	}
 
 	qstr := fmt.Sprintf(`INSERT INTO %s (
-	    id, area_id, faction_id, is_child_bearing, male_id, female_id 
+	    id, area_id, faction_id, 
+	    ethos_altruism, ethos_ambition, ethos_tradition, ethos_pacifism, ethos_piety, ethos_caution,
+	    is_child_bearing, max_child_bearing_tick,  pregnancy_end,
+	    male_id, female_id,
+	    ma_grandma_id, ma_grandpa_id, pa_grandma_id, pa_grandpa_id,
+	    number_of_children
 	) VALUES (
-	    :id, :area_id, :faction_id, :is_child_bearing, :male_id, :female_id 
+	    :id, :area_id, :faction_id, 
+	    :ethos_altruism, :ethos_ambition, :ethos_tradition, :ethos_pacifism, :ethos_piety, :ethos_caution,
+	    :is_child_bearing, :max_child_bearing_tick,  :pregnancy_end,
+	    :male_id, :female_id,
+	    :ma_grandma_id, :ma_grandpa_id, :pa_grandma_id, :pa_grandpa_id,
+	    :number_of_children
 	) ON CONFLICT (id) DO UPDATE SET
+	    ethos_altruism=EXCLUDED.ethos_altruism,
+	    ethos_ambition=EXCLUDED.ethos_ambition,
+	    ethos_tradition=EXCLUDED.ethos_tradition,
+	    ethos_pacifism=EXCLUDED.ethos_pacifism,
+	    ethos_piety=EXCLUDED.ethos_piety,
+	    ethos_caution=EXCLUDED.ethos_caution,
 	    area_id=EXCLUDED.area_id,
 	    faction_id=EXCLUDED.faction_id,
-	    is_child_bearing=EXCLUDED.is_child_bearing
+	    is_child_bearing=EXCLUDED.is_child_bearing,
+	    pregnancy_end=EXCLUDED.pregnancy_end,
+	    number_of_children=EXCLUDED.number_of_children
 	;`, tableFamilies)
 
 	_, err := op.NamedExec(qstr, in)

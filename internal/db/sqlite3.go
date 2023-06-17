@@ -108,11 +108,24 @@ var (
 
 	createFamilies = fmt.Sprintf(`CREATE TABLE IF NOT EXISTS %s (
 	    id VARCHAR(36) PRIMARY KEY,
+            ethos_altruism INTEGER NOT NULL DEFAULT 0,
+            ethos_ambition INTEGER NOT NULL DEFAULT 0,
+            ethos_tradition INTEGER NOT NULL DEFAULT 0,
+            ethos_pacifism INTEGER NOT NULL DEFAULT 0,
+            ethos_piety INTEGER NOT NULL DEFAULT 0,
+            ethos_caution INTEGER NOT NULL DEFAULT 0,
 	    area_id VARCHAR(36) NOT NULL,
 	    faction_id VARCHAR(36) NOT NULL DEFAULT "",
-	    is_child_bearing BOOLEAN NOT NULL DEFAULT TRUE,
+	    is_child_bearing BOOLEAN NOT NULL DEFAULT FALSE,
 	    male_id VARCHAR(36) NOT NULL,
 	    female_id VARCHAR(36) NOT NULL,
+	    max_child_bearing_tick INTEGER NOT NULL DEFAULT 0,
+	    pregnancy_end INTEGER NOT NULL DEFAULT 0,
+	    ma_grandma_id VARCHAR(36) NOT NULL DEFAULT "",
+	    ma_grandpa_id VARCHAR(36) NOT NULL DEFAULT "",
+	    pa_grandma_id VARCHAR(36) NOT NULL DEFAULT "",
+	    pa_grandpa_id VARCHAR(36) NOT NULL DEFAULT "",
+	    number_of_children INTEGER NOT NULL DEFAULT 0,
 	    UNIQUE (male_id, female_id)
 	);`, tableFamilies)
 
@@ -186,10 +199,11 @@ var (
 		// families we mostly run over to see if we need to add children on a tick, so area + child_bearing
 		fmt.Sprintf(`CREATE INDEX IF NOT EXISTS fam_child_bearing ON %s (area_id, is_child_bearing);`, tableFamilies),
 
-		// hunt for people in given areas, by job, or their preferred_profession & area
+		// hunt for people in given areas, by job, family, or their preferred_profession & area
 		fmt.Sprintf(`CREATE INDEX IF NOT EXISTS peo_area ON %s (area_id);`, tablePeople),
 		fmt.Sprintf(`CREATE INDEX IF NOT EXISTS peo_prof ON %s (area_id, preferred_profession);`, tablePeople),
 		fmt.Sprintf(`CREATE INDEX IF NOT EXISTS peo_job ON %s (job_id);`, tablePeople),
+		fmt.Sprintf(`CREATE INDEX IF NOT EXISTS peo_fam ON %s (birth_family_id);`, tablePeople),
 
 		// factions we really only look up either by ID, by action_frequency or by government
 		fmt.Sprintf(`CREATE INDEX IF NOT EXISTS fact_government ON %s (government_id);`, tableFactions),

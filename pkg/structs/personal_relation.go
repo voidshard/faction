@@ -11,6 +11,7 @@ type PersonalRelation int
 // Nb. these are in order, where the lower number(s) trump higher ones.
 const (
 	// TODO: deity?
+	// TODO: mentor?
 
 	// family
 	PersonalRelationExWife PersonalRelation = iota
@@ -21,6 +22,8 @@ const (
 	PersonalRelationMother
 	PersonalRelationSon
 	PersonalRelationDaughter
+	PersonalRelationBrother
+	PersonalRelationSister
 	PersonalRelationGrandmother
 	PersonalRelationGrandfather
 	PersonalRelationGrandson

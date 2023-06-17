@@ -8,7 +8,12 @@ package structs
 // For as long as both people are lovers / married & within child-bearing age a family
 // has a chance of bearing children every so often.
 type Family struct {
+	Ethos // rough outlook
+
 	ID string `db:"id"`
+
+	// Race demographic assigned to children
+	Race string `db:"race"`
 
 	// Area where the family is based (where children will be placed)
 	AreaID string `db:"area_id"`
@@ -26,10 +31,30 @@ type Family struct {
 	// - both people are married or lovers (ie. willing to bear children)
 	IsChildBearing bool `db:"is_child_bearing"`
 
+	// Represents the tick when one of the two potential parents becomes too old to bear children.
+	MaxChildBearingTick int `db:"max_child_bearing_tick"`
+
+	// If mother is pregnant then this is the tick when she will give birth.
+	// Nb.
+	// - we always set a Family to *not* child bearing if either partner dies
+	//   (as in, it cannot produce more children)
+	// - we set PregnancyEnd to 0 when the child is born or the mother dies
+	//   (this means the child can be born if the father is dead)
+	// This saves us having to query the parents when doing calculations
+	PregnancyEnd int `db:"pregnancy_end"`
+
 	// A family consists of a male & female and can bear children.
 	// Nb. this does not imply that the couple are married ..
 	MaleID   string `db:"male_id"`
 	FemaleID string `db:"female_id"`
+
+	// Save us looking up families (the info doesn't change anyways)
+	MaGrandmaID string `db:"ma_grandma_id"` // mother's mother
+	MaGrandpaID string `db:"ma_grandpa_id"` // mother's father
+	PaGrandmaID string `db:"pa_grandma_id"` // father's mother
+	PaGrandpaID string `db:"pa_grandpa_id"` // father's father
+
+	NumberOfChildren int `db:"number_of_children"` // number of children this family has had
 }
 
 // relationshipGender returns if

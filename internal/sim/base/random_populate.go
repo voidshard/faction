@@ -10,9 +10,14 @@ import (
 	"time"
 
 	"github.com/voidshard/faction/internal/db"
+	"github.com/voidshard/faction/internal/dbutils"
 	"github.com/voidshard/faction/internal/stats"
 	"github.com/voidshard/faction/pkg/config"
 	"github.com/voidshard/faction/pkg/structs"
+)
+
+const (
+	diedInChildbirth = "died in childbirth"
 )
 
 // demographicsRand holds random dice for a demographics struct.
@@ -78,7 +83,7 @@ func (s *Base) randPerson(dice *demographicsRand, areaID string) *structs.Person
 			Piety:     dice.ethosPiety.Int(),
 			Caution:   dice.ethosCaution.Int(),
 		},
-		BirthTick: -1 * dice.childbearingAge.Int(),
+		BirthTick: -1 * (dice.childbearingAge.Int() + dice.childbearingTerm.Int()),
 		IsMale:    dice.rng.Float64() <= 0.5,
 	}
 	if dice.rng.Float64() <= dice.cfg.EthosBlackSheepProbability {
@@ -172,16 +177,24 @@ func (s *Base) spawnFamily(dice *demographicsRand, areaID string) *metaPeople {
 
 	mum := s.randPerson(dice, areaID)
 	dad := s.randPerson(dice, areaID)
-	mp.adults = append(mp.adults, mum, dad)
-
 	mum.IsMale = false
 	dad.IsMale = true
+	mp.adults = append(mp.adults, mum, dad)
+
+	eldest := dad.BirthTick
+	if mum.BirthTick < eldest { // ie. "is born before"
+		eldest = mum.BirthTick
+	}
+
 	family := &structs.Family{
-		ID:             structs.NewID(mum.ID, dad.ID),
-		AreaID:         areaID,
-		IsChildBearing: true,
-		MaleID:         dad.ID,
-		FemaleID:       mum.ID,
+		Ethos:               *structs.EthosAverage(&mum.Ethos, &dad.Ethos),
+		ID:                  structs.NewID(mum.ID, dad.ID),
+		Race:                mum.Race,
+		AreaID:              areaID,
+		IsChildBearing:      true,
+		MaleID:              dad.ID,
+		FemaleID:            mum.ID,
+		MaxChildBearingTick: eldest + int(dice.cfg.ChildbearingAge.Max),
 	}
 	mp.families = append(mp.families, family)
 
@@ -242,42 +255,22 @@ func (s *Base) spawnFamily(dice *demographicsRand, areaID string) *metaPeople {
 		}
 
 		child := s.randPerson(dice, areaID)
-		child.Ethos = *structs.EthosAverage(&child.Ethos, &mum.Ethos, &dad.Ethos) // average out parents
-		child.IsChild = true
-
-		// nb. currently all children at the start are born at the same time .. oddly enough
 		child.BirthTick = -1
 
-		rel := structs.PersonalRelationDaughter
-		if child.IsMale {
-			rel = structs.PersonalRelationSon
+		if dice.rng.Float64() <= dice.cfg.DeathInfantMortalityProbability { // check if child dies
+			child.DeathMetaReason = diedInChildbirth
+			child.DeathTick = 1
 		}
 
-		mp.relations = append(
-			mp.relations,
-			&structs.Tuple{Subject: mum.ID, Object: child.ID, Value: int(rel)},
-			&structs.Tuple{Subject: dad.ID, Object: child.ID, Value: int(rel)},
-			&structs.Tuple{Subject: child.ID, Object: mum.ID, Value: int(structs.PersonalRelationMother)},
-			&structs.Tuple{Subject: child.ID, Object: dad.ID, Value: int(structs.PersonalRelationFather)},
-		)
-		mp.trust = append(
-			mp.trust,
-			&structs.Tuple{Subject: mum.ID, Object: child.ID, Value: dice.relationTrust.Int()},
-			&structs.Tuple{Subject: dad.ID, Object: child.ID, Value: dice.relationTrust.Int()},
-			&structs.Tuple{Subject: child.ID, Object: mum.ID, Value: dice.relationTrust.Int()},
-			&structs.Tuple{Subject: child.ID, Object: dad.ID, Value: dice.relationTrust.Int()},
-		)
+		addChildToFamily(dice, child, family)
+		addParentChildRelations(dice, mp, child, family)
 
 		if i == 0 && dice.rng.Float64() <= dice.cfg.ChildbearingDeathProbability { // check if mother dies
 			mum.DeathTick = 1
-			mum.DeathMetaReason = "died in childbirth"
+			mum.DeathMetaReason = diedInChildbirth
 			mum.DeathMetaKey = structs.MetaKeyPerson
 			mum.DeathMetaVal = child.ID
-		}
-
-		if dice.rng.Float64() <= dice.cfg.DeathInfantMortalityProbability { // check if child dies
-			child.DeathMetaReason = dice.deathCauseReason[dice.deathCauseProb.Int()]
-			child.DeathTick = 1
+			family.IsChildBearing = false
 		}
 
 		childFaiths := []*structs.Tuple{}
@@ -305,6 +298,7 @@ func (s *Base) spawnFamily(dice *demographicsRand, areaID string) *metaPeople {
 			&structs.Tuple{Subject: mum.ID, Object: dad.ID, Value: dice.relationTrust.Int() / 2},
 			&structs.Tuple{Subject: mum.ID, Object: dad.ID, Value: dice.relationTrust.Int() / 2},
 		)
+		family.IsChildBearing = false
 	} else {
 		div := 1
 		if havingAffair {
@@ -322,7 +316,46 @@ func (s *Base) spawnFamily(dice *demographicsRand, areaID string) *metaPeople {
 		)
 	}
 
+	if len(mp.children) > 1 {
+		// add inter-sibling relations
+		for i, child := range mp.children {
+			for j, sibling := range mp.children {
+				if i == j {
+					continue
+				}
+				siblingRelationship(dice.relationTrust, mp, child, sibling)
+			}
+		}
+	}
+
+	if len(mp.children) >= int(dice.cfg.FamilySize.Max) {
+		family.IsChildBearing = false
+	}
+
 	return mp
+}
+
+func siblingRelationship(trust *stats.Rand, mp *metaPeople, a, b *structs.Person) {
+	brel := structs.PersonalRelationSister
+	if b.IsMale {
+		brel = structs.PersonalRelationBrother
+	}
+
+	arel := structs.PersonalRelationSister
+	if a.IsMale {
+		arel = structs.PersonalRelationBrother
+	}
+
+	mp.relations = append(
+		mp.relations,
+		&structs.Tuple{Subject: a.ID, Object: b.ID, Value: int(brel)},
+		&structs.Tuple{Subject: b.ID, Object: a.ID, Value: int(arel)},
+	)
+	mp.trust = append(
+		mp.trust,
+		&structs.Tuple{Subject: a.ID, Object: b.ID, Value: trust.Int()},
+		&structs.Tuple{Subject: b.ID, Object: a.ID, Value: trust.Int()},
+	)
 }
 
 func randomRelationship(personA, personB string, dice *demographicsRand) ([]*structs.Tuple, []*structs.Tuple) {
@@ -349,6 +382,14 @@ func randomRelationship(personA, personB string, dice *demographicsRand) ([]*str
 			&structs.Tuple{Subject: personA, Object: personB, Value: trust * dice.relationTrust.Int()},
 			&structs.Tuple{Subject: personB, Object: personA, Value: trust * dice.relationTrust.Int()},
 		}
+}
+
+func (s *Base) demographicDice(name string) (*demographicsRand, error) {
+	demo, ok := s.cfg.Demographics[name]
+	if !ok {
+		return nil, fmt.Errorf("unknown demographics %q", name)
+	}
+	return newDemographicsRand(demo), nil
 }
 
 func (s *Base) SpawnPopulace(desiredTotal int, name string, areas ...string) error {
@@ -537,6 +578,271 @@ func blacksheep(rng *rand.Rand, p *structs.Person) {
 		p.Piety = v
 	case 5:
 		p.Caution = v
+	}
+}
+
+// AdjustPopulation adjusts the population of an area simulating natural life events
+// like births, deaths etc.
+func (s *Base) AdjustPopulation(area string) error {
+	tick, err := s.dbconn.Tick()
+	if err != nil {
+		return err
+	}
+
+	// 1. families who can have children may do so
+	err = s.growFamilies(tick, area)
+	if err != nil {
+		return err
+	}
+
+	// 2.a people who're too old may die
+	//  .b people can randomly die of misc reasons (disease etc)
+
+	return err
+}
+
+func (s *Base) lifeEvents(tick int, area string) error {
+	return nil
+}
+
+func (s *Base) growFamilies(tick int, area string) error {
+	// ultimately we iterate families that can have children in chunks
+	// - for each chunk
+	//  - for each family check if it
+	//    - has a birth
+	//    - has reached it's max children
+	//  - write changes
+	//  - for each person in {siblings of children or mothers who died in this chunk
+	//    - if it's a mother, mark mother as dead
+	//    - if it's a child mark as sibling
+	//  - write changes
+	//
+	// The batched approach looks ugly but should make our code more efficient
+	// that a nicer looking more query intensive approach
+
+	token := (&dbutils.IterToken{Limit: 500, Offset: 0}).String()
+	ff := []*db.FamilyFilter{&db.FamilyFilter{OnlyChildBearing: true, AreaID: area}}
+	var (
+		families []*structs.Family
+		err      error
+	)
+
+	for {
+		mp := newMetaPeople()
+
+		mothersDiedInChildbirth := map[string]string{}     // mother id -> child id
+		familiesNewSibling := map[string]*structs.Person{} // family id -> sibling
+
+		pf := []*db.PersonFilter{}
+
+		families, token, err = s.dbconn.Families(token, ff...)
+		if err != nil {
+			return nil
+		}
+		for _, f := range families {
+			dice, err := s.demographicDice(f.Race)
+			if err != nil {
+				return nil
+			}
+
+			modified := false
+
+			// check if a baby is born
+			if f.PregnancyEnd == tick {
+				modified = true
+				f.PregnancyEnd = 0 // reset
+
+				child := s.randPerson(dice, area)
+				child.BirthTick = tick
+				mp.children = append(mp.children, child)
+
+				if dice.rng.Float64() <= dice.cfg.DeathInfantMortalityProbability { // check if child dies
+					child.DeathMetaReason = diedInChildbirth
+					child.DeathTick = tick
+				}
+
+				addChildToFamily(dice, child, f)
+				addParentChildRelations(dice, mp, child, f)
+
+				if f.NumberOfChildren > 1 {
+					familiesNewSibling[f.ID] = child
+					pf = append(pf, &db.PersonFilter{BirthFamilyID: f.ID, IncludeChildren: true})
+				}
+
+				if dice.rng.Float64() <= dice.cfg.ChildbearingDeathProbability { // check if mother dies
+					mothersDiedInChildbirth[f.FemaleID] = child.ID
+					pf = append(pf, &db.PersonFilter{ID: f.FemaleID})
+					f.IsChildBearing = false
+				}
+			}
+
+			// check if the family is too old to have children
+			if f.MaxChildBearingTick >= tick || f.NumberOfChildren >= int(dice.cfg.FamilySize.Max) {
+				modified = true
+				f.IsChildBearing = false
+			}
+
+			// check if the family is expecting a baby
+			if f.PregnancyEnd <= 0 && f.IsChildBearing && dice.rng.Float64() <= dice.cfg.ChildbearingProbability {
+				modified = true
+				f.PregnancyEnd = tick + dice.childbearingTerm.Int()
+			}
+
+			// if we changed it, add to batch to be written
+			if modified {
+				mp.families = append(mp.families, f)
+			}
+		}
+
+		// write new children & changes to families
+		err = writeMetaPeople(s.dbconn, mp)
+		if err != nil {
+			return err
+		}
+
+		// we probably should allow configuring this
+		trust := stats.NewRand(20, structs.MaxTuple, structs.MaxTuple/2, structs.MaxTuple/4)
+
+		// modify the people we need to (either siblings or mothers)
+		var (
+			people []*structs.Person
+			ptoken string
+		)
+		for {
+			mp = newMetaPeople()
+
+			people, ptoken, err = s.dbconn.People(ptoken, pf...)
+			if err != nil {
+				return err
+			}
+			for _, p := range people {
+				// there are currently two reasons we have a person here
+				// 1. it's a mother we want to register as died in childbirth
+				// 2. it's a family member (child) that has a new sibling
+				childID, ok := mothersDiedInChildbirth[p.ID]
+				if ok {
+					p.DeathTick = tick
+					p.DeathMetaReason = diedInChildbirth
+					p.DeathMetaKey = structs.MetaKeyPerson
+					p.DeathMetaVal = childID
+					mp.adults = append(mp.adults, p)
+
+					continue
+				}
+
+				child, ok := familiesNewSibling[p.BirthFamilyID]
+				if !ok {
+					continue
+				}
+
+				if p.ID == child.ID {
+					continue
+				}
+
+				siblingRelationship(trust, mp, p, child)
+				mp.children = append(mp.children, p)
+			}
+			err = writeMetaPeople(s.dbconn, mp)
+			if err != nil {
+				return err
+			}
+
+			if ptoken == "" {
+				break
+			}
+		}
+
+		if token == "" {
+			break
+		}
+	}
+
+	return nil
+}
+
+func addChildToFamily(dice *demographicsRand, child *structs.Person, f *structs.Family) {
+	child.Ethos = *structs.EthosAverage(&child.Ethos, &f.Ethos)
+	child.BirthFamilyID = f.ID
+	child.IsChild = true
+	f.NumberOfChildren++
+	if f.NumberOfChildren >= int(dice.cfg.FamilySize.Max) {
+		f.IsChildBearing = false
+	}
+}
+
+// addParentChildRelations adds parent & grandparent relationships
+func addParentChildRelations(dice *demographicsRand, mp *metaPeople, child *structs.Person, f *structs.Family) {
+	rel := structs.PersonalRelationDaughter
+	grel := structs.PersonalRelationGranddaughter
+	if child.IsMale {
+		rel = structs.PersonalRelationSon
+		grel = structs.PersonalRelationGrandson
+	}
+
+	// parents
+	mp.relations = append(
+		mp.relations,
+		&structs.Tuple{Subject: f.FemaleID, Object: child.ID, Value: int(rel)},
+		&structs.Tuple{Subject: f.MaleID, Object: child.ID, Value: int(rel)},
+		&structs.Tuple{Subject: child.ID, Object: f.FemaleID, Value: int(structs.PersonalRelationMother)},
+		&structs.Tuple{Subject: child.ID, Object: f.MaleID, Value: int(structs.PersonalRelationFather)},
+	)
+	mp.trust = append(
+		mp.trust,
+		&structs.Tuple{Subject: f.FemaleID, Object: child.ID, Value: dice.relationTrust.Int()},
+		&structs.Tuple{Subject: f.MaleID, Object: child.ID, Value: dice.relationTrust.Int()},
+		&structs.Tuple{Subject: child.ID, Object: f.FemaleID, Value: dice.relationTrust.Int()},
+		&structs.Tuple{Subject: child.ID, Object: f.MaleID, Value: dice.relationTrust.Int()},
+	)
+
+	// grandparents (first generation families wont have grandparents)
+	if f.MaGrandmaID != "" {
+		mp.relations = append(
+			mp.relations,
+			&structs.Tuple{Subject: f.MaGrandmaID, Object: child.ID, Value: int(grel)},
+			&structs.Tuple{Subject: child.ID, Object: f.MaGrandmaID, Value: int(structs.PersonalRelationGrandmother)},
+		)
+		mp.trust = append(
+			mp.trust,
+			&structs.Tuple{Subject: f.MaGrandmaID, Object: child.ID, Value: dice.relationTrust.Int()},
+			&structs.Tuple{Subject: child.ID, Object: f.MaGrandmaID, Value: dice.relationTrust.Int()},
+		)
+	}
+	if f.MaGrandpaID != "" {
+		mp.relations = append(
+			mp.relations,
+			&structs.Tuple{Subject: f.MaGrandpaID, Object: child.ID, Value: int(grel)},
+			&structs.Tuple{Subject: child.ID, Object: f.MaGrandpaID, Value: int(structs.PersonalRelationGrandfather)},
+		)
+		mp.trust = append(
+			mp.trust,
+			&structs.Tuple{Subject: f.MaGrandpaID, Object: child.ID, Value: dice.relationTrust.Int()},
+			&structs.Tuple{Subject: child.ID, Object: f.MaGrandpaID, Value: dice.relationTrust.Int()},
+		)
+	}
+	if f.PaGrandmaID != "" {
+		mp.relations = append(
+			mp.relations,
+			&structs.Tuple{Subject: f.PaGrandmaID, Object: child.ID, Value: int(grel)},
+			&structs.Tuple{Subject: child.ID, Object: f.PaGrandmaID, Value: int(structs.PersonalRelationGrandmother)},
+		)
+		mp.trust = append(
+			mp.trust,
+			&structs.Tuple{Subject: f.PaGrandmaID, Object: child.ID, Value: dice.relationTrust.Int()},
+			&structs.Tuple{Subject: child.ID, Object: f.PaGrandmaID, Value: dice.relationTrust.Int()},
+		)
+	}
+	if f.PaGrandpaID != "" {
+		mp.relations = append(
+			mp.relations,
+			&structs.Tuple{Subject: f.PaGrandpaID, Object: child.ID, Value: int(grel)},
+			&structs.Tuple{Subject: child.ID, Object: f.PaGrandpaID, Value: int(structs.PersonalRelationGrandfather)},
+		)
+		mp.trust = append(
+			mp.trust,
+			&structs.Tuple{Subject: f.PaGrandpaID, Object: child.ID, Value: dice.relationTrust.Int()},
+			&structs.Tuple{Subject: child.ID, Object: f.PaGrandpaID, Value: dice.relationTrust.Int()},
+		)
 	}
 }
 

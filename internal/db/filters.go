@@ -66,6 +66,8 @@ type FamilyFilter struct {
 	OnlyChildBearing bool // restricts the search to only child bearing families
 	MaleID           string
 	FemaleID         string
+	AreaID           string
+	PregnancyEnd     int // values <= 0 are ignored
 }
 
 type JobFilter struct {

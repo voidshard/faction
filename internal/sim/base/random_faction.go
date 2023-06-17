@@ -500,7 +500,7 @@ func (s *Base) randFaction(fr *factionRand) *metaFaction {
 
 // newFactionRand creates a new dice roller for creationg factions based on faction config
 // and the available land rights in some area(s).
-func newFactionRand(f *config.Faction, tech Technology, yields *yieldRand, areas []string) *factionRand {
+func newFactionRand(f *config.Faction, tech technology.Technology, yields *yieldRand, areas []string) *factionRand {
 	focusOccurProb := []float64{}
 	focusWeights := []*stats.Rand{}
 	for _, focus := range f.Focuses {

@@ -104,4 +104,7 @@ type Simulation interface {
 
 	// Tick updates internal time by one tick, returns the current tick.
 	Tick() (int, error)
+
+	// AdjustPopulation accounts for natural deaths, births etc in an area
+	AdjustPopulation(areaID string) error
 }

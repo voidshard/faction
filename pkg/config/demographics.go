@@ -8,6 +8,15 @@ import (
 //
 // For randomly making societies that look "sort of like this."
 type Demographics struct {
+	Race string // nb. we should split out Race vs Culture in demographics
+
+	// EthosMean represents the average outlook of members of the population
+	EthosMean structs.Ethos
+	// EthosDeviation is the standard deviation of the populace from the average (above).
+	EthosDeviation structs.Ethos
+	// Probability of a person getting a wildly different Ethos ("black sheep")
+	EthosBlackSheepProbability float64
+
 	// FamilySizeAverage is the average number of children in a family.
 	// A family always has parents ..
 	FamilySize Distribution
@@ -24,28 +33,6 @@ type Demographics struct {
 	MarriageDivorceProbability float64
 	// The chance one partner will have an affair (hopefully very low)
 	MarriageAffairProbability float64
-
-	// All people created with this Populate call will have this race set.
-	// In general we expect different races (where relevant) to have their own
-	// spread of professions, ethos etc.
-	Race string
-
-	// Ages min/max (in ticks) at which someone can have children.
-	ChildbearingAge              Distribution
-	ChildbearingTerm             Distribution // how long it takes to have a child
-	ChildbearingDeathProbability float64      // probability of (mother's) death during childbirth
-
-	// EthosMean represents the average outlook of members of the population
-	EthosMean structs.Ethos
-	// EthosDeviation is the standard deviation of the populace from the average (above).
-	EthosDeviation structs.Ethos
-	// Probability of a person getting a wildly different Ethos ("black sheep")
-	EthosBlackSheepProbability float64
-
-	// Probability of a person dying of some natural cause
-	DeathInfantMortalityProbability float64            // natural death in childhood
-	DeathAdultMortalityProbability  float64            // natural death in adulthood
-	DeathCauseNaturalProbability    map[string]float64 // what actually kills someone
 
 	// Professions to allocate to people.
 	Professions []Profession
@@ -74,4 +61,15 @@ type Demographics struct {
 	// Faiths to allocate to people.
 	Faiths           []Faith
 	FaithProbability []float64 // likelihood of 0 or more faiths
+
+	// Ages min/max (in ticks) at which someone can have children.
+	ChildbearingAge              Distribution
+	ChildbearingTerm             Distribution // how long it takes to have a child
+	ChildbearingDeathProbability float64      // probability of (mother's) death during childbirth
+	ChildbearingProbability      float64      // probability of having a child in a given tick
+
+	// Probability of a person dying of some natural cause
+	DeathInfantMortalityProbability float64            // natural death in childhood
+	DeathAdultMortalityProbability  float64            // natural death in adulthood
+	DeathCauseNaturalProbability    map[string]float64 // what actually kills someone
 }
