@@ -17,8 +17,8 @@ func sqlWhereFromFilters(in []*Filter, offset int) (string, []interface{}, error
 		where string
 	)
 
-	for _, f := range in {
-		segment, fargs, err := f.sqlQuery(offset)
+	for i, f := range in {
+		segment, fargs, err := f.sqlQuery(i + offset)
 		if err != nil {
 			return "", nil, err
 		}

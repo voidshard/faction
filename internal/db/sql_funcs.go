@@ -127,7 +127,7 @@ func incrModifiers(op sqlOperator, r Relation, v int, in []*Filter) error {
 		return nil
 	}
 
-	where, args, err := sqlWhereFromFilters(in, 1)
+	where, args, err := sqlWhereFromFilters(in, 1) // 1 is taken
 	if err != nil {
 		return err
 	}
@@ -197,7 +197,7 @@ func incrTuples(op sqlOperator, r Relation, v int, in []*Filter) error {
 		return nil
 	}
 
-	where, args, err := sqlWhereFromFilters(in, 0)
+	where, args, err := sqlWhereFromFilters(in, 1) // 1 is taken
 	if err != nil {
 		return err
 	}
@@ -209,6 +209,7 @@ func incrTuples(op sqlOperator, r Relation, v int, in []*Filter) error {
 		structs.MaxTuple, structs.MinTuple,
 		where,
 	)
+	fmt.Println(qstr, args)
 
 	_, err = op.Exec(qstr, args...)
 	return err

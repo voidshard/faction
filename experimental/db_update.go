@@ -42,11 +42,14 @@ func main() {
 	errRollback(err)
 	fmt.Println("wrote tuple", db.RelationPersonFactionAffiliation, aff)
 
-	err = tx.IncrTuples(db.RelationPersonFactionAffiliation, 10, &db.TupleFilter{Subject: subject, Object: object})
+	fmt.Println(subject, object)
+	fs := []*db.Filter{db.F(db.Subject, db.Equal, subject), db.F(db.Object, db.Equal, object)}
+
+	err = tx.IncrTuples(db.RelationPersonFactionAffiliation, 10, fs...)
 	errRollback(err)
 	fmt.Println("incremented tuple", db.RelationPersonFactionAffiliation, aff, "by 10")
 
-	err = tx.IncrTuples(db.RelationPersonFactionAffiliation, -1000, &db.TupleFilter{Subject: subject, Object: object})
+	err = tx.IncrTuples(db.RelationPersonFactionAffiliation, -100, fs...)
 	errRollback(err)
 	fmt.Println("incremented tuple", db.RelationPersonFactionAffiliation, aff, "by -100")
 
