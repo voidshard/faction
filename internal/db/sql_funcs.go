@@ -54,7 +54,7 @@ func deleteModifiers(op sqlOperator, r Relation, expires_before_tick int) error 
 	return err
 }
 
-func modifiersSum(op sqlOperator, r Relation, token string, in []*ModifierFilter) ([]*structs.Tuple, string, error) {
+func modifiersSum(op sqlOperator, r Relation, token string, in []*Filter) ([]*structs.Tuple, string, error) {
 	if !r.SupportsModifiers() {
 		return nil, token, fmt.Errorf("relation %s does not support modifiers", r)
 	}
@@ -64,7 +64,10 @@ func modifiersSum(op sqlOperator, r Relation, token string, in []*ModifierFilter
 		return nil, token, err
 	}
 
-	q, args := sqlSummationTuplesFromModifiers(r, tk, in)
+	q, args, err := sqlSummationTuplesFromModifiers(r, tk, in)
+	if err != nil {
+		return nil, token, err
+	}
 
 	var out []*structs.Tuple
 	err = op.Select(&out, q, args...)
@@ -75,7 +78,7 @@ func modifiersSum(op sqlOperator, r Relation, token string, in []*ModifierFilter
 	return out, nextToken(tk, len(out)), nil
 }
 
-func modifiers(op sqlOperator, r Relation, token string, in []*ModifierFilter) ([]*structs.Modifier, string, error) {
+func modifiers(op sqlOperator, r Relation, token string, in []*Filter) ([]*structs.Modifier, string, error) {
 	if !r.SupportsModifiers() {
 		return nil, token, fmt.Errorf("relation %s does not support modifiers", r)
 	}
@@ -84,7 +87,10 @@ func modifiers(op sqlOperator, r Relation, token string, in []*ModifierFilter) (
 		return nil, token, err
 	}
 
-	q, args := sqlFromModifierFilters(r, tk, in)
+	q, args, err := sqlFromModifierFilters(r, tk, in)
+	if err != nil {
+		return nil, token, err
+	}
 
 	var out []*structs.Modifier
 	err = op.Select(&out, q, args...)
@@ -116,12 +122,15 @@ func setModifiers(op sqlOperator, r Relation, in []*structs.Modifier) error {
 	return err
 }
 
-func incrModifiers(op sqlOperator, r Relation, v int, in []*ModifierFilter) error {
+func incrModifiers(op sqlOperator, r Relation, v int, in []*Filter) error {
 	if len(in) == 0 {
 		return nil
 	}
 
-	where, args := sqlWhereFromModifierFilters(in, 1)
+	where, args, err := sqlWhereFromFilters(in, 1)
+	if err != nil {
+		return err
+	}
 	args = append([]interface{}{v}, args...) // add our value to the front
 
 	qstr := fmt.Sprintf(
@@ -131,17 +140,20 @@ func incrModifiers(op sqlOperator, r Relation, v int, in []*ModifierFilter) erro
 		where,
 	)
 
-	_, err := op.Exec(qstr, args...)
+	_, err = op.Exec(qstr, args...)
 	return err
 }
 
-func tuples(op sqlOperator, r Relation, token string, in []*TupleFilter) ([]*structs.Tuple, string, error) {
+func tuples(op sqlOperator, r Relation, token string, in []*Filter) ([]*structs.Tuple, string, error) {
 	tk, err := dbutils.ParseToken(token)
 	if err != nil {
 		return nil, token, err
 	}
 
-	q, args := sqlFromTupleFilters(r, tk, in)
+	q, args, err := sqlFromTupleFilters(r, tk, in)
+	if err != nil {
+		return nil, token, err
+	}
 
 	var out []*structs.Tuple
 	err = op.Select(&out, q, args...)
@@ -180,14 +192,17 @@ func clampInt(v, min, max int) int {
 	return v
 }
 
-func incrTuples(op sqlOperator, r Relation, v int, in []*TupleFilter) error {
+func incrTuples(op sqlOperator, r Relation, v int, in []*Filter) error {
 	if len(in) == 0 {
 		return nil
 	}
 
-	where, args := sqlWhereFromTupleFilters(in, 1)
-	args = append([]interface{}{v}, args...) // add our value to the front
+	where, args, err := sqlWhereFromFilters(in, 0)
+	if err != nil {
+		return err
+	}
 
+	args = append([]interface{}{v}, args...) // add our value to the front
 	qstr := fmt.Sprintf(
 		`UPDATE %s SET value = MAX(MIN(value + $1, %d), %d) %s;`,
 		r.tupleTable(),
@@ -195,17 +210,20 @@ func incrTuples(op sqlOperator, r Relation, v int, in []*TupleFilter) error {
 		where,
 	)
 
-	_, err := op.Exec(qstr, args...)
+	_, err = op.Exec(qstr, args...)
 	return err
 }
 
-func plots(op sqlOperator, token string, in []*PlotFilter) ([]*structs.Plot, string, error) {
+func plots(op sqlOperator, token string, in []*Filter) ([]*structs.Plot, string, error) {
 	tk, err := dbutils.ParseToken(token)
 	if err != nil {
 		return nil, token, err
 	}
 
-	q, args := sqlFromPlotFilters(tk, in)
+	q, args, err := sqlFromPlotFilters(tk, in)
+	if err != nil {
+		return nil, token, err
+	}
 
 	var out []*structs.Plot
 	err = op.Select(&out, q, args...)
@@ -257,13 +275,16 @@ func setPlots(op sqlOperator, in []*structs.Plot) error {
 	return err
 }
 
-func routes(op sqlOperator, token string, in []*RouteFilter) ([]*structs.Route, string, error) {
+func routes(op sqlOperator, token string, in []*Filter) ([]*structs.Route, string, error) {
 	tk, err := dbutils.ParseToken(token)
 	if err != nil {
 		return nil, token, err
 	}
 
-	q, args := sqlFromRouteFilters(tk, in)
+	q, args, err := sqlFromRouteFilters(tk, in)
+	if err != nil {
+		return nil, token, err
+	}
 
 	var out []*structs.Route
 	err = op.Select(&out, q, args...)
@@ -305,13 +326,16 @@ func setRoutes(op sqlOperator, in []*structs.Route) error {
 	return err
 }
 
-func people(op sqlOperator, token string, in []*PersonFilter) ([]*structs.Person, string, error) {
+func people(op sqlOperator, token string, in []*Filter) ([]*structs.Person, string, error) {
 	tk, err := dbutils.ParseToken(token)
 	if err != nil {
 		return nil, token, err
 	}
 
-	q, args := sqlFromPersonFilters(tk, in)
+	q, args, err := sqlFromPersonFilters(tk, in)
+	if err != nil {
+		return nil, token, err
+	}
 
 	var out []*structs.Person
 	err = op.Select(&out, q, args...)
@@ -382,13 +406,16 @@ func setPeople(op sqlOperator, in []*structs.Person) error {
 	return err
 }
 
-func jobs(op sqlOperator, token string, in []*JobFilter) ([]*structs.Job, string, error) {
+func jobs(op sqlOperator, token string, in []*Filter) ([]*structs.Job, string, error) {
 	tk, err := dbutils.ParseToken(token)
 	if err != nil {
 		return nil, token, err
 	}
 
-	q, args := sqlFromJobFilters(tk, in)
+	q, args, err := sqlFromJobFilters(tk, in)
+	if err != nil {
+		return nil, token, err
+	}
 
 	var out []*structs.Job
 	err = op.Select(&out, q, args...)
@@ -445,14 +472,17 @@ func setJobs(op sqlOperator, in []*structs.Job) error {
 	return err
 }
 
-func governments(op sqlOperator, token string, in []*GovernmentFilter) ([]*structs.Government, string, error) {
+func governments(op sqlOperator, token string, in []*Filter) ([]*structs.Government, string, error) {
 	tk, err := dbutils.ParseToken(token)
 	if err != nil {
 		return nil, token, err
 	}
 
 	// 1. read Government objects
-	q, args := sqlFromGovernmentFilters(tk, in)
+	q, args, err := sqlFromGovernmentFilters(tk, in)
+	if err != nil {
+		return nil, token, err
+	}
 
 	var out []*structs.Government
 	err = op.Select(&out, q, args...)
@@ -612,13 +642,16 @@ func setGovernments(op sqlOperator, in []*structs.Government) error {
 	return err
 }
 
-func families(op sqlOperator, token string, in []*FamilyFilter) ([]*structs.Family, string, error) {
+func families(op sqlOperator, token string, in []*Filter) ([]*structs.Family, string, error) {
 	tk, err := dbutils.ParseToken(token)
 	if err != nil {
 		return nil, token, err
 	}
 
-	q, args := sqlFromFamilyFilters(tk, in)
+	q, args, err := sqlFromFamilyFilters(tk, in)
+	if err != nil {
+		return nil, token, err
+	}
 
 	var out []*structs.Family
 	err = op.Select(&out, q, args...)
@@ -683,13 +716,16 @@ func setFamilies(op sqlOperator, in []*structs.Family) error {
 	return err
 }
 
-func factions(op sqlOperator, token string, in []*FactionFilter) ([]*structs.Faction, string, error) {
+func factions(op sqlOperator, token string, in []*Filter) ([]*structs.Faction, string, error) {
 	tk, err := dbutils.ParseToken(token)
 	if err != nil {
 		return nil, token, err
 	}
 
-	q, args := sqlFromFactionFilters(tk, in)
+	q, args, err := sqlFromFactionFilters(tk, in)
+	if err != nil {
+		return nil, token, err
+	}
 
 	var out []*structs.Faction
 	err = op.Select(&out, q, args...)
@@ -788,13 +824,16 @@ func setFactions(op sqlOperator, in []*structs.Faction) error {
 	return err
 }
 
-func areas(op sqlOperator, token string, in []*AreaFilter) ([]*structs.Area, string, error) {
+func areas(op sqlOperator, token string, in []*Filter) ([]*structs.Area, string, error) {
 	tk, err := dbutils.ParseToken(token)
 	if err != nil {
 		return nil, token, err
 	}
 
-	q, args := sqlFromAreaFilters(tk, in)
+	q, args, err := sqlFromAreaFilters(tk, in)
+	if err != nil {
+		return nil, token, err
+	}
 
 	var out []*structs.Area
 	err = op.Select(&out, q, args...)

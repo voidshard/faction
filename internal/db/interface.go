@@ -24,18 +24,18 @@ type Reader interface {
 	// be parsed by the end user(s), and it's design & encoding may change.
 
 	Tick() (int, error)
-	Areas(token string, f ...*AreaFilter) ([]*structs.Area, string, error)
-	Factions(token string, f ...*FactionFilter) ([]*structs.Faction, string, error)
-	Families(token string, f ...*FamilyFilter) ([]*structs.Family, string, error)
-	Governments(token string, f ...*GovernmentFilter) ([]*structs.Government, string, error)
-	Jobs(token string, f ...*JobFilter) ([]*structs.Job, string, error)
-	People(token string, f ...*PersonFilter) ([]*structs.Person, string, error)
-	Plots(token string, f ...*PlotFilter) ([]*structs.Plot, string, error)
-	Tuples(table Relation, token string, f ...*TupleFilter) ([]*structs.Tuple, string, error)
-	Routes(token string, f ...*RouteFilter) ([]*structs.Route, string, error)
+	Areas(token string, f ...*Filter) ([]*structs.Area, string, error)
+	Factions(token string, f ...*Filter) ([]*structs.Faction, string, error)
+	Families(token string, f ...*Filter) ([]*structs.Family, string, error)
+	Governments(token string, f ...*Filter) ([]*structs.Government, string, error)
+	Jobs(token string, f ...*Filter) ([]*structs.Job, string, error)
+	People(token string, f ...*Filter) ([]*structs.Person, string, error)
+	Plots(token string, f ...*Filter) ([]*structs.Plot, string, error)
+	Tuples(table Relation, token string, f ...*Filter) ([]*structs.Tuple, string, error)
+	Routes(token string, f ...*Filter) ([]*structs.Route, string, error)
 	Meta(id string) (string, int, error)
-	Modifiers(table Relation, token string, f ...*ModifierFilter) ([]*structs.Modifier, string, error)
-	ModifiersSum(table Relation, token string, f ...*ModifierFilter) ([]*structs.Tuple, string, error)
+	Modifiers(table Relation, token string, f ...*Filter) ([]*structs.Modifier, string, error)
+	ModifiersSum(table Relation, token string, f ...*Filter) ([]*structs.Tuple, string, error)
 }
 
 type Writer interface {
@@ -52,7 +52,7 @@ type Writer interface {
 	DeleteModifiers(table Relation, expires_before_tick int) error
 	SetRoutes(in ...*structs.Route) error
 	SetMeta(id, str_val string, int_val int) error
-	IncrTuples(table Relation, v int, f ...*TupleFilter) error
+	IncrTuples(table Relation, v int, f ...*Filter) error
 }
 
 type ReaderWriter interface {

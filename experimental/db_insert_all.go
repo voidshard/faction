@@ -140,7 +140,7 @@ func main() {
 		TickCreated:     0,
 		TickStarts:      5,
 		TickEnds:        15,
-		Secrecy:         0,
+		Secrecy:         1,
 		IsIllegal:       false,
 		State:           structs.JobStatePending,
 	}

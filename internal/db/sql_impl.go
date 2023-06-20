@@ -51,47 +51,47 @@ func (s *sqlDB) Tick() (int, error) {
 	return t, err
 }
 
-func (s *sqlDB) Plots(token string, in ...*PlotFilter) ([]*structs.Plot, string, error) {
+func (s *sqlDB) Plots(token string, in ...*Filter) ([]*structs.Plot, string, error) {
 	return plots(s.conn, token, in)
 }
 
-func (s *sqlDB) Routes(token string, in ...*RouteFilter) ([]*structs.Route, string, error) {
+func (s *sqlDB) Routes(token string, in ...*Filter) ([]*structs.Route, string, error) {
 	return routes(s.conn, token, in)
 }
 
-func (s *sqlDB) People(token string, in ...*PersonFilter) ([]*structs.Person, string, error) {
+func (s *sqlDB) People(token string, in ...*Filter) ([]*structs.Person, string, error) {
 	return people(s.conn, token, in)
 }
 
-func (s *sqlDB) Jobs(token string, in ...*JobFilter) ([]*structs.Job, string, error) {
+func (s *sqlDB) Jobs(token string, in ...*Filter) ([]*structs.Job, string, error) {
 	return jobs(s.conn, token, in)
 }
 
-func (s *sqlDB) Governments(token string, in ...*GovernmentFilter) ([]*structs.Government, string, error) {
+func (s *sqlDB) Governments(token string, in ...*Filter) ([]*structs.Government, string, error) {
 	return governments(s.conn, token, in)
 }
 
-func (s *sqlDB) Families(token string, in ...*FamilyFilter) ([]*structs.Family, string, error) {
+func (s *sqlDB) Families(token string, in ...*Filter) ([]*structs.Family, string, error) {
 	return families(s.conn, token, in)
 }
 
-func (s *sqlDB) Factions(token string, in ...*FactionFilter) ([]*structs.Faction, string, error) {
+func (s *sqlDB) Factions(token string, in ...*Filter) ([]*structs.Faction, string, error) {
 	return factions(s.conn, token, in)
 }
 
-func (s *sqlDB) Areas(token string, in ...*AreaFilter) ([]*structs.Area, string, error) {
+func (s *sqlDB) Areas(token string, in ...*Filter) ([]*structs.Area, string, error) {
 	return areas(s.conn, token, in)
 }
 
-func (s *sqlDB) Tuples(r Relation, token string, in ...*TupleFilter) ([]*structs.Tuple, string, error) {
+func (s *sqlDB) Tuples(r Relation, token string, in ...*Filter) ([]*structs.Tuple, string, error) {
 	return tuples(s.conn, r, token, in)
 }
 
-func (s *sqlDB) Modifiers(r Relation, token string, in ...*ModifierFilter) ([]*structs.Modifier, string, error) {
+func (s *sqlDB) Modifiers(r Relation, token string, in ...*Filter) ([]*structs.Modifier, string, error) {
 	return modifiers(s.conn, r, token, in)
 }
 
-func (s *sqlDB) ModifiersSum(table Relation, token string, f ...*ModifierFilter) ([]*structs.Tuple, string, error) {
+func (s *sqlDB) ModifiersSum(table Relation, token string, f ...*Filter) ([]*structs.Tuple, string, error) {
 	return modifiersSum(s.conn, table, token, f)
 }
 
@@ -144,47 +144,47 @@ func (t *sqlTx) SetTick(tick int) error {
 	return t.SetMeta(metaClock, "", tick-1)
 }
 
-func (t *sqlTx) Plots(token string, in ...*PlotFilter) ([]*structs.Plot, string, error) {
+func (t *sqlTx) Plots(token string, in ...*Filter) ([]*structs.Plot, string, error) {
 	return plots(t.tx, token, in)
 }
 
-func (t *sqlTx) Routes(token string, in ...*RouteFilter) ([]*structs.Route, string, error) {
+func (t *sqlTx) Routes(token string, in ...*Filter) ([]*structs.Route, string, error) {
 	return routes(t.tx, token, in)
 }
 
-func (t *sqlTx) People(token string, in ...*PersonFilter) ([]*structs.Person, string, error) {
+func (t *sqlTx) People(token string, in ...*Filter) ([]*structs.Person, string, error) {
 	return people(t.tx, token, in)
 }
 
-func (t *sqlTx) Jobs(token string, in ...*JobFilter) ([]*structs.Job, string, error) {
+func (t *sqlTx) Jobs(token string, in ...*Filter) ([]*structs.Job, string, error) {
 	return jobs(t.tx, token, in)
 }
 
-func (t *sqlTx) Governments(token string, in ...*GovernmentFilter) ([]*structs.Government, string, error) {
+func (t *sqlTx) Governments(token string, in ...*Filter) ([]*structs.Government, string, error) {
 	return governments(t.tx, token, in)
 }
 
-func (t *sqlTx) Families(token string, in ...*FamilyFilter) ([]*structs.Family, string, error) {
+func (t *sqlTx) Families(token string, in ...*Filter) ([]*structs.Family, string, error) {
 	return families(t.tx, token, in)
 }
 
-func (t *sqlTx) Factions(token string, in ...*FactionFilter) ([]*structs.Faction, string, error) {
+func (t *sqlTx) Factions(token string, in ...*Filter) ([]*structs.Faction, string, error) {
 	return factions(t.tx, token, in)
 }
 
-func (t *sqlTx) Areas(token string, in ...*AreaFilter) ([]*structs.Area, string, error) {
+func (t *sqlTx) Areas(token string, in ...*Filter) ([]*structs.Area, string, error) {
 	return areas(t.tx, token, in)
 }
 
-func (t *sqlTx) Tuples(r Relation, token string, in ...*TupleFilter) ([]*structs.Tuple, string, error) {
+func (t *sqlTx) Tuples(r Relation, token string, in ...*Filter) ([]*structs.Tuple, string, error) {
 	return tuples(t.tx, r, token, in)
 }
 
-func (t *sqlTx) Modifiers(r Relation, token string, in ...*ModifierFilter) ([]*structs.Modifier, string, error) {
+func (t *sqlTx) Modifiers(r Relation, token string, in ...*Filter) ([]*structs.Modifier, string, error) {
 	return modifiers(t.tx, r, token, in)
 }
 
-func (t *sqlTx) ModifiersSum(table Relation, token string, f ...*ModifierFilter) ([]*structs.Tuple, string, error) {
+func (t *sqlTx) ModifiersSum(table Relation, token string, f ...*Filter) ([]*structs.Tuple, string, error) {
 	return modifiersSum(t.tx, table, token, f)
 }
 
@@ -228,11 +228,11 @@ func (t *sqlTx) SetModifiers(r Relation, mod ...*structs.Modifier) error {
 	return setModifiers(t.tx, r, mod)
 }
 
-func (t *sqlTx) IncrTuples(r Relation, v int, f ...*TupleFilter) error {
+func (t *sqlTx) IncrTuples(r Relation, v int, f ...*Filter) error {
 	return incrTuples(t.tx, r, v, f)
 }
 
-func (t *sqlTx) IncrModifiers(r Relation, v int, f ...*ModifierFilter) error {
+func (t *sqlTx) IncrModifiers(r Relation, v int, f ...*Filter) error {
 	return incrModifiers(t.tx, r, v, f)
 }
 
