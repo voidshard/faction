@@ -591,8 +591,14 @@ func (s *Base) AdjustPopulation(area string) error {
 		return err
 	}
 
-	// 1. families who can have children may do so
-	err = s.growFamilies(tick, area)
+	// check non-pregnant families for conceptions
+	err = s.conceiveChildren(tick, area)
+	if err != nil {
+		return err
+	}
+
+	// check pregnant families for births
+	err = s.birthChildren(tick, area)
 	if err != nil {
 		return err
 	}
@@ -604,6 +610,64 @@ func (s *Base) AdjustPopulation(area string) error {
 }
 
 func (s *Base) lifeEvents(tick int, area string) error {
+	return nil
+}
+
+func (s *Base) conceiveChildren(tick int, area string) error {
+	token := (&dbutils.IterToken{Limit: 500, Offset: 0}).String()
+	ff := db.Q( // all childbearing families in the area not expecting a birth
+		db.F(db.AreaID, db.Equal, area),
+		db.F(db.IsChildBearing, db.Equal, true),
+		db.F(db.PregnancyEnd, db.Equal, 0),
+	)
+	var (
+		families []*structs.Family
+		err      error
+	)
+	for {
+		mp := newMetaPeople()
+
+		families, token, err = s.dbconn.Families(token, ff)
+		if err != nil {
+			return err
+		}
+		for _, f := range families {
+			dice, err := s.demographicDice(f.Race)
+			if err != nil {
+				return err
+			}
+
+			modified := false
+			// check if the family is too old to have children
+			if f.MaxChildBearingTick <= tick || f.NumberOfChildren >= int(dice.cfg.FamilySize.Max) {
+				fmt.Println("family", f.ID, "will have no more children")
+				modified = true
+				f.IsChildBearing = false
+			}
+
+			// check if the family is expecting a baby
+			px := dice.rng.Float64()
+			if f.PregnancyEnd <= 0 && f.IsChildBearing && px <= dice.cfg.ChildbearingProbability {
+				modified = true
+				f.PregnancyEnd = tick + dice.childbearingTerm.Int()
+			}
+
+			if modified {
+				mp.families = append(mp.families, f)
+			}
+		}
+
+		// write new children & changes to families
+		err = writeMetaPeople(s.dbconn, mp)
+		if err != nil {
+			return err
+		}
+
+		if token == "" {
+			break
+		}
+	}
+
 	return nil
 }
 
@@ -689,7 +753,7 @@ func (s *Base) applyChildbirthEffects(tick int, mothersDiedInChildbirth map[stri
 	return nil
 }
 
-func (s *Base) growFamilies(tick int, area string) error {
+func (s *Base) birthChildren(tick int, area string) error {
 	// ultimately we iterate families that can have children in chunks
 	// - for each chunk
 	//  - for each family check if it
@@ -704,11 +768,7 @@ func (s *Base) growFamilies(tick int, area string) error {
 	// Work is performed in batches of limited size
 
 	token := (&dbutils.IterToken{Limit: 500, Offset: 0}).String()
-	ff := db.Q( // all childbearing families in the area not expecting a birth
-		db.F(db.AreaID, db.Equal, area),
-		db.F(db.IsChildBearing, db.Equal, true),
-		db.F(db.PregnancyEnd, db.Equal, 0),
-	).Or( // all childbearing families in the area expecting a birth (nb. childbearing ommited)
+	ff := db.Q( // all childbearing families in the area expecting a birth
 		db.F(db.AreaID, db.Equal, area),
 		db.F(db.PregnancyEnd, db.Less, tick+1),
 		db.F(db.PregnancyEnd, db.Greater, 0),
@@ -734,63 +794,39 @@ func (s *Base) growFamilies(tick int, area string) error {
 				return err
 			}
 
-			modified := false
+			f.PregnancyEnd = 0 // reset
 
-			// check if a baby is born
-			if f.PregnancyEnd > 0 && f.PregnancyEnd <= tick {
-				modified = true
-				f.PregnancyEnd = 0 // reset
+			child := s.randPerson(dice, area)
+			child.BirthTick = tick
 
-				child := s.randPerson(dice, area)
-				child.BirthTick = tick
+			addChildToFamily(dice, child, f)
+			addParentChildRelations(dice, mp, child, f)
 
-				addChildToFamily(dice, child, f)
-				addParentChildRelations(dice, mp, child, f)
+			mp.children = append(mp.children, child)
 
-				mp.children = append(mp.children, child)
-
-				if dice.rng.Float64() <= dice.cfg.DeathInfantMortalityProbability { // check if child dies
-					child.DeathMetaReason = diedInChildbirth
-					child.DeathTick = tick
-					child.DeathMetaKey = structs.MetaKeyPerson
-					child.DeathMetaVal = f.FemaleID
-				}
-
-				if f.NumberOfChildren > 1 {
-					familiesNewSibling[f.ID] = child
-				}
-
-				fmt.Println("child born", child.ID, "to", child.BirthFamilyID)
-				if child.DeathTick > 0 {
-					fmt.Println("\tchild died", child.ID)
-				}
-
-				if dice.rng.Float64() <= dice.cfg.ChildbearingDeathProbability { // check if mother dies
-					fmt.Println("\tmother died", f.FemaleID)
-					mothersDiedInChildbirth[f.FemaleID] = child.ID
-					f.IsChildBearing = false
-				}
-
+			if dice.rng.Float64() <= dice.cfg.DeathInfantMortalityProbability { // check if child dies
+				child.DeathMetaReason = diedInChildbirth
+				child.DeathTick = tick
+				child.DeathMetaKey = structs.MetaKeyPerson
+				child.DeathMetaVal = f.FemaleID
 			}
 
-			// check if the family is too old to have children
-			if f.MaxChildBearingTick <= tick || f.NumberOfChildren >= int(dice.cfg.FamilySize.Max) {
-				fmt.Println("family", f.ID, "will have no more children")
-				modified = true
+			if f.NumberOfChildren > 1 {
+				familiesNewSibling[f.ID] = child
+			}
+
+			fmt.Println("child born", child.ID, "to", child.BirthFamilyID)
+			if child.DeathTick > 0 {
+				fmt.Println("\tchild died", child.ID)
+			}
+
+			if dice.rng.Float64() <= dice.cfg.ChildbearingDeathProbability { // check if mother dies
+				fmt.Println("\tmother died", f.FemaleID)
+				mothersDiedInChildbirth[f.FemaleID] = child.ID
 				f.IsChildBearing = false
 			}
 
-			// check if the family is expecting a baby
-			px := dice.rng.Float64()
-			if f.PregnancyEnd <= 0 && f.IsChildBearing && px <= dice.cfg.ChildbearingProbability {
-				modified = true
-				f.PregnancyEnd = tick + dice.childbearingTerm.Int()
-			}
-
-			// if we changed it, add to batch to be written
-			if modified {
-				mp.families = append(mp.families, f)
-			}
+			mp.families = append(mp.families, f)
 		}
 
 		// write new children & changes to families
