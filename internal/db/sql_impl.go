@@ -21,7 +21,14 @@ const (
 
 	// metaClock is the current simulation tick, stored in the metadata table
 	metaClock = "tick"
+
+	// chunks (rows) we write a time
+	chunksPerWrite = 1200
 )
+
+type Row interface {
+	*structs.Plot | *structs.Route | *structs.Person | *structs.Job | *structs.Government | *structs.Family | *structs.Faction | *structs.Area | *structs.Tuple | *structs.Modifier
+}
 
 // sqlDB represents a generic DB wrapper -- this allows SQLite & Postgres to run
 // the same code & execute queries in the same manner.
@@ -51,47 +58,47 @@ func (s *sqlDB) Tick() (int, error) {
 	return t, err
 }
 
-func (s *sqlDB) Plots(token string, in ...*Filter) ([]*structs.Plot, string, error) {
+func (s *sqlDB) Plots(token string, in *Query) ([]*structs.Plot, string, error) {
 	return plots(s.conn, token, in)
 }
 
-func (s *sqlDB) Routes(token string, in ...*Filter) ([]*structs.Route, string, error) {
+func (s *sqlDB) Routes(token string, in *Query) ([]*structs.Route, string, error) {
 	return routes(s.conn, token, in)
 }
 
-func (s *sqlDB) People(token string, in ...*Filter) ([]*structs.Person, string, error) {
+func (s *sqlDB) People(token string, in *Query) ([]*structs.Person, string, error) {
 	return people(s.conn, token, in)
 }
 
-func (s *sqlDB) Jobs(token string, in ...*Filter) ([]*structs.Job, string, error) {
+func (s *sqlDB) Jobs(token string, in *Query) ([]*structs.Job, string, error) {
 	return jobs(s.conn, token, in)
 }
 
-func (s *sqlDB) Governments(token string, in ...*Filter) ([]*structs.Government, string, error) {
+func (s *sqlDB) Governments(token string, in *Query) ([]*structs.Government, string, error) {
 	return governments(s.conn, token, in)
 }
 
-func (s *sqlDB) Families(token string, in ...*Filter) ([]*structs.Family, string, error) {
+func (s *sqlDB) Families(token string, in *Query) ([]*structs.Family, string, error) {
 	return families(s.conn, token, in)
 }
 
-func (s *sqlDB) Factions(token string, in ...*Filter) ([]*structs.Faction, string, error) {
+func (s *sqlDB) Factions(token string, in *Query) ([]*structs.Faction, string, error) {
 	return factions(s.conn, token, in)
 }
 
-func (s *sqlDB) Areas(token string, in ...*Filter) ([]*structs.Area, string, error) {
+func (s *sqlDB) Areas(token string, in *Query) ([]*structs.Area, string, error) {
 	return areas(s.conn, token, in)
 }
 
-func (s *sqlDB) Tuples(r Relation, token string, in ...*Filter) ([]*structs.Tuple, string, error) {
+func (s *sqlDB) Tuples(r Relation, token string, in *Query) ([]*structs.Tuple, string, error) {
 	return tuples(s.conn, r, token, in)
 }
 
-func (s *sqlDB) Modifiers(r Relation, token string, in ...*Filter) ([]*structs.Modifier, string, error) {
+func (s *sqlDB) Modifiers(r Relation, token string, in *Query) ([]*structs.Modifier, string, error) {
 	return modifiers(s.conn, r, token, in)
 }
 
-func (s *sqlDB) ModifiersSum(table Relation, token string, f ...*Filter) ([]*structs.Tuple, string, error) {
+func (s *sqlDB) ModifiersSum(table Relation, token string, f *Query) ([]*structs.Tuple, string, error) {
 	return modifiersSum(s.conn, table, token, f)
 }
 
@@ -134,105 +141,124 @@ func (t *sqlTx) SetMeta(id, strv string, intv int) error {
 
 func (t *sqlTx) Tick() (int, error) {
 	_, tick, err := t.Meta(metaClock)
-	return tick + 1, err
+	if tick < 1 {
+		tick = 1
+	}
+	return tick, err
 }
 
 func (t *sqlTx) SetTick(tick int) error {
 	if tick <= 1 {
 		return nil
 	}
-	return t.SetMeta(metaClock, "", tick-1)
+	return t.SetMeta(metaClock, "", tick)
 }
 
-func (t *sqlTx) Plots(token string, in ...*Filter) ([]*structs.Plot, string, error) {
+func (t *sqlTx) Plots(token string, in *Query) ([]*structs.Plot, string, error) {
 	return plots(t.tx, token, in)
 }
 
-func (t *sqlTx) Routes(token string, in ...*Filter) ([]*structs.Route, string, error) {
+func (t *sqlTx) Routes(token string, in *Query) ([]*structs.Route, string, error) {
 	return routes(t.tx, token, in)
 }
 
-func (t *sqlTx) People(token string, in ...*Filter) ([]*structs.Person, string, error) {
+func (t *sqlTx) People(token string, in *Query) ([]*structs.Person, string, error) {
 	return people(t.tx, token, in)
 }
 
-func (t *sqlTx) Jobs(token string, in ...*Filter) ([]*structs.Job, string, error) {
+func (t *sqlTx) Jobs(token string, in *Query) ([]*structs.Job, string, error) {
 	return jobs(t.tx, token, in)
 }
 
-func (t *sqlTx) Governments(token string, in ...*Filter) ([]*structs.Government, string, error) {
+func (t *sqlTx) Governments(token string, in *Query) ([]*structs.Government, string, error) {
 	return governments(t.tx, token, in)
 }
 
-func (t *sqlTx) Families(token string, in ...*Filter) ([]*structs.Family, string, error) {
+func (t *sqlTx) Families(token string, in *Query) ([]*structs.Family, string, error) {
 	return families(t.tx, token, in)
 }
 
-func (t *sqlTx) Factions(token string, in ...*Filter) ([]*structs.Faction, string, error) {
+func (t *sqlTx) Factions(token string, in *Query) ([]*structs.Faction, string, error) {
 	return factions(t.tx, token, in)
 }
 
-func (t *sqlTx) Areas(token string, in ...*Filter) ([]*structs.Area, string, error) {
+func (t *sqlTx) Areas(token string, in *Query) ([]*structs.Area, string, error) {
 	return areas(t.tx, token, in)
 }
 
-func (t *sqlTx) Tuples(r Relation, token string, in ...*Filter) ([]*structs.Tuple, string, error) {
+func (t *sqlTx) Tuples(r Relation, token string, in *Query) ([]*structs.Tuple, string, error) {
 	return tuples(t.tx, r, token, in)
 }
 
-func (t *sqlTx) Modifiers(r Relation, token string, in ...*Filter) ([]*structs.Modifier, string, error) {
+func (t *sqlTx) Modifiers(r Relation, token string, in *Query) ([]*structs.Modifier, string, error) {
 	return modifiers(t.tx, r, token, in)
 }
 
-func (t *sqlTx) ModifiersSum(table Relation, token string, f ...*Filter) ([]*structs.Tuple, string, error) {
+func (t *sqlTx) ModifiersSum(table Relation, token string, f *Query) ([]*structs.Tuple, string, error) {
 	return modifiersSum(t.tx, table, token, f)
 }
 
-func (t *sqlTx) SetPlots(plots ...*structs.Plot) error {
-	return setPlots(t.tx, plots)
+// chunkWrite stops us from trying to write too many rows at once; triggering
+// errors about too many SQL variables
+func chunkWrite[R Row](fn func(sqlOperator, []R) error, tx sqlOperator, in []R) error {
+	for i := 0; i < len(in); i += chunksPerWrite {
+		j := i + chunksPerWrite
+		if j > len(in) {
+			return fn(tx, in[i:])
+		}
+		err := fn(tx, in[i:j])
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
-func (t *sqlTx) SetRoutes(routes ...*structs.Route) error {
-	return setRoutes(t.tx, routes)
+func (t *sqlTx) SetPlots(in ...*structs.Plot) error {
+	return chunkWrite(setPlots, t.tx, in)
 }
 
-func (t *sqlTx) SetPeople(people ...*structs.Person) error {
-	return setPeople(t.tx, people)
+func (t *sqlTx) SetRoutes(in ...*structs.Route) error {
+	return chunkWrite(setRoutes, t.tx, in)
 }
 
-func (t *sqlTx) SetJobs(jobs ...*structs.Job) error {
-	return setJobs(t.tx, jobs)
+func (t *sqlTx) SetPeople(in ...*structs.Person) error {
+	return chunkWrite(setPeople, t.tx, in)
 }
 
-func (t *sqlTx) SetGovernments(governments ...*structs.Government) error {
-	return setGovernments(t.tx, governments)
+func (t *sqlTx) SetJobs(in ...*structs.Job) error {
+	return chunkWrite(setJobs, t.tx, in)
 }
 
-func (t *sqlTx) SetFamilies(families ...*structs.Family) error {
-	return setFamilies(t.tx, families)
+func (t *sqlTx) SetGovernments(in ...*structs.Government) error {
+	return chunkWrite(setGovernments, t.tx, in)
 }
 
-func (t *sqlTx) SetFactions(factions ...*structs.Faction) error {
-	return setFactions(t.tx, factions)
+func (t *sqlTx) SetFamilies(in ...*structs.Family) error {
+	return chunkWrite(setFamilies, t.tx, in)
 }
 
-func (t *sqlTx) SetAreas(areas ...*structs.Area) error {
-	return setAreas(t.tx, areas)
+func (t *sqlTx) SetFactions(in ...*structs.Faction) error {
+	return chunkWrite(setFactions, t.tx, in)
 }
 
-func (t *sqlTx) SetTuples(r Relation, tuples ...*structs.Tuple) error {
-	return setTuples(t.tx, r, tuples)
+func (t *sqlTx) SetAreas(in ...*structs.Area) error {
+	return chunkWrite(setAreas, t.tx, in)
 }
 
-func (t *sqlTx) SetModifiers(r Relation, mod ...*structs.Modifier) error {
-	return setModifiers(t.tx, r, mod)
+func (t *sqlTx) SetTuples(r Relation, in ...*structs.Tuple) error {
+	return setTuples(t.tx, r, in)
 }
 
-func (t *sqlTx) IncrTuples(r Relation, v int, f ...*Filter) error {
+func (t *sqlTx) SetModifiers(r Relation, in ...*structs.Modifier) error {
+	return setModifiers(t.tx, r, in)
+}
+
+func (t *sqlTx) IncrTuples(r Relation, v int, f *Query) error {
 	return incrTuples(t.tx, r, v, f)
 }
 
-func (t *sqlTx) IncrModifiers(r Relation, v int, f ...*Filter) error {
+func (t *sqlTx) IncrModifiers(r Relation, v int, f *Query) error {
 	return incrModifiers(t.tx, r, v, f)
 }
 

@@ -206,12 +206,11 @@ func (fr *factionRand) recalcGuildProb() {
 
 func (s *Base) SpawnFactions(count int, cfg *config.Faction, areas ...string) ([]*structs.Faction, error) {
 	// prep some filters
-	arf := []*db.AreaFilter{}
-	lrf := []*db.PlotFilter{}
-	for _, area := range areas {
-		arf = append(arf, &db.AreaFilter{ID: area})
-		lrf = append(lrf, &db.PlotFilter{AreaID: area, HasCommodity: true})
-	}
+	arf := db.Q(db.F(db.ID, db.In, areas))
+	lrf := db.Q(
+		db.F(db.AreaID, db.In, areas),
+		db.F(db.Commodity, db.NotEqual, ""),
+	)
 
 	// what land is good for what / who
 	yields, err := s.areaYields(lrf, false)

@@ -32,21 +32,21 @@ func main() {
 	fmt.Printf("tick %d\n", tick)
 
 	fmt.Println("areas")
-	areas, _, err := conn.Areas("")
+	areas, _, err := conn.Areas("", nil)
 	perr(err)
 	for _, i := range areas {
 		fmt.Printf("\t%v\n", i)
 	}
 
 	fmt.Println("routes")
-	routes, _, err := conn.Routes("")
+	routes, _, err := conn.Routes("", nil)
 	perr(err)
 	for _, i := range routes {
 		fmt.Printf("\t%v\n", i)
 	}
 
 	fmt.Println("governments")
-	govts, _, err := conn.Governments("")
+	govts, _, err := conn.Governments("", nil)
 	perr(err)
 	for _, i := range govts {
 		fmt.Printf("\t%v\n\toutlawed\n", i)
@@ -62,35 +62,35 @@ func main() {
 	}
 
 	fmt.Println("factions")
-	factions, _, err := conn.Factions("")
+	factions, _, err := conn.Factions("", nil)
 	perr(err)
 	for _, i := range factions {
 		fmt.Printf("\t%v\n", i)
 	}
 
 	fmt.Println("people")
-	people, _, err := conn.People("")
+	people, _, err := conn.People("", nil)
 	perr(err)
 	for _, i := range people {
 		fmt.Printf("\t%v\n", i)
 	}
 
 	fmt.Println("families")
-	families, _, err := conn.Families("")
+	families, _, err := conn.Families("", nil)
 	perr(err)
 	for _, i := range families {
 		fmt.Printf("\t%v\n", i)
 	}
 
 	fmt.Println("plots")
-	plots, _, err := conn.Plots("")
+	plots, _, err := conn.Plots("", nil)
 	perr(err)
 	for _, i := range plots {
 		fmt.Printf("\t%v\n", i)
 	}
 
 	fmt.Println("jobs")
-	jobs, _, err := conn.Jobs("")
+	jobs, _, err := conn.Jobs("", nil)
 	perr(err)
 	for _, i := range jobs {
 		fmt.Printf("\t%v\n", i)
@@ -102,7 +102,7 @@ func main() {
 		db.RelationPersonFactionAffiliation,
 	} {
 		fmt.Println("tuple", r)
-		rel, _, err := conn.Tuples(r, "")
+		rel, _, err := conn.Tuples(r, "", nil)
 		perr(err)
 		for _, i := range rel {
 			fmt.Printf("\t%v\n", i)
@@ -111,7 +111,7 @@ func main() {
 
 	for _, r := range []db.Relation{db.RelationPersonPersonTrust} {
 		fmt.Println("modifier", r)
-		rel, _, err := conn.Modifiers(r, "")
+		rel, _, err := conn.Modifiers(r, "", nil)
 		perr(err)
 		for _, i := range rel {
 			fmt.Printf("\t%v\n", i)
@@ -119,7 +119,7 @@ func main() {
 	}
 
 	fmt.Println("modifier sums", db.RelationPersonPersonTrust)
-	sums, _, err := conn.ModifiersSum(db.RelationPersonPersonTrust, "")
+	sums, _, err := conn.ModifiersSum(db.RelationPersonPersonTrust, "", nil)
 	perr(err)
 	for _, i := range sums {
 		fmt.Printf("\t%v\n", i)

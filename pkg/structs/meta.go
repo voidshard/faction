@@ -14,4 +14,7 @@ const (
 	MetaKeyFamily     MetaKey = "family"     // targets specific family Key:FAMILY_ID
 	MetaKeyCommodity  MetaKey = "commodity"  // targets specific commodity (ie. spice) Key:COMMODITY_ID
 	MetaKeyAction     MetaKey = "action"     // targets specific action (ie. assassination) Key:ACTION_TYPE
+	MetaKeyJob        MetaKey = "job"        // targets specific job (ie. assassination) Key:JOB_ID
+	MetaKeyArea       MetaKey = "area"       // targets specific area (ie. assassination) Key:AREA_ID
+	MetaKeyRoute      MetaKey = "route"      // targets specific route (ie. assassination) Key:ROUTE_ID
 )

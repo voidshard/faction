@@ -1,11 +1,5 @@
+/*filters.go contains generic query / filter implementations*/
 package db
-
-import (
-	"fmt"
-	"strings"
-
-	"github.com/voidshard/faction/internal/dbutils"
-)
 
 type Field string
 type Op string
@@ -30,6 +24,9 @@ const (
 	// area, faction
 	GovernmentID Field = "government_id"
 
+	// area
+	Commodity Field = "commodity"
+
 	// plot
 	FactionID Field = "faction_id"
 
@@ -45,11 +42,17 @@ const (
 	EthosPiety      Field = "ethos_piety"
 	EthosCaution    Field = "ethos_caution"
 
+	// person
+	PreferredProfession Field = "preferred_profession"
+	PreferredFactionID  Field = "preferred_faction_id"
+	IsChild             Field = "is_child"
+	BirthFamilyID       Field = "birth_family_id"
+
 	// modifiers
 	TickExpires Field = "tick_expires"
 
 	// family
-	IsChildBearing Field = "child_bearing"
+	IsChildBearing Field = "is_child_bearing"
 	PregnancyEnd   Field = "pregnancy_end"
 
 	// job
@@ -64,15 +67,24 @@ const (
 	Object  Field = "object"
 )
 
-var (
-	fieldTypes = map[Op][]isValid{
-		Equal:    {isInt, isString},
-		NotEqual: {isInt, isString},
-		In:       {isListID},
-		Greater:  {isInt},
-		Less:     {isInt},
-	}
-)
+type Query struct {
+	sort    bool // by ID
+	filters [][]*Filter
+}
+
+func Q(filters ...*Filter) *Query {
+	return &Query{filters: [][]*Filter{filters}, sort: true}
+}
+
+func (q *Query) DisableSort() *Query {
+	q.sort = false
+	return q
+}
+
+func (q *Query) Or(filters ...*Filter) *Query {
+	q.filters = append(q.filters, filters)
+	return q
+}
 
 type Filter struct {
 	Field Field
@@ -86,137 +98,4 @@ func F(field Field, op Op, value interface{}) *Filter {
 		Op:    op,
 		Value: value,
 	}
-}
-
-func (f *Filter) sqlQuery(offset int) (string, []interface{}, error) {
-	if f.Field == "" {
-		return "", nil, fmt.Errorf("invalid filter field: %s", f.Field)
-	}
-	if f.Op == "" {
-		return "", nil, fmt.Errorf("invalid filter op: %s", f.Op)
-	}
-	if f.Value == nil {
-		return "", nil, fmt.Errorf("invalid filter value: %s", f.Value)
-	}
-
-	checks, ok := fieldTypes[f.Op]
-	if !ok {
-		return "", nil, fmt.Errorf("invalid filter op: %s", f.Op)
-	}
-	valid := false
-	for _, check := range checks {
-		valid = check(f.Value)
-		if valid {
-			break
-		}
-	}
-	if !valid {
-		return "", nil, fmt.Errorf("invalid filter value: %v", f.Value)
-	}
-
-	args := []interface{}{}
-	placeholder := fmt.Sprintf("$%d", offset+1)
-
-	if f.Op == In {
-		values := f.Value.([]string) // we've already checked the type
-		placeholders := []string{}
-		for i, v := range values {
-			placeholders = append(placeholders, fmt.Sprintf("$%d", i+offset+1))
-			args = append(args, v)
-		}
-		placeholder = fmt.Sprintf("(%s)", strings.Join(placeholders, ","))
-	} else {
-		args = append(args, f.Value)
-	}
-
-	return fmt.Sprintf("%s %s %s", f.sqlColumn(), f.Op, placeholder), args, nil
-}
-
-func (f *Filter) sqlColumn() string {
-	switch f.Field {
-	case ID:
-		return "id"
-	case JobID:
-		return "job_id"
-	case AreaID:
-		return "area_id"
-	case GovernmentID:
-		return "government_id"
-	case FactionID:
-		return "faction_id"
-	case SourceAreaID:
-		return "source_area_id"
-	case TargetAreaID:
-		return "target_area_id"
-	case EthosAltruism:
-		return "ethos_altruism"
-	case EthosAmbition:
-		return "ethos_ambition"
-	case EthosTradition:
-		return "ethos_tradition"
-	case EthosPacificism:
-		return "ethos_pacificism"
-	case EthosPiety:
-		return "ethos_piety"
-	case EthosCaution:
-		return "ethos_caution"
-	case TickExpires:
-		return "tick_expires"
-	case IsChildBearing:
-		return "child_bearing"
-	case PregnancyEnd:
-		return "pregnancy_end"
-	case SourceFactionID:
-		return "source_faction_id"
-	case TargetMetaKey:
-		return "target_meta_key"
-	case TargetMetaVal:
-		return "target_meta_val"
-	case Secrecy:
-		return "secrecy"
-	case State:
-		return "state"
-	case Subject:
-		return "subject"
-	case Object:
-		return "object"
-	}
-	return ""
-}
-
-func isInt(v interface{}) bool {
-	_, ok := v.(int)
-	return ok
-}
-
-func isString(v interface{}) bool {
-	_, ok := v.(string)
-	return ok
-}
-
-func isID(v interface{}) bool {
-	i, ok := v.(string)
-	if !ok {
-		return false
-	}
-	return dbutils.IsValidID(i)
-}
-
-func isListID(v interface{}) bool {
-	ls, ok := v.([]string)
-	if !ok {
-		return false
-	}
-	for _, i := range ls {
-		valid := dbutils.IsValidID(i)
-		if !valid {
-			return false
-		}
-	}
-	return true
-}
-
-func isListString(v interface{}) bool {
-	_, ok := v.([]string)
-	return ok
 }

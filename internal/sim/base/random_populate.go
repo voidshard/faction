@@ -260,6 +260,8 @@ func (s *Base) spawnFamily(dice *demographicsRand, areaID string) *metaPeople {
 		if dice.rng.Float64() <= dice.cfg.DeathInfantMortalityProbability { // check if child dies
 			child.DeathMetaReason = diedInChildbirth
 			child.DeathTick = 1
+			child.DeathMetaKey = structs.MetaKeyPerson
+			child.DeathMetaVal = mum.ID
 		}
 
 		addChildToFamily(dice, child, family)
@@ -605,6 +607,88 @@ func (s *Base) lifeEvents(tick int, area string) error {
 	return nil
 }
 
+// applyChildbirthEffects updates People in one of two cases;
+// - an expectant mother has died in childbirth (mother needs to be marked as dead)
+// - a new child is born (set up relationships with siblings)
+func (s *Base) applyChildbirthEffects(tick int, mothersDiedInChildbirth map[string]string, familiesNewSibling map[string]*structs.Person) error {
+	if len(mothersDiedInChildbirth)+len(familiesNewSibling) == 0 {
+		return nil
+	}
+
+	// we probably should allow configuring this
+	trust := stats.NewRand(20, structs.MaxTuple, structs.MaxTuple/2, structs.MaxTuple/4)
+
+	// ok, now we need to find people we have to update
+	families := []string{}
+	mothers := []string{}
+	for personID := range mothersDiedInChildbirth {
+		mothers = append(mothers, personID)
+	}
+	for familyID := range familiesNewSibling {
+		families = append(families, familyID)
+	}
+
+	pf := db.Q()
+	if len(families) > 0 {
+		pf.Or(db.F(db.BirthFamilyID, db.In, families))
+	}
+	if len(mothers) > 0 {
+		pf.Or(db.F(db.ID, db.In, mothers)) // mothers who died in childbirth
+	}
+
+	// modify the people we need to (either siblings or mothers)
+	var (
+		people []*structs.Person
+		ptoken string
+		err    error
+	)
+	for {
+		mp := newMetaPeople()
+
+		people, ptoken, err = s.dbconn.People(ptoken, pf)
+		if err != nil {
+			return err
+		}
+		for _, p := range people {
+			// there are currently two reasons we have a person here
+			// 1. it's a mother we want to register as died in childbirth
+			// 2. it's a family member (child) that has a new sibling
+			childID, ok := mothersDiedInChildbirth[p.ID]
+			if ok {
+				p.DeathTick = tick
+				p.DeathMetaReason = diedInChildbirth
+				p.DeathMetaKey = structs.MetaKeyPerson
+				p.DeathMetaVal = childID
+				mp.adults = append(mp.adults, p)
+				continue
+			}
+
+			child, ok := familiesNewSibling[p.BirthFamilyID]
+			if !ok {
+				continue
+			}
+
+			if p.ID == child.ID {
+				continue
+			}
+
+			siblingRelationship(trust, mp, p, child)
+			mp.children = append(mp.children, p)
+		}
+
+		err = writeMetaPeople(s.dbconn, mp)
+		if err != nil {
+			return err
+		}
+
+		if ptoken == "" {
+			break
+		}
+	}
+
+	return nil
+}
+
 func (s *Base) growFamilies(tick int, area string) error {
 	// ultimately we iterate families that can have children in chunks
 	// - for each chunk
@@ -617,11 +701,18 @@ func (s *Base) growFamilies(tick int, area string) error {
 	//    - if it's a child mark as sibling
 	//  - write changes
 	//
-	// The batched approach looks ugly but should make our code more efficient
-	// that a nicer looking more query intensive approach
+	// Work is performed in batches of limited size
 
 	token := (&dbutils.IterToken{Limit: 500, Offset: 0}).String()
-	ff := []*db.FamilyFilter{&db.FamilyFilter{OnlyChildBearing: true, AreaID: area}}
+	ff := db.Q( // all childbearing families in the area not expecting a birth
+		db.F(db.AreaID, db.Equal, area),
+		db.F(db.IsChildBearing, db.Equal, true),
+		db.F(db.PregnancyEnd, db.Equal, 0),
+	).Or( // all childbearing families in the area expecting a birth (nb. childbearing ommited)
+		db.F(db.AreaID, db.Equal, area),
+		db.F(db.PregnancyEnd, db.Less, tick+1),
+		db.F(db.PregnancyEnd, db.Greater, 0),
+	)
 	var (
 		families []*structs.Family
 		err      error
@@ -633,57 +724,65 @@ func (s *Base) growFamilies(tick int, area string) error {
 		mothersDiedInChildbirth := map[string]string{}     // mother id -> child id
 		familiesNewSibling := map[string]*structs.Person{} // family id -> sibling
 
-		pf := []*db.PersonFilter{}
-
-		families, token, err = s.dbconn.Families(token, ff...)
+		families, token, err = s.dbconn.Families(token, ff)
 		if err != nil {
-			return nil
+			return err
 		}
 		for _, f := range families {
 			dice, err := s.demographicDice(f.Race)
 			if err != nil {
-				return nil
+				return err
 			}
 
 			modified := false
 
 			// check if a baby is born
-			if f.PregnancyEnd == tick {
+			if f.PregnancyEnd > 0 && f.PregnancyEnd <= tick {
 				modified = true
 				f.PregnancyEnd = 0 // reset
 
 				child := s.randPerson(dice, area)
 				child.BirthTick = tick
+
+				addChildToFamily(dice, child, f)
+				addParentChildRelations(dice, mp, child, f)
+
 				mp.children = append(mp.children, child)
 
 				if dice.rng.Float64() <= dice.cfg.DeathInfantMortalityProbability { // check if child dies
 					child.DeathMetaReason = diedInChildbirth
 					child.DeathTick = tick
+					child.DeathMetaKey = structs.MetaKeyPerson
+					child.DeathMetaVal = f.FemaleID
 				}
-
-				addChildToFamily(dice, child, f)
-				addParentChildRelations(dice, mp, child, f)
 
 				if f.NumberOfChildren > 1 {
 					familiesNewSibling[f.ID] = child
-					pf = append(pf, &db.PersonFilter{BirthFamilyID: f.ID, IncludeChildren: true})
+				}
+
+				fmt.Println("child born", child.ID, "to", child.BirthFamilyID)
+				if child.DeathTick > 0 {
+					fmt.Println("\tchild died", child.ID)
 				}
 
 				if dice.rng.Float64() <= dice.cfg.ChildbearingDeathProbability { // check if mother dies
+					fmt.Println("\tmother died", f.FemaleID)
 					mothersDiedInChildbirth[f.FemaleID] = child.ID
-					pf = append(pf, &db.PersonFilter{ID: f.FemaleID})
 					f.IsChildBearing = false
 				}
+
 			}
 
 			// check if the family is too old to have children
-			if f.MaxChildBearingTick >= tick || f.NumberOfChildren >= int(dice.cfg.FamilySize.Max) {
+			if f.MaxChildBearingTick <= tick || f.NumberOfChildren >= int(dice.cfg.FamilySize.Max) {
+				fmt.Println("family", f.ID, "will have no more children")
 				modified = true
 				f.IsChildBearing = false
 			}
 
 			// check if the family is expecting a baby
-			if f.PregnancyEnd <= 0 && f.IsChildBearing && dice.rng.Float64() <= dice.cfg.ChildbearingProbability {
+			px := dice.rng.Float64()
+			if f.PregnancyEnd <= 0 && f.IsChildBearing && px <= dice.cfg.ChildbearingProbability {
 				modified = true
 				f.PregnancyEnd = tick + dice.childbearingTerm.Int()
 			}
@@ -700,56 +799,10 @@ func (s *Base) growFamilies(tick int, area string) error {
 			return err
 		}
 
-		// we probably should allow configuring this
-		trust := stats.NewRand(20, structs.MaxTuple, structs.MaxTuple/2, structs.MaxTuple/4)
-
-		// modify the people we need to (either siblings or mothers)
-		var (
-			people []*structs.Person
-			ptoken string
-		)
-		for {
-			mp = newMetaPeople()
-
-			people, ptoken, err = s.dbconn.People(ptoken, pf...)
-			if err != nil {
-				return err
-			}
-			for _, p := range people {
-				// there are currently two reasons we have a person here
-				// 1. it's a mother we want to register as died in childbirth
-				// 2. it's a family member (child) that has a new sibling
-				childID, ok := mothersDiedInChildbirth[p.ID]
-				if ok {
-					p.DeathTick = tick
-					p.DeathMetaReason = diedInChildbirth
-					p.DeathMetaKey = structs.MetaKeyPerson
-					p.DeathMetaVal = childID
-					mp.adults = append(mp.adults, p)
-
-					continue
-				}
-
-				child, ok := familiesNewSibling[p.BirthFamilyID]
-				if !ok {
-					continue
-				}
-
-				if p.ID == child.ID {
-					continue
-				}
-
-				siblingRelationship(trust, mp, p, child)
-				mp.children = append(mp.children, p)
-			}
-			err = writeMetaPeople(s.dbconn, mp)
-			if err != nil {
-				return err
-			}
-
-			if ptoken == "" {
-				break
-			}
+		// update people affected by the above changes
+		err = s.applyChildbirthEffects(tick, mothersDiedInChildbirth, familiesNewSibling)
+		if err != nil {
+			return err
 		}
 
 		if token == "" {
@@ -764,6 +817,7 @@ func addChildToFamily(dice *demographicsRand, child *structs.Person, f *structs.
 	child.Ethos = *structs.EthosAverage(&child.Ethos, &f.Ethos)
 	child.BirthFamilyID = f.ID
 	child.IsChild = true
+	child.Race = f.Race
 	f.NumberOfChildren++
 	if f.NumberOfChildren >= int(dice.cfg.FamilySize.Max) {
 		f.IsChildBearing = false

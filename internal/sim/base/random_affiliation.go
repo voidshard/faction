@@ -234,15 +234,18 @@ func (s *Base) InspireFactionAffiliation(cfg *config.Affiliation, factionID stri
 		defer wgcheckpeople.Done()
 
 		for people := range check {
-			tf := make([]*db.TupleFilter, len(people))
-			for i, p := range people {
-				tf[i] = &db.TupleFilter{Subject: p.ID, Object: p.PreferredFactionID}
+			tf := db.Q()
+			for _, p := range people {
+				tf.Or(
+					db.F(db.Subject, db.Equal, p.ID),
+					db.F(db.Object, db.Equal, p.PreferredFactionID),
+				)
 			}
 
 			token := dbutils.NewToken()
-			token.Limit = len(tf)
+			token.Limit = len(people)
 
-			ranks, _, err := s.dbconn.Tuples(db.RelationPersonFactionRank, token.String(), tf...)
+			ranks, _, err := s.dbconn.Tuples(db.RelationPersonFactionRank, token.String(), tf)
 			if err != nil {
 				errors <- err
 				continue
@@ -276,16 +279,23 @@ func (s *Base) InspireFactionAffiliation(cfg *config.Affiliation, factionID stri
 
 		chunk := 250
 
-		pf := []*db.PersonFilter{}
+		pf := db.Q()
 		noProfessions := ctx.Summary.Professions == nil || len(ctx.Summary.Professions) == 0
-		for areaID := range ctx.Areas {
-			if noProfessions {
-				pf = append(pf, &db.PersonFilter{AreaID: areaID})
-				continue
+		if noProfessions {
+			pf.Or(
+				db.F(db.AreaID, db.In, ctx.Areas),
+				db.F(db.IsChild, db.Equal, false),
+			)
+		} else {
+			professions := []string{}
+			for p := range ctx.Summary.Professions {
+				professions = append(professions, p)
 			}
-			for profession := range ctx.Summary.Professions {
-				pf = append(pf, &db.PersonFilter{AreaID: areaID, PreferredProfession: profession})
-			}
+			pf.Or(
+				db.F(db.AreaID, db.In, ctx.Areas),
+				db.F(db.PreferredProfession, db.In, professions),
+				db.F(db.IsChild, db.Equal, false),
+			)
 		}
 
 		toconsider := []*structs.Person{}
@@ -297,7 +307,7 @@ func (s *Base) InspireFactionAffiliation(cfg *config.Affiliation, factionID stri
 			err    error
 		)
 		for {
-			people, token, err = s.dbconn.People(token, pf...)
+			people, token, err = s.dbconn.People(token, pf)
 			if err != nil {
 				errors <- err
 				return

@@ -20,7 +20,7 @@ func newYieldRand() *yieldRand {
 
 // areaYields returns the total yield of all land in the given areas, used to
 // determine guild type factions.
-func (s *Base) areaYields(in []*db.PlotFilter, includeOwned bool) (*yieldRand, error) {
+func (s *Base) areaYields(in *db.Query, includeOwned bool) (*yieldRand, error) {
 	var (
 		land  []*structs.Plot
 		token string
@@ -29,7 +29,7 @@ func (s *Base) areaYields(in []*db.PlotFilter, includeOwned bool) (*yieldRand, e
 
 	yield := newYieldRand()
 	for {
-		land, token, err = s.dbconn.Plots(token, in...)
+		land, token, err = s.dbconn.Plots(token, in)
 		if err != nil {
 			return nil, err
 		}
@@ -71,7 +71,7 @@ func (s *Base) areaYields(in []*db.PlotFilter, includeOwned bool) (*yieldRand, e
 // areaGovernments returns
 // 1. a map of area id to government id
 // 2. a map of government id to government
-func (s *Base) areaGovernments(in []*db.AreaFilter) (map[string]string, map[string]*structs.Government, error) {
+func (s *Base) areaGovernments(in *db.Query) (map[string]string, map[string]*structs.Government, error) {
 	areaToGovt := map[string]string{}
 	govtToGovt := map[string]*structs.Government{}
 
@@ -82,7 +82,7 @@ func (s *Base) areaGovernments(in []*db.AreaFilter) (map[string]string, map[stri
 	)
 
 	for {
-		areas, token, err = s.dbconn.Areas(token, in...)
+		areas, token, err = s.dbconn.Areas(token, in)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -105,15 +105,16 @@ func (s *Base) areaGovernments(in []*db.AreaFilter) (map[string]string, map[stri
 		return areaToGovt, govtToGovt, nil
 	}
 
-	gf := []*db.GovernmentFilter{}
+	gids := []string{}
 	for gid := range govtToGovt {
-		gf = append(gf, &db.GovernmentFilter{ID: gid})
+		gids = append(gids, gid)
 	}
+	gf := db.Q(db.F(db.ID, db.In, gids))
 
 	var governments []*structs.Government
 
 	for {
-		governments, token, err = s.dbconn.Governments(token, gf...)
+		governments, token, err = s.dbconn.Governments(token, gf)
 		if err != nil {
 			return nil, nil, err
 		}

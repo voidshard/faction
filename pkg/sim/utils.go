@@ -23,6 +23,9 @@ func New(cfg *config.Simulation, opts ...simOption) (Simulation, error) {
 	}
 
 	me, err := base.New(cfg)
+	if err != nil {
+		return nil, err
+	}
 
 	// apply given options
 	for _, opt := range opts {

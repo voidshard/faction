@@ -44,11 +44,8 @@ func (s *Base) Factions(ids ...string) ([]*structs.Faction, error) {
 	if len(ids) == 0 {
 		return nil, nil // we don't want to return everything
 	}
-	f := make([]*db.FactionFilter, len(ids))
-	for i, id := range ids {
-		f[i].ID = id
-	}
-	out, _, err := s.dbconn.Factions("", f...)
+	f := db.Q(db.F(db.ID, db.In, ids))
+	out, _, err := s.dbconn.Factions("", f)
 	return out, err
 }
 

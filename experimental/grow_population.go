@@ -20,13 +20,8 @@ func main() {
 
 	area1 := &structs.Area{ID: structs.NewID("area1")}
 
-	_, err = simulator.Tick()
-	if err != nil {
-		panic(err)
-	}
-
 	for _, a := range []*structs.Area{area1} {
-		simulator.AdjustPopulation(a.ID)
+		err = simulator.AdjustPopulation(a.ID)
 		if err != nil {
 			panic(err)
 		}

@@ -108,6 +108,7 @@ var (
 
 	createFamilies = fmt.Sprintf(`CREATE TABLE IF NOT EXISTS %s (
 	    id VARCHAR(36) PRIMARY KEY,
+	    race VARCHAR(255) NOT NULL default "",
             ethos_altruism INTEGER NOT NULL DEFAULT 0,
             ethos_ambition INTEGER NOT NULL DEFAULT 0,
             ethos_tradition INTEGER NOT NULL DEFAULT 0,

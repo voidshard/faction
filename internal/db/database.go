@@ -52,7 +52,7 @@ type DemographicQuery struct {
 func (f *FactionDB) InTransaction(do func(tx ReaderWriter) error) error {
 	tx, err := f.Database.Transaction()
 	if err != nil {
-		return nil
+		return err
 	}
 
 	err = do(tx)
@@ -83,10 +83,10 @@ func (f *FactionDB) FactionSummary(rels []Relation, in ...string) ([]*structs.Fa
 		return nil, err
 	}
 
-	ff := []*Filter{F(ID, In, in)}
-	tfSub := []*Filter{F(Subject, In, in)}
-	tfObj := []*Filter{F(Object, In, in)}
-	mf := []*Filter{F(TickExpires, Greater, tick), F(Subject, In, in)}
+	ff := Q(F(ID, In, in))
+	tfSub := Q(F(Subject, In, in))
+	tfObj := Q(F(Object, In, in))
+	mf := Q(F(TickExpires, Greater, tick)).Or(F(Subject, In, in))
 
 	fdata := map[string]*structs.FactionSummary{}
 	var (
@@ -96,7 +96,7 @@ func (f *FactionDB) FactionSummary(rels []Relation, in ...string) ([]*structs.Fa
 	)
 
 	for {
-		factions, token, err = f.Factions(token, ff...)
+		factions, token, err = f.Factions(token, ff)
 		if err != nil {
 			return nil, err
 		}
@@ -117,7 +117,7 @@ func (f *FactionDB) FactionSummary(rels []Relation, in ...string) ([]*structs.Fa
 		}
 
 		for {
-			tuples, token, err = f.Tuples(r, token, tf...)
+			tuples, token, err = f.Tuples(r, token, tf)
 			if err != nil {
 				return nil, err
 			}
@@ -163,7 +163,7 @@ func (f *FactionDB) FactionSummary(rels []Relation, in ...string) ([]*structs.Fa
 		}
 
 		for {
-			tuples, token, err = f.ModifiersSum(r, token, mf...)
+			tuples, token, err = f.ModifiersSum(r, token, mf)
 			if err != nil {
 				return nil, err
 			}
@@ -235,9 +235,10 @@ func (f *FactionDB) Demographics(in *DemographicQuery) (*structs.Demographics, e
 			}
 		}
 	}
-	pf := []*Filter{}
+
+	pf := Q()
 	if in.Areas != nil {
-		pf = append(pf, F(AreaID, In, in.Areas))
+		pf.Or(F(AreaID, In, in.Areas))
 	}
 
 	permit := func(item string, set map[string]bool) bool {
@@ -269,7 +270,7 @@ func (f *FactionDB) Demographics(in *DemographicQuery) (*structs.Demographics, e
 	)
 
 	for {
-		people, ptoken, err = f.People(ptoken, pf...)
+		people, ptoken, err = f.People(ptoken, pf)
 		if err != nil {
 			return ret, err
 		}
@@ -278,12 +279,12 @@ func (f *FactionDB) Demographics(in *DemographicQuery) (*structs.Demographics, e
 		for _, p := range people {
 			pids = append(pids, p.ID)
 		}
-		tf := []*Filter{F(Subject, In, pids)}
+		tf := Q(F(Subject, In, pids))
 
 		// TODO: we probably should expand the filters so this is not needed
 		for _, r := range demoRelations {
 			for {
-				tuples, ttoken, err = f.Tuples(r, ttoken, tf...)
+				tuples, ttoken, err = f.Tuples(r, ttoken, tf)
 				if err != nil {
 					return ret, err
 				}
@@ -328,7 +329,7 @@ func (f *FactionDB) Demographics(in *DemographicQuery) (*structs.Demographics, e
 // That is, given a set of areas, which factions have influence there.
 // (Inverse of FactionAreas)
 func (f *FactionDB) AreaFactions(areaIDs ...string) (map[string]map[string]bool, error) {
-	pfilters := []*Filter{F(AreaID, In, areaIDs)}
+	pfilters := Q(F(AreaID, In, areaIDs))
 
 	var (
 		plots []*structs.Plot
@@ -339,7 +340,7 @@ func (f *FactionDB) AreaFactions(areaIDs ...string) (map[string]map[string]bool,
 	result := map[string]map[string]bool{}
 
 	for {
-		plots, token, err = f.Plots(token, pfilters...)
+		plots, token, err = f.Plots(token, pfilters)
 		if err != nil {
 			return nil, err
 		}
@@ -364,7 +365,7 @@ func (f *FactionDB) AreaFactions(areaIDs ...string) (map[string]map[string]bool,
 // That is, given a set of factions, this is where factions have influence.
 // (Inverse of AreaFactions)
 func (f *FactionDB) FactionAreas(factionIDs ...string) (map[string]map[string]bool, error) {
-	pfilters := []*Filter{F(FactionID, In, factionIDs)}
+	pfilters := Q(F(FactionID, In, factionIDs))
 
 	var (
 		plots []*structs.Plot
@@ -375,7 +376,7 @@ func (f *FactionDB) FactionAreas(factionIDs ...string) (map[string]map[string]bo
 	result := map[string]map[string]bool{}
 
 	for {
-		plots, token, err = f.Plots(token, pfilters...)
+		plots, token, err = f.Plots(token, pfilters)
 		if err != nil {
 			return nil, err
 		}
@@ -401,7 +402,7 @@ func (f *FactionDB) AreaGovernments(in ...string) (map[string]*structs.Governmen
 	}
 
 	// look up areas
-	af := []*Filter{F(ID, In, in)}
+	af := Q(F(ID, In, in))
 
 	var (
 		govIDs     map[string]bool
@@ -411,7 +412,7 @@ func (f *FactionDB) AreaGovernments(in ...string) (map[string]*structs.Governmen
 		err        error
 	)
 	for {
-		areas, token, err = f.Areas(token, af...)
+		areas, token, err = f.Areas(token, af)
 		if err != nil {
 			return nil, err
 		}
@@ -434,14 +435,14 @@ func (f *FactionDB) AreaGovernments(in ...string) (map[string]*structs.Governmen
 	for id := range govIDs {
 		gids = append(gids, id)
 	}
-	gf := []*Filter{F(ID, In, gids)}
+	gf := Q(F(ID, In, gids))
 
 	var (
 		govs    []*structs.Government
 		govById map[string]*structs.Government
 	)
 	for {
-		govs, token, err = f.Governments(token, gf...)
+		govs, token, err = f.Governments(token, gf)
 		if err != nil {
 			return nil, err
 		}
@@ -474,7 +475,7 @@ func (f *FactionDB) SetAreaGovernment(govID string, areaIDs []string) error {
 		return fmt.Errorf("invalid goverment id: %s", govID)
 	}
 
-	af := []*Filter{F(ID, In, areaIDs)}
+	af := Q(F(ID, In, areaIDs))
 
 	var (
 		areas []*structs.Area
@@ -483,7 +484,7 @@ func (f *FactionDB) SetAreaGovernment(govID string, areaIDs []string) error {
 	)
 
 	for {
-		areas, token, err = f.Areas(token, af...)
+		areas, token, err = f.Areas(token, af)
 		if err != nil {
 			return err
 		}

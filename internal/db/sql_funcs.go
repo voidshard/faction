@@ -54,9 +54,13 @@ func deleteModifiers(op sqlOperator, r Relation, expires_before_tick int) error 
 	return err
 }
 
-func modifiersSum(op sqlOperator, r Relation, token string, in []*Filter) ([]*structs.Tuple, string, error) {
+func modifiersSum(op sqlOperator, r Relation, token string, in *Query) ([]*structs.Tuple, string, error) {
 	if !r.SupportsModifiers() {
 		return nil, token, fmt.Errorf("relation %s does not support modifiers", r)
+	}
+
+	if in == nil {
+		in = Q()
 	}
 
 	tk, err := dbutils.ParseToken(token)
@@ -78,10 +82,15 @@ func modifiersSum(op sqlOperator, r Relation, token string, in []*Filter) ([]*st
 	return out, nextToken(tk, len(out)), nil
 }
 
-func modifiers(op sqlOperator, r Relation, token string, in []*Filter) ([]*structs.Modifier, string, error) {
+func modifiers(op sqlOperator, r Relation, token string, in *Query) ([]*structs.Modifier, string, error) {
 	if !r.SupportsModifiers() {
 		return nil, token, fmt.Errorf("relation %s does not support modifiers", r)
 	}
+
+	if in == nil {
+		in = Q()
+	}
+
 	tk, err := dbutils.ParseToken(token)
 	if err != nil {
 		return nil, token, err
@@ -122,12 +131,12 @@ func setModifiers(op sqlOperator, r Relation, in []*structs.Modifier) error {
 	return err
 }
 
-func incrModifiers(op sqlOperator, r Relation, v int, in []*Filter) error {
-	if len(in) == 0 {
+func incrModifiers(op sqlOperator, r Relation, v int, in *Query) error {
+	if in == nil || len(in.filters) == 0 {
 		return nil
 	}
 
-	where, args, err := sqlWhereFromFilters(in, 1) // 1 is taken
+	where, args, err := in.sqlQuery(1) // 1 is taken
 	if err != nil {
 		return err
 	}
@@ -144,7 +153,11 @@ func incrModifiers(op sqlOperator, r Relation, v int, in []*Filter) error {
 	return err
 }
 
-func tuples(op sqlOperator, r Relation, token string, in []*Filter) ([]*structs.Tuple, string, error) {
+func tuples(op sqlOperator, r Relation, token string, in *Query) ([]*structs.Tuple, string, error) {
+	if in == nil {
+		in = Q()
+	}
+
 	tk, err := dbutils.ParseToken(token)
 	if err != nil {
 		return nil, token, err
@@ -192,12 +205,12 @@ func clampInt(v, min, max int) int {
 	return v
 }
 
-func incrTuples(op sqlOperator, r Relation, v int, in []*Filter) error {
-	if len(in) == 0 {
+func incrTuples(op sqlOperator, r Relation, v int, in *Query) error {
+	if in == nil || len(in.filters) == 0 {
 		return nil
 	}
 
-	where, args, err := sqlWhereFromFilters(in, 1) // 1 is taken
+	where, args, err := in.sqlQuery(1) // 1 is taken
 	if err != nil {
 		return err
 	}
@@ -209,13 +222,16 @@ func incrTuples(op sqlOperator, r Relation, v int, in []*Filter) error {
 		structs.MaxTuple, structs.MinTuple,
 		where,
 	)
-	fmt.Println(qstr, args)
 
 	_, err = op.Exec(qstr, args...)
 	return err
 }
 
-func plots(op sqlOperator, token string, in []*Filter) ([]*structs.Plot, string, error) {
+func plots(op sqlOperator, token string, in *Query) ([]*structs.Plot, string, error) {
+	if in == nil {
+		in = Q()
+	}
+
 	tk, err := dbutils.ParseToken(token)
 	if err != nil {
 		return nil, token, err
@@ -276,7 +292,11 @@ func setPlots(op sqlOperator, in []*structs.Plot) error {
 	return err
 }
 
-func routes(op sqlOperator, token string, in []*Filter) ([]*structs.Route, string, error) {
+func routes(op sqlOperator, token string, in *Query) ([]*structs.Route, string, error) {
+	if in == nil {
+		in = Q()
+	}
+
 	tk, err := dbutils.ParseToken(token)
 	if err != nil {
 		return nil, token, err
@@ -327,7 +347,11 @@ func setRoutes(op sqlOperator, in []*structs.Route) error {
 	return err
 }
 
-func people(op sqlOperator, token string, in []*Filter) ([]*structs.Person, string, error) {
+func people(op sqlOperator, token string, in *Query) ([]*structs.Person, string, error) {
+	if in == nil {
+		in = Q()
+	}
+
 	tk, err := dbutils.ParseToken(token)
 	if err != nil {
 		return nil, token, err
@@ -336,6 +360,11 @@ func people(op sqlOperator, token string, in []*Filter) ([]*structs.Person, stri
 	q, args, err := sqlFromPersonFilters(tk, in)
 	if err != nil {
 		return nil, token, err
+	}
+
+	fmt.Println("People", q)
+	for i, a := range args {
+		fmt.Println("\t", i+1, a)
 	}
 
 	var out []*structs.Person
@@ -365,6 +394,9 @@ func setPeople(op sqlOperator, in []*structs.Person) error {
 		if f.JobID != "" && !dbutils.IsValidID(f.JobID) {
 			return fmt.Errorf("person job id %s is invalid", f.JobID)
 		}
+		if f.Race == "" {
+			return fmt.Errorf("person id %s race required", f.ID)
+		}
 		f.Clamp()
 	}
 
@@ -392,6 +424,7 @@ func setPeople(op sqlOperator, in []*structs.Person) error {
 	    ethos_pacifism=EXCLUDED.ethos_pacifism,
 	    ethos_piety=EXCLUDED.ethos_piety,
 	    ethos_caution=EXCLUDED.ethos_caution,
+	    race=EXCLUDED.race,
 	    area_id=EXCLUDED.area_id,
 	    job_id=EXCLUDED.job_id,
 	    is_child=EXCLUDED.is_child,
@@ -407,7 +440,11 @@ func setPeople(op sqlOperator, in []*structs.Person) error {
 	return err
 }
 
-func jobs(op sqlOperator, token string, in []*Filter) ([]*structs.Job, string, error) {
+func jobs(op sqlOperator, token string, in *Query) ([]*structs.Job, string, error) {
+	if in == nil {
+		in = Q()
+	}
+
 	tk, err := dbutils.ParseToken(token)
 	if err != nil {
 		return nil, token, err
@@ -473,7 +510,11 @@ func setJobs(op sqlOperator, in []*structs.Job) error {
 	return err
 }
 
-func governments(op sqlOperator, token string, in []*Filter) ([]*structs.Government, string, error) {
+func governments(op sqlOperator, token string, in *Query) ([]*structs.Government, string, error) {
+	if in == nil {
+		in = Q()
+	}
+
 	tk, err := dbutils.ParseToken(token)
 	if err != nil {
 		return nil, token, err
@@ -643,7 +684,11 @@ func setGovernments(op sqlOperator, in []*structs.Government) error {
 	return err
 }
 
-func families(op sqlOperator, token string, in []*Filter) ([]*structs.Family, string, error) {
+func families(op sqlOperator, token string, in *Query) ([]*structs.Family, string, error) {
+	if in == nil {
+		in = Q()
+	}
+
 	tk, err := dbutils.ParseToken(token)
 	if err != nil {
 		return nil, token, err
@@ -652,6 +697,11 @@ func families(op sqlOperator, token string, in []*Filter) ([]*structs.Family, st
 	q, args, err := sqlFromFamilyFilters(tk, in)
 	if err != nil {
 		return nil, token, err
+	}
+
+	fmt.Println("Families", q)
+	for i, a := range args {
+		fmt.Println("\t", i+1, a)
 	}
 
 	var out []*structs.Family
@@ -667,6 +717,7 @@ func setFamilies(op sqlOperator, in []*structs.Family) error {
 	if len(in) == 0 {
 		return nil
 	}
+
 	for _, f := range in {
 		if !dbutils.IsValidID(f.ID) {
 			return fmt.Errorf("family id %s is invalid", f.ID)
@@ -683,23 +734,27 @@ func setFamilies(op sqlOperator, in []*structs.Family) error {
 		if !dbutils.IsValidID(f.FemaleID) {
 			return fmt.Errorf("family female id %s is invalid", f.FemaleID)
 		}
+		if f.Race == "" {
+			return fmt.Errorf("family %s race is requred", f.ID)
+		}
 	}
 
 	qstr := fmt.Sprintf(`INSERT INTO %s (
-	    id, area_id, faction_id, 
+	    id, race, area_id, faction_id, 
 	    ethos_altruism, ethos_ambition, ethos_tradition, ethos_pacifism, ethos_piety, ethos_caution,
 	    is_child_bearing, max_child_bearing_tick,  pregnancy_end,
 	    male_id, female_id,
 	    ma_grandma_id, ma_grandpa_id, pa_grandma_id, pa_grandpa_id,
 	    number_of_children
 	) VALUES (
-	    :id, :area_id, :faction_id, 
+	    :id, :race, :area_id, :faction_id, 
 	    :ethos_altruism, :ethos_ambition, :ethos_tradition, :ethos_pacifism, :ethos_piety, :ethos_caution,
-	    :is_child_bearing, :max_child_bearing_tick,  :pregnancy_end,
+	    :is_child_bearing, :max_child_bearing_tick, :pregnancy_end,
 	    :male_id, :female_id,
 	    :ma_grandma_id, :ma_grandpa_id, :pa_grandma_id, :pa_grandpa_id,
 	    :number_of_children
 	) ON CONFLICT (id) DO UPDATE SET
+	    race=EXCLUDED.race,
 	    ethos_altruism=EXCLUDED.ethos_altruism,
 	    ethos_ambition=EXCLUDED.ethos_ambition,
 	    ethos_tradition=EXCLUDED.ethos_tradition,
@@ -717,7 +772,11 @@ func setFamilies(op sqlOperator, in []*structs.Family) error {
 	return err
 }
 
-func factions(op sqlOperator, token string, in []*Filter) ([]*structs.Faction, string, error) {
+func factions(op sqlOperator, token string, in *Query) ([]*structs.Faction, string, error) {
+	if in == nil {
+		in = Q()
+	}
+
 	tk, err := dbutils.ParseToken(token)
 	if err != nil {
 		return nil, token, err
@@ -825,7 +884,11 @@ func setFactions(op sqlOperator, in []*structs.Faction) error {
 	return err
 }
 
-func areas(op sqlOperator, token string, in []*Filter) ([]*structs.Area, string, error) {
+func areas(op sqlOperator, token string, in *Query) ([]*structs.Area, string, error) {
+	if in == nil {
+		in = Q()
+	}
+
 	tk, err := dbutils.ParseToken(token)
 	if err != nil {
 		return nil, token, err

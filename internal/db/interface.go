@@ -24,18 +24,18 @@ type Reader interface {
 	// be parsed by the end user(s), and it's design & encoding may change.
 
 	Tick() (int, error)
-	Areas(token string, f ...*Filter) ([]*structs.Area, string, error)
-	Factions(token string, f ...*Filter) ([]*structs.Faction, string, error)
-	Families(token string, f ...*Filter) ([]*structs.Family, string, error)
-	Governments(token string, f ...*Filter) ([]*structs.Government, string, error)
-	Jobs(token string, f ...*Filter) ([]*structs.Job, string, error)
-	People(token string, f ...*Filter) ([]*structs.Person, string, error)
-	Plots(token string, f ...*Filter) ([]*structs.Plot, string, error)
-	Tuples(table Relation, token string, f ...*Filter) ([]*structs.Tuple, string, error)
-	Routes(token string, f ...*Filter) ([]*structs.Route, string, error)
+	Areas(token string, q *Query) ([]*structs.Area, string, error)
+	Factions(token string, q *Query) ([]*structs.Faction, string, error)
+	Families(token string, q *Query) ([]*structs.Family, string, error)
+	Governments(token string, q *Query) ([]*structs.Government, string, error)
+	Jobs(token string, q *Query) ([]*structs.Job, string, error)
+	People(token string, q *Query) ([]*structs.Person, string, error)
+	Plots(token string, q *Query) ([]*structs.Plot, string, error)
+	Tuples(table Relation, token string, q *Query) ([]*structs.Tuple, string, error)
+	Routes(token string, q *Query) ([]*structs.Route, string, error)
 	Meta(id string) (string, int, error)
-	Modifiers(table Relation, token string, f ...*Filter) ([]*structs.Modifier, string, error)
-	ModifiersSum(table Relation, token string, f ...*Filter) ([]*structs.Tuple, string, error)
+	Modifiers(table Relation, token string, q *Query) ([]*structs.Modifier, string, error)
+	ModifiersSum(table Relation, token string, q *Query) ([]*structs.Tuple, string, error)
 }
 
 type Writer interface {
@@ -52,7 +52,7 @@ type Writer interface {
 	DeleteModifiers(table Relation, expires_before_tick int) error
 	SetRoutes(in ...*structs.Route) error
 	SetMeta(id, str_val string, int_val int) error
-	IncrTuples(table Relation, v int, f ...*Filter) error
+	IncrTuples(table Relation, v int, q *Query) error
 }
 
 type ReaderWriter interface {
