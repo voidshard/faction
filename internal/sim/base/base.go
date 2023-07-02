@@ -1,6 +1,8 @@
 package base
 
 import (
+	"fmt"
+
 	"github.com/voidshard/faction/internal/db"
 	"github.com/voidshard/faction/pkg/config"
 	"github.com/voidshard/faction/pkg/economy"
@@ -28,6 +30,14 @@ func New(cfg *config.Simulation) (*Base, error) {
 		eco:  fantasy.NewEconomy(),
 		tech: fantasy.NewTechnology(),
 	}, err
+}
+
+func (s *Base) demographicDice(name string) (*demographicsRand, error) {
+	demo, ok := s.cfg.Demographics[name]
+	if !ok {
+		return nil, fmt.Errorf("unknown demographics %q", name)
+	}
+	return newDemographicsRand(demo), nil
 }
 
 func (s *Base) SetTechnology(tech technology.Technology) error {

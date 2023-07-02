@@ -54,7 +54,8 @@ var (
 
 	createArea = fmt.Sprintf(`CREATE TABLE IF NOT EXISTS %s (
 	    id VARCHAR(36) PRIMARY KEY,
-	    government_id VARCHAR(36)
+	    government_id VARCHAR(36),
+	    biome VARCHAR(255) NOT NULL DEFAULT ""
 	);`, tableAreas)
 
 	createGovernments = fmt.Sprintf(`CREATE TABLE IF NOT EXISTS %s (
@@ -152,7 +153,9 @@ var (
 	    preferred_faction_id VARCHAR(36) NOT NULL DEFAULT "",
 	    death_meta_reason TEXT NOT NULL DEFAULT "",
 	    death_meta_key VARCHAR(255) NOT NULL DEFAULT "",
-	    death_meta_val VARCHAR(255) NOT NULL DEFAULT ""
+	    death_meta_val VARCHAR(255) NOT NULL DEFAULT "",
+	    natural_death_tick INTEGER NOT NULL DEFAULT 0,
+	    random INTEGER NOT NULL DEFAULT 0
 	);`, tablePeople)
 
 	createFactions = fmt.Sprintf(`CREATE TABLE IF NOT EXISTS %s (
@@ -205,6 +208,7 @@ var (
 		fmt.Sprintf(`CREATE INDEX IF NOT EXISTS peo_prof ON %s (area_id, preferred_profession);`, tablePeople),
 		fmt.Sprintf(`CREATE INDEX IF NOT EXISTS peo_job ON %s (job_id);`, tablePeople),
 		fmt.Sprintf(`CREATE INDEX IF NOT EXISTS peo_fam ON %s (birth_family_id);`, tablePeople),
+		fmt.Sprintf(`CREATE INDEX IF NOT EXISTS peo_rand ON %s (random);`, tablePeople),
 
 		// factions we really only look up either by ID, by action_frequency or by government
 		fmt.Sprintf(`CREATE INDEX IF NOT EXISTS fact_government ON %s (government_id);`, tableFactions),

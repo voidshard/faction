@@ -29,8 +29,16 @@ var (
 		TargetAreaID:       {isID, isListID},
 		PreferredFactionID: {isID, isListID},
 		BirthFamilyID:      {isID, isListID},
+		MaleID:             {isID, isListID},
+		FemaleID:           {isID, isListID},
 		SourceFactionID:    {isID, isListID},
 		TargetMetaKey:      {isMetaKey},
+		Random:             {isInt},
+		BirthTick:          {isInt},
+		DeathTick:          {isInt},
+		NaturalDeathTick:   {isInt},
+		TickExpires:        {isInt},
+		Secrecy:            {isInt},
 	}
 	metaKeys = map[string]bool{}
 )
@@ -168,12 +176,28 @@ func (f *Filter) sqlColumn() string {
 	switch f.Field {
 	case ID:
 		return "id"
+	case BirthTick:
+		return "birth_tick"
+	case DeathTick:
+		return "death_tick"
+	case NaturalDeathTick:
+		return "natural_death_tick"
+	case Race:
+		return "race"
+	case Random:
+		return "random"
 	case BirthFamilyID:
 		return "birth_family_id"
+	case MaleID:
+		return "male_id"
+	case FemaleID:
+		return "female_id"
 	case JobID:
 		return "job_id"
 	case AreaID:
 		return "area_id"
+	case Biome:
+		return "biome"
 	case GovernmentID:
 		return "government_id"
 	case FactionID:

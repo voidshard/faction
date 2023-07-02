@@ -17,4 +17,8 @@ type Area struct {
 
 	// Government ID (if any)
 	GovernmentID string `db:"government_id"`
+
+	// something to denote the area
+	// - in general an unset biome implies it's suitable for anything / catch all
+	Biome string `db:"biome"`
 }

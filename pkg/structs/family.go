@@ -55,6 +55,10 @@ type Family struct {
 	PaGrandpaID string `db:"pa_grandpa_id"` // father's father
 
 	NumberOfChildren int `db:"number_of_children"` // number of children this family has had
+
+	MarriageTick int `db:"marriage_tick"` // tick when the couple married
+	DivorceTick  int `db:"divorce_tick"`  // tick when the couple divorced
+	WidowedTick  int `db:"widowed_tick"`  // tick when the couple were widowed
 }
 
 // relationshipGender returns if

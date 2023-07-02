@@ -362,11 +362,6 @@ func people(op sqlOperator, token string, in *Query) ([]*structs.Person, string,
 		return nil, token, err
 	}
 
-	fmt.Println("People", q)
-	for i, a := range args {
-		fmt.Println("\t", i+1, a)
-	}
-
 	var out []*structs.Person
 	err = op.Select(&out, q, args...)
 	if err != nil {
@@ -407,7 +402,8 @@ func setPeople(op sqlOperator, in []*structs.Person) error {
 	    area_id, job_id,
 	    birth_tick, death_tick, is_male, is_child,
 	    preferred_profession, preferred_faction_id,
-	    death_meta_reason, death_meta_key, death_meta_val
+	    death_meta_reason, death_meta_key, death_meta_val, natural_death_tick,
+	    random
 	) VALUES (
 	    :id,
 	    :ethos_altruism, :ethos_ambition, :ethos_tradition, :ethos_pacifism, :ethos_piety, :ethos_caution,
@@ -416,7 +412,8 @@ func setPeople(op sqlOperator, in []*structs.Person) error {
 	    :birth_tick, :death_tick,
 	    :is_male, :is_child,
 	    :preferred_profession, :preferred_faction_id,
-	    :death_meta_reason, :death_meta_key, :death_meta_val
+	    :death_meta_reason, :death_meta_key, :death_meta_val, :natural_death_tick,
+	    :random
 	) ON CONFLICT (id) DO UPDATE SET
 	    ethos_altruism=EXCLUDED.ethos_altruism,
 	    ethos_ambition=EXCLUDED.ethos_ambition,
@@ -699,11 +696,6 @@ func families(op sqlOperator, token string, in *Query) ([]*structs.Family, strin
 		return nil, token, err
 	}
 
-	fmt.Println("Families", q)
-	for i, a := range args {
-		fmt.Println("\t", i+1, a)
-	}
-
 	var out []*structs.Family
 	err = op.Select(&out, q, args...)
 	if err != nil {
@@ -919,10 +911,11 @@ func setAreas(op sqlOperator, in []*structs.Area) error {
 		}
 	}
 
-	qstr := fmt.Sprintf(`INSERT INTO %s (id, government_id)
-		        VALUES (:id, :government_id)
+	qstr := fmt.Sprintf(`INSERT INTO %s (id, government_id, biome)
+		        VALUES (:id, :government_id, :biome)
 		        ON CONFLICT (id) DO UPDATE SET
-		            government_id=EXCLUDED.government_id
+		            government_id=EXCLUDED.government_id,
+			    biome=EXCLUDED.biome
 		        ;`,
 		tableAreas,
 	)

@@ -27,4 +27,27 @@ type Person struct {
 
 	PreferredProfession string `db:"preferred_profession"` // ie. what they want to do for a living
 	PreferredFactionID  string `db:"preferred_faction_id"` // ie. who they want to work for
+
+	// used for blind randomisation without needing to read a record from the DB.
+	// ie. if a disease might kills 1 in 10000 people we can just roll a random
+	// number and set the death cause with a single update without needing to read any records.
+	//
+	// A number 0 -> 1000000
+	// This number never changes.
+	Random int `db:"random"`
+
+	// NaturalDeathTick is the tick someone is slated to die of old age.
+	//
+	// Set on birth. (Let's call it .. "fated death"?)
+	//
+	// Computationally it's easier to store the tick someone is slated to die on
+	// of "old age" than to randomly roll for each person down the line each tick to
+	// see if they die.
+	NaturalDeathTick int `db:"natural_death_tick"`
+}
+
+func (p *Person) SetBirthTick(t int) {
+	lifespan := p.NaturalDeathTick - p.BirthTick
+	p.BirthTick = t
+	p.NaturalDeathTick = t + lifespan
 }

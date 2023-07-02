@@ -1,6 +1,11 @@
 /*filters.go contains generic query / filter implementations*/
 package db
 
+import (
+	"fmt"
+	"strings"
+)
+
 type Field string
 type Op string
 
@@ -20,6 +25,12 @@ const (
 
 	JobID  Field = "job_id"
 	AreaID Field = "area_id"
+
+	// area
+	Biome Field = "biome"
+
+	// person & family
+	Race Field = "race"
 
 	// area, faction
 	GovernmentID Field = "government_id"
@@ -47,6 +58,10 @@ const (
 	PreferredFactionID  Field = "preferred_faction_id"
 	IsChild             Field = "is_child"
 	BirthFamilyID       Field = "birth_family_id"
+	BirthTick           Field = "birth_tick"
+	DeathTick           Field = "death_tick"
+	NaturalDeathTick    Field = "natural_death_tick"
+	Random              Field = "random"
 
 	// modifiers
 	TickExpires Field = "tick_expires"
@@ -54,6 +69,8 @@ const (
 	// family
 	IsChildBearing Field = "is_child_bearing"
 	PregnancyEnd   Field = "pregnancy_end"
+	MaleID         Field = "male_id"
+	FemaleID       Field = "female_id"
 
 	// job
 	SourceFactionID Field = "source_faction_id"
@@ -74,6 +91,18 @@ type Query struct {
 
 func Q(filters ...*Filter) *Query {
 	return &Query{filters: [][]*Filter{filters}, sort: true}
+}
+
+func (q *Query) String() string {
+	ors := make([]string, len(q.filters))
+	for i, fset := range q.filters {
+		ands := make([]string, len(fset))
+		for j, f := range fset {
+			ands[j] = fmt.Sprintf("\t\t%s", f.String())
+		}
+		ors[i] = strings.Join(ands, "\n\t\tAND\n ")
+	}
+	return fmt.Sprintf("Query:\n%s", strings.Join(ors, "\n\tOR\n "))
 }
 
 func (q *Query) DisableSort() *Query {
@@ -98,4 +127,8 @@ func F(field Field, op Op, value interface{}) *Filter {
 		Op:    op,
 		Value: value,
 	}
+}
+
+func (f *Filter) String() string {
+	return fmt.Sprintf("%s %s %v", f.Field, f.Op, f.Value)
 }

@@ -10,9 +10,6 @@ type PersonalRelation int
 // - if a person is a lover and a wife, they are considered a wife.
 // Nb. these are in order, where the lower number(s) trump higher ones.
 const (
-	// TODO: deity?
-	// TODO: mentor?
-
 	// family
 	PersonalRelationExWife PersonalRelation = iota
 	PersonalRelationExHusband
@@ -43,5 +40,6 @@ const (
 	PersonalRelationFriend
 
 	// acquaintances
+	PersonalRelationMentor
 	PersonalRelationColleague // people that work together
 )

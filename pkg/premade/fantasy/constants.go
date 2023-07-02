@@ -103,3 +103,48 @@ const (
 	ASSASSIN  = "assassin"
 	ALCHEMIST = "alchemist"
 )
+
+const (
+	// Biomes
+	// It's generally considered that biomes are a mixture of biomes but are dominated by one.
+	WOODLAND = "woodland"
+	FOREST   = "forest"
+	JUNGLE   = "jungle"
+
+	// biomes by altitude
+	ALPINE       = "alpine" // high mountians, probably permanently snow capped
+	MOUNTAINS    = "mountains"
+	HILLS        = "hills"
+	SUBTERRANIAN = "subterranean"
+
+	// plains of various types depending on moisture / grass vs shrubs vs trees
+	SAVANNAH  = "savannah"
+	GRASSLAND = "grassland" // savannah, with few if any woody plants
+	BADLANDS  = "badlands"  // land where all the good soil, clay and sedimentary rock is gone
+	DESERT    = "desert"    // minimal to no water
+
+	// water laden biomes
+	LAKE  = "lake"
+	SWAMP = "swamp"
+	MARSH = "marsh"
+	COAST = "coast"
+	REEF  = "reef"
+
+	// underwater biomes
+	// www.whoi.edu/know-your-ocean/ocean-topics/how-the-ocean-works/ocean-zones/
+	SUBAQUATIC_SUNLIT   = "subaquatic-sunlit"   // [0-200m] close enough to surface to get light
+	SUBAQUATIC_TWILIGHT = "subaquatic-twilight" // [200m-1km] not much light
+	SUBAQUATIC_MIDNIGHT = "subaquatic-midnight" // [1-3km] no light, cold, high pressure
+	SUBAQUATIC_ABYSSAL  = "subaquatic-abyssal"  // [3-6km] no light, very cold, high pressures
+	SUBAQUATIC_HADIC    = "subaquatic-hadic"    // [6km+] no light, freezing, extreme pressures
+	SUBAQUATIC_VOLCANIC = "subaquatic-volcanic" // underwater volcanic vents
+
+	// cold biomes
+	SUBARCTIC = "subarctic" // think Inuits, cold but there's hunting & fishing
+	TUNDRA    = "tundra"    // frozen grassland, probably with permafrost, no trees, maybe spare grass
+	ARCTIC    = "arctic"    // penguins, ice, permafrost, no plants
+
+	// volcanic regions
+	VOLCANIC_FERTILE = "volcanic-fertile" // volcanic-origin soil that is rich in nutrients
+	VOLCANIC_BARREN  = "volcanic-barren"  // area so steeped in volcanic activity that nothing grows
+)

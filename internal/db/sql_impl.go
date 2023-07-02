@@ -55,6 +55,9 @@ func (s *sqlDB) Meta(id string) (string, int, error) {
 
 func (s *sqlDB) Tick() (int, error) {
 	_, t, err := s.Meta(metaClock)
+	if t < 1 {
+		t = 1
+	}
 	return t, err
 }
 

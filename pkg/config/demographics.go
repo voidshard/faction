@@ -10,6 +10,9 @@ import (
 type Demographics struct {
 	Race string // nb. we should split out Race vs Culture in demographics
 
+	// Biomes that this race/culture can survive in
+	Biomes map[string]float64
+
 	// EthosMean represents the average outlook of members of the population
 	EthosMean structs.Ethos
 	// EthosDeviation is the standard deviation of the populace from the average (above).
@@ -72,4 +75,6 @@ type Demographics struct {
 	DeathInfantMortalityProbability float64            // natural death in childhood
 	DeathAdultMortalityProbability  float64            // natural death in adulthood
 	DeathCauseNaturalProbability    map[string]float64 // what actually kills someone
+
+	Lifespan Distribution // how long someone lives (in ticks) before death of "old age"
 }
