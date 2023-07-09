@@ -29,3 +29,17 @@ type Profession struct {
 	//   be a little off & on (eg. working as a guard between assassination contracts)
 	ValidSideProfession bool
 }
+
+func mergeProfessions(a, b Profession) Profession {
+	return Profession{
+		Distribution: Distribution{
+			Min:       (a.Min + b.Min) / 2,
+			Max:       (a.Max + b.Max) / 2,
+			Mean:      (a.Mean + b.Mean) / 2,
+			Deviation: (a.Deviation + b.Deviation) / 2,
+		},
+		Name:                a.Name,
+		Occurs:              (a.Occurs + b.Occurs) / 2,
+		ValidSideProfession: a.ValidSideProfession || b.ValidSideProfession,
+	}
+}

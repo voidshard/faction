@@ -18,8 +18,11 @@ type Simulation struct {
 	// Actions that do not appear in this are not permitted.
 	Actions map[structs.ActionType]*Action
 
-	// Demographics match name -> Demographics.
-	Demographics map[string]*Demographics
+	// Race name -> Race
+	Races map[string]*Race
+
+	// Culture name -> Culture
+	Cultures map[string]*Culture
 
 	// TODO: queue (fan out for faction job calculations)
 	// TODO: graph? (future w/ path calculations for trade)

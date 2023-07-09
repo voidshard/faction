@@ -36,7 +36,8 @@ func main() {
 	err = simulator.SpawnPopulace(
 		popPerArea,
 		"human",
-		ids...,
+		"human",
+		ids,
 	)
 	if err != nil {
 		panic(err)

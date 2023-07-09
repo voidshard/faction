@@ -1,5 +1,9 @@
 package structs
 
+const (
+	PersonRandomMax = 1000000
+)
+
 // Person roughly outlines someone that can belong to / work for a faction.
 type Person struct {
 	Ethos // rough outlook
@@ -10,7 +14,8 @@ type Person struct {
 	ID            string `db:"id"`
 	BirthFamilyID string `db:"birth_family_id"` // family person was born into
 
-	Race string `db:"race"`
+	Race    string `db:"race"`
+	Culture string `db:"culture"`
 
 	AreaID string `db:"area_id"` // area person lives in
 	JobID  string `db:"job_id"`  // ie. current job id (if any)

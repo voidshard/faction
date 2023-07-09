@@ -392,13 +392,16 @@ func setPeople(op sqlOperator, in []*structs.Person) error {
 		if f.Race == "" {
 			return fmt.Errorf("person id %s race required", f.ID)
 		}
+		if f.Culture == "" {
+			return fmt.Errorf("person id %s culture required", f.ID)
+		}
 		f.Clamp()
 	}
 
 	qstr := fmt.Sprintf(`INSERT INTO %s (
 	    id,
 	    ethos_altruism, ethos_ambition, ethos_tradition, ethos_pacifism, ethos_piety, ethos_caution,
-	    first_name, last_name, birth_family_id, race,
+	    first_name, last_name, birth_family_id, race, culture,
 	    area_id, job_id,
 	    birth_tick, death_tick, is_male, is_child,
 	    preferred_profession, preferred_faction_id,
@@ -407,7 +410,7 @@ func setPeople(op sqlOperator, in []*structs.Person) error {
 	) VALUES (
 	    :id,
 	    :ethos_altruism, :ethos_ambition, :ethos_tradition, :ethos_pacifism, :ethos_piety, :ethos_caution,
-	    :first_name, :last_name, :birth_family_id, :race,
+	    :first_name, :last_name, :birth_family_id, :race, :culture,
 	    :area_id, :job_id,
 	    :birth_tick, :death_tick,
 	    :is_male, :is_child,
@@ -422,6 +425,7 @@ func setPeople(op sqlOperator, in []*structs.Person) error {
 	    ethos_piety=EXCLUDED.ethos_piety,
 	    ethos_caution=EXCLUDED.ethos_caution,
 	    race=EXCLUDED.race,
+	    culture=EXCLUDED.culture,
 	    area_id=EXCLUDED.area_id,
 	    job_id=EXCLUDED.job_id,
 	    is_child=EXCLUDED.is_child,
@@ -729,17 +733,20 @@ func setFamilies(op sqlOperator, in []*structs.Family) error {
 		if f.Race == "" {
 			return fmt.Errorf("family %s race is requred", f.ID)
 		}
+		if f.Culture == "" {
+			return fmt.Errorf("family %s culture is requred", f.ID)
+		}
 	}
 
 	qstr := fmt.Sprintf(`INSERT INTO %s (
-	    id, race, area_id, faction_id, 
+	    id, race, culture, area_id, faction_id, 
 	    ethos_altruism, ethos_ambition, ethos_tradition, ethos_pacifism, ethos_piety, ethos_caution,
 	    is_child_bearing, max_child_bearing_tick,  pregnancy_end,
 	    male_id, female_id,
 	    ma_grandma_id, ma_grandpa_id, pa_grandma_id, pa_grandpa_id,
 	    number_of_children
 	) VALUES (
-	    :id, :race, :area_id, :faction_id, 
+	    :id, :race, :culture, :area_id, :faction_id, 
 	    :ethos_altruism, :ethos_ambition, :ethos_tradition, :ethos_pacifism, :ethos_piety, :ethos_caution,
 	    :is_child_bearing, :max_child_bearing_tick, :pregnancy_end,
 	    :male_id, :female_id,
@@ -747,6 +754,7 @@ func setFamilies(op sqlOperator, in []*structs.Family) error {
 	    :number_of_children
 	) ON CONFLICT (id) DO UPDATE SET
 	    race=EXCLUDED.race,
+	    culture=EXCLUDED.culture,
 	    ethos_altruism=EXCLUDED.ethos_altruism,
 	    ethos_ambition=EXCLUDED.ethos_ambition,
 	    ethos_tradition=EXCLUDED.ethos_tradition,

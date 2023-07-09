@@ -11,7 +11,7 @@ var (
 	religion3 = structs.NewID("3")
 )
 
-// DemographicsHuman returns a set of demographics for a fantasy human
+// CultureHuman returns a set of demographics for a fantasy human
 // population.
 //
 // In general users are expected to create their own demographics, but this
@@ -19,8 +19,8 @@ var (
 //
 // Seriously please load these from a config or something .. this is just for
 // playing around.
-func DemographicsHuman() *config.Demographics {
-	return &config.Demographics{
+func CultureHuman() *config.Culture {
+	return &config.Culture{
 		FamilySize: config.Distribution{
 			Min:       1,
 			Max:       18,
@@ -28,42 +28,13 @@ func DemographicsHuman() *config.Demographics {
 			Deviation: 4,
 		},
 		// Probabilities of inter-personal relations per tick
-		FriendshipProbability:      0.3 / float64(DEFAULT_TICKS_PER_YEAR),
-		FriendshipCloseProbability: 0.1 / float64(DEFAULT_TICKS_PER_YEAR),
-		EnemyProbability:           0.20 / float64(DEFAULT_TICKS_PER_YEAR),
-		EnemyHatedProbability:      0.35 / float64(DEFAULT_TICKS_PER_YEAR),
-		MarriageProbability:        0.6 / float64(DEFAULT_TICKS_PER_YEAR*10),
-		MarriageDivorceProbability: 0.02 / float64(DEFAULT_TICKS_PER_YEAR*25),
-		MarriageAffairProbability:  0.04 / float64(DEFAULT_TICKS_PER_YEAR*15),
-		Race:                       "human",
-		Biomes: map[string]float64{ // biome -> preference weight
-			WOODLAND:         0.8,
-			FOREST:           0.4,
-			JUNGLE:           0.2,
-			MOUNTAINS:        0.05,
-			HILLS:            0.5,
-			SAVANNAH:         0.8,
-			GRASSLAND:        0.7,
-			DESERT:           0.05,
-			LAKE:             0.8,
-			SWAMP:            0.1,
-			MARSH:            0.1,
-			COAST:            0.8,
-			SUBARCTIC:        0.01,
-			VOLCANIC_FERTILE: 0.6,
-		},
-		ChildbearingAge: config.Distribution{
-			Min:       13 * DEFAULT_TICKS_PER_YEAR,
-			Max:       45 * DEFAULT_TICKS_PER_YEAR,
-			Mean:      22 * DEFAULT_TICKS_PER_YEAR,
-			Deviation: 5 * DEFAULT_TICKS_PER_YEAR,
-		},
-		ChildbearingTerm: config.Distribution{ // 9 months-ish
-			Min:       8 * 30 * DEFAULT_TICKS_PER_DAY,
-			Max:       10 * 30 * DEFAULT_TICKS_PER_DAY,
-			Mean:      9 * 30 * DEFAULT_TICKS_PER_DAY,
-			Deviation: 30 * DEFAULT_TICKS_PER_DAY,
-		},
+		FriendshipProbability:        0.3 / float64(DEFAULT_TICKS_PER_YEAR),
+		FriendshipCloseProbability:   0.1 / float64(DEFAULT_TICKS_PER_YEAR),
+		EnemyProbability:             0.20 / float64(DEFAULT_TICKS_PER_YEAR),
+		EnemyHatedProbability:        0.35 / float64(DEFAULT_TICKS_PER_YEAR),
+		MarriageProbability:          0.6 / float64(DEFAULT_TICKS_PER_YEAR*10),
+		MarriageDivorceProbability:   0.02 / float64(DEFAULT_TICKS_PER_YEAR*25),
+		MarriageAffairProbability:    0.04 / float64(DEFAULT_TICKS_PER_YEAR*15),
 		ChildbearingDeathProbability: 0.10, // actual medieval rate probably higher (on Birth)
 		ChildbearingProbability:      .2,   //      1 / (float64(DEFAULT_TICKS_PER_YEAR) * 2), // very roughly every 2 years
 		EthosMean:                    structs.Ethos{},
@@ -93,14 +64,6 @@ func DemographicsHuman() *config.Demographics {
 			"suicide":       0.02,
 			"poisoning":     0.01,
 			"animal attack": 0.04,
-		},
-		Lifespan: config.Distribution{
-			// Nb. this is fantasy, where "magic" to grant healing is not unheard of.
-			// Medieval life expectancy is considerably more dire
-			Min:       2 * DEFAULT_TICKS_PER_YEAR,
-			Max:       90 * DEFAULT_TICKS_PER_YEAR,
-			Mean:      55 * DEFAULT_TICKS_PER_YEAR,
-			Deviation: 15 * DEFAULT_TICKS_PER_YEAR,
 		},
 		Professions: []config.Profession{
 			config.Profession{

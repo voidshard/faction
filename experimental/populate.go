@@ -39,9 +39,12 @@ func main() {
 	err = simulator.SpawnPopulace(
 		30000, // nb. this is approximate & doesn't include people spawned dead
 		"human",
-		area1.ID,
-		area2.ID,
-		area3.ID,
+		"human",
+		[]string{
+			area1.ID,
+			area2.ID,
+			area3.ID,
+		},
 	)
 	if err != nil {
 		panic(err)

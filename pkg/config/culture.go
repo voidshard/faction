@@ -4,15 +4,8 @@ import (
 	"github.com/voidshard/faction/pkg/structs"
 )
 
-// Demographics roughly describes a large population.
-//
-// For randomly making societies that look "sort of like this."
-type Demographics struct {
-	Race string // nb. we should split out Race vs Culture in demographics
-
-	// Biomes that this race/culture can survive in
-	Biomes map[string]float64
-
+// Culture
+type Culture struct {
 	// EthosMean represents the average outlook of members of the population
 	EthosMean structs.Ethos
 	// EthosDeviation is the standard deviation of the populace from the average (above).
@@ -65,16 +58,18 @@ type Demographics struct {
 	Faiths           []Faith
 	FaithProbability []float64 // likelihood of 0 or more faiths
 
-	// Ages min/max (in ticks) at which someone can have children.
-	ChildbearingAge              Distribution
-	ChildbearingTerm             Distribution // how long it takes to have a child
-	ChildbearingDeathProbability float64      // probability of (mother's) death during childbirth
-	ChildbearingProbability      float64      // probability of having a child in a given tick
+	// Ages min/max (in ticks) at which someone can have children (rolled once on birth)
+	ChildbearingDeathProbability float64 // probability of (mother's) death during childbirth
+	ChildbearingProbability      float64 // probability of becoming an expectant parent (per tick)
 
-	// Probability of a person dying of some natural cause
-	DeathInfantMortalityProbability float64            // natural death in childhood
-	DeathAdultMortalityProbability  float64            // natural death in adulthood
-	DeathCauseNaturalProbability    map[string]float64 // what actually kills someone
+	// the min / max values are set by 'race'
+	ChildbearingAgeMean      float64 // average age at which someone has children
+	ChildbearingAgeDeviation float64 // standard deviation of age at which someone has children
 
-	Lifespan Distribution // how long someone lives (in ticks) before death of "old age"
+	// Probability of a person dying of some natural cause in any given tick
+	DeathInfantMortalityProbability float64 // natural death in childhood
+	DeathAdultMortalityProbability  float64 // natural death in adulthood
+
+	// what actually kills someone ("naturally" in adulthood)
+	DeathCauseNaturalProbability map[string]float64
 }

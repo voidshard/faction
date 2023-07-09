@@ -1,9 +1,8 @@
 package base
 
 import (
-	"fmt"
-
 	"github.com/voidshard/faction/internal/db"
+	demographics "github.com/voidshard/faction/internal/demographics"
 	"github.com/voidshard/faction/pkg/config"
 	"github.com/voidshard/faction/pkg/economy"
 	fantasy "github.com/voidshard/faction/pkg/premade/fantasy"
@@ -18,6 +17,8 @@ type Base struct {
 	tech technology.Technology
 
 	dbconn *db.FactionDB
+
+	dice *demographics.Dice
 }
 
 // New Simulation, the main doo-da
@@ -29,15 +30,9 @@ func New(cfg *config.Simulation) (*Base, error) {
 		// default tech / eco
 		eco:  fantasy.NewEconomy(),
 		tech: fantasy.NewTechnology(),
+		// dice for sim configs
+		dice: demographics.New(cfg),
 	}, err
-}
-
-func (s *Base) demographicDice(name string) (*demographicsRand, error) {
-	demo, ok := s.cfg.Demographics[name]
-	if !ok {
-		return nil, fmt.Errorf("unknown demographics %q", name)
-	}
-	return newDemographicsRand(demo), nil
 }
 
 func (s *Base) SetTechnology(tech technology.Technology) error {

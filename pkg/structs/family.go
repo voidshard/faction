@@ -15,6 +15,9 @@ type Family struct {
 	// Race demographic assigned to children
 	Race string `db:"race"`
 
+	// Culture demographic assigned to children
+	Culture string `db:"culture"`
+
 	// Area where the family is based (where children will be placed)
 	AreaID string `db:"area_id"`
 

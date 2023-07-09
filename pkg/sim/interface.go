@@ -88,7 +88,8 @@ type Simulation interface {
 	// - The people count here is the number of people we want *alive* at the end
 	// we can create more people than this; as we sometimes create people dead
 	// in order to simulate some past family tragedy or something.
-	SpawnPopulace(people int, demographicName string, areas ...string) error
+	// - The number created is approximate
+	SpawnPopulace(people int, race, culture string, areas []string) error
 
 	// Demographics for the given area(s).
 	Demographics(areas ...string) (*structs.Demographics, error)
