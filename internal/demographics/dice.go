@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/voidshard/faction/pkg/config"
+	"github.com/voidshard/faction/pkg/structs"
 )
 
 // Dice holds random dice for a demographics (race, culture) struct.
@@ -18,6 +19,8 @@ type Dice struct {
 	simCfg *config.Simulation
 	rng    *rand.Rand
 	cfgs   map[string]*Demographic
+
+	ethicsByProfession map[string]*structs.Ethos
 }
 
 func rckey(race, culture string) string {
@@ -26,9 +29,10 @@ func rckey(race, culture string) string {
 
 func New(simCfg *config.Simulation) *Dice {
 	d := &Dice{
-		simCfg: simCfg,
-		rng:    rand.New(rand.NewSource(time.Now().UnixNano())),
-		cfgs:   map[string]*Demographic{},
+		simCfg:             simCfg,
+		rng:                rand.New(rand.NewSource(time.Now().UnixNano())),
+		cfgs:               map[string]*Demographic{},
+		ethicsByProfession: calcEthosWeightsForProfessions(simCfg),
 	}
 
 	for race, rdata := range simCfg.Races {
@@ -39,6 +43,40 @@ func New(simCfg *config.Simulation) *Dice {
 	}
 
 	return d
+}
+
+func calcEthosWeightsForProfessions(cfg *config.Simulation) map[string]*structs.Ethos {
+	w := map[string][]*structs.Ethos{}
+
+	ethicw := structs.MaxEthos / 100
+
+	for _, act := range cfg.Actions {
+		if act.ProfessionWeights == nil {
+			continue
+		}
+		for prof, weight := range act.ProfessionWeights {
+			cur, ok := w[prof]
+			if !ok {
+				cur = []*structs.Ethos{}
+			}
+			cur = append(cur, act.Ethos.Add(int(weight)*ethicw))
+			w[prof] = cur
+		}
+	}
+
+	averages := map[string]*structs.Ethos{}
+
+	for prof, ethics := range w {
+		if len(ethics) == 0 {
+			continue
+		}
+
+		// apply a 50% weight to the average so we can't have someone's ethos
+		// *entirely* defined by their profession(s)
+		averages[prof] = structs.EthosAverage(ethics...).Multiply(0.5).Clamp()
+	}
+
+	return averages
 }
 
 // MaxDeathAdultMortalityProbability returns the highest DeathAdultMortalityProbability
@@ -52,6 +90,22 @@ func (d *Dice) MaxDeathAdultMortalityProbability() float64 {
 		}
 	}
 	return v
+}
+
+// EthosWeightFromProfession returns the ethos weight for a person based on their professions.
+func (d *Dice) EthosWeightFromProfessions(prof []*structs.Tuple) *structs.Ethos {
+	if len(prof) == 0 {
+		return &structs.Ethos{}
+	}
+	eth := []*structs.Ethos{}
+	for _, p := range prof {
+		w, ok := d.ethicsByProfession[p.Subject]
+		if !ok {
+			continue
+		}
+		eth = append(eth, w)
+	}
+	return structs.EthosAverage(eth...).Clamp()
 }
 
 func (d *Dice) Float64() float64 {

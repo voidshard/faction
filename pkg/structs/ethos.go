@@ -1,6 +1,7 @@
 package structs
 
 import (
+	"fmt"
 	"math"
 )
 
@@ -53,38 +54,55 @@ type Ethos struct {
 	Caution int `db:"ethos_caution"`
 }
 
-// Sub v from Ethos values (clamped to MinEthos), returning a new Ethos
-func (e *Ethos) Sub(v int) *Ethos {
+func (e *Ethos) String() string {
+	return fmt.Sprintf("Ethos{Amb:%d, Alt:%d, Tra:%d, Pac:%d, Pie:%d, Cau:%d}", e.Ambition, e.Altruism, e.Tradition, e.Pacifism, e.Piety, e.Caution)
+}
+
+// Add v to Ethos values returning a new Ethos
+func (e *Ethos) Add(v int) *Ethos {
 	return &Ethos{
-		Altruism:  int(math.Max(MinEthos, float64(e.Altruism-v))),
-		Ambition:  int(math.Max(MinEthos, float64(e.Ambition-v))),
-		Tradition: int(math.Max(MinEthos, float64(e.Tradition-v))),
-		Pacifism:  int(math.Max(MinEthos, float64(e.Pacifism-v))),
-		Piety:     int(math.Max(MinEthos, float64(e.Piety-v))),
-		Caution:   int(math.Max(MinEthos, float64(e.Caution-v))),
+		Ambition:  int(e.Ambition + v),
+		Altruism:  int(e.Altruism + v),
+		Tradition: int(e.Tradition + v),
+		Pacifism:  int(e.Pacifism + v),
+		Piety:     int(e.Piety + v),
+		Caution:   int(e.Caution + v),
 	}
 }
 
-// Add v to Ethos values (clamped to MaxEthos), returning a new Ethos
-func (e *Ethos) Add(v int) *Ethos {
+// AddEthos adds ethos values returning a new Ethos
+func (e *Ethos) AddEthos(v *Ethos) *Ethos {
 	return &Ethos{
-		Ambition:  int(math.Min(MaxEthos, float64(e.Ambition+v))),
-		Altruism:  int(math.Min(MaxEthos, float64(e.Altruism+v))),
-		Tradition: int(math.Min(MaxEthos, float64(e.Tradition+v))),
-		Pacifism:  int(math.Min(MaxEthos, float64(e.Pacifism+v))),
-		Piety:     int(math.Min(MaxEthos, float64(e.Piety+v))),
-		Caution:   int(math.Min(MaxEthos, float64(e.Caution+v))),
+		Ambition:  int(e.Ambition + v.Ambition),
+		Altruism:  int(e.Altruism + v.Altruism),
+		Tradition: int(e.Tradition + v.Tradition),
+		Pacifism:  int(e.Pacifism + v.Pacifism),
+		Piety:     int(e.Piety + v.Piety),
+		Caution:   int(e.Caution + v.Caution),
+	}
+}
+
+// Multiply ethos values by v returning a new Ethos
+func (e *Ethos) Multiply(v float64) *Ethos {
+	return &Ethos{
+		Ambition:  int(float64(e.Ambition) * v),
+		Altruism:  int(float64(e.Altruism) * v),
+		Tradition: int(float64(e.Tradition) * v),
+		Pacifism:  int(float64(e.Pacifism) * v),
+		Piety:     int(float64(e.Piety) * v),
+		Caution:   int(float64(e.Caution) * v),
 	}
 }
 
 // Clamp ethos values to min / max values
-func (e *Ethos) Clamp() {
+func (e *Ethos) Clamp() *Ethos {
 	e.Ambition = int(math.Min(MaxEthos, math.Max(MinEthos, float64(e.Ambition))))
 	e.Altruism = int(math.Min(MaxEthos, math.Max(MinEthos, float64(e.Altruism))))
 	e.Tradition = int(math.Min(MaxEthos, math.Max(MinEthos, float64(e.Tradition))))
 	e.Pacifism = int(math.Min(MaxEthos, math.Max(MinEthos, float64(e.Pacifism))))
 	e.Piety = int(math.Min(MaxEthos, math.Max(MinEthos, float64(e.Piety))))
 	e.Caution = int(math.Min(MaxEthos, math.Max(MinEthos, float64(e.Caution))))
+	return e
 }
 
 // EthosDistance returns the distance between two ethos values
@@ -107,6 +125,10 @@ func EthosDistance(a, b *Ethos) float64 {
 // EthosAverage returns the average of the given ethos values
 func EthosAverage(in ...*Ethos) *Ethos {
 	e := &Ethos{}
+	if len(in) == 0 {
+		return e
+	}
+
 	for _, i := range in {
 		e.Altruism += i.Altruism
 		e.Ambition += i.Ambition

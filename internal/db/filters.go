@@ -26,6 +26,9 @@ const (
 	JobID  Field = "job_id"
 	AreaID Field = "area_id"
 
+	// event
+	Type Field = "type"
+
 	// area
 	Biome Field = "biome"
 
@@ -56,7 +59,7 @@ const (
 	// person
 	PreferredProfession Field = "preferred_profession"
 	PreferredFactionID  Field = "preferred_faction_id"
-	IsChild             Field = "is_child"
+	AdulthoodTick       Field = "adulthood_tick"
 	BirthFamilyID       Field = "birth_family_id"
 	BirthTick           Field = "birth_tick"
 	DeathTick           Field = "death_tick"

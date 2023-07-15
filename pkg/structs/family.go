@@ -1,5 +1,9 @@
 package structs
 
+const (
+	FamilyRandomMax = 1000000000
+)
+
 // Family is created when one of
 // - simulation.go 'Populate' creates a family
 // - a male / female of child bearing age marry
@@ -62,6 +66,8 @@ type Family struct {
 	MarriageTick int `db:"marriage_tick"` // tick when the couple married
 	DivorceTick  int `db:"divorce_tick"`  // tick when the couple divorced
 	WidowedTick  int `db:"widowed_tick"`  // tick when the couple were widowed
+
+	Random int `db:"random"` // random number used for blind randomisation
 }
 
 // relationshipGender returns if

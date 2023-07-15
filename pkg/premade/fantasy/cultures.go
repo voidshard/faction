@@ -39,11 +39,11 @@ func CultureHuman() *config.Culture {
 		ChildbearingProbability:      .2,   //      1 / (float64(DEFAULT_TICKS_PER_YEAR) * 2), // very roughly every 2 years
 		EthosMean:                    structs.Ethos{},
 		EthosDeviation: structs.Ethos{
-			Altruism:  2000,
-			Ambition:  10000,
+			Altruism:  1000,
+			Ambition:  7000,
 			Tradition: 4000,
-			Pacifism:  9000,
-			Piety:     9000,
+			Pacifism:  3000,
+			Piety:     7000,
 			Caution:   1500,
 		},
 		EthosBlackSheepProbability:      0.02, // Probability given at least one radical ethos change (on Birth)

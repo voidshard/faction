@@ -13,6 +13,7 @@ type metaPeople struct {
 	trust     []*structs.Tuple
 	relations []*structs.Tuple
 	families  []*structs.Family
+	events    []*structs.Event
 }
 
 func newMetaPeople() *metaPeople {

@@ -237,7 +237,7 @@ func plots(op sqlOperator, token string, in *Query) ([]*structs.Plot, string, er
 		return nil, token, err
 	}
 
-	q, args, err := sqlFromPlotFilters(tk, in)
+	q, args, err := genericSQLFromFilters(tk, in, tablePlots)
 	if err != nil {
 		return nil, token, err
 	}
@@ -357,7 +357,7 @@ func people(op sqlOperator, token string, in *Query) ([]*structs.Person, string,
 		return nil, token, err
 	}
 
-	q, args, err := sqlFromPersonFilters(tk, in)
+	q, args, err := genericSQLFromFilters(tk, in, tablePeople)
 	if err != nil {
 		return nil, token, err
 	}
@@ -403,7 +403,7 @@ func setPeople(op sqlOperator, in []*structs.Person) error {
 	    ethos_altruism, ethos_ambition, ethos_tradition, ethos_pacifism, ethos_piety, ethos_caution,
 	    first_name, last_name, birth_family_id, race, culture,
 	    area_id, job_id,
-	    birth_tick, death_tick, is_male, is_child,
+	    birth_tick, death_tick, is_male, adulthood_tick,
 	    preferred_profession, preferred_faction_id,
 	    death_meta_reason, death_meta_key, death_meta_val, natural_death_tick,
 	    random
@@ -413,7 +413,7 @@ func setPeople(op sqlOperator, in []*structs.Person) error {
 	    :first_name, :last_name, :birth_family_id, :race, :culture,
 	    :area_id, :job_id,
 	    :birth_tick, :death_tick,
-	    :is_male, :is_child,
+	    :is_male, :adulthood_tick,
 	    :preferred_profession, :preferred_faction_id,
 	    :death_meta_reason, :death_meta_key, :death_meta_val, :natural_death_tick,
 	    :random
@@ -428,7 +428,6 @@ func setPeople(op sqlOperator, in []*structs.Person) error {
 	    culture=EXCLUDED.culture,
 	    area_id=EXCLUDED.area_id,
 	    job_id=EXCLUDED.job_id,
-	    is_child=EXCLUDED.is_child,
 	    preferred_profession=EXCLUDED.preferred_profession,
 	    preferred_faction_id=EXCLUDED.preferred_faction_id,
 	    death_tick=EXCLUDED.death_tick,
@@ -436,6 +435,58 @@ func setPeople(op sqlOperator, in []*structs.Person) error {
 	    death_meta_key=EXCLUDED.death_meta_key,
 	    death_meta_val=EXCLUDED.death_meta_val
 	;`, tablePeople)
+
+	_, err := op.NamedExec(qstr, in)
+	return err
+}
+
+func events(op sqlOperator, token string, in *Query) ([]*structs.Event, string, error) {
+	if in == nil {
+		in = Q()
+	}
+
+	tk, err := dbutils.ParseToken(token)
+	if err != nil {
+		return nil, token, err
+	}
+
+	q, args, err := genericSQLFromFilters(tk, in, tableEvents)
+	if err != nil {
+		return nil, token, err
+	}
+
+	var out []*structs.Event
+	err = op.Select(&out, q, args...)
+	if err != nil {
+		return nil, token, err
+	}
+
+	return out, nextToken(tk, len(out)), nil
+}
+
+func setEvents(op sqlOperator, in []*structs.Event) error {
+	if len(in) == 0 {
+		return nil
+	}
+
+	for _, f := range in {
+		if !dbutils.IsValidID(f.ID) {
+			return fmt.Errorf("event id %s is invalid", f.ID)
+		}
+		if f.Tick < 0 {
+			return fmt.Errorf("event tick %d is invalid", f.Tick)
+		}
+		if f.SourceEvent != "" && !dbutils.IsValidID(f.SourceEvent) {
+			return fmt.Errorf("event source event id %s is invalid", f.SourceEvent)
+		}
+	}
+
+	// events cannot be updated
+	qstr := fmt.Sprintf(`INSERT INTO %s (
+	    id, type, tick, meta_key, meta_val, source_event, message
+	) VALUES (	
+	    :id, :type, :tick, :meta_key, :meta_val, :source_event, :message
+	);`, tableEvents)
 
 	_, err := op.NamedExec(qstr, in)
 	return err
@@ -451,7 +502,7 @@ func jobs(op sqlOperator, token string, in *Query) ([]*structs.Job, string, erro
 		return nil, token, err
 	}
 
-	q, args, err := sqlFromJobFilters(tk, in)
+	q, args, err := genericSQLFromFilters(tk, in, tableJobs)
 	if err != nil {
 		return nil, token, err
 	}
@@ -522,7 +573,7 @@ func governments(op sqlOperator, token string, in *Query) ([]*structs.Government
 	}
 
 	// 1. read Government objects
-	q, args, err := sqlFromGovernmentFilters(tk, in)
+	q, args, err := genericSQLFromFilters(tk, in, tableGovernments)
 	if err != nil {
 		return nil, token, err
 	}
@@ -695,7 +746,7 @@ func families(op sqlOperator, token string, in *Query) ([]*structs.Family, strin
 		return nil, token, err
 	}
 
-	q, args, err := sqlFromFamilyFilters(tk, in)
+	q, args, err := genericSQLFromFilters(tk, in, tableFamilies)
 	if err != nil {
 		return nil, token, err
 	}
@@ -744,14 +795,14 @@ func setFamilies(op sqlOperator, in []*structs.Family) error {
 	    is_child_bearing, max_child_bearing_tick,  pregnancy_end,
 	    male_id, female_id,
 	    ma_grandma_id, ma_grandpa_id, pa_grandma_id, pa_grandpa_id,
-	    number_of_children
+	    number_of_children, random
 	) VALUES (
 	    :id, :race, :culture, :area_id, :faction_id, 
 	    :ethos_altruism, :ethos_ambition, :ethos_tradition, :ethos_pacifism, :ethos_piety, :ethos_caution,
 	    :is_child_bearing, :max_child_bearing_tick, :pregnancy_end,
 	    :male_id, :female_id,
 	    :ma_grandma_id, :ma_grandpa_id, :pa_grandma_id, :pa_grandpa_id,
-	    :number_of_children
+	    :number_of_children, :random
 	) ON CONFLICT (id) DO UPDATE SET
 	    race=EXCLUDED.race,
 	    culture=EXCLUDED.culture,
@@ -782,7 +833,7 @@ func factions(op sqlOperator, token string, in *Query) ([]*structs.Faction, stri
 		return nil, token, err
 	}
 
-	q, args, err := sqlFromFactionFilters(tk, in)
+	q, args, err := genericSQLFromFilters(tk, in, tableFactions)
 	if err != nil {
 		return nil, token, err
 	}
@@ -894,7 +945,7 @@ func areas(op sqlOperator, token string, in *Query) ([]*structs.Area, string, er
 		return nil, token, err
 	}
 
-	q, args, err := sqlFromAreaFilters(tk, in)
+	q, args, err := genericSQLFromFilters(tk, in, tableAreas)
 	if err != nil {
 		return nil, token, err
 	}

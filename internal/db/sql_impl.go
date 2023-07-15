@@ -18,6 +18,7 @@ const (
 	tablePeople      = "people"
 	tableRoutes      = "routes"
 	tablePlots       = "plots"
+	tableEvents      = "events"
 
 	// metaClock is the current simulation tick, stored in the metadata table
 	metaClock = "tick"
@@ -27,7 +28,7 @@ const (
 )
 
 type Row interface {
-	*structs.Plot | *structs.Route | *structs.Person | *structs.Job | *structs.Government | *structs.Family | *structs.Faction | *structs.Area | *structs.Tuple | *structs.Modifier
+	*structs.Plot | *structs.Route | *structs.Person | *structs.Job | *structs.Government | *structs.Family | *structs.Faction | *structs.Area | *structs.Tuple | *structs.Modifier | *structs.Event
 }
 
 // sqlDB represents a generic DB wrapper -- this allows SQLite & Postgres to run
@@ -71,6 +72,10 @@ func (s *sqlDB) Routes(token string, in *Query) ([]*structs.Route, string, error
 
 func (s *sqlDB) People(token string, in *Query) ([]*structs.Person, string, error) {
 	return people(s.conn, token, in)
+}
+
+func (s *sqlDB) Events(token string, in *Query) ([]*structs.Event, string, error) {
+	return events(s.conn, token, in)
 }
 
 func (s *sqlDB) Jobs(token string, in *Query) ([]*structs.Job, string, error) {
@@ -169,6 +174,10 @@ func (t *sqlTx) People(token string, in *Query) ([]*structs.Person, string, erro
 	return people(t.tx, token, in)
 }
 
+func (t *sqlTx) Events(token string, in *Query) ([]*structs.Event, string, error) {
+	return events(t.tx, token, in)
+}
+
 func (t *sqlTx) Jobs(token string, in *Query) ([]*structs.Job, string, error) {
 	return jobs(t.tx, token, in)
 }
@@ -227,6 +236,10 @@ func (t *sqlTx) SetRoutes(in ...*structs.Route) error {
 
 func (t *sqlTx) SetPeople(in ...*structs.Person) error {
 	return chunkWrite(setPeople, t.tx, in)
+}
+
+func (t *sqlTx) SetEvents(in ...*structs.Event) error {
+	return chunkWrite(setEvents, t.tx, in)
 }
 
 func (t *sqlTx) SetJobs(in ...*structs.Job) error {

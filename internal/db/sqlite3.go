@@ -129,6 +129,7 @@ var (
 	    pa_grandma_id VARCHAR(36) NOT NULL DEFAULT "",
 	    pa_grandpa_id VARCHAR(36) NOT NULL DEFAULT "",
 	    number_of_children INTEGER NOT NULL DEFAULT 0,
+	    random INTEGER NOT NULL DEFAULT 0,
 	    UNIQUE (male_id, female_id)
 	);`, tableFamilies)
 
@@ -150,7 +151,7 @@ var (
 	    birth_tick INTEGER NOT NULL DEFAULT 1,
 	    death_tick INTEGER NOT NULL DEFAULT 0,
 	    is_male BOOLEAN NOT NULL DEFAULT FALSE,
-	    is_child BOOLEAN NOT NULL DEFAULT FALSE,
+	    adulthood_tick INTEGER NOT NULL DEFAULT 0,
 	    preferred_profession VARCHAR(255) NOT NULL DEFAULT "",
 	    preferred_faction_id VARCHAR(36) NOT NULL DEFAULT "",
 	    death_meta_reason TEXT NOT NULL DEFAULT "",
@@ -190,6 +191,16 @@ var (
             parent_faction_relation INTEGER NOT NULL DEFAULT 0
         );`, tableFactions)
 
+	createEvents = fmt.Sprintf(`CREATE TABLE IF NOT EXISTS %s (
+	    id VARCHAR(36) PRIMARY KEY,
+	    type VARCHAR(255) NOT NULL default "",
+	    tick INTEGER NOT NULL DEFAULT 0,
+	    meta_key VARCHAR(255) NOT NULL default "",
+	    meta_val VARCHAR(255) NOT NULL default "",
+	    source_event_id VARCHAR(36) NOT NULL default "",
+	    message TEXT NOT NULL default "",
+	)`, tableEvents)
+
 	// indexes that we should create
 	// TODO
 	indexes = []string{
@@ -201,6 +212,9 @@ var (
 
 		// jobs we want to search by area & state (to see if we need to add people)
 		fmt.Sprintf(`CREATE INDEX IF NOT EXISTS jobs_target_area ON %s (target_area_id, state);`, tableJobs),
+
+		// events we want to search by tick (ie. what happened this tick?)
+		fmt.Sprintf(`CREATE INDEX IF NOT EXISTS event_tick ON %s (tick);`, tableEvents),
 
 		// families we mostly run over to see if we need to add children on a tick, so area + child_bearing
 		fmt.Sprintf(`CREATE INDEX IF NOT EXISTS fam_child_bearing ON %s (area_id, is_child_bearing);`, tableFamilies),

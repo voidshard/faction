@@ -33,12 +33,14 @@ func (s *Base) spawnFamily(tick int, areaID, race, culture string) *metaPeople {
 	// nb. we're creating mum & dad in the past so that our children (if any) are born "now"
 	mum := demo.RandomPerson(areaID)
 	mum.SetBirthTick(tick - demo.RandomParentingAge())
+	_, mumFaiths := s.addSkillAndFaith(demo, mp, mum)
+	mum.IsMale = false
 
 	dad := demo.RandomPerson(areaID)
 	dad.SetBirthTick(tick - demo.RandomParentingAge())
-
-	mum.IsMale = false
+	_, dadFaiths := s.addSkillAndFaith(demo, mp, dad)
 	dad.IsMale = true
+
 	mp.adults = append(mp.adults, mum, dad)
 
 	eldest := dad.BirthTick
@@ -67,35 +69,17 @@ func (s *Base) spawnFamily(tick int, areaID, race, culture string) *metaPeople {
 		FemaleID:            mum.ID,
 		MaxChildBearingTick: eldest + demo.MaxParentingAge(), // the last tick the couple can have children
 		MarriageTick:        tick,
+		Random:              int(s.dice.Float64() * structs.FamilyRandomMax),
 	}
 	mp.families = append(mp.families, family)
-
-	skills := demo.RandomProfession(mum.ID)
-	if len(skills) > 0 {
-		mp.skills = append(mp.skills, skills...)
-		mum.PreferredProfession = skills[0].Object
-	}
-	skills = demo.RandomProfession(dad.ID)
-	if len(skills) > 0 {
-		mp.skills = append(mp.skills, skills...)
-		dad.PreferredProfession = skills[0].Object
-	}
-
-	mumFaiths := demo.RandomFaith(mum.ID)
-	dadFaiths := demo.RandomFaith(dad.ID)
-	mp.faith = append(mp.faith, mumFaiths...)
-	mp.faith = append(mp.faith, dadFaiths...)
 
 	havingAffair := demo.RandomIsHavingAffair(parentingTicks)
 	if havingAffair {
 		affair := demo.RandomPerson(areaID)
+		affair.SetBirthTick(tick - demo.RandomParentingAge())
+		s.addSkillAndFaith(demo, mp, affair)
 		mp.adults = append(mp.adults, affair)
-		skills = demo.RandomProfession(affair.ID)
-		if len(skills) > 0 {
-			mp.skills = append(mp.skills, skills...)
-			affair.PreferredProfession = skills[0].Object
-		}
-		mp.faith = append(mp.faith, demo.RandomFaith(affair.ID)...)
+
 		if affair.IsMale {
 			mp.relations = append(
 				mp.relations,
@@ -215,6 +199,20 @@ func (s *Base) spawnFamily(tick int, areaID, race, culture string) *metaPeople {
 	return mp
 }
 
+func (s *Base) addSkillAndFaith(demo *dg.Demographic, mp *metaPeople, person *structs.Person) ([]*structs.Tuple, []*structs.Tuple) {
+	skills := demo.RandomProfession(person.ID)
+	if len(skills) > 0 {
+		mp.skills = append(mp.skills, skills...)
+		person.PreferredProfession = skills[0].Object
+		person.Ethos = *person.Ethos.AddEthos(s.dice.EthosWeightFromProfessions(skills))
+	}
+
+	faiths := demo.RandomFaith(person.ID)
+	mp.faith = append(mp.faith, faiths...)
+
+	return skills, faiths
+}
+
 func siblingRelationship(dice *dg.Demographic, mp *metaPeople, a, b *structs.Person) {
 	brel := structs.PersonalRelationSister
 	if b.IsMale {
@@ -244,14 +242,9 @@ func (s *Base) spawnCouple(tick int, areaID, race, culture string, mp *metaPeopl
 	alive := 0
 
 	person := demo.RandomPerson(areaID)
+	person.SetBirthTick(tick - demo.RandomParentingAge())
 	mp.adults = append(mp.adults, person)
-
-	skills := demo.RandomProfession(person.ID)
-	if len(skills) > 0 {
-		mp.skills = append(mp.skills, skills...)
-		person.PreferredProfession = skills[0].Object
-	}
-	mp.faith = append(mp.faith, demo.RandomFaith(person.ID)...)
+	s.addSkillAndFaith(demo, mp, person)
 
 	cause, died := demo.RandomDeathAdultMortality()
 	if died {
@@ -266,16 +259,12 @@ func (s *Base) spawnCouple(tick int, areaID, race, culture string, mp *metaPeopl
 	}
 
 	lover := demo.RandomPerson(areaID)
+	lover.SetBirthTick(tick - demo.RandomParentingAge())
 	lover.IsMale = !person.IsMale
 	alive++
 
 	mp.adults = append(mp.adults, lover)
-	skills = demo.RandomProfession(lover.ID)
-	if len(skills) > 0 {
-		mp.skills = append(mp.skills, skills...)
-		lover.PreferredProfession = skills[0].Object
-	}
-	mp.faith = append(mp.faith, demo.RandomFaith(lover.ID)...)
+	s.addSkillAndFaith(demo, mp, lover)
 
 	rel := structs.PersonalRelationLover
 	if s.dice.Float64() <= 0.1 {
@@ -348,7 +337,8 @@ func (s *Base) SpawnPopulace(desiredTotal int, race, culture string, areas []str
 
 				mp := newMetaPeople()
 
-				if dice.RandomIsMarried(float64(dice.MinParentingAge())) {
+				// we'll have 1 in 20 unmarried (just to force some variety)
+				if aliveArea%20 > 0 && dice.RandomIsMarried(float64(dice.MinParentingAge())) {
 					// spawn explicit familiy
 					mp = s.spawnFamily(tick, areaID, race, culture)
 					for _, p := range append(mp.adults, mp.children...) {
@@ -363,6 +353,7 @@ func (s *Base) SpawnPopulace(desiredTotal int, race, culture string, areas []str
 					}
 				}
 
+				// randomly add a few relationships
 				if len(prevAdults) > 0 && len(mp.adults) > 0 {
 					for _, a := range mp.adults {
 						for _, p := range stats.ChooseIndexes(len(prevAdults), s.dice.Intn(3)) {
@@ -422,7 +413,7 @@ func (s *Base) AdjustPopulation(area string) error {
 		return err
 	}
 
-	// check for deaths / marriages / divorces
+	// check for marriages / divorces
 	return s.lifeEvents(tick, area)
 }
 
@@ -454,7 +445,6 @@ func (s *Base) deathCheck(tick int, area string) error {
 			db.F(db.Random, db.Less, deathStart+deathRange+1),
 		)
 	}
-	fmt.Println("deathCheck", ff.String())
 
 	var (
 		people []*structs.Person
@@ -507,7 +497,7 @@ func (s *Base) deathCheck(tick int, area string) error {
 // applyDeath enacts from hooks after someone has died - marking families as non child bearing etc.
 //
 // This isn't needed for deaths via childbirth, since we set families in that function (since we
-// already have a the families to hand).
+// already have the families to hand).
 func (s *Base) applyDeath(tick int, in ...*structs.Person) error {
 	if len(in) == 0 {
 		return nil
@@ -585,14 +575,6 @@ func (s *Base) applyDeath(tick int, in ...*structs.Person) error {
 }
 
 func (s *Base) lifeEvents(tick int, area string) error {
-	// a. people who're too old may die
-	// b. people can randomly die of misc reasons (disease etc)
-	// c. people can get married / divorced
-	//token := (&dbutils.IterToken{Limit: 1000, Offset: 0}).String()
-	//ff := db.Q(
-	//		db.F(db.AreaID, db.Equal, area),
-	//	)
-
 	return nil
 }
 
@@ -818,8 +800,8 @@ func (s *Base) birthChildren(tick int, area string) error {
 func addChildToFamily(dice *dg.Demographic, child *structs.Person, f *structs.Family) {
 	child.Ethos = *structs.EthosAverage(&child.Ethos, &f.Ethos)
 	child.BirthFamilyID = f.ID
-	child.IsChild = true
 	child.Race = f.Race
+	child.Culture = f.Culture
 	f.NumberOfChildren++
 	if f.NumberOfChildren >= dice.MaxFamilySize() {
 		f.IsChildBearing = false

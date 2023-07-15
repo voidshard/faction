@@ -36,6 +36,7 @@ type Reader interface {
 	Meta(id string) (string, int, error)
 	Modifiers(table Relation, token string, q *Query) ([]*structs.Modifier, string, error)
 	ModifiersSum(table Relation, token string, q *Query) ([]*structs.Tuple, string, error)
+	Events(token string, q *Query) ([]*structs.Event, string, error)
 }
 
 type Writer interface {
@@ -53,6 +54,7 @@ type Writer interface {
 	SetRoutes(in ...*structs.Route) error
 	SetMeta(id, str_val string, int_val int) error
 	IncrTuples(table Relation, v int, q *Query) error
+	SetEvents(in ...*structs.Event) error
 }
 
 type ReaderWriter interface {

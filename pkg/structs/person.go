@@ -1,7 +1,7 @@
 package structs
 
 const (
-	PersonRandomMax = 1000000
+	PersonRandomMax = 1000000000
 )
 
 // Person roughly outlines someone that can belong to / work for a faction.
@@ -23,8 +23,9 @@ type Person struct {
 	BirthTick int `db:"birth_tick"`
 	DeathTick int `db:"death_tick"`
 
-	IsMale  bool `db:"is_male"`
-	IsChild bool `db:"is_child"` // person is too young for much of anything
+	IsMale bool `db:"is_male"`
+
+	AdulthoodTick int `db:"adulthood_tick"` // tick person becomes an adult
 
 	DeathMetaReason string  `db:"death_meta_reason"`
 	DeathMetaKey    MetaKey `db:"death_meta_key"`
@@ -51,8 +52,13 @@ type Person struct {
 	NaturalDeathTick int `db:"natural_death_tick"`
 }
 
+// SetBirthTick updates the birthtick, and moves the natural death tick and adulthood tick
+// accordingly.
 func (p *Person) SetBirthTick(t int) {
 	lifespan := p.NaturalDeathTick - p.BirthTick
+	childhood := p.AdulthoodTick - p.BirthTick
+
 	p.BirthTick = t
 	p.NaturalDeathTick = t + lifespan
+	p.AdulthoodTick = t + childhood
 }

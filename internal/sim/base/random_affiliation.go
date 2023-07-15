@@ -15,7 +15,7 @@ import (
 
 var (
 	maxEthosDistance = structs.EthosDistance(
-		(&structs.Ethos{}).Sub(structs.MaxEthos),
+		(&structs.Ethos{}).Add(structs.MinEthos),
 		(&structs.Ethos{}).Add(structs.MaxEthos),
 	)
 )
@@ -97,6 +97,11 @@ func (s *Base) getFactionContext(factionID string) (*factionContext, error) {
 // InspireFactionAffiliation adds affiliaton to the given factions in regions they have influence.
 func (s *Base) InspireFactionAffiliation(cfg *config.Affiliation, factionID string) error {
 	ctx, err := s.getFactionContext(factionID)
+	if err != nil {
+		return err
+	}
+
+	tick, err := s.dbconn.Tick()
 	if err != nil {
 		return err
 	}
@@ -284,7 +289,7 @@ func (s *Base) InspireFactionAffiliation(cfg *config.Affiliation, factionID stri
 		if noProfessions {
 			pf.Or(
 				db.F(db.AreaID, db.In, ctx.Areas),
-				db.F(db.IsChild, db.Equal, false),
+				db.F(db.AdulthoodTick, db.Less, tick),
 			)
 		} else {
 			professions := []string{}
@@ -294,7 +299,7 @@ func (s *Base) InspireFactionAffiliation(cfg *config.Affiliation, factionID stri
 			pf.Or(
 				db.F(db.AreaID, db.In, ctx.Areas),
 				db.F(db.PreferredProfession, db.In, professions),
-				db.F(db.IsChild, db.Equal, false),
+				db.F(db.AdulthoodTick, db.Less, tick),
 			)
 		}
 
@@ -330,7 +335,7 @@ func (s *Base) InspireFactionAffiliation(cfg *config.Affiliation, factionID stri
 					continue
 				}
 
-				if p.IsChild || p.DeathTick > 0 {
+				if p.AdulthoodTick < tick || p.DeathTick > 0 {
 					continue // invalid
 				} else if p.PreferredFactionID == "" {
 					toconsider = append(toconsider, p) // easy case

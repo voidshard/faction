@@ -3,6 +3,7 @@ package base
 import (
 	"math"
 	"math/rand"
+	"sort"
 	"time"
 
 	"github.com/voidshard/faction/internal/stats"
@@ -155,6 +156,7 @@ func (d *Demographic) RandomPerson(areaID string) *structs.Person {
 		AreaID:           areaID,
 		Ethos:            d.RandomEthos(),
 		BirthTick:        birth,
+		AdulthoodTick:    int(d.race.ChildbearingAgeMin) + birth,
 		NaturalDeathTick: d.RandomLifespan() + birth,
 		IsMale:           d.RandomIsMale(),
 		Random:           int(d.rng.Float64() * structs.PersonRandomMax),
@@ -194,10 +196,12 @@ func (d *Demographic) RandomEthos() structs.Ethos {
 		Caution:   d.ethosCaution.Int(),
 	}
 	if d.rng.Float64() <= d.culture.EthosBlackSheepProbability {
+		tenth := structs.MaxTuple / 10
+
 		// randomly flip some values to extremes
-		v := structs.MinTuple + d.rng.Intn(200) // very low
+		v := structs.MinTuple + d.rng.Intn(tenth) // very low
 		if d.rng.Float64() < 0.5 {
-			v = structs.MaxTuple - 200 + d.rng.Intn(200) // very high
+			v = structs.MaxTuple - d.rng.Intn(tenth) // very high
 		}
 		switch d.rng.Intn(6) {
 		case 0:
@@ -233,9 +237,7 @@ func (d *Demographic) RandomProfession(subject string) []*structs.Tuple {
 		return data
 	}
 
-	// preferred profession / trade
-	score := -1
-	preferrence := -1
+	chosen := map[string]config.Profession{}
 
 	hasPrimaryProfession := false
 	for i := 0; i < count*2; i++ {
@@ -246,17 +248,8 @@ func (d *Demographic) RandomProfession(subject string) []*structs.Tuple {
 		hasPrimaryProfession = hasPrimaryProfession || prof.ValidSideProfession
 
 		profDice := d.professionLevel[prof.Name]
-
 		last := &structs.Tuple{Subject: subject, Object: prof.Name, Value: profDice.Int()}
-
-		newScore := last.Value
-		if !prof.ValidSideProfession { // implies dedicated trade
-			newScore *= 2
-		}
-		if newScore > score {
-			score = newScore
-			preferrence = len(data) - 1 // preferred profession index
-		}
+		chosen[prof.Name] = prof
 
 		data = append(data, last)
 		if len(data) >= count {
@@ -264,10 +257,26 @@ func (d *Demographic) RandomProfession(subject string) []*structs.Tuple {
 		}
 	}
 
-	if preferrence > 0 {
-		// move preffered role to the front
-		data[0], data[preferrence] = data[preferrence], data[0]
-	}
+	sort.Slice(data, func(i, j int) bool {
+		iProf, iok := chosen[data[i].Subject]
+		jProf, jok := chosen[data[j].Subject]
+
+		ival := data[i].Value
+		jval := data[j].Value
+
+		if iok {
+			if !iProf.ValidSideProfession {
+				ival *= 2
+			}
+		}
+		if jok {
+			if !jProf.ValidSideProfession {
+				jval *= 2
+			}
+		}
+
+		return ival > jval // we want highest first
+	})
 
 	return data
 }

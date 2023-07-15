@@ -26,6 +26,9 @@ func New(cfg *config.Simulation, opts ...simOption) (Simulation, error) {
 			"human": fantasy.CultureHuman(),
 		}
 	}
+	if cfg.Actions == nil {
+		cfg.Actions = fantasy.Actions()
+	}
 
 	me, err := base.New(cfg)
 	if err != nil {

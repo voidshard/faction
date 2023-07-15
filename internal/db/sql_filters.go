@@ -39,26 +39,40 @@ var (
 		NaturalDeathTick:   {isInt},
 		TickExpires:        {isInt},
 		Secrecy:            {isInt},
+		AdulthoodTick:      {isInt},
+		Type:               {isEventType},
 	}
-	metaKeys = map[string]bool{}
+	metaKeys   = map[string]bool{}
+	eventTypes = map[string]bool{}
 )
 
 func init() {
-	for _, key := range []structs.MetaKey{
-		structs.MetaKeyPerson,
-		structs.MetaKeyPlot,
-		structs.MetaKeyResearch,
-		structs.MetaKeyFaction,
-		structs.MetaKeyReligion,
-		structs.MetaKeyGovernment,
-		structs.MetaKeyFamily,
-		structs.MetaKeyCommodity,
-		structs.MetaKeyAction,
-		structs.MetaKeyArea,
-		structs.MetaKeyJob,
-		structs.MetaKeyRoute,
-	} {
-		metaKeys[string(key)] = true
+	metaKeys = map[string]bool{
+		string(structs.MetaKeyPerson):     true,
+		string(structs.MetaKeyPlot):       true,
+		string(structs.MetaKeyResearch):   true,
+		string(structs.MetaKeyFaction):    true,
+		string(structs.MetaKeyReligion):   true,
+		string(structs.MetaKeyGovernment): true,
+		string(structs.MetaKeyFamily):     true,
+		string(structs.MetaKeyCommodity):  true,
+		string(structs.MetaKeyAction):     true,
+		string(structs.MetaKeyArea):       true,
+		string(structs.MetaKeyJob):        true,
+		string(structs.MetaKeyRoute):      true,
+		string(structs.MetaKeyEvent):      true,
+	}
+
+	eventTypes = map[string]bool{
+		string(structs.EventPersonBirth):      true,
+		string(structs.EventPersonDeath):      true,
+		string(structs.EventPersonMove):       true,
+		string(structs.EventPersonChangeProf): true,
+		string(structs.EventFamilyMarriage):   true,
+		string(structs.EventFamilyDivorce):    true,
+		string(structs.EventFamilyAdoption):   true,
+		string(structs.EventFamilyPregnant):   true,
+		string(structs.EventFamilyMove):       true,
 	}
 }
 
@@ -173,73 +187,8 @@ func (f *Filter) sqlQuery(offset int) (string, []interface{}, error) {
 }
 
 func (f *Filter) sqlColumn() string {
-	switch f.Field {
-	case ID:
-		return "id"
-	case BirthTick:
-		return "birth_tick"
-	case DeathTick:
-		return "death_tick"
-	case NaturalDeathTick:
-		return "natural_death_tick"
-	case Race:
-		return "race"
-	case Random:
-		return "random"
-	case BirthFamilyID:
-		return "birth_family_id"
-	case MaleID:
-		return "male_id"
-	case FemaleID:
-		return "female_id"
-	case JobID:
-		return "job_id"
-	case AreaID:
-		return "area_id"
-	case Biome:
-		return "biome"
-	case GovernmentID:
-		return "government_id"
-	case FactionID:
-		return "faction_id"
-	case SourceAreaID:
-		return "source_area_id"
-	case TargetAreaID:
-		return "target_area_id"
-	case EthosAltruism:
-		return "ethos_altruism"
-	case EthosAmbition:
-		return "ethos_ambition"
-	case EthosTradition:
-		return "ethos_tradition"
-	case EthosPacificism:
-		return "ethos_pacificism"
-	case EthosPiety:
-		return "ethos_piety"
-	case EthosCaution:
-		return "ethos_caution"
-	case TickExpires:
-		return "tick_expires"
-	case IsChildBearing:
-		return "is_child_bearing"
-	case PregnancyEnd:
-		return "pregnancy_end"
-	case SourceFactionID:
-		return "source_faction_id"
-	case TargetMetaKey:
-		return "target_meta_key"
-	case TargetMetaVal:
-		return "target_meta_val"
-	case Secrecy:
-		return "secrecy"
-	case State:
-		return "state"
-	case Subject:
-		return "subject"
-	case Object:
-		return "object"
-	}
-	return ""
+	// since Field restricts user input to valid columns anyways
+	return string(f.Field)
 }
 
 func isBool(v interface{}) bool {
@@ -263,6 +212,15 @@ func isID(v interface{}) bool {
 		return false
 	}
 	return dbutils.IsValidID(i)
+}
+
+func isEventType(v interface{}) bool {
+	i, ok := v.(string)
+	if !ok {
+		return false
+	}
+	_, ok = eventTypes[i]
+	return ok
 }
 
 func isMetaKey(v interface{}) bool {
@@ -348,7 +306,7 @@ func sqlFromTupleFilters(r Relation, tk *dbutils.IterToken, in *Query) (string, 
 	), append(args, tk.Limit, tk.Offset), nil
 }
 
-func sqlFromGovernmentFilters(tk *dbutils.IterToken, in *Query) (string, []interface{}, error) {
+func genericSQLFromFilters(tk *dbutils.IterToken, in *Query, table string) (string, []interface{}, error) {
 	where, args, err := in.sqlQuery(0)
 	if err != nil {
 		return "", nil, err
@@ -359,9 +317,15 @@ func sqlFromGovernmentFilters(tk *dbutils.IterToken, in *Query) (string, []inter
 		order = "ORDER BY id"
 	}
 
-	return fmt.Sprintf(
-		"SELECT * FROM %s %s %s LIMIT $%d OFFSET $%d;",
-		tableGovernments, where, order, len(args)+1, len(args)+2,
+	return fmt.Sprintf(`SELECT *
+		FROM %s
+		%s 
+		%s LIMIT $%d OFFSET $%d;`,
+		table,
+		where,
+		order,
+		len(args)+1,
+		len(args)+2,
 	), append(args, tk.Limit, tk.Offset), nil
 }
 
@@ -396,134 +360,5 @@ func sqlFromRouteFilters(tk *dbutils.IterToken, in *Query) (string, []interface{
 	return fmt.Sprintf(`SELECT * 
 	    FROM %s %s %s LIMIT $%d OFFSET $%d;`,
 		tableRoutes, where, order, len(args)+1, len(args)+2,
-	), append(args, tk.Limit, tk.Offset), nil
-}
-
-func sqlFromJobFilters(tk *dbutils.IterToken, in *Query) (string, []interface{}, error) {
-	where, args, err := in.sqlQuery(0)
-	if err != nil {
-		return "", nil, err
-	}
-
-	order := ""
-	if in.sort {
-		order = "ORDER BY id"
-	}
-
-	return fmt.Sprintf(`SELECT *
-	    FROM %s
-	    %s
-	    %s
-	    LIMIT $%d OFFSET $%d`, tableJobs, where, order, len(args)+1, len(args)+2,
-	), append(args, tk.Limit, tk.Offset), nil
-}
-
-func sqlFromFamilyFilters(tk *dbutils.IterToken, in *Query) (string, []interface{}, error) {
-	where, args, err := in.sqlQuery(0)
-	if err != nil {
-		return "", nil, err
-	}
-
-	order := ""
-	if in.sort {
-		order = "ORDER BY id"
-	}
-
-	return fmt.Sprintf(`SELECT * FROM %s %s %s LIMIT $%d OFFSET $%d;`,
-		tableFamilies,
-		where,
-		order,
-		len(args)+1,
-		len(args)+2,
-	), append(args, tk.Limit, tk.Offset), nil
-}
-
-func sqlFromFactionFilters(tk *dbutils.IterToken, in *Query) (string, []interface{}, error) {
-	where, args, err := in.sqlQuery(0)
-	if err != nil {
-		return "", nil, err
-	}
-
-	order := ""
-	if in.sort {
-		order = "ORDER BY id"
-	}
-
-	return fmt.Sprintf(`SELECT * 
-	    FROM %s %s %s LIMIT $%d OFFSET $%d;`,
-		tableFactions,
-		where,
-		order,
-		len(args)+1,
-		len(args)+2,
-	), append(args, tk.Limit, tk.Offset), nil
-}
-
-func sqlFromPlotFilters(tk *dbutils.IterToken, in *Query) (string, []interface{}, error) {
-	where, args, err := in.sqlQuery(0)
-	if err != nil {
-		return "", nil, err
-	}
-
-	order := ""
-	if in.sort {
-		order = "ORDER BY id"
-	}
-
-	return fmt.Sprintf(`SELECT *
-	    FROM %s
-	    %s
-	    %s LIMIT $%d OFFSET $%d;`,
-		tablePlots,
-		where,
-		order,
-		len(args)+1,
-		len(args)+2,
-	), append(args, tk.Limit, tk.Offset), nil
-}
-
-func sqlFromPersonFilters(tk *dbutils.IterToken, in *Query) (string, []interface{}, error) {
-	where, args, err := in.sqlQuery(0)
-	if err != nil {
-		return "", nil, err
-	}
-
-	order := ""
-	if in.sort {
-		order = "ORDER BY id"
-	}
-
-	return fmt.Sprintf(`SELECT *
-		FROM %s
-		%s
-		%s LIMIT $%d OFFSET $%d;`,
-		tablePeople,
-		where,
-		order,
-		len(args)+1,
-		len(args)+2,
-	), append(args, tk.Limit, tk.Offset), nil
-}
-
-func sqlFromAreaFilters(tk *dbutils.IterToken, in *Query) (string, []interface{}, error) {
-	where, args, err := in.sqlQuery(0)
-	if err != nil {
-		return "", nil, err
-	}
-
-	order := ""
-	if in.sort {
-		order = "ORDER BY id"
-	}
-
-	return fmt.Sprintf(`SELECT *
-		FROM %s
-		%s 
-		%s LIMIT $%d OFFSET $%d;`,
-		tableAreas,
-		where,
-		order,
-		len(args)+1,
-		len(args)+2,
 	), append(args, tk.Limit, tk.Offset), nil
 }
