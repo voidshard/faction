@@ -2,10 +2,11 @@ package base
 
 import (
 	"github.com/voidshard/faction/internal/db"
-	"github.com/voidshard/faction/internal/dbutils"
 	"github.com/voidshard/faction/pkg/structs"
 )
 
+// yieldRand is a struct for storing the various amount(s) of commodities across some area(s).
+// Useful for metadata about what land might be useful for.
 type yieldRand struct {
 	professionYield map[string]int             // profession -> yield
 	professionLand  map[string][]*structs.Plot // profession -> land
@@ -66,67 +67,4 @@ func (s *Base) areaYields(in *db.Query, includeOwned bool) (*yieldRand, error) {
 	}
 
 	return yield, nil
-}
-
-// areaGovernments returns
-// 1. a map of area id to government id
-// 2. a map of government id to government
-func (s *Base) areaGovernments(in *db.Query) (map[string]string, map[string]*structs.Government, error) {
-	areaToGovt := map[string]string{}
-	govtToGovt := map[string]*structs.Government{}
-
-	var (
-		areas []*structs.Area
-		token string
-		err   error
-	)
-
-	for {
-		areas, token, err = s.dbconn.Areas(token, in)
-		if err != nil {
-			return nil, nil, err
-		}
-
-		for _, area := range areas {
-			if dbutils.IsValidID(area.GovernmentID) {
-				areaToGovt[area.ID] = area.GovernmentID
-				govtToGovt[area.GovernmentID] = nil
-			} else {
-				areaToGovt[area.ID] = ""
-			}
-		}
-
-		if token == "" {
-			break
-		}
-	}
-
-	if len(govtToGovt) == 0 {
-		return areaToGovt, govtToGovt, nil
-	}
-
-	gids := []string{}
-	for gid := range govtToGovt {
-		gids = append(gids, gid)
-	}
-	gf := db.Q(db.F(db.ID, db.In, gids))
-
-	var governments []*structs.Government
-
-	for {
-		governments, token, err = s.dbconn.Governments(token, gf)
-		if err != nil {
-			return nil, nil, err
-		}
-
-		for _, govt := range governments {
-			govtToGovt[govt.ID] = govt
-		}
-
-		if token == "" {
-			break
-		}
-	}
-
-	return areaToGovt, govtToGovt, nil
 }

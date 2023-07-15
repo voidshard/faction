@@ -476,16 +476,17 @@ func setEvents(op sqlOperator, in []*structs.Event) error {
 		if f.Tick < 0 {
 			return fmt.Errorf("event tick %d is invalid", f.Tick)
 		}
-		if f.SourceEvent != "" && !dbutils.IsValidID(f.SourceEvent) {
-			return fmt.Errorf("event source event id %s is invalid", f.SourceEvent)
-		}
 	}
 
 	// events cannot be updated
 	qstr := fmt.Sprintf(`INSERT INTO %s (
-	    id, type, tick, meta_key, meta_val, source_event, message
+	    id, type, tick, message,
+	    subject_meta_key, subject_meta_val,
+	    cause_meta_key, cause_meta_val
 	) VALUES (	
-	    :id, :type, :tick, :meta_key, :meta_val, :source_event, :message
+	    :id, :type, :tick, :message,
+	    :subject_meta_key, :subject_meta_val,
+	    :cause_meta_key, :cause_meta_val
 	);`, tableEvents)
 
 	_, err := op.NamedExec(qstr, in)

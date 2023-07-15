@@ -195,11 +195,12 @@ var (
 	    id VARCHAR(36) PRIMARY KEY,
 	    type VARCHAR(255) NOT NULL default "",
 	    tick INTEGER NOT NULL DEFAULT 0,
-	    meta_key VARCHAR(255) NOT NULL default "",
-	    meta_val VARCHAR(255) NOT NULL default "",
-	    source_event_id VARCHAR(36) NOT NULL default "",
 	    message TEXT NOT NULL default "",
-	)`, tableEvents)
+	    subject_meta_key VARCHAR(255) NOT NULL default "",
+	    subject_meta_val VARCHAR(255) NOT NULL default "",
+	    cause_meta_key VARCHAR(255) NOT NULL default "",
+	    cause_meta_val VARCHAR(255) NOT NULL default ""
+	);`, tableEvents)
 
 	// indexes that we should create
 	// TODO
@@ -214,7 +215,7 @@ var (
 		fmt.Sprintf(`CREATE INDEX IF NOT EXISTS jobs_target_area ON %s (target_area_id, state);`, tableJobs),
 
 		// events we want to search by tick (ie. what happened this tick?)
-		fmt.Sprintf(`CREATE INDEX IF NOT EXISTS event_tick ON %s (tick);`, tableEvents),
+		fmt.Sprintf(`CREATE INDEX IF NOT EXISTS event_tick_type ON %s (tick, type);`, tableEvents),
 
 		// families we mostly run over to see if we need to add children on a tick, so area + child_bearing
 		fmt.Sprintf(`CREATE INDEX IF NOT EXISTS fam_child_bearing ON %s (area_id, is_child_bearing);`, tableFamilies),

@@ -28,12 +28,14 @@ const (
 
 	// event
 	Type Field = "type"
+	Tick Field = "tick"
 
 	// area
 	Biome Field = "biome"
 
 	// person & family
-	Race Field = "race"
+	Race    Field = "race"
+	Culture Field = "culture"
 
 	// area, faction
 	GovernmentID Field = "government_id"

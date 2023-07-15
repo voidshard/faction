@@ -5,6 +5,7 @@ import (
 	"github.com/voidshard/faction/pkg/structs"
 )
 
+// metaPeople is a working data set when operating on people & associated data
 type metaPeople struct {
 	adults    []*structs.Person
 	children  []*structs.Person
@@ -25,12 +26,17 @@ func newMetaPeople() *metaPeople {
 		trust:     []*structs.Tuple{},
 		relations: []*structs.Tuple{},
 		families:  []*structs.Family{},
+		events:    []*structs.Event{},
 	}
 }
 
 func writeMetaPeople(conn *db.FactionDB, p *metaPeople) error {
 	return conn.InTransaction(func(tx db.ReaderWriter) error {
 		err := tx.SetPeople(append(p.adults, p.children...)...)
+		if err != nil {
+			return err
+		}
+		err = tx.SetEvents(p.events...)
 		if err != nil {
 			return err
 		}

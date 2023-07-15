@@ -2,7 +2,7 @@ package base
 
 import (
 	"github.com/voidshard/faction/internal/db"
-	demographics "github.com/voidshard/faction/internal/demographics"
+	demographics "github.com/voidshard/faction/internal/random/demographics"
 	"github.com/voidshard/faction/pkg/config"
 	"github.com/voidshard/faction/pkg/economy"
 	fantasy "github.com/voidshard/faction/pkg/premade/fantasy"

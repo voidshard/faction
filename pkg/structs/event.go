@@ -13,6 +13,8 @@ const (
 	EventFamilyPregnant EventType = "family_pregnant"
 	EventFamilyAdoption EventType = "family_adoption"
 	EventFamilyMove     EventType = "family_move"
+
+	EventFactionPromotion EventType = "faction_promotion"
 )
 
 // Event is something we want to report to the caller
@@ -21,12 +23,13 @@ type Event struct {
 	Type EventType `db:"type"`
 	Tick int       `db:"tick"`
 
-	// Key is some user defined key in an Action config (see pkg/config/action.go)
-	MetaKey MetaKey `db:"meta_key"`
-	MetaVal string  `db:"meta_val"`
+	// what the event is talking about
+	SubjectMetaKey MetaKey `db:"subject_meta_key"`
+	SubjectMetaVal string  `db:"subject_meta_val"`
 
-	// If we know the src event
-	SourceEvent string `db:"source_event"`
+	// if we know the cause
+	CauseMetaKey MetaKey `db:"cause_meta_key"`
+	CauseMetaVal string  `db:"cause_meta_val"`
 
 	// Human readable message
 	Message string `db:"message"`

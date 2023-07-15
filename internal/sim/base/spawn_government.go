@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"github.com/voidshard/faction/internal/db"
-	"github.com/voidshard/faction/internal/stats"
+	stats "github.com/voidshard/faction/internal/random/rng"
 	"github.com/voidshard/faction/pkg/config"
 	"github.com/voidshard/faction/pkg/structs"
 )
