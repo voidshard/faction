@@ -1,3 +1,5 @@
+/*Rather than run tasks one at a time, this queue aggregates tasks within some time frame so we process in batches.
+ */
 package queue
 
 import (
@@ -17,6 +19,7 @@ type aggregatingQueue struct {
 	incoming chan *JobMeta
 	outgoing chan<- []*JobMeta
 	quit     chan bool
+	exited   bool
 }
 
 func newAggregatingQueue(hnd Handler, out chan<- []*JobMeta) *aggregatingQueue {
@@ -37,6 +40,12 @@ func (q *aggregatingQueue) Close() {
 	close(q.incoming)
 	q.quit <- true
 	close(q.quit)
+}
+
+func (q *aggregatingQueue) Flush() {
+	for !q.exited {
+		time.Sleep(10 * time.Millisecond)
+	}
 }
 
 func (q *aggregatingQueue) Enqueue(j *JobMeta) {
@@ -71,6 +80,7 @@ func (q *aggregatingQueue) run() {
 			q.buffer = []*JobMeta{}
 			q.lock.Unlock()
 			if exit {
+				q.exited = true
 				return
 			}
 		}

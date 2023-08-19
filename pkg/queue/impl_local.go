@@ -49,13 +49,25 @@ func NewLocalQueue(routines int) Queue {
 }
 
 func (q *localQueue) Close() error {
+	q.handlerslock.Lock()
+	defer q.handlerslock.Unlock()
+
+	for _, h := range q.handlers {
+		h.Close()
+	}
+
+	for _, h := range q.handlers {
+		h.Flush()
+	}
+
 	close(q.queue)
 	return nil
 }
 
 func (q *localQueue) Await(ids ...string) (State, error) {
 	if len(ids) == 0 {
-		// if no ids are given, await all tasks. Strictly a local-mode thing.
+		// If no ids are given, await all tasks. Strictly a local-mode thing.
+		// This doesn't prevent adding new tasks.
 		for {
 			q.jobsLock.Lock()
 			num := len(q.jobs)
