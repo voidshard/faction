@@ -65,11 +65,11 @@ var (
 	);`, tableGovernments)
 
 	createLaws = fmt.Sprintf(`CREATE TABLE IF NOT EXISTS %s (
-	    government_id VARCHAR(36) NOT NULL,
+	    source_id VARCHAR(36) NOT NULL,
 	    meta_key VARCHAR(255) NOT NULL,
 	    meta_val VARCHAR(255) NOT NULL,
 	    illegal BOOLEAN NOT NULL DEFAULT FALSE,
-	    UNIQUE(government_id, meta_key, meta_val)
+	    UNIQUE(source_id, meta_key, meta_val)
 	);`, tableLaws)
 
 	createPlots = fmt.Sprintf(`CREATE TABLE IF NOT EXISTS %s (
@@ -206,7 +206,7 @@ var (
 	// TODO
 	indexes = []string{
 		// we look up laws by the government id
-		fmt.Sprintf(`CREATE INDEX IF NOT EXISTS laws_government_id ON %s (government_id);`, tableLaws),
+		fmt.Sprintf(`CREATE INDEX IF NOT EXISTS laws_source_id ON %s (source_id);`, tableLaws),
 
 		// we look up plots by their owner(s) in order to determine where faction(s) can perform actions
 		fmt.Sprintf(`CREATE INDEX IF NOT EXISTS plot_owner ON %s (faction_id);`, tablePlots),
@@ -292,6 +292,7 @@ func (s *Sqlite) createTables() error {
 		createFamilies,
 		createPeople,
 		createFactions,
+		createEvents,
 	}
 	todoIx := []string{}
 

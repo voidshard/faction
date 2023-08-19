@@ -56,6 +56,8 @@ func main() {
 		AreaID:        area1.ID,
 		IsMale:        true,
 		BirthTick:     1,
+		Race:          "human",
+		Culture:       "human",
 	}
 	wife1 := &structs.Person{
 		ID:            structs.NewID(),
@@ -64,6 +66,8 @@ func main() {
 		AreaID:        area1.ID,
 		IsMale:        false,
 		BirthTick:     1,
+		Race:          "human",
+		Culture:       "human",
 	}
 	steve1 := &structs.Person{
 		ID:            structs.NewID(),
@@ -72,9 +76,17 @@ func main() {
 		AreaID:        area2.ID,
 		IsMale:        true,
 		BirthTick:     2,
+		Race:          "human",
+		Culture:       "human",
 	}
 	family1 := &structs.Family{
-		ID: structs.NewID(), AreaID: area1.ID, IsChildBearing: true, MaleID: husband1.ID, FemaleID: wife1.ID,
+		ID:             structs.NewID(),
+		AreaID:         area1.ID,
+		IsChildBearing: true,
+		MaleID:         husband1.ID,
+		FemaleID:       wife1.ID,
+		Race:           "human",
+		Culture:        "human",
 	}
 
 	// RelationPersonPersonRelationships

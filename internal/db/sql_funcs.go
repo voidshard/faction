@@ -35,10 +35,10 @@ type mstruct struct {
 // lawStruct holds a law row. We don't provide these as a first class object,
 // but internally a government(s) laws are written as individual rows.
 type lawStruct struct {
-	GovernmentID string          `db:"government_id"`
-	MetaKey      structs.MetaKey `db:"meta_key"`
-	MetaVal      string          `db:"meta_val"`
-	Illegal      bool            `db:"illegal"`
+	SourceID string          `db:"source_id"`
+	MetaKey  structs.MetaKey `db:"meta_key"`
+	MetaVal  string          `db:"meta_val"`
+	Illegal  bool            `db:"illegal"`
 }
 
 func deleteModifiers(op sqlOperator, r Relation, expires_before_tick int) error {
@@ -473,9 +473,6 @@ func setEvents(op sqlOperator, in []*structs.Event) error {
 		if !dbutils.IsValidID(f.ID) {
 			return fmt.Errorf("event id %s is invalid", f.ID)
 		}
-		if f.Tick < 0 {
-			return fmt.Errorf("event tick %d is invalid", f.Tick)
-		}
 	}
 
 	// events cannot be updated
@@ -586,92 +583,104 @@ func governments(op sqlOperator, token string, in *Query) ([]*structs.Government
 	}
 
 	// 2. read law(s) for relevant Government(s)
-	gmap := map[string]*structs.Government{}
 	ids := make([]string, len(out))
 	for i, g := range out {
 		ids[i] = g.ID
-		gmap[g.ID] = g
-		g.Outlawed = structs.NewLaws()
 	}
 
-	lawsQ, lawsArgs := sqlLawsFromGovernmentIDs(ids)
-
-	var laws []*lawStruct
-	err = op.Select(&laws, lawsQ, lawsArgs...)
-	if err != nil {
-		return nil, token, err
-	}
-
-	// 3. cobble together
-	for _, l := range laws {
-		g, ok := gmap[l.GovernmentID]
-		if !ok { // should never happen, must have picked up row we didn't mean to
-			continue
+	laws, err := readLaws(op, ids)
+	for _, g := range out {
+		laws, ok := laws[g.ID]
+		if !ok {
+			// govt. has no laws
+			laws = structs.NewLaws()
 		}
-
-		switch l.MetaKey {
-		case structs.MetaKeyFaction:
-			g.Outlawed.Factions[l.MetaVal] = l.Illegal
-		case structs.MetaKeyCommodity:
-			g.Outlawed.Commodities[l.MetaVal] = l.Illegal
-		case structs.MetaKeyAction:
-			g.Outlawed.Actions[structs.ActionType(l.MetaVal)] = l.Illegal
-		case structs.MetaKeyResearch:
-			g.Outlawed.Research[l.MetaVal] = l.Illegal
-		case structs.MetaKeyReligion:
-			g.Outlawed.Religions[l.MetaVal] = l.Illegal
-		}
+		g.Outlawed = laws
 	}
 
 	return out, nextToken(tk, len(out)), nil
 }
 
+func readLaws(op sqlOperator, in []string) (map[string]*structs.Laws, error) {
+	lawsQ, lawsArgs := sqlLawsFromSourceIDs(in)
+	var lawRows []*lawStruct
+	err := op.Select(&lawRows, lawsQ, lawsArgs...)
+	if err != nil {
+		return nil, err
+	}
+
+	result := map[string]*structs.Laws{}
+
+	for _, l := range lawRows {
+		law, ok := result[l.SourceID]
+		if !ok {
+			law = structs.NewLaws()
+			result[l.SourceID] = law
+		}
+
+		switch l.MetaKey {
+		case structs.MetaKeyFaction:
+			law.Factions[l.MetaVal] = l.Illegal
+		case structs.MetaKeyCommodity:
+			law.Commodities[l.MetaVal] = l.Illegal
+		case structs.MetaKeyAction:
+			law.Actions[structs.ActionType(l.MetaVal)] = l.Illegal
+		case structs.MetaKeyResearch:
+			law.Research[l.MetaVal] = l.Illegal
+		case structs.MetaKeyReligion:
+			law.Religions[l.MetaVal] = l.Illegal
+		}
+	}
+
+	return result, nil
+}
+
 // toLaws converts a Government object to a slice of lawStructs.
 // Internally we save the laws in their own table, but we don't expose this because we expect the laws
 // to be reasonbly small in number and reasonably static.
-func toLaws(f *structs.Government) []*lawStruct {
-	laws := []*lawStruct{}
-	if f.Outlawed.Factions != nil {
-		for k, v := range f.Outlawed.Factions {
+func toLawRows(id string, laws *structs.Laws) []*lawStruct {
+	rows := []*lawStruct{}
+	if laws.Factions != nil {
+		for k, v := range laws.Factions {
 			if !v {
 				continue
 			}
-			laws = append(laws, &lawStruct{GovernmentID: f.ID, MetaKey: structs.MetaKeyFaction, MetaVal: k, Illegal: v})
+			rows = append(rows, &lawStruct{SourceID: id, MetaKey: structs.MetaKeyFaction, MetaVal: k, Illegal: v})
 		}
 	}
-	if f.Outlawed.Commodities != nil {
-		for k, v := range f.Outlawed.Commodities {
+	if laws.Commodities != nil {
+		for k, v := range laws.Commodities {
 			if !v {
 				continue
 			}
-			laws = append(laws, &lawStruct{GovernmentID: f.ID, MetaKey: structs.MetaKeyCommodity, MetaVal: k, Illegal: v})
+			rows = append(rows, &lawStruct{SourceID: id, MetaKey: structs.MetaKeyCommodity, MetaVal: k, Illegal: v})
 		}
 	}
-	if f.Outlawed.Actions != nil {
-		for k, v := range f.Outlawed.Actions {
+	if laws.Actions != nil {
+		for k, v := range laws.Actions {
 			if !v {
 				continue
 			}
-			laws = append(laws, &lawStruct{GovernmentID: f.ID, MetaKey: structs.MetaKeyAction, MetaVal: string(k), Illegal: v})
+			rows = append(rows, &lawStruct{SourceID: id, MetaKey: structs.MetaKeyAction, MetaVal: string(k), Illegal: v})
 		}
 	}
-	if f.Outlawed.Research != nil {
-		for k, v := range f.Outlawed.Research {
+	if laws.Research != nil {
+		for k, v := range laws.Research {
 			if !v {
 				continue
 			}
-			laws = append(laws, &lawStruct{GovernmentID: f.ID, MetaKey: structs.MetaKeyResearch, MetaVal: k, Illegal: v})
+			rows = append(rows, &lawStruct{SourceID: id, MetaKey: structs.MetaKeyResearch, MetaVal: k, Illegal: v})
 		}
 	}
-	if f.Outlawed.Religions != nil {
-		for k, v := range f.Outlawed.Religions {
+	if laws.Religions != nil {
+		for k, v := range laws.Religions {
 			if !v {
 				continue
 			}
-			laws = append(laws, &lawStruct{GovernmentID: f.ID, MetaKey: structs.MetaKeyReligion, MetaVal: k, Illegal: v})
+			rows = append(rows, &lawStruct{SourceID: id, MetaKey: structs.MetaKeyReligion, MetaVal: k, Illegal: v})
 		}
 	}
-	return laws
+	return rows
 }
 
 func setGovernments(op sqlOperator, in []*structs.Government) error {
@@ -695,7 +704,7 @@ func setGovernments(op sqlOperator, in []*structs.Government) error {
 		idArgs[fmt.Sprintf("%d", i)] = f.ID
 
 		if f.Outlawed != nil {
-			laws = append(laws, toLaws(f)...)
+			laws = append(laws, toLawRows(f.ID, f.Outlawed)...)
 		}
 	}
 
@@ -715,7 +724,7 @@ func setGovernments(op sqlOperator, in []*structs.Government) error {
 	}
 
 	// 2. delete all laws for the given government(s)
-	qstr = fmt.Sprintf(`DELETE FROM %s WHERE government_id in (%s);`, tableLaws, strings.Join(idNames, ","))
+	qstr = fmt.Sprintf(`DELETE FROM %s WHERE source_id in (%s);`, tableLaws, strings.Join(idNames, ","))
 
 	_, err = op.NamedExec(qstr, idArgs)
 	if err != nil {
@@ -724,9 +733,9 @@ func setGovernments(op sqlOperator, in []*structs.Government) error {
 
 	// 3. annnd now we can write the laws
 	qstr = fmt.Sprintf(`INSERT INTO %s (
-	    government_id, meta_key, meta_val, illegal
+	    source_id, meta_key, meta_val, illegal
 	) VALUES (
-	    :government_id, :meta_key, :meta_val, :illegal
+	    :source_id, :meta_key, :meta_val, :illegal
 	);`, tableLaws)
 
 	_, err = op.NamedExec(qstr, laws)

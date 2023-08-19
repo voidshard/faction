@@ -6,22 +6,13 @@ import (
 	"github.com/voidshard/faction/pkg/structs"
 )
 
-func newBirthEvent(tick int, personID, familyID string) *structs.Event {
-	return &structs.Event{
-		ID:             dbutils.NewID(),
-		Type:           structs.EventPersonBirth,
-		Tick:           tick,
-		SubjectMetaKey: structs.MetaKeyPerson,
-		SubjectMetaVal: personID,
-		CauseMetaKey:   structs.MetaKeyFamily,
-		CauseMetaVal:   familyID,
-	}
-}
-
-// already have the families to hand).
-func (s *Base) applyDeath(tick int, in ...*structs.Person) error {
-	if len(in) == 0 {
-		return nil
+func (s *Base) applyDeathFamilyEffect(tick int, events []*structs.Event) error {
+	query := db.Q(
+		db.F(db.ID, db.In, eventSubjects(events)),
+	).DisableSort()
+	in, _, err := s.dbconn.People("", query)
+	if err != nil {
+		return err
 	}
 
 	female := []string{}
@@ -37,10 +28,9 @@ func (s *Base) applyDeath(tick int, in ...*structs.Person) error {
 		}
 	}
 
-	token := (&dbutils.IterToken{Limit: 1000, Offset: 0}).String()
+	token := dbutils.NewTokenWith(1000, 0)
 	var (
 		families []*structs.Family
-		err      error
 	)
 	q := db.Q(
 		db.F(db.MaleID, db.In, male),
@@ -51,6 +41,9 @@ func (s *Base) applyDeath(tick int, in ...*structs.Person) error {
 		families, token, err = s.dbconn.Families(token, q)
 		if err != nil {
 			return err
+		}
+		if len(families) == 0 {
+			return nil
 		}
 
 		update := []*structs.Family{}
@@ -65,7 +58,7 @@ func (s *Base) applyDeath(tick int, in ...*structs.Person) error {
 			f.IsChildBearing = false
 			f.WidowedTick = tick
 
-			// if a mother has died, the child has too :(
+			// if a mother has died, the unborn child has too :(
 			_, ok := femaleDead[f.FemaleID]
 			if ok {
 				f.PregnancyEnd = 0

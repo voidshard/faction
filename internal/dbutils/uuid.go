@@ -21,14 +21,10 @@ var (
 	// checks if we match a UUID like 123e4567-e89b-12d3-a456-426655440000
 	valid = regexp.MustCompile("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$")
 
-	rng *rand.Rand
+	rng = rand.New(rand.NewSource(time.Now().UnixNano()))
 )
 
 type UUID [16]byte
-
-func init() {
-	rng = rand.New(rand.NewSource(time.Now().UnixNano()))
-}
 
 // Create a new ID string deterministically
 func NewID(args ...interface{}) string {

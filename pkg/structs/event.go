@@ -1,5 +1,9 @@
 package structs
 
+import (
+	"encoding/json"
+)
+
 type EventType string
 
 const (
@@ -33,4 +37,12 @@ type Event struct {
 
 	// Human readable message
 	Message string `db:"message"`
+}
+
+func (e *Event) MarshalJson() ([]byte, error) {
+	return json.Marshal(e)
+}
+
+func (e *Event) UnmarshalJson(b []byte) error {
+	return json.Unmarshal(b, e)
 }

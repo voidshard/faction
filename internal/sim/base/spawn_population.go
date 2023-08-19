@@ -30,13 +30,13 @@ func (s *Base) spawnFamily(tick int, areaID, race, culture string) *metaPeople {
 	mum.SetBirthTick(tick - demo.RandomParentingAge())
 	_, mumFaiths := s.addSkillAndFaith(demo, mp, mum)
 	mum.IsMale = false
-	mp.events = append(mp.events, newBirthEvent(mum.BirthTick, mum.ID, ""))
+	mp.events = append(mp.events, newBirthEvent(mum, ""))
 
 	dad := demo.RandomPerson(areaID)
 	dad.SetBirthTick(tick - demo.RandomParentingAge())
 	_, dadFaiths := s.addSkillAndFaith(demo, mp, dad)
 	dad.IsMale = true
-	mp.events = append(mp.events, newBirthEvent(dad.BirthTick, dad.ID, ""))
+	mp.events = append(mp.events, newBirthEvent(dad, ""))
 
 	mp.adults = append(mp.adults, mum, dad)
 
@@ -69,6 +69,7 @@ func (s *Base) spawnFamily(tick int, areaID, race, culture string) *metaPeople {
 		Random:              int(s.dice.Float64() * structs.FamilyRandomMax),
 	}
 	mp.families = append(mp.families, family)
+	mp.events = append(mp.events, newMarriageEvent(family, tick-demo.RandomChildbearingTerm()))
 
 	havingAffair := demo.RandomIsHavingAffair(parentingTicks)
 	if havingAffair {
@@ -76,7 +77,7 @@ func (s *Base) spawnFamily(tick int, areaID, race, culture string) *metaPeople {
 		affair.SetBirthTick(tick - demo.RandomParentingAge())
 		s.addSkillAndFaith(demo, mp, affair)
 		mp.adults = append(mp.adults, affair)
-		mp.events = append(mp.events, newBirthEvent(affair.BirthTick, affair.ID, ""))
+		mp.events = append(mp.events, newBirthEvent(affair, ""))
 
 		if affair.IsMale {
 			mp.relations = append(
@@ -110,12 +111,14 @@ func (s *Base) spawnFamily(tick int, areaID, race, culture string) *metaPeople {
 
 		child := demo.RandomPerson(areaID)
 		child.SetBirthTick(tick)
+		mp.events = append(mp.events, newBirthEvent(child, family.ID))
 
 		if demo.RandomDeathInfantMortality() {
 			child.DeathMetaReason = diedInChildbirth
 			child.DeathTick = tick
 			child.DeathMetaKey = structs.MetaKeyPerson
 			child.DeathMetaVal = mum.ID
+			mp.events = append(mp.events, newDeathEvent(child))
 		}
 
 		addChildToFamily(demo, child, family)
@@ -126,6 +129,7 @@ func (s *Base) spawnFamily(tick int, areaID, race, culture string) *metaPeople {
 			mum.DeathMetaReason = diedInChildbirth
 			mum.DeathMetaKey = structs.MetaKeyPerson
 			mum.DeathMetaVal = child.ID
+			mp.events = append(mp.events, newDeathEvent(mum))
 			family.IsChildBearing = false
 			family.WidowedTick = tick
 		}
@@ -160,6 +164,7 @@ func (s *Base) spawnFamily(tick int, areaID, race, culture string) *metaPeople {
 			family.WidowedTick = tick
 		} else {
 			family.DivorceTick = tick
+			mp.events = append(mp.events, newDivorceEvent(family, tick))
 		}
 	} else {
 		div := 1
@@ -204,6 +209,8 @@ func (s *Base) spawnCouple(tick int, areaID, race, culture string, mp *metaPeopl
 
 	person := demo.RandomPerson(areaID)
 	person.SetBirthTick(tick - demo.RandomParentingAge())
+	mp.events = append(mp.events, newBirthEvent(person, ""))
+
 	mp.adults = append(mp.adults, person)
 	s.addSkillAndFaith(demo, mp, person)
 
@@ -211,6 +218,7 @@ func (s *Base) spawnCouple(tick int, areaID, race, culture string, mp *metaPeopl
 	if died {
 		person.DeathTick = tick
 		person.DeathMetaReason = cause
+		mp.events = append(mp.events, newDeathEvent(person))
 	} else {
 		alive++
 	}
@@ -221,6 +229,7 @@ func (s *Base) spawnCouple(tick int, areaID, race, culture string, mp *metaPeopl
 
 	lover := demo.RandomPerson(areaID)
 	lover.SetBirthTick(tick - demo.RandomParentingAge())
+	mp.events = append(mp.events, newBirthEvent(lover, ""))
 	lover.IsMale = !person.IsMale
 	alive++
 

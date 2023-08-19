@@ -36,6 +36,13 @@ func NewToken() *IterToken {
 	}
 }
 
+func NewTokenWith(limit, offset int) string {
+	t := NewToken()
+	t.Limit = limit
+	t.Offset = offset
+	return t.String()
+}
+
 // ParseIterToken returns our limit / offset from a token
 func ParseToken(in string) (*IterToken, error) {
 	if in == "" {

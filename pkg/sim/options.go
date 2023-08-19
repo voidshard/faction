@@ -2,6 +2,7 @@ package sim
 
 import (
 	"github.com/voidshard/faction/pkg/economy"
+	"github.com/voidshard/faction/pkg/queue"
 	"github.com/voidshard/faction/pkg/technology"
 )
 
@@ -26,5 +27,12 @@ func SetTechnology(tech technology.Technology) simOption {
 func SetEconomy(eco economy.Economy) simOption {
 	return func(s Simulation) error {
 		return s.SetEconomy(eco)
+	}
+}
+
+// SetQueue registers the given queue with the simulation.
+func SetQueue(q queue.Queue) simOption {
+	return func(s Simulation) error {
+		return s.SetQueue(q)
 	}
 }

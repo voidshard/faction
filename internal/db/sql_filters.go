@@ -330,10 +330,10 @@ func genericSQLFromFilters(tk *dbutils.IterToken, in *Query, table string) (stri
 	), append(args, tk.Limit, tk.Offset), nil
 }
 
-func sqlLawsFromGovernmentIDs(in []string) (string, []interface{}) {
+func sqlLawsFromSourceIDs(in []string) (string, []interface{}) {
 	inGovtIDs, args := sqlIn(in)
 	return fmt.Sprintf(`SELECT *
-	    FROM %s WHERE government_id IN (%s);
+	    FROM %s WHERE source_id IN (%s);
 	`, tableLaws, inGovtIDs), args
 }
 

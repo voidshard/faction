@@ -3,6 +3,7 @@ package sim
 import (
 	"github.com/voidshard/faction/pkg/config"
 	"github.com/voidshard/faction/pkg/economy"
+	"github.com/voidshard/faction/pkg/queue"
 	"github.com/voidshard/faction/pkg/structs"
 	"github.com/voidshard/faction/pkg/technology"
 )
@@ -13,6 +14,7 @@ type Simulation interface {
 	// Options
 	SetTechnology(tech technology.Technology) error
 	SetEconomy(eco economy.Economy) error
+	SetQueue(q queue.Queue) error
 
 	// SetGovernments upserts government(s).
 	//
@@ -105,6 +107,13 @@ type Simulation interface {
 
 	// Tick updates internal time by one tick, returns the current tick.
 	Tick() (int, error)
+
+	// FireEvents will fire any events that have been queued up for the current tick.
+	//
+	// Rather than immediately fire events as they occur in a given tick, we store them in
+	// the DB for firing in batches. We don't really need real time events, and this is way
+	// more efficient to process.
+	FireEvents() error
 
 	// AdjustPopulation accounts for natural deaths, births etc in an area
 	AdjustPopulation(areaID string) error

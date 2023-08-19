@@ -14,6 +14,9 @@ func New(cfg *config.Simulation, opts ...simOption) (Simulation, error) {
 	if cfg.Database == nil {
 		cfg.Database = config.DefaultDatabase()
 	}
+	if cfg.Queue == nil {
+		cfg.Queue = config.DefaultQueue()
+	}
 
 	// if not told otherwise, we'll assume human demographics
 	if cfg.Races == nil {

@@ -31,11 +31,12 @@ type ActionType string
 // - crusade, excommunicate
 const (
 	// Friendly actions (most of these target another faction)
-	ActionTypeTrade     ActionType = "trade"     // trade goods with another faction, everyone wins
-	ActionTypeBribe     ActionType = "bribe"     // pay a faction to increase their favor
-	ActionTypeFestival  ActionType = "festival"  // hold a festival (usually religious in nature), increases general favor & affiliation
-	ActionTypeGrantLand ActionType = "grantland" // government grants the use of some land
-	ActionTypeCharity   ActionType = "charity"   // donate money to people of an area(s), increases general favor
+	ActionTypeTrade      ActionType = "trade"      // trade goods with another faction, everyone wins
+	ActionTypeBribe      ActionType = "bribe"      // pay a faction to increase their favor
+	ActionTypeFestival   ActionType = "festival"   // hold a festival (usually religious in nature), increases general favor & affiliation
+	ActionTypePilgrimage ActionType = "pilgrimage" // hold a pilgrimage, increases faith
+	ActionTypeGrantLand  ActionType = "grantland"  // government grants the use of some land
+	ActionTypeCharity    ActionType = "charity"    // donate money to people of an area(s), increases general favor
 
 	// Neutral actions (these target "self")
 	ActionTypePropoganda     ActionType = "propoganda"      // increases general favor towards you, cheaper than 'Charity' but less um, honest

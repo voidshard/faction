@@ -6,6 +6,7 @@ import (
 	"github.com/voidshard/faction/pkg/config"
 	"github.com/voidshard/faction/pkg/economy"
 	fantasy "github.com/voidshard/faction/pkg/premade/fantasy"
+	"github.com/voidshard/faction/pkg/queue"
 	"github.com/voidshard/faction/pkg/structs"
 	"github.com/voidshard/faction/pkg/technology"
 )
@@ -17,6 +18,7 @@ type Base struct {
 	tech technology.Technology
 
 	dbconn *db.FactionDB
+	queue  queue.Queue
 
 	dice *demographics.Dice
 }
@@ -24,15 +26,61 @@ type Base struct {
 // New Simulation, the main doo-da
 func New(cfg *config.Simulation) (*Base, error) {
 	dbconn, err := db.New(cfg.Database)
-	return &Base{
+	if err != nil {
+		return nil, err
+	}
+	me := &Base{
 		cfg:    cfg,
 		dbconn: dbconn,
 		// default tech / eco
-		eco:  fantasy.NewEconomy(),
-		tech: fantasy.NewTechnology(),
+		eco:   fantasy.NewEconomy(),
+		tech:  fantasy.NewTechnology(),
+		queue: queue.NewLocalQueue(10),
 		// dice for sim configs
 		dice: demographics.New(cfg),
-	}, err
+	}
+	me.registerTasksWithQueue()
+	return me, nil
+}
+
+func (s *Base) FireEvents() error {
+	tick, err := s.dbconn.Tick()
+	if err != nil {
+		return err
+	}
+
+	q := db.Q(db.F(db.Tick, db.Equal, tick))
+	var (
+		events []*structs.Event
+		token  string
+	)
+
+	count := 0
+	for {
+		events, token, err = s.dbconn.Events(token, q)
+		if err != nil {
+			return err
+		}
+
+		// TODO: Perhaps we could batch launch
+		for _, e := range events {
+			data, err := e.MarshalJson()
+			if err != nil {
+				return err
+			}
+			count += 1
+
+			_, err = s.queue.Enqueue(eventTask(e.Type), data)
+			if err != nil {
+				return err
+			}
+		}
+
+		if token == "" {
+			break
+		}
+	}
+	return nil
 }
 
 func (s *Base) SetTechnology(tech technology.Technology) error {
@@ -42,6 +90,12 @@ func (s *Base) SetTechnology(tech technology.Technology) error {
 
 func (s *Base) SetEconomy(eco economy.Economy) error {
 	s.eco = eco
+	return nil
+}
+
+func (s *Base) SetQueue(q queue.Queue) error {
+	s.queue = q
+	s.registerTasksWithQueue() // register with new queue
 	return nil
 }
 
