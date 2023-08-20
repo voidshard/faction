@@ -9,6 +9,7 @@ import (
 	"github.com/voidshard/faction/internal/db"
 	"github.com/voidshard/faction/internal/dbutils"
 	stats "github.com/voidshard/faction/internal/random/rng"
+	"github.com/voidshard/faction/internal/sim/simutil"
 	"github.com/voidshard/faction/pkg/config"
 	"github.com/voidshard/faction/pkg/structs"
 )
@@ -22,7 +23,28 @@ var (
 
 // InspireFactionAffiliation adds affiliaton to the given factions in regions they have influence.
 func (s *Base) InspireFactionAffiliation(cfg *config.Affiliation, factionID string) error {
-	ctx, err := s.getFactionContext(factionID)
+	// This is going to be .. complex.
+	//
+	// We need to:
+	// 1. figure out the faction context; the areas in which it operates and their governments
+	// 2. iterate over people in those areas who
+	//   a. have no profession (if the faction doesn't have preferred professions)
+	//   -or-
+	//   b. have a preferred profession that the faction is interested in
+	// 3. for each person (if their ethos isn't too far from the faction), we bucket them into
+	//    either "consider" or "check"
+	//  a. "consider" are people who currently have no major affiliation (eg. no preferred faction) so we
+	//     can forward them straight along
+	//  b. "check" are people who have a preferred faction, but we need to check their rank in case
+	//     we can poach them. People from "check" will be moved to "consider" if they're below the rank
+	//     threshold or dropped
+	// 4. for each person sent to "consider" we assign them a faction affiliation & rank based on faction
+	//    ethos, religion, random dice etc, until the faction has enough people or we run out of people
+	//
+	// This entire process is made more fun as we do everything in batches of people
+	// (as always) to make our DB calls efficient.
+
+	ctx, err := simutil.NewFactionContext(s.dbconn, factionID)
 	if err != nil {
 		return err
 	}
@@ -75,24 +97,27 @@ func (s *Base) InspireFactionAffiliation(cfg *config.Affiliation, factionID stri
 		members := stats.NewRand(cfg.Members.Min, cfg.Members.Max, cfg.Members.Mean, cfg.Members.Deviation).Int()
 		done := 0
 
-		for candidates := range consider {
+		for people := range consider {
 			trust := []*structs.Tuple{}
 			rels := []*structs.Tuple{}
 			affils := []*structs.Tuple{}
 			ranks := []*structs.Tuple{}
 			faith := []*structs.Tuple{}
+			events := []*structs.Event{}
 
-			people := []*structs.Person{}
-			for _, p := range candidates {
+			for _, p := range people {
 				affil := affdice.Int()
-				desiredRank := rankFromAffiliation(affil)
-				rank := ctx.closestOpenRank(desiredRank)
-
-				people = append(people, p)
+				desiredRank := simutil.RankFromAffiliation(affil)
+				rank := ctx.ClosestOpenRank(desiredRank)
 
 				if done < members {
+					prev := p.PreferredFactionID
 					p.PreferredFactionID = factionID
 					ranks = append(ranks, &structs.Tuple{Subject: p.ID, Object: factionID, Value: int(rank)})
+					events = append(events,
+						newFactionChangeEvent(p, tick, prev),
+						newFactionPromotionEvent(p, tick, factionID),
+					)
 					done += 1
 				} else {
 					// we've added full members, so we'll just set some affiliation on the rest
@@ -123,7 +148,7 @@ func (s *Base) InspireFactionAffiliation(cfg *config.Affiliation, factionID stri
 					}
 
 					trustlevel := trustdice.Int()
-					rel := professionalRelationByTrust(trustlevel)
+					rel := simutil.ProfessionalRelationByTrust(trustlevel)
 
 					rels = append(
 						rels,
@@ -155,7 +180,11 @@ func (s *Base) InspireFactionAffiliation(cfg *config.Affiliation, factionID stri
 				if err != nil {
 					return err
 				}
-				return tx.SetTuples(db.RelationPersonFactionRank, ranks...)
+				err = tx.SetTuples(db.RelationPersonFactionRank, ranks...)
+				if err != nil {
+					return err
+				}
+				return tx.SetEvents(events...)
 			})
 		}
 	}()
@@ -165,7 +194,7 @@ func (s *Base) InspireFactionAffiliation(cfg *config.Affiliation, factionID stri
 		defer wgcheckpeople.Done()
 
 		for people := range check {
-			tf := db.Q()
+			tf := db.Q().DisableSort()
 			for _, p := range people {
 				tf.Or(
 					db.F(db.Subject, db.Equal, p.ID),
@@ -216,6 +245,7 @@ func (s *Base) InspireFactionAffiliation(cfg *config.Affiliation, factionID stri
 			pf.Or(
 				db.F(db.AreaID, db.In, ctx.Areas),
 				db.F(db.AdulthoodTick, db.Less, tick),
+				db.F(db.DeathTick, db.Equal, 0),
 			)
 		} else {
 			professions := []string{}
@@ -226,6 +256,7 @@ func (s *Base) InspireFactionAffiliation(cfg *config.Affiliation, factionID stri
 				db.F(db.AreaID, db.In, ctx.Areas),
 				db.F(db.PreferredProfession, db.In, professions),
 				db.F(db.AdulthoodTick, db.Less, tick),
+				db.F(db.DeathTick, db.Equal, 0),
 			)
 		}
 
@@ -300,125 +331,4 @@ func (s *Base) InspireFactionAffiliation(cfg *config.Affiliation, factionID stri
 	wgsetpeople.Wait()
 	close(errors) // stop error routine and wait for it
 	return <-finalerr
-}
-
-// closestRank returns the closest rank to the desired rank that is available.
-// We iterate over all slots (eventually) defaulting upwards.
-// If nothing is available, we return Associate.
-func closestRank(d *structs.DemographicRankSpread, desired structs.FactionRank) (structs.FactionRank, bool) {
-	if desired == structs.FactionRankAssociate { // there's always a slot for Associate
-		return desired, true
-	}
-	if d.Count(desired) > 0 { // there is a slot at the given rank -> yay!
-		return desired, true
-	}
-
-	min := int(structs.FactionRankAssociate)
-	max := int(structs.FactionRankRuler)
-
-	for i := 1; i <= max; i++ {
-		j := int(desired) + i
-		k := int(desired) - i
-
-		if j >= min && j <= max && d.Count(structs.FactionRank(j)) > 0 {
-			return structs.FactionRank(j), true
-		}
-		if k >= min && k <= max && d.Count(structs.FactionRank(k)) > 0 {
-			return structs.FactionRank(k), true
-		}
-	}
-
-	return structs.FactionRankAssociate, false
-}
-
-func rankFromAffiliation(a int) structs.FactionRank {
-	space := structs.MaxTuple / int(structs.FactionRankRuler)
-	for i := 1; i < int(structs.FactionRankRuler); i++ {
-		if a < i*space {
-			return structs.FactionRank(i - 1)
-		}
-	}
-	return structs.FactionRankRuler
-}
-
-func professionalRelationByTrust(a int) structs.PersonalRelation {
-	if a < structs.MaxTuple/10 && a > structs.MinTuple/10 {
-		// the neutral zone
-		return structs.PersonalRelationColleague
-	} else if a < 0 {
-		if a < structs.MinTuple/2 {
-			return structs.PersonalRelationHatedEnemy
-		}
-		return structs.PersonalRelationEnemy
-	} else { // a > 0
-		if a > structs.MaxTuple/2 {
-			return structs.PersonalRelationCloseFriend
-		}
-		return structs.PersonalRelationFriend
-	}
-}
-
-// availablePositions returns open positions given the current positions taken, leadership type & faction structure.
-func availablePositions(d *structs.DemographicRankSpread, ltype structs.LeaderType, structure structs.LeaderStructure) *structs.DemographicRankSpread {
-	minZero := func(i int) int {
-		if i < 0 {
-			return 0
-		}
-		return i
-	}
-
-	rulers := ltype.Rulers()
-	rulerSlots := minZero(rulers - d.Ruler)
-
-	var ds *structs.DemographicRankSpread
-
-	switch structure {
-	case structs.LeaderStructurePyramid:
-		// ie. the number of positions available for a rank is always
-		// {people in lower rank / 3} - {people in this rank}
-		//
-		// That is, if there are currently 15 Journeyman, then there are 5 Adept positions.
-		// Thus the number of *open* positions is 5 minus the current number of Adepts.
-		//
-		// So if 15 journeyman and 2 adepts, the number of open adept positions is 15 / 3 - 2 = 3
-		ds = &structs.DemographicRankSpread{
-			Ruler:       rulerSlots,
-			Elder:       minZero(d.GrandMaster/3 - d.Elder),
-			GrandMaster: minZero(d.Expert/3 - d.GrandMaster),
-			Expert:      minZero(d.Adept/3 - d.Expert),
-			Adept:       minZero(d.Journeyman/3 - d.Adept),
-			Journeyman:  minZero(d.Novice/3 - d.Journeyman),
-			Novice:      minZero(d.Apprentice/3 - d.Novice),
-			Apprentice:  minZero(d.Associate/3 - d.Apprentice),
-			Associate:   1, // there is always a spot for a new recruit
-		}
-	case structs.LeaderStructureCell:
-		ds = &structs.DemographicRankSpread{
-			Ruler:       rulerSlots,
-			Elder:       minZero(rulers - d.Elder),           // each ruler slot has a single second in command
-			GrandMaster: minZero(rulers*2 - d.GrandMaster),   // each elder has two squad commanders
-			Expert:      minZero(rulers*2*2 - d.Expert),      // each squad has 2 experts
-			Adept:       minZero(rulers*2*10 - d.Adept),      // each squad has 10 adepts
-			Journeyman:  minZero(rulers*2*25 - d.Journeyman), // each squad has 25 journeyman
-			Novice:      1,                                   // open slots for junior ranks
-			Apprentice:  1,
-			Associate:   1,
-		}
-	case structs.LeaderStructureLoose:
-		// no one cares, there's always an open slot if you've got the skills
-		ds = &structs.DemographicRankSpread{
-			Ruler:       rulerSlots,
-			Elder:       1,
-			GrandMaster: 1,
-			Master:      1,
-			Expert:      1,
-			Adept:       1,
-			Journeyman:  1,
-			Novice:      1,
-			Apprentice:  1,
-			Associate:   1,
-		}
-	}
-
-	return ds
 }

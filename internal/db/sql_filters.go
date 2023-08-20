@@ -15,7 +15,7 @@ var (
 	fieldTypes = map[Op][]isValid{
 		Equal:    {isInt, isString, isBool},
 		NotEqual: {isInt, isString},
-		In:       {isListID},
+		In:       {isListID, isListString},
 		Greater:  {isInt},
 		Less:     {isInt},
 	}
@@ -27,12 +27,13 @@ var (
 		FactionID:          {isID, isListID},
 		SourceAreaID:       {isID, isListID},
 		TargetAreaID:       {isID, isListID},
+		JobState:           {isJobState, isListJobState},
 		PreferredFactionID: {isID, isListID},
 		BirthFamilyID:      {isID, isListID},
 		MaleID:             {isID, isListID},
 		FemaleID:           {isID, isListID},
 		SourceFactionID:    {isID, isListID},
-		TargetMetaKey:      {isMetaKey},
+		TargetMetaKey:      {isMetaKey, isListMetaKey},
 		Random:             {isInt},
 		BirthTick:          {isInt},
 		DeathTick:          {isInt},
@@ -40,11 +41,12 @@ var (
 		TickExpires:        {isInt},
 		Secrecy:            {isInt},
 		AdulthoodTick:      {isInt},
-		Type:               {isEventType},
+		Type:               {isEventType, isListEventType},
 		Tick:               {isInt},
 	}
 	metaKeys   = map[string]bool{}
 	eventTypes = map[string]bool{}
+	jobStates  = map[string]bool{}
 )
 
 func init() {
@@ -74,6 +76,14 @@ func init() {
 		string(structs.EventFamilyAdoption):   true,
 		string(structs.EventFamilyPregnant):   true,
 		string(structs.EventFamilyMove):       true,
+	}
+
+	jobStates = map[string]bool{
+		string(structs.JobStatePending): true,
+		string(structs.JobStateReady):   true,
+		string(structs.JobStateActive):  true,
+		string(structs.JobStateDone):    true,
+		string(structs.JobStateFailed):  true,
 	}
 }
 
@@ -224,6 +234,20 @@ func isEventType(v interface{}) bool {
 	return ok
 }
 
+func isListEventType(v interface{}) bool {
+	i, ok := v.([]string)
+	if !ok {
+		return false
+	}
+	for _, j := range i {
+		_, ok = eventTypes[j]
+		if !ok {
+			return false
+		}
+	}
+	return true
+}
+
 func isMetaKey(v interface{}) bool {
 	i, ok := v.(string)
 	if !ok {
@@ -231,6 +255,43 @@ func isMetaKey(v interface{}) bool {
 	}
 	_, ok = metaKeys[i]
 	return ok
+}
+
+func isListMetaKey(v interface{}) bool {
+	i, ok := v.([]string)
+	if !ok {
+		return false
+	}
+	for _, j := range i {
+		_, ok = metaKeys[j]
+		if !ok {
+			return false
+		}
+	}
+	return true
+}
+
+func isJobState(v interface{}) bool {
+	i, ok := v.(string)
+	if !ok {
+		return false
+	}
+	_, ok = jobStates[i]
+	return ok
+}
+
+func isListJobState(v interface{}) bool {
+	i, ok := v.([]string)
+	if !ok {
+		return false
+	}
+	for _, j := range i {
+		_, ok = jobStates[j]
+		if !ok {
+			return false
+		}
+	}
+	return true
 }
 
 func isListID(v interface{}) bool {

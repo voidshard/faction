@@ -11,7 +11,7 @@ import (
 // Simulation is our raison d'être and provides a single interface for any action a
 // user might want to perform.
 type Simulation interface {
-	// Options
+	// Options to set extention interfaces.
 	SetTechnology(tech technology.Technology) error
 	SetEconomy(eco economy.Economy) error
 	SetQueue(q queue.Queue) error
@@ -113,7 +113,27 @@ type Simulation interface {
 	// Rather than immediately fire events as they occur in a given tick, we store them in
 	// the DB for firing in batches. We don't really need real time events, and this is way
 	// more efficient to process.
+	//
+	// This should be called as the last function in a given tick and gives us the chance
+	// to perform post-processing based on what has happened over the last tick / apply various
+	// side effects and what not.
 	FireEvents() error
+
+	// PlanFactionJobs tries to figure out given the current context / climate around the
+	// faction what Jobs they wish to enact.
+	// More rarely factions may also cancel Jobs they no longer wish to enact if for example they
+	// feel a Job will not go ahead or priorities change.
+	//
+	// We return any extra Jobs created and/or cancelled as a result of this (if any).
+	//
+	// Note that a faction may decide not to queue up extra work for many reasons, eg.
+	// - they don't have enough money to support their desired Job(s)
+	// - they currently have enough / too much work on
+	// - their desired Job(s) are already in progress, and they don't believe they have
+	// enough followers / resources to support more
+	//
+	// This function doesn't actually enact Jobs.
+	PlanFactionJobs(factionID string) ([]*structs.Job, error)
 
 	// AdjustPopulation accounts for natural deaths, births etc in an area
 	AdjustPopulation(areaID string) error

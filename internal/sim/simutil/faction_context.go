@@ -1,4 +1,4 @@
-package base
+package simutil
 
 import (
 	"fmt"
@@ -8,9 +8,9 @@ import (
 	"github.com/voidshard/faction/pkg/structs"
 )
 
-// factionContext stores full faction information plus data about all areas
+// FactionContext stores full faction information plus data about all areas
 // and governments that rule those areas
-type factionContext struct {
+type FactionContext struct {
 	Summary     *structs.FactionSummary
 	Areas       map[string]bool                // map areaID -> bool (in which the faction has influence)
 	Governments map[string]*structs.Government // map areaID -> government (only the above areas)
@@ -18,15 +18,15 @@ type factionContext struct {
 	openRanks *structs.DemographicRankSpread
 }
 
-func (f *factionContext) closestOpenRank(desired structs.FactionRank) structs.FactionRank {
+func (f *FactionContext) ClosestOpenRank(desired structs.FactionRank) structs.FactionRank {
 	if f.openRanks == nil {
-		f.openRanks = availablePositions(f.Summary.Ranks, f.Summary.Leadership, f.Summary.Structure)
+		f.openRanks = AvailablePositions(f.Summary.Ranks, f.Summary.Leadership, f.Summary.Structure)
 	}
 
-	nearest, ok := closestRank(f.openRanks, desired)
+	nearest, ok := ClosestRank(f.openRanks, desired)
 	if !ok {
-		f.openRanks = availablePositions(f.Summary.Ranks, f.Summary.Leadership, f.Summary.Structure)
-		nearest, _ = closestRank(f.openRanks, desired)
+		f.openRanks = AvailablePositions(f.Summary.Ranks, f.Summary.Leadership, f.Summary.Structure)
+		nearest, _ = ClosestRank(f.openRanks, desired)
 	}
 
 	f.Summary.Ranks.Add(nearest, 1)
@@ -35,15 +35,13 @@ func (f *factionContext) closestOpenRank(desired structs.FactionRank) structs.Fa
 	return nearest
 }
 
-// getFactionContext returns (pretty much) everything about a given faction and
-// the regions / governments in which it has influence.
-func (s *Base) getFactionContext(factionID string) (*factionContext, error) {
+func NewFactionContext(dbconn *db.FactionDB, factionID string) (*FactionContext, error) {
 	if !dbutils.IsValidID(factionID) {
 		return nil, fmt.Errorf("invalid faction id %s", factionID)
 	}
 
 	// look up the faction summary, we only need a few fields so we'll limit it to those
-	summaries, err := s.dbconn.FactionSummary([]db.Relation{
+	summaries, err := dbconn.FactionSummary([]db.Relation{
 		db.RelationFactionProfessionWeight,
 		db.RelationPersonFactionRank,
 	}, factionID)
@@ -54,7 +52,7 @@ func (s *Base) getFactionContext(factionID string) (*factionContext, error) {
 	}
 
 	// lookup where a faction has influence
-	fareas, err := s.dbconn.FactionAreas(factionID)
+	fareas, err := dbconn.FactionAreas(factionID)
 	if err != nil {
 		return nil, err
 	} else if len(fareas) == 0 {
@@ -72,12 +70,12 @@ func (s *Base) getFactionContext(factionID string) (*factionContext, error) {
 		areaIDs[count] = areaID
 		count++
 	}
-	areaGovs, err := s.dbconn.AreaGovernments(areaIDs...)
+	areaGovs, err := dbconn.AreaGovernments(areaIDs...)
 	if err != nil {
 		return nil, err
 	}
 
-	return &factionContext{
+	return &FactionContext{
 		Summary:     summaries[0],
 		Areas:       areas,
 		Governments: areaGovs,

@@ -1,5 +1,13 @@
 package queue
 
+import (
+	"fmt"
+)
+
+var (
+	ErrNoHandler = fmt.Errorf("no handler for task")
+)
+
 type State string
 
 const (

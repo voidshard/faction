@@ -4,6 +4,30 @@ import (
 	"github.com/voidshard/faction/pkg/structs"
 )
 
+func newFactionPromotionEvent(p *structs.Person, tick int, factionID string) *structs.Event {
+	return &structs.Event{
+		ID:             structs.NewID(),
+		Type:           structs.EventFactionPromotion,
+		Tick:           tick,
+		SubjectMetaKey: structs.MetaKeyPerson,
+		SubjectMetaVal: p.ID,
+		CauseMetaKey:   structs.MetaKeyFaction,
+		CauseMetaVal:   factionID,
+	}
+}
+
+func newFactionChangeEvent(p *structs.Person, tick int, previousPreferredFaction string) *structs.Event {
+	return &structs.Event{
+		ID:             structs.NewID(),
+		Type:           structs.EventPersonChangeFaction,
+		Tick:           tick,
+		SubjectMetaKey: structs.MetaKeyPerson,
+		SubjectMetaVal: p.ID,
+		CauseMetaKey:   structs.MetaKeyFaction,
+		CauseMetaVal:   previousPreferredFaction,
+	}
+}
+
 func newMarriageEvent(f *structs.Family, tick int) *structs.Event {
 	return &structs.Event{
 		ID:             structs.NewID(),

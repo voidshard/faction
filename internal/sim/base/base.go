@@ -1,6 +1,8 @@
 package base
 
 import (
+	"errors"
+
 	"github.com/voidshard/faction/internal/db"
 	demographics "github.com/voidshard/faction/internal/random/demographics"
 	"github.com/voidshard/faction/pkg/config"
@@ -71,7 +73,10 @@ func (s *Base) FireEvents() error {
 			count += 1
 
 			_, err = s.queue.Enqueue(eventTask(e.Type), data)
-			if err != nil {
+			if errors.Is(err, queue.ErrNoHandler) {
+				// no post processing is needed for this event type
+				continue
+			} else if err != nil {
 				return err
 			}
 		}

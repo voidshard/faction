@@ -7,6 +7,7 @@ import (
 
 	"github.com/voidshard/faction/internal/db"
 	"github.com/voidshard/faction/internal/dbutils"
+	"github.com/voidshard/faction/internal/sim/simutil"
 	"github.com/voidshard/faction/pkg/structs"
 )
 
@@ -133,7 +134,7 @@ func (s *Base) birthChildren(tick int, area string) error {
 	)
 
 	for {
-		mp := newMetaPeople()
+		mp := simutil.NewMetaPeople()
 
 		families, token, err = s.dbconn.Families(token, ff)
 		if err != nil {
@@ -150,23 +151,23 @@ func (s *Base) birthChildren(tick int, area string) error {
 			child := dice.RandomPerson(area)
 			child.SetBirthTick(tick)
 
-			addChildToFamily(dice, child, f)
-			addParentChildRelations(dice, mp, child, f)
+			simutil.AddChildToFamily(dice, child, f)
+			simutil.AddParentChildRelations(dice, mp, child, f)
 
-			mp.children = append(mp.children, child)
+			mp.Children = append(mp.Children, child)
 
-			mp.events = append(mp.events, newBirthEvent(child, f.ID))
+			mp.Events = append(mp.Events, newBirthEvent(child, f.ID))
 
 			if dice.RandomDeathInfantMortality() {
 				child.DeathMetaReason = diedInChildbirth
 				child.DeathTick = tick
 				child.DeathMetaKey = structs.MetaKeyPerson
 				child.DeathMetaVal = f.FemaleID
-				mp.events = append(mp.events, newDeathEvent(child))
+				mp.Events = append(mp.Events, newDeathEvent(child))
 			}
 
 			if dice.RandomAdultDeathInChildbirth() {
-				mp.events = append(mp.events, newDeathEventWithCause(
+				mp.Events = append(mp.Events, newDeathEventWithCause(
 					tick,
 					f.FemaleID,
 					structs.MetaKeyPerson,
@@ -174,17 +175,17 @@ func (s *Base) birthChildren(tick int, area string) error {
 				))
 				f.IsChildBearing = false
 				f.WidowedTick = tick
-				mp.relations = append(mp.relations,
+				mp.Relations = append(mp.Relations,
 					&structs.Tuple{Subject: f.MaleID, Object: f.FemaleID, Value: int(structs.PersonalRelationExWife)},
 					&structs.Tuple{Subject: f.FemaleID, Object: f.MaleID, Value: int(structs.PersonalRelationExHusband)},
 				)
 			}
 
-			mp.families = append(mp.families, f)
+			mp.Families = append(mp.Families, f)
 		}
 
 		// write new children & changes to families
-		err = writeMetaPeople(s.dbconn, mp)
+		err = simutil.WriteMetaPeople(s.dbconn, mp)
 		if err != nil {
 			return err
 		}
@@ -209,7 +210,7 @@ func (s *Base) conceiveChildren(tick int, area string) error {
 		err      error
 	)
 	for {
-		mp := newMetaPeople()
+		mp := simutil.NewMetaPeople()
 
 		families, token, err = s.dbconn.Families(token, ff)
 		if err != nil {
@@ -232,12 +233,12 @@ func (s *Base) conceiveChildren(tick int, area string) error {
 			}
 
 			if modified {
-				mp.families = append(mp.families, f)
+				mp.Families = append(mp.Families, f)
 			}
 		}
 
 		// write new children & changes to families
-		err = writeMetaPeople(s.dbconn, mp)
+		err = simutil.WriteMetaPeople(s.dbconn, mp)
 		if err != nil {
 			return err
 		}

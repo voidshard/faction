@@ -207,7 +207,7 @@ func (q *localQueue) Enqueue(task string, args []byte) (string, error) {
 	hnd, ok := q.handlers[task]
 	defer q.handlerslock.Unlock()
 	if !ok {
-		return "", fmt.Errorf("no handler for task %s", task)
+		return "", fmt.Errorf("%w %s", ErrNoHandler, task)
 	}
 
 	q.setStatus(j.Job.ID, StateQueued)

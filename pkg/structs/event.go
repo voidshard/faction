@@ -7,10 +7,11 @@ import (
 type EventType string
 
 const (
-	EventPersonDeath      EventType = "person_death"
-	EventPersonBirth      EventType = "person_birth"
-	EventPersonMove       EventType = "person_move"
-	EventPersonChangeProf EventType = "person_change_profession"
+	EventPersonDeath         EventType = "person_death"
+	EventPersonBirth         EventType = "person_birth"
+	EventPersonMove          EventType = "person_move"
+	EventPersonChangeProf    EventType = "person_change_profession"
+	EventPersonChangeFaction EventType = "person_change_faction" // someone with no preferred faction sets one
 
 	EventFamilyMarriage EventType = "family_marriage"
 	EventFamilyDivorce  EventType = "family_divorce"
@@ -18,7 +19,8 @@ const (
 	EventFamilyAdoption EventType = "family_adoption"
 	EventFamilyMove     EventType = "family_move"
 
-	EventFactionPromotion EventType = "faction_promotion"
+	EventFactionDemo      EventType = "faction_demotion"  // faction rank++ (regardless of preferred faction)
+	EventFactionPromotion EventType = "faction_promotion" // faction rank-- (regardless of preferred faction)
 )
 
 // Event is something we want to report to the caller

@@ -7,7 +7,8 @@ import (
 	"fmt"
 	"sync"
 
-	stats "github.com/voidshard/faction/internal/random/rng"
+	"github.com/voidshard/faction/internal/random/rng"
+	"github.com/voidshard/faction/internal/sim/simutil"
 	"github.com/voidshard/faction/pkg/structs"
 )
 
@@ -20,25 +21,25 @@ const (
 	randomValueMax = 1000000.0
 )
 
-func (s *Base) spawnFamily(tick int, areaID, race, culture string) *metaPeople {
+func (s *Base) spawnFamily(tick int, areaID, race, culture string) *simutil.MetaPeople {
 	demo := s.dice.MustDemographic(race, culture)
 
-	mp := newMetaPeople()
+	mp := simutil.NewMetaPeople()
 
 	// nb. we're creating mum & dad in the past so that our children (if any) are born "now"
 	mum := demo.RandomPerson(areaID)
 	mum.SetBirthTick(tick - demo.RandomParentingAge())
-	_, mumFaiths := s.addSkillAndFaith(demo, mp, mum)
+	_, mumFaiths := simutil.AddSkillAndFaith(s.dice, mp, mum)
 	mum.IsMale = false
-	mp.events = append(mp.events, newBirthEvent(mum, ""))
+	mp.Events = append(mp.Events, newBirthEvent(mum, ""))
 
 	dad := demo.RandomPerson(areaID)
 	dad.SetBirthTick(tick - demo.RandomParentingAge())
-	_, dadFaiths := s.addSkillAndFaith(demo, mp, dad)
+	_, dadFaiths := simutil.AddSkillAndFaith(s.dice, mp, dad)
 	dad.IsMale = true
-	mp.events = append(mp.events, newBirthEvent(dad, ""))
+	mp.Events = append(mp.Events, newBirthEvent(dad, ""))
 
-	mp.adults = append(mp.adults, mum, dad)
+	mp.Adults = append(mp.Adults, mum, dad)
 
 	eldest := dad.BirthTick
 	youngest := mum.BirthTick
@@ -68,36 +69,36 @@ func (s *Base) spawnFamily(tick int, areaID, race, culture string) *metaPeople {
 		MarriageTick:        tick,
 		Random:              int(s.dice.Float64() * structs.FamilyRandomMax),
 	}
-	mp.families = append(mp.families, family)
-	mp.events = append(mp.events, newMarriageEvent(family, tick-demo.RandomChildbearingTerm()))
+	mp.Families = append(mp.Families, family)
+	mp.Events = append(mp.Events, newMarriageEvent(family, tick-demo.RandomChildbearingTerm()))
 
 	havingAffair := demo.RandomIsHavingAffair(parentingTicks)
 	if havingAffair {
 		affair := demo.RandomPerson(areaID)
 		affair.SetBirthTick(tick - demo.RandomParentingAge())
-		s.addSkillAndFaith(demo, mp, affair)
-		mp.adults = append(mp.adults, affair)
-		mp.events = append(mp.events, newBirthEvent(affair, ""))
+		simutil.AddSkillAndFaith(s.dice, mp, affair)
+		mp.Adults = append(mp.Adults, affair)
+		mp.Events = append(mp.Events, newBirthEvent(affair, ""))
 
 		if affair.IsMale {
-			mp.relations = append(
-				mp.relations,
+			mp.Relations = append(
+				mp.Relations,
 				&structs.Tuple{Subject: mum.ID, Object: affair.ID, Value: int(structs.PersonalRelationLover)},
 				&structs.Tuple{Subject: affair.ID, Object: mum.ID, Value: int(structs.PersonalRelationLover)},
 			)
-			mp.trust = append(
-				mp.trust,
+			mp.Trust = append(
+				mp.Trust,
 				&structs.Tuple{Subject: mum.ID, Object: affair.ID, Value: demo.RandomTrust()},
 				&structs.Tuple{Subject: affair.ID, Object: mum.ID, Value: demo.RandomTrust()},
 			)
 		} else {
-			mp.relations = append(
-				mp.relations,
+			mp.Relations = append(
+				mp.Relations,
 				&structs.Tuple{Subject: dad.ID, Object: affair.ID, Value: int(structs.PersonalRelationLover)},
 				&structs.Tuple{Subject: affair.ID, Object: dad.ID, Value: int(structs.PersonalRelationLover)},
 			)
-			mp.trust = append(
-				mp.trust,
+			mp.Trust = append(
+				mp.Trust,
 				&structs.Tuple{Subject: dad.ID, Object: affair.ID, Value: demo.RandomTrust()},
 				&structs.Tuple{Subject: affair.ID, Object: dad.ID, Value: demo.RandomTrust()},
 			)
@@ -111,25 +112,25 @@ func (s *Base) spawnFamily(tick int, areaID, race, culture string) *metaPeople {
 
 		child := demo.RandomPerson(areaID)
 		child.SetBirthTick(tick)
-		mp.events = append(mp.events, newBirthEvent(child, family.ID))
+		mp.Events = append(mp.Events, newBirthEvent(child, family.ID))
 
 		if demo.RandomDeathInfantMortality() {
 			child.DeathMetaReason = diedInChildbirth
 			child.DeathTick = tick
 			child.DeathMetaKey = structs.MetaKeyPerson
 			child.DeathMetaVal = mum.ID
-			mp.events = append(mp.events, newDeathEvent(child))
+			mp.Events = append(mp.Events, newDeathEvent(child))
 		}
 
-		addChildToFamily(demo, child, family)
-		addParentChildRelations(demo, mp, child, family)
+		simutil.AddChildToFamily(demo, child, family)
+		simutil.AddParentChildRelations(demo, mp, child, family)
 
 		if i == 0 && demo.RandomAdultDeathInChildbirth() {
 			mum.DeathTick = tick
 			mum.DeathMetaReason = diedInChildbirth
 			mum.DeathMetaKey = structs.MetaKeyPerson
 			mum.DeathMetaVal = child.ID
-			mp.events = append(mp.events, newDeathEvent(mum))
+			mp.Events = append(mp.Events, newDeathEvent(mum))
 			family.IsChildBearing = false
 			family.WidowedTick = tick
 		}
@@ -144,18 +145,18 @@ func (s *Base) spawnFamily(tick int, areaID, race, culture string) *metaPeople {
 				childFaiths = append(childFaiths, &structs.Tuple{Subject: child.ID, Object: f.Object, Value: f.Value / 2})
 			}
 		}
-		mp.faith = append(mp.faith, childFaiths...)
-		mp.children = append(mp.children, child)
+		mp.Faith = append(mp.Faith, childFaiths...)
+		mp.Children = append(mp.Children, child)
 	}
 
 	if mum.DeathTick > 0 || demo.RandomIsDivorced(parentingTicks) {
-		mp.relations = append(
-			mp.relations,
+		mp.Relations = append(
+			mp.Relations,
 			&structs.Tuple{Subject: mum.ID, Object: dad.ID, Value: int(structs.PersonalRelationExHusband)},
 			&structs.Tuple{Subject: dad.ID, Object: mum.ID, Value: int(structs.PersonalRelationExWife)},
 		)
-		mp.trust = append(
-			mp.trust,
+		mp.Trust = append(
+			mp.Trust,
 			&structs.Tuple{Subject: mum.ID, Object: dad.ID, Value: demo.RandomTrust() / 2},
 			&structs.Tuple{Subject: mum.ID, Object: dad.ID, Value: demo.RandomTrust() / 2},
 		)
@@ -164,61 +165,61 @@ func (s *Base) spawnFamily(tick int, areaID, race, culture string) *metaPeople {
 			family.WidowedTick = tick
 		} else {
 			family.DivorceTick = tick
-			mp.events = append(mp.events, newDivorceEvent(family, tick))
+			mp.Events = append(mp.Events, newDivorceEvent(family, tick))
 		}
 	} else {
 		div := 1
 		if havingAffair {
 			div = 4
 		}
-		mp.relations = append(
-			mp.relations,
+		mp.Relations = append(
+			mp.Relations,
 			&structs.Tuple{Subject: mum.ID, Object: dad.ID, Value: int(structs.PersonalRelationHusband)},
 			&structs.Tuple{Subject: dad.ID, Object: mum.ID, Value: int(structs.PersonalRelationWife)},
 		)
-		mp.trust = append(
-			mp.trust,
+		mp.Trust = append(
+			mp.Trust,
 			&structs.Tuple{Subject: mum.ID, Object: dad.ID, Value: demo.RandomTrust() / div},
 			&structs.Tuple{Subject: mum.ID, Object: dad.ID, Value: demo.RandomTrust() / div},
 		)
 	}
 
-	if len(mp.children) > 1 {
+	if len(mp.Children) > 1 {
 		// add inter-sibling relations
-		for i, child := range mp.children {
-			for j, sibling := range mp.children {
+		for i, child := range mp.Children {
+			for j, sibling := range mp.Children {
 				if i == j {
 					continue
 				}
-				siblingRelationship(demo, mp, child, sibling)
+				simutil.SiblingRelationship(demo, mp, child, sibling)
 			}
 		}
 	}
 
-	if len(mp.children) >= demo.MaxFamilySize() {
+	if len(mp.Children) >= demo.MaxFamilySize() {
 		family.IsChildBearing = false
 	}
 
 	return mp
 }
 
-func (s *Base) spawnCouple(tick int, areaID, race, culture string, mp *metaPeople) int {
+func (s *Base) spawnCouple(tick int, areaID, race, culture string, mp *simutil.MetaPeople) int {
 	demo := s.dice.MustDemographic(race, culture)
 
 	alive := 0
 
 	person := demo.RandomPerson(areaID)
 	person.SetBirthTick(tick - demo.RandomParentingAge())
-	mp.events = append(mp.events, newBirthEvent(person, ""))
+	mp.Events = append(mp.Events, newBirthEvent(person, ""))
 
-	mp.adults = append(mp.adults, person)
-	s.addSkillAndFaith(demo, mp, person)
+	mp.Adults = append(mp.Adults, person)
+	simutil.AddSkillAndFaith(s.dice, mp, person)
 
 	cause, died := demo.RandomDeathAdultMortality()
 	if died {
 		person.DeathTick = tick
 		person.DeathMetaReason = cause
-		mp.events = append(mp.events, newDeathEvent(person))
+		mp.Events = append(mp.Events, newDeathEvent(person))
 	} else {
 		alive++
 	}
@@ -229,25 +230,25 @@ func (s *Base) spawnCouple(tick int, areaID, race, culture string, mp *metaPeopl
 
 	lover := demo.RandomPerson(areaID)
 	lover.SetBirthTick(tick - demo.RandomParentingAge())
-	mp.events = append(mp.events, newBirthEvent(lover, ""))
+	mp.Events = append(mp.Events, newBirthEvent(lover, ""))
 	lover.IsMale = !person.IsMale
 	alive++
 
-	mp.adults = append(mp.adults, lover)
-	s.addSkillAndFaith(demo, mp, lover)
+	mp.Adults = append(mp.Adults, lover)
+	simutil.AddSkillAndFaith(s.dice, mp, lover)
 
 	rel := structs.PersonalRelationLover
 	if s.dice.Float64() <= 0.1 {
 		rel = structs.PersonalRelationFiance
 	}
 
-	mp.relations = append(
-		mp.relations,
+	mp.Relations = append(
+		mp.Relations,
 		&structs.Tuple{Subject: person.ID, Object: lover.ID, Value: int(rel)},
 		&structs.Tuple{Subject: lover.ID, Object: person.ID, Value: int(rel)},
 	)
-	mp.trust = append(
-		mp.trust,
+	mp.Trust = append(
+		mp.Trust,
 		&structs.Tuple{Subject: person.ID, Object: lover.ID, Value: demo.RandomTrust()},
 		&structs.Tuple{Subject: lover.ID, Object: person.ID, Value: demo.RandomTrust()},
 	)
@@ -305,13 +306,13 @@ func (s *Base) SpawnPopulace(desiredTotal int, race, culture string, areas []str
 					break
 				}
 
-				mp := newMetaPeople()
+				mp := simutil.NewMetaPeople()
 
 				// we'll have 1 in 20 unmarried (just to force some variety)
 				if aliveArea%20 > 0 && dice.RandomIsMarried(float64(dice.MinParentingAge())) {
 					// spawn explicit familiy
 					mp = s.spawnFamily(tick, areaID, race, culture)
-					for _, p := range append(mp.adults, mp.children...) {
+					for _, p := range append(mp.Adults, mp.Children...) {
 						if p.DeathTick <= 0 {
 							aliveArea++
 						}
@@ -324,29 +325,29 @@ func (s *Base) SpawnPopulace(desiredTotal int, race, culture string, areas []str
 				}
 
 				// randomly add a few relationships
-				if len(prevAdults) > 0 && len(mp.adults) > 0 {
-					for _, a := range mp.adults {
-						for _, p := range stats.ChooseIndexes(len(prevAdults), s.dice.Intn(3)) {
+				if len(prevAdults) > 0 && len(mp.Adults) > 0 {
+					for _, a := range mp.Adults {
+						for _, p := range rng.ChooseIndexes(len(prevAdults), s.dice.Intn(3)) {
 							relationships, trust := dice.RandomRelationship(a.ID, prevAdults[p].ID)
-							mp.relations = append(mp.relations, relationships...)
-							mp.trust = append(mp.trust, trust...)
+							mp.Relations = append(mp.Relations, relationships...)
+							mp.Trust = append(mp.Trust, trust...)
 						}
 					}
 				}
-				if len(prevChildren) > 0 && len(mp.children) > 0 {
-					for _, a := range mp.children {
-						for _, p := range stats.ChooseIndexes(len(prevChildren), s.dice.Intn(2)) {
+				if len(prevChildren) > 0 && len(mp.Children) > 0 {
+					for _, a := range mp.Children {
+						for _, p := range rng.ChooseIndexes(len(prevChildren), s.dice.Intn(2)) {
 							relationships, trust := dice.RandomRelationship(a.ID, prevChildren[p].ID)
-							mp.relations = append(mp.relations, relationships...)
-							mp.trust = append(mp.trust, trust...)
+							mp.Relations = append(mp.Relations, relationships...)
+							mp.Trust = append(mp.Trust, trust...)
 						}
 					}
 				}
 
-				prevAdults = mp.adults
-				prevChildren = mp.children
+				prevAdults = mp.Adults
+				prevChildren = mp.Children
 
-				errs <- writeMetaPeople(s.dbconn, mp)
+				errs <- simutil.WriteMetaPeople(s.dbconn, mp)
 			}
 		}(a)
 	}

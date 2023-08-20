@@ -4,7 +4,8 @@ import (
 	"math/rand"
 	"time"
 
-	stats "github.com/voidshard/faction/internal/random/rng"
+	"github.com/voidshard/faction/internal/random/rng"
+	"github.com/voidshard/faction/internal/sim/simutil"
 	"github.com/voidshard/faction/pkg/config"
 	"github.com/voidshard/faction/pkg/structs"
 	"github.com/voidshard/faction/pkg/technology"
@@ -23,40 +24,40 @@ type factionRand struct {
 	cfg            *config.Faction
 	tech           technology.Technology
 	rng            *rand.Rand
-	ethosAltruism  *stats.Rand
-	ethosAmbition  *stats.Rand
-	ethosTradition *stats.Rand
-	ethosPacifism  *stats.Rand
-	ethosPiety     *stats.Rand
-	ethosCaution   *stats.Rand
-	leaderOccur    stats.Normalised
+	ethosAltruism  *rng.Rand
+	ethosAmbition  *rng.Rand
+	ethosTradition *rng.Rand
+	ethosPacifism  *rng.Rand
+	ethosPiety     *rng.Rand
+	ethosCaution   *rng.Rand
+	leaderOccur    rng.Normalised
 	leaderList     []structs.LeaderType
-	structOccur    stats.Normalised
+	structOccur    rng.Normalised
 	structList     []structs.LeaderStructure
-	wealth         *stats.Rand
-	cohesion       *stats.Rand
-	corruption     *stats.Rand
-	espOffense     *stats.Rand
-	espDefense     *stats.Rand
-	milOffense     *stats.Rand
-	milDefense     *stats.Rand
-	focusOccur     stats.Normalised
-	focusCount     stats.Normalised
-	focusWeights   []*stats.Rand
-	guildOccur     stats.Normalised
-	guildCount     stats.Normalised
-	propertyCount  stats.Normalised
+	wealth         *rng.Rand
+	cohesion       *rng.Rand
+	corruption     *rng.Rand
+	espOffense     *rng.Rand
+	espDefense     *rng.Rand
+	milOffense     *rng.Rand
+	milDefense     *rng.Rand
+	focusOccur     rng.Normalised
+	focusCount     rng.Normalised
+	focusWeights   []*rng.Rand
+	guildOccur     rng.Normalised
+	guildCount     rng.Normalised
+	propertyCount  rng.Normalised
 	areas          []string
-	plotSize       *stats.Rand
+	plotSize       *rng.Rand
 }
 
-func (fr *factionRand) randResearch(f *metaFaction, count int) []*structs.Tuple {
+func (fr *factionRand) randResearch(f *simutil.MetaFaction, count int) []*structs.Tuple {
 	if count <= 0 {
 		return []*structs.Tuple{}
 	}
 
 	areas := []string{} // all areas faction has presence in
-	for area := range f.areas {
+	for area := range f.Areas {
 		areas = append(areas, area)
 	}
 
@@ -78,7 +79,7 @@ func (fr *factionRand) randResearch(f *metaFaction, count int) []*structs.Tuple 
 	}
 
 	favouredTopics := map[string]bool{}
-	for _, weight := range f.profWeights {
+	for _, weight := range f.ProfWeights {
 		//  consider favoured professions for the faction
 		ptopics, ok := byProfession[weight.Object]
 		if !ok { // profession has no research topics
@@ -101,9 +102,9 @@ func (fr *factionRand) randResearch(f *metaFaction, count int) []*structs.Tuple 
 	}
 
 	// finally, we can choose actual research topics
-	norm := stats.NewNormalised(probs)
+	norm := rng.NewNormalised(probs)
 	seen := map[int]bool{}
-	weight := stats.NewRand(
+	weight := rng.NewRand(
 		// TODO: could expose this in config
 		structs.MaxEthos/8,
 		structs.MaxEthos,
@@ -126,7 +127,7 @@ func (fr *factionRand) randResearch(f *metaFaction, count int) []*structs.Tuple 
 
 		topic := topics[choice]
 		weights = append(weights, &structs.Tuple{
-			Subject: f.faction.ID,
+			Subject: f.Faction.ID,
 			Object:  topic.Name,
 			Value:   weight.Int(),
 		})
@@ -186,17 +187,17 @@ func (fr *factionRand) recalcGuildProb() {
 			guildProb = append(guildProb, prob)
 		}
 	}
-	fr.guildOccur = stats.NewNormalised(guildProb)
+	fr.guildOccur = rng.NewNormalised(guildProb)
 }
 
 // newFactionRand creates a new dice roller for creationg factions based on faction config
 // and the available land rights in some area(s).
 func newFactionRand(f *config.Faction, tech technology.Technology, yields *yieldRand, areas []string) *factionRand {
 	focusOccurProb := []float64{}
-	focusWeights := []*stats.Rand{}
+	focusWeights := []*rng.Rand{}
 	for _, focus := range f.Focuses {
 		focusOccurProb = append(focusOccurProb, focus.Probability)
-		focusWeights = append(focusWeights, stats.NewRand(focus.Weight.Min, focus.Weight.Max, focus.Weight.Mean, focus.Weight.Deviation))
+		focusWeights = append(focusWeights, rng.NewRand(focus.Weight.Min, focus.Weight.Max, focus.Weight.Mean, focus.Weight.Deviation))
 	}
 
 	leaderProb := []float64{}
@@ -218,30 +219,30 @@ func newFactionRand(f *config.Faction, tech technology.Technology, yields *yield
 		cfg:            f,
 		tech:           tech,
 		rng:            rand.New(rand.NewSource(time.Now().UnixNano())),
-		ethosAltruism:  stats.NewRand(structs.MinEthos, structs.MaxEthos, float64(f.EthosMean.Altruism), float64(f.EthosDeviation.Altruism)),
-		ethosAmbition:  stats.NewRand(structs.MinEthos, structs.MaxEthos, float64(f.EthosMean.Ambition), float64(f.EthosDeviation.Ambition)),
-		ethosTradition: stats.NewRand(structs.MinEthos, structs.MaxEthos, float64(f.EthosMean.Tradition), float64(f.EthosDeviation.Tradition)),
-		ethosPacifism:  stats.NewRand(structs.MinEthos, structs.MaxEthos, float64(f.EthosMean.Pacifism), float64(f.EthosDeviation.Pacifism)),
-		ethosPiety:     stats.NewRand(structs.MinEthos, structs.MaxEthos, float64(f.EthosMean.Piety), float64(f.EthosDeviation.Piety)),
-		ethosCaution:   stats.NewRand(structs.MinEthos, structs.MaxEthos, float64(f.EthosMean.Caution), float64(f.EthosDeviation.Caution)),
-		leaderOccur:    stats.NewNormalised(leaderProb),
+		ethosAltruism:  rng.NewRand(structs.MinEthos, structs.MaxEthos, float64(f.EthosMean.Altruism), float64(f.EthosDeviation.Altruism)),
+		ethosAmbition:  rng.NewRand(structs.MinEthos, structs.MaxEthos, float64(f.EthosMean.Ambition), float64(f.EthosDeviation.Ambition)),
+		ethosTradition: rng.NewRand(structs.MinEthos, structs.MaxEthos, float64(f.EthosMean.Tradition), float64(f.EthosDeviation.Tradition)),
+		ethosPacifism:  rng.NewRand(structs.MinEthos, structs.MaxEthos, float64(f.EthosMean.Pacifism), float64(f.EthosDeviation.Pacifism)),
+		ethosPiety:     rng.NewRand(structs.MinEthos, structs.MaxEthos, float64(f.EthosMean.Piety), float64(f.EthosDeviation.Piety)),
+		ethosCaution:   rng.NewRand(structs.MinEthos, structs.MaxEthos, float64(f.EthosMean.Caution), float64(f.EthosDeviation.Caution)),
+		leaderOccur:    rng.NewNormalised(leaderProb),
 		leaderList:     llist,
-		structOccur:    stats.NewNormalised(structureProb),
+		structOccur:    rng.NewNormalised(structureProb),
 		structList:     slist,
-		wealth:         stats.NewRand(f.Wealth.Min, f.Wealth.Max, f.Wealth.Mean, f.Wealth.Deviation),
-		cohesion:       stats.NewRand(f.Cohesion.Min, f.Cohesion.Max, f.Cohesion.Mean, f.Cohesion.Deviation),
-		corruption:     stats.NewRand(f.Corruption.Min, f.Corruption.Max, f.Corruption.Mean, f.Corruption.Deviation),
-		espOffense:     stats.NewRand(f.EspionageOffense.Min, f.EspionageOffense.Max, f.EspionageOffense.Mean, f.EspionageOffense.Deviation),
-		espDefense:     stats.NewRand(f.EspionageDefense.Min, f.EspionageDefense.Max, f.EspionageDefense.Mean, f.EspionageDefense.Deviation),
-		milOffense:     stats.NewRand(f.MilitaryOffense.Min, f.MilitaryOffense.Max, f.MilitaryOffense.Mean, f.MilitaryOffense.Deviation),
-		milDefense:     stats.NewRand(f.MilitaryDefense.Min, f.MilitaryDefense.Max, f.MilitaryDefense.Mean, f.MilitaryDefense.Deviation),
-		focusOccur:     stats.NewNormalised(focusOccurProb),
-		focusCount:     stats.NewNormalised(f.FocusProbability),
+		wealth:         rng.NewRand(f.Wealth.Min, f.Wealth.Max, f.Wealth.Mean, f.Wealth.Deviation),
+		cohesion:       rng.NewRand(f.Cohesion.Min, f.Cohesion.Max, f.Cohesion.Mean, f.Cohesion.Deviation),
+		corruption:     rng.NewRand(f.Corruption.Min, f.Corruption.Max, f.Corruption.Mean, f.Corruption.Deviation),
+		espOffense:     rng.NewRand(f.EspionageOffense.Min, f.EspionageOffense.Max, f.EspionageOffense.Mean, f.EspionageOffense.Deviation),
+		espDefense:     rng.NewRand(f.EspionageDefense.Min, f.EspionageDefense.Max, f.EspionageDefense.Mean, f.EspionageDefense.Deviation),
+		milOffense:     rng.NewRand(f.MilitaryOffense.Min, f.MilitaryOffense.Max, f.MilitaryOffense.Mean, f.MilitaryOffense.Deviation),
+		milDefense:     rng.NewRand(f.MilitaryDefense.Min, f.MilitaryDefense.Max, f.MilitaryDefense.Mean, f.MilitaryDefense.Deviation),
+		focusOccur:     rng.NewNormalised(focusOccurProb),
+		focusCount:     rng.NewNormalised(f.FocusProbability),
 		focusWeights:   focusWeights,
-		guildCount:     stats.NewNormalised(f.GuildProbability),
-		propertyCount:  stats.NewNormalised(f.PropertyProbability),
+		guildCount:     rng.NewNormalised(f.GuildProbability),
+		propertyCount:  rng.NewNormalised(f.PropertyProbability),
 		areas:          areas,
-		plotSize:       stats.NewRand(f.PlotSize.Min, f.PlotSize.Max, f.PlotSize.Mean, f.PlotSize.Deviation),
+		plotSize:       rng.NewRand(f.PlotSize.Min, f.PlotSize.Max, f.PlotSize.Mean, f.PlotSize.Deviation),
 	}
 
 	fr.recalcGuildProb()

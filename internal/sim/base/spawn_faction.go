@@ -6,6 +6,7 @@ package base
 import (
 	"github.com/voidshard/faction/internal/db"
 	"github.com/voidshard/faction/internal/dbutils"
+	"github.com/voidshard/faction/internal/sim/simutil"
 	"github.com/voidshard/faction/pkg/config"
 	"github.com/voidshard/faction/pkg/structs"
 )
@@ -39,28 +40,28 @@ func (s *Base) SpawnFactions(count int, cfg *config.Faction, areas ...string) ([
 	for i := 0; i < count; i++ {
 		f := s.randFaction(dice)
 
-		govtID, _ := areaToGovt[f.faction.HomeAreaID]
+		govtID, _ := areaToGovt[f.Faction.HomeAreaID]
 		govt, _ := govtToGovt[govtID]
 
 		if govt != nil {
 			factionOutlawed := isFactionIllegal(govt, f)
 
-			f.faction.GovernmentID = govtID
-			f.faction.IsCovert = factionOutlawed
+			f.Faction.GovernmentID = govtID
+			f.Faction.IsCovert = factionOutlawed
 
 			if factionOutlawed {
-				govt.Outlawed.Factions[f.faction.ID] = true
+				govt.Outlawed.Factions[f.Faction.ID] = true
 				govsToWrite[govtID] = govt
 			}
 
 		}
 
-		err = writeMetaFaction(s.dbconn, f)
+		err = simutil.WriteMetaFaction(s.dbconn, f)
 		if err != nil {
 			return nil, err
 		}
 
-		factions = append(factions, f.faction)
+		factions = append(factions, f.Faction)
 	}
 
 	// finally, flush law change(s) to govt (if needed)
@@ -77,21 +78,21 @@ func (s *Base) SpawnFactions(count int, cfg *config.Faction, areas ...string) ([
 	return factions, err
 }
 
-func isFactionIllegal(govt *structs.Government, f *metaFaction) bool {
+func isFactionIllegal(govt *structs.Government, f *simutil.MetaFaction) bool {
 	// look for any reason to mark the faction as illegal
-	if f.faction.ReligionID != "" {
-		illegal, _ := govt.Outlawed.Religions[f.faction.ReligionID]
+	if f.Faction.ReligionID != "" {
+		illegal, _ := govt.Outlawed.Religions[f.Faction.ReligionID]
 		if illegal {
 			return true
 		}
 	}
-	for _, act := range f.actions {
+	for _, act := range f.Actions {
 		illegal, _ := govt.Outlawed.Actions[act]
 		if illegal {
 			return true
 		}
 	}
-	for _, research := range f.researchWeights {
+	for _, research := range f.ResearchWeights {
 		illegal, _ := govt.Outlawed.Research[research.Object]
 		if illegal {
 			return true
@@ -164,42 +165,35 @@ func (s *Base) areaGovernments(in *db.Query) (map[string]string, map[string]*str
 }
 
 // randFaction spits out a random faction.
-func (s *Base) randFaction(fr *factionRand) *metaFaction {
+func (s *Base) randFaction(fr *factionRand) *simutil.MetaFaction {
 	// start with a lot of randomly inserted fields
-	mf := &metaFaction{
-		faction: &structs.Faction{
-			Ethos: structs.Ethos{ // random ethos to start with
-				Altruism:  fr.ethosAltruism.Int(),
-				Ambition:  fr.ethosAmbition.Int(),
-				Tradition: fr.ethosTradition.Int(),
-				Pacifism:  fr.ethosPacifism.Int(),
-				Piety:     fr.ethosPiety.Int(),
-				Caution:   fr.ethosCaution.Int(),
-			},
-			ID:               structs.NewID(),
-			Leadership:       fr.leaderList[fr.leaderOccur.Int()],
-			Structure:        fr.structList[fr.structOccur.Int()],
-			Wealth:           fr.wealth.Int(),
-			Cohesion:         fr.cohesion.Int(),
-			Corruption:       fr.corruption.Int(),
-			EspionageOffense: fr.espOffense.Int(),
-			EspionageDefense: fr.espDefense.Int(),
-			MilitaryOffense:  fr.milOffense.Int(),
-			MilitaryDefense:  fr.milDefense.Int(),
+	mf := simutil.NewMetaFaction()
+	mf.Faction = &structs.Faction{
+		Ethos: structs.Ethos{ // random ethos to start with
+			Altruism:  fr.ethosAltruism.Int(),
+			Ambition:  fr.ethosAmbition.Int(),
+			Tradition: fr.ethosTradition.Int(),
+			Pacifism:  fr.ethosPacifism.Int(),
+			Piety:     fr.ethosPiety.Int(),
+			Caution:   fr.ethosCaution.Int(),
 		},
-		actions:         []structs.ActionType{},
-		actionWeights:   []*structs.Tuple{},
-		plots:           []*structs.Plot{},
-		profWeights:     []*structs.Tuple{},
-		researchWeights: []*structs.Tuple{},
-		areas:           map[string]bool{},
+		ID:               structs.NewID(),
+		Leadership:       fr.leaderList[fr.leaderOccur.Int()],
+		Structure:        fr.structList[fr.structOccur.Int()],
+		Wealth:           fr.wealth.Int(),
+		Cohesion:         fr.cohesion.Int(),
+		Corruption:       fr.corruption.Int(),
+		EspionageOffense: fr.espOffense.Int(),
+		EspionageDefense: fr.espDefense.Int(),
+		MilitaryOffense:  fr.milOffense.Int(),
+		MilitaryDefense:  fr.milDefense.Int(),
 	}
 
 	// consider action focuses
 	professions := []string{}
 	actions := []structs.ActionType{}
 	seen := map[int]bool{}
-	actionsEthos := []*structs.Ethos{&mf.faction.Ethos}
+	actionsEthos := []*structs.Ethos{&mf.Faction.Ethos}
 	researchCount := 0
 	for i := 0; i < fr.focusCount.Int(); i++ {
 		choice := fr.focusOccur.Int()
@@ -212,10 +206,10 @@ func (s *Base) randFaction(fr *factionRand) *metaFaction {
 		focus := fr.cfg.Focuses[choice]
 		weight := fr.focusWeights[choice]
 
-		mf.faction.EspionageOffense += int(focus.EspionageOffenseBonus * float64(mf.faction.EspionageOffense))
-		mf.faction.EspionageDefense += int(focus.EspionageDefenseBonus * float64(mf.faction.EspionageDefense))
-		mf.faction.MilitaryOffense += int(focus.MilitaryOffenseBonus * float64(mf.faction.MilitaryOffense))
-		mf.faction.MilitaryDefense += int(focus.MilitaryDefenseBonus * float64(mf.faction.MilitaryDefense))
+		mf.Faction.EspionageOffense += int(focus.EspionageOffenseBonus * float64(mf.Faction.EspionageOffense))
+		mf.Faction.EspionageDefense += int(focus.EspionageDefenseBonus * float64(mf.Faction.EspionageDefense))
+		mf.Faction.MilitaryOffense += int(focus.MilitaryOffenseBonus * float64(mf.Faction.MilitaryOffense))
+		mf.Faction.MilitaryDefense += int(focus.MilitaryDefenseBonus * float64(mf.Faction.MilitaryDefense))
 
 		for _, act := range focus.Actions {
 			actionCfg, ok := s.cfg.Actions[act]
@@ -227,8 +221,8 @@ func (s *Base) randFaction(fr *factionRand) *metaFaction {
 				researchCount++
 			}
 
-			mf.actionWeights = append(mf.actionWeights, &structs.Tuple{
-				Subject: mf.faction.ID,
+			mf.ActionWeights = append(mf.ActionWeights, &structs.Tuple{
+				Subject: mf.Faction.ID,
 				Object:  string(act),
 				Value:   weight.Int(),
 			})
@@ -242,7 +236,7 @@ func (s *Base) randFaction(fr *factionRand) *metaFaction {
 	}
 
 	// favoured actions influence faction's starting ethos
-	mf.faction.Ethos = *structs.EthosAverage(actionsEthos...)
+	mf.Faction.Ethos = *structs.EthosAverage(actionsEthos...)
 
 	// consider a profession based guild
 	seen = map[int]bool{}
@@ -268,7 +262,7 @@ func (s *Base) randFaction(fr *factionRand) *metaFaction {
 		}
 
 		for _, land := range landrights {
-			land.FactionID = mf.faction.ID
+			land.FactionID = mf.Faction.ID
 
 			if s.eco.IsCraftable(land.Commodity) {
 				countCraft++
@@ -276,9 +270,9 @@ func (s *Base) randFaction(fr *factionRand) *metaFaction {
 			if s.eco.IsHarvestable(land.Commodity) {
 				countHarvest++
 			}
-			mf.areas[land.AreaID] = true
+			mf.Areas[land.AreaID] = true
 		}
-		mf.plots = append(mf.plots, landrights...)
+		mf.Plots = append(mf.Plots, landrights...)
 		professions = append(professions, guild.Profession)
 	}
 
@@ -292,8 +286,8 @@ func (s *Base) randFaction(fr *factionRand) *metaFaction {
 		if w > structs.MaxEthos {
 			w = structs.MaxEthos
 		}
-		mf.profWeights = append(mf.profWeights, &structs.Tuple{
-			Subject: mf.faction.ID,
+		mf.ProfWeights = append(mf.ProfWeights, &structs.Tuple{
+			Subject: mf.Faction.ID,
 			Object:  p,
 			Value:   w,
 		})
@@ -309,36 +303,36 @@ func (s *Base) randFaction(fr *factionRand) *metaFaction {
 		if w > structs.MaxEthos {
 			w = structs.MaxEthos
 		}
-		mf.actions = append(mf.actions, a)
-		mf.actionWeights = append(mf.actionWeights, &structs.Tuple{
-			Subject: mf.faction.ID,
+		mf.Actions = append(mf.Actions, a)
+		mf.ActionWeights = append(mf.ActionWeights, &structs.Tuple{
+			Subject: mf.Faction.ID,
 			Object:  string(a),
 			Value:   w,
 		})
 	}
 
 	// give faction land if we're still below the min
-	for i := len(mf.plots); i < fr.propertyCount.Int()+1; i++ {
+	for i := len(mf.Plots); i < fr.propertyCount.Int()+1; i++ {
 		area := fr.areas[fr.rng.Intn(len(fr.areas))]
-		mf.plots = append(mf.plots, &structs.Plot{
+		mf.Plots = append(mf.Plots, &structs.Plot{
 			ID:        structs.NewID(),
 			AreaID:    area,
-			FactionID: mf.faction.ID,
+			FactionID: mf.Faction.ID,
 			Size:      fr.plotSize.Int(),
 		})
-		mf.areas[area] = true
+		mf.Areas[area] = true
 	}
 
 	// if we need to pick research topics, we can do so now sensibly
 	// (since we know where the faction is and what professions it prefers)
-	mf.researchWeights = fr.randResearch(mf, researchCount)
+	mf.ResearchWeights = fr.randResearch(mf, researchCount)
 
 	// pick a headquarters
-	switch len(mf.plots) {
+	switch len(mf.Plots) {
 	case 0:
-		mf.faction.HomeAreaID = mf.plots[0].AreaID
+		mf.Faction.HomeAreaID = mf.Plots[0].AreaID
 	default:
-		mf.faction.HomeAreaID = mf.plots[fr.rng.Intn(len(mf.plots))].AreaID
+		mf.Faction.HomeAreaID = mf.Plots[fr.rng.Intn(len(mf.Plots))].AreaID
 	}
 
 	return mf

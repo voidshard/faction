@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/voidshard/faction/internal/db"
+	"github.com/voidshard/faction/internal/sim/simutil"
 	"github.com/voidshard/faction/pkg/structs"
 
 	mapset "github.com/deckarep/golang-set/v2"
@@ -43,7 +44,7 @@ func (s *Base) applyBirthSiblingRelations(tick int, events []*structs.Event) err
 			return err
 		}
 
-		mp := newMetaPeople()
+		mp := simutil.NewMetaPeople()
 		for _, p := range people {
 			kids, ok := newChildren[p.BirthFamilyID]
 			if !ok {
@@ -58,13 +59,13 @@ func (s *Base) applyBirthSiblingRelations(tick int, events []*structs.Event) err
 					return fmt.Errorf("invalid demographic not found: [race] %s, [culture] %s", p.Race, p.Culture)
 				}
 				demo := s.dice.MustDemographic(p.Race, p.Culture)
-				siblingRelationship(demo, mp, p, kid)
-				mp.children = append(mp.children, p)
+				simutil.SiblingRelationship(demo, mp, p, kid)
+				mp.Children = append(mp.Children, p)
 
 			}
 		}
 
-		err = writeMetaPeople(s.dbconn, mp)
+		err = simutil.WriteMetaPeople(s.dbconn, mp)
 		if err != nil {
 			return err
 		}
