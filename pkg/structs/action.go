@@ -68,3 +68,19 @@ const (
 	ActionTypeCrusade   ActionType = "crusade"    // excommunication on a grander and more permanent scale
 	ActionTypeWar       ActionType = "war"        // full armed conflict
 )
+
+var (
+	// Factions with a IsReligion & ReligionID may perform these actions
+	ReligionOnlyActions = []ActionType{}
+
+	// Factions with a IsGovernment & GovernmentID may perform these actions
+	GovernmentOnlyActions = []ActionType{}
+)
+
+func init() {
+	// Factions with a IsReligion & ReligionID may perform these actions
+	ReligionOnlyActions = []ActionType{ActionTypeCrusade, ActionTypeExcommunicate}
+
+	// Factions with a IsGovernment & GovernmentID may perform these actions
+	GovernmentOnlyActions = []ActionType{ActionTypeGrantLand, ActionTypeRevokeLand}
+}

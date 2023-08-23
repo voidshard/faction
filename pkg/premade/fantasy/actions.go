@@ -1,4 +1,4 @@
-package premade
+package fantasy
 
 import (
 	"github.com/voidshard/faction/pkg/config"
@@ -15,9 +15,10 @@ func Actions() map[structs.ActionType]*config.Action {
 
 	return map[structs.ActionType]*config.Action{
 		structs.ActionTypeTrade: {
-			MinPeople: 3,
-			MaxPeople: 150,
-			Ethos:     structs.Ethos{Altruism: -1 * minor},
+			MinPeople:   3,
+			MaxPeople:   150,
+			Probability: 0.3,
+			Ethos:       structs.Ethos{Altruism: -1 * minor},
 			Cost: config.Distribution{
 				Min:       1000000,  // 100gp
 				Max:       50000000, // 5000gp
@@ -46,11 +47,13 @@ func Actions() map[structs.ActionType]*config.Action {
 			},
 			RefundOnCancel: 0.5,
 			SecrecyWeight:  1,
+			Goals:          []structs.Goal{structs.GoalWealth},
 		},
 		structs.ActionTypeBribe: {
-			MinPeople: 1,
-			MaxPeople: 15,
-			Ethos:     structs.Ethos{Tradition: -2 * minor, Ambition: 2 * minor, Caution: 2 * minor},
+			MinPeople:   1,
+			MaxPeople:   15,
+			Probability: 0.05,
+			Ethos:       structs.Ethos{Tradition: -2 * minor, Ambition: 2 * minor, Caution: 2 * minor},
 			Cost: config.Distribution{
 				Min:       20000000,  // 2000gp
 				Max:       100000000, // 10000gp
@@ -77,6 +80,7 @@ func Actions() map[structs.ActionType]*config.Action {
 				NOBLE:    2,
 			},
 			SecrecyWeight: 1.5,
+			Goals:         []structs.Goal{structs.GoalDiplomacy},
 		},
 		structs.ActionTypeFestival: {
 			MinPeople: 100,
@@ -105,11 +109,13 @@ func Actions() map[structs.ActionType]*config.Action {
 				PRIEST: 5,
 				CLERK:  2,
 			},
+			Goals: []structs.Goal{structs.GoalPiety, structs.GoalDiplomacy},
 		},
 		structs.ActionTypeGrantLand: {
-			MinPeople: 1,
-			MaxPeople: 15,
-			Ethos:     structs.Ethos{Altruism: modest, Tradition: 2 * minor},
+			MinPeople:   1,
+			MaxPeople:   15,
+			Probability: 0.1,
+			Ethos:       structs.Ethos{Altruism: modest, Tradition: 2 * minor},
 			TimeToPrepare: config.Distribution{
 				Min:       15 * DEFAULT_TICKS_PER_DAY,
 				Max:       30 * DEFAULT_TICKS_PER_DAY,
@@ -122,11 +128,13 @@ func Actions() map[structs.ActionType]*config.Action {
 				Mean:      60 * DEFAULT_TICKS_PER_DAY,
 				Deviation: 60 * DEFAULT_TICKS_PER_DAY,
 			},
+			Goals: []structs.Goal{structs.GoalDiplomacy},
 		},
 		structs.ActionTypeCharity: {
-			MinPeople: 5,
-			MaxPeople: 1500,
-			Ethos:     structs.Ethos{Altruism: major, Piety: minor},
+			MinPeople:   5,
+			MaxPeople:   1500,
+			Probability: 0.05,
+			Ethos:       structs.Ethos{Altruism: major, Piety: minor},
 			Cost: config.Distribution{
 				Min:       100000,   // 10gp
 				Max:       10000000, // 1000gp
@@ -146,11 +154,13 @@ func Actions() map[structs.ActionType]*config.Action {
 				Deviation: 7 * DEFAULT_TICKS_PER_DAY,
 			},
 			PersonWeight: 2,
+			Goals:        []structs.Goal{structs.GoalPiety, structs.GoalDiplomacy},
 		},
 		structs.ActionTypePropoganda: {
-			MinPeople: 30,
-			MaxPeople: -1,
-			Ethos:     structs.Ethos{Tradition: -1 * minor, Ambition: modest},
+			MinPeople:   30,
+			MaxPeople:   -1,
+			Probability: 0.05,
+			Ethos:       structs.Ethos{Tradition: -1 * minor, Ambition: modest},
 			Cost: config.Distribution{
 				Min:       50000000,  // 5000gp
 				Max:       100000000, // 10000gp
@@ -177,10 +187,12 @@ func Actions() map[structs.ActionType]*config.Action {
 				NOBLE:  5,
 			},
 			SecrecyWeight: 1.1,
+			Goals:         []structs.Goal{structs.GoalPower},
 		},
 		structs.ActionTypeRecruit: {
 			MinPeople:    1,
 			MaxPeople:    60,
+			Probability:  0.2,
 			Ethos:        structs.Ethos{Caution: modest},
 			PersonWeight: 1,
 			ProfessionWeights: map[string]float64{
@@ -200,10 +212,12 @@ func Actions() map[structs.ActionType]*config.Action {
 				Deviation: 30 * DEFAULT_TICKS_PER_DAY,
 			},
 			SecrecyWeight: 1,
+			Goals:         []structs.Goal{structs.GoalMilitary, structs.GoalPower},
 		},
 		structs.ActionTypeExpand: { // cost determined by land prices in economy
 			MinPeople:    1,
 			MaxPeople:    15,
+			Probability:  0.2,
 			Ethos:        structs.Ethos{Caution: 3 * minor},
 			PersonWeight: 1,
 			ProfessionWeights: map[string]float64{
@@ -224,10 +238,12 @@ func Actions() map[structs.ActionType]*config.Action {
 				Deviation: 30 * DEFAULT_TICKS_PER_DAY,
 			},
 			SecrecyWeight: 1,
+			Goals:         []structs.Goal{structs.GoalTerritory},
 		},
 		structs.ActionTypeDownsize: {
 			MinPeople:    1,
 			MaxPeople:    15,
+			Probability:  0.02,
 			Ethos:        structs.Ethos{Caution: -1 * modest},
 			PersonWeight: 1,
 			ProfessionWeights: map[string]float64{
@@ -248,10 +264,12 @@ func Actions() map[structs.ActionType]*config.Action {
 				Deviation: 30 * DEFAULT_TICKS_PER_DAY,
 			},
 			SecrecyWeight: 1,
+			Goals:         []structs.Goal{structs.GoalStability, structs.GoalWealth},
 		},
 		structs.ActionTypeCraft: {
 			MinPeople:    1,
 			MaxPeople:    -1,
+			Probability:  0.3,
 			Ethos:        structs.Ethos{Altruism: -1 * minor},
 			PersonWeight: 1,
 			ProfessionWeights: map[string]float64{
@@ -277,10 +295,12 @@ func Actions() map[structs.ActionType]*config.Action {
 				Mean:      4 * DEFAULT_TICKS_PER_DAY,
 				Deviation: 4 * DEFAULT_TICKS_PER_DAY,
 			},
+			Goals: []structs.Goal{structs.GoalWealth},
 		},
 		structs.ActionTypeHarvest: {
 			MinPeople:    1,
 			MaxPeople:    -1,
+			Probability:  0.5,
 			Ethos:        structs.Ethos{},
 			PersonWeight: 2,
 			ProfessionWeights: map[string]float64{
@@ -302,10 +322,12 @@ func Actions() map[structs.ActionType]*config.Action {
 				Mean:      3 * DEFAULT_TICKS_PER_DAY,
 				Deviation: 4 * DEFAULT_TICKS_PER_DAY,
 			},
+			Goals: []structs.Goal{structs.GoalWealth},
 		},
 		structs.ActionTypeConsolidate: {
 			MinPeople:    1,
 			MaxPeople:    15,
+			Probability:  0.1,
 			Ethos:        structs.Ethos{Caution: modest},
 			PersonWeight: 1,
 			ProfessionWeights: map[string]float64{
@@ -325,11 +347,13 @@ func Actions() map[structs.ActionType]*config.Action {
 				Deviation: 1 * DEFAULT_TICKS_PER_DAY,
 			},
 			SecrecyWeight: 1,
+			Goals:         []structs.Goal{structs.GoalStability},
 		},
 		structs.ActionTypeResearch: {
-			MinPeople: 1,
-			MaxPeople: 100,
-			Ethos:     structs.Ethos{Piety: -1 * minor, Tradition: -2 * minor},
+			MinPeople:   1,
+			MaxPeople:   100,
+			Probability: 0.3,
+			Ethos:       structs.Ethos{Piety: -1 * minor, Tradition: -2 * minor},
 			ProfessionWeights: map[string]float64{
 				MAGE:      5,
 				ALCHEMIST: 3,
@@ -356,10 +380,12 @@ func Actions() map[structs.ActionType]*config.Action {
 				Deviation: 60 * DEFAULT_TICKS_PER_DAY,
 			},
 			SecrecyWeight: 1.4,
+			Goals:         []structs.Goal{structs.GoalScience},
 		},
 		structs.ActionTypeExcommunicate: {
 			MinPeople:    1,
 			MaxPeople:    100,
+			Probability:  0.1,
 			Ethos:        structs.Ethos{Piety: major, Caution: -1 * minor},
 			PersonWeight: 1,
 			ProfessionWeights: map[string]float64{
@@ -379,10 +405,12 @@ func Actions() map[structs.ActionType]*config.Action {
 				Deviation: 30 * DEFAULT_TICKS_PER_DAY,
 			},
 			SecrecyWeight: 1.2,
+			Goals:         []structs.Goal{structs.GoalPiety, structs.GoalPower},
 		},
 		structs.ActionTypeConcealSecrets: {
 			MinPeople:    1,
 			MaxPeople:    100,
+			Probability:  0.20,
 			Ethos:        structs.Ethos{Caution: major},
 			PersonWeight: 1,
 			ProfessionWeights: map[string]float64{
@@ -405,10 +433,12 @@ func Actions() map[structs.ActionType]*config.Action {
 				Deviation: 10 * DEFAULT_TICKS_PER_DAY,
 			},
 			SecrecyWeight: 1.5,
+			Goals:         []structs.Goal{structs.GoalStability, structs.GoalEspionage},
 		},
 		structs.ActionTypeGatherSecrets: {
 			MinPeople:    2,
 			MaxPeople:    14,
+			Probability:  0.10,
 			Ethos:        structs.Ethos{Ambition: modest, Caution: 2 * minor},
 			PersonWeight: 1,
 			ProfessionWeights: map[string]float64{
@@ -437,6 +467,7 @@ func Actions() map[structs.ActionType]*config.Action {
 				Deviation: 30 * DEFAULT_TICKS_PER_DAY,
 			},
 			SecrecyWeight: 1.4,
+			Goals:         []structs.Goal{structs.GoalEspionage, structs.GoalWealth},
 		},
 		structs.ActionTypeRevokeLand: {
 			MinPeople: 1,
@@ -454,11 +485,13 @@ func Actions() map[structs.ActionType]*config.Action {
 				Mean:      60 * DEFAULT_TICKS_PER_DAY,
 				Deviation: 30 * DEFAULT_TICKS_PER_DAY,
 			},
+			Goals: []structs.Goal{structs.GoalPower},
 		},
 		structs.ActionTypeHireMercenaries: {
-			MinPeople: 1,
-			MaxPeople: 5,
-			Ethos:     structs.Ethos{Ambition: 3 * minor, Tradition: 1 * minor, Pacifism: 1 * minor},
+			MinPeople:   1,
+			MaxPeople:   5,
+			Probability: 0.02,
+			Ethos:       structs.Ethos{Ambition: 3 * minor, Tradition: 1 * minor, Pacifism: 1 * minor},
 			Cost: config.Distribution{
 				Min:       20000000, // 2000gp
 				Max:       25000000, // 4000gp
@@ -485,11 +518,13 @@ func Actions() map[structs.ActionType]*config.Action {
 				SOLDIER: 5,
 			},
 			SecrecyWeight: 1.2,
+			Goals:         []structs.Goal{structs.GoalMilitary, structs.GoalPower},
 		},
 		structs.ActionTypeSpreadRumors: {
-			MinPeople: 1,
-			MaxPeople: -1,
-			Ethos:     structs.Ethos{Ambition: 3 * minor, Tradition: -1 * minor},
+			MinPeople:   1,
+			MaxPeople:   -1,
+			Probability: 0.20,
+			Ethos:       structs.Ethos{Ambition: 3 * minor, Tradition: -1 * minor},
 			TimeToPrepare: config.Distribution{
 				Min:       14 * DEFAULT_TICKS_PER_DAY,
 				Max:       30 * DEFAULT_TICKS_PER_DAY,
@@ -510,12 +545,14 @@ func Actions() map[structs.ActionType]*config.Action {
 				NOBLE:  5,
 			},
 			SecrecyWeight: 1.3,
+			Goals:         []structs.Goal{structs.GoalPower, structs.GoalEspionage},
 		},
 
 		structs.ActionTypeAssassinate: {
-			MinPeople: 1,
-			MaxPeople: 21,
-			Ethos:     structs.Ethos{Ambition: modest, Tradition: -1 * minor, Altruism: -1 * modest, Pacifism: -1 * minor},
+			MinPeople:   1,
+			MaxPeople:   21,
+			Probability: 0.02,
+			Ethos:       structs.Ethos{Ambition: modest, Tradition: -1 * minor, Altruism: -1 * modest, Pacifism: -1 * minor},
 			Cost: config.Distribution{
 				Min:       50000000,  // 5000gp
 				Max:       200000000, // 20000gp
@@ -543,11 +580,13 @@ func Actions() map[structs.ActionType]*config.Action {
 				SOLDIER:   4,
 			},
 			SecrecyWeight: 1.2,
+			Goals:         []structs.Goal{structs.GoalPower, structs.GoalEspionage},
 		},
 		structs.ActionTypeFrame: {
-			MinPeople: 1,
-			MaxPeople: 15,
-			Ethos:     structs.Ethos{Ambition: modest, Tradition: -1 * minor, Pacifism: minor},
+			MinPeople:   1,
+			MaxPeople:   15,
+			Probability: 0.15,
+			Ethos:       structs.Ethos{Ambition: modest, Tradition: -1 * minor, Pacifism: minor},
 			Cost: config.Distribution{
 				Min:       10000000, // 1000gp
 				Max:       25000000, // 2500gp
@@ -567,11 +606,13 @@ func Actions() map[structs.ActionType]*config.Action {
 				Deviation: 60 * DEFAULT_TICKS_PER_DAY,
 			},
 			SecrecyWeight: 1.4,
+			Goals:         []structs.Goal{structs.GoalPower, structs.GoalEspionage},
 		},
 		structs.ActionTypeRaid: {
-			MinPeople: 14,
-			MaxPeople: 120,
-			Ethos:     structs.Ethos{Ambition: 2 * minor, Pacifism: -1 * modest, Caution: -1 * modest},
+			MinPeople:   14,
+			MaxPeople:   120,
+			Probability: 0.05,
+			Ethos:       structs.Ethos{Ambition: 2 * minor, Pacifism: -1 * modest, Caution: -1 * modest},
 			Cost: config.Distribution{
 				Min:       10000000, // 1000gp
 				Max:       50000000, // 5000gp
@@ -601,11 +642,13 @@ func Actions() map[structs.ActionType]*config.Action {
 			RefundOnCancel:  0.5,
 			RefundOnFailure: 0.2,
 			SecrecyWeight:   1.1,
+			Goals:           []structs.Goal{structs.GoalMilitary, structs.GoalWealth},
 		},
 		structs.ActionTypeSteal: {
-			MinPeople: 1,
-			MaxPeople: 15,
-			Ethos:     structs.Ethos{Altruism: -2 * minor, Caution: 2 * minor},
+			MinPeople:   1,
+			MaxPeople:   15,
+			Probability: 0.1,
+			Ethos:       structs.Ethos{Altruism: -2 * minor, Caution: 2 * minor},
 			TimeToPrepare: config.Distribution{
 				Min:       14 * DEFAULT_TICKS_PER_DAY,
 				Max:       30 * DEFAULT_TICKS_PER_DAY,
@@ -627,11 +670,13 @@ func Actions() map[structs.ActionType]*config.Action {
 				HUNTER: 1,
 			},
 			SecrecyWeight: 1.3,
+			Goals:         []structs.Goal{structs.GoalWealth},
 		},
 		structs.ActionTypePillage: {
-			MinPeople: 14,
-			MaxPeople: 120,
-			Ethos:     structs.Ethos{Ambition: 2 * minor, Pacifism: -1 * modest, Caution: -1 * modest},
+			MinPeople:   14,
+			MaxPeople:   120,
+			Probability: 0.04,
+			Ethos:       structs.Ethos{Ambition: 2 * minor, Pacifism: -1 * modest, Caution: -1 * modest},
 			Cost: config.Distribution{
 				Min:       10000000, // 1000gp
 				Max:       50000000, // 5000gp
@@ -662,11 +707,13 @@ func Actions() map[structs.ActionType]*config.Action {
 			RefundOnCancel:  0.5,
 			RefundOnFailure: 0.2,
 			SecrecyWeight:   1.1,
+			Goals:           []structs.Goal{structs.GoalMilitary, structs.GoalPower},
 		},
 		structs.ActionTypeBlackmail: {
-			MinPeople: 1,
-			MaxPeople: 7,
-			Ethos:     structs.Ethos{Ambition: modest, Caution: 2 * minor, Altruism: -1 * minor},
+			MinPeople:   1,
+			MaxPeople:   7,
+			Probability: 0.10,
+			Ethos:       structs.Ethos{Ambition: modest, Caution: 2 * minor, Altruism: -1 * minor},
 			TimeToPrepare: config.Distribution{
 				Min:       1 * DEFAULT_TICKS_PER_DAY,
 				Max:       7 * DEFAULT_TICKS_PER_DAY,
@@ -688,11 +735,13 @@ func Actions() map[structs.ActionType]*config.Action {
 				THIEF:  4,
 			},
 			SecrecyWeight: 2,
+			Goals:         []structs.Goal{structs.GoalPower, structs.GoalEspionage, structs.GoalWealth},
 		},
 		structs.ActionTypeKidnap: {
-			MinPeople: 3,
-			MaxPeople: 21,
-			Ethos:     structs.Ethos{Ambition: modest, Caution: 2 * minor, Altruism: -1 * minor},
+			MinPeople:   3,
+			MaxPeople:   21,
+			Probability: 0.05,
+			Ethos:       structs.Ethos{Ambition: modest, Caution: 2 * minor, Altruism: -1 * minor},
 			TimeToPrepare: config.Distribution{
 				Min:       14 * DEFAULT_TICKS_PER_DAY,
 				Max:       30 * DEFAULT_TICKS_PER_DAY,
@@ -715,11 +764,13 @@ func Actions() map[structs.ActionType]*config.Action {
 				ASSASSIN:  2,
 			},
 			SecrecyWeight: 1.2,
+			Goals:         []structs.Goal{structs.GoalWealth},
 		},
 		structs.ActionTypeShadowWar: {
-			MinPeople: 100,
-			MaxPeople: -1,
-			Ethos:     structs.Ethos{Ambition: major, Caution: -1 * minor, Pacifism: -1 * major},
+			MinPeople:   100,
+			MaxPeople:   -1,
+			Probability: 0.01,
+			Ethos:       structs.Ethos{Ambition: major, Caution: -1 * minor, Pacifism: -1 * major},
 			Cost: config.Distribution{
 				Min:       20000000,  // 2000gp
 				Max:       100000000, // 10000gp
@@ -752,11 +803,13 @@ func Actions() map[structs.ActionType]*config.Action {
 				LEATHERWORKER: 2,
 			},
 			SecrecyWeight: 1,
+			Goals:         []structs.Goal{structs.GoalMilitary, structs.GoalEspionage, structs.GoalPower},
 		},
 		structs.ActionTypeCrusade: {
-			MinPeople: 500,
-			MaxPeople: -1,
-			Ethos:     structs.Ethos{Ambition: major, Piety: major, Caution: -1 * major, Pacifism: -1 * major},
+			MinPeople:   500,
+			MaxPeople:   -1,
+			Probability: 0.01,
+			Ethos:       structs.Ethos{Ambition: major, Piety: major, Caution: -1 * major, Pacifism: -1 * major},
 			Cost: config.Distribution{
 				Min:       500000000,  // 50000gp
 				Max:       2500000000, // 250000gp
@@ -787,11 +840,13 @@ func Actions() map[structs.ActionType]*config.Action {
 				SMITH:         4,
 				LEATHERWORKER: 2,
 			},
+			Goals: []structs.Goal{structs.GoalMilitary, structs.GoalPiety, structs.GoalPower},
 		},
 		structs.ActionTypeWar: {
-			MinPeople: 500,
-			MaxPeople: -1,
-			Ethos:     structs.Ethos{Ambition: major, Caution: -1 * major, Pacifism: -1 * major},
+			MinPeople:   500,
+			MaxPeople:   -1,
+			Probability: 0.01,
+			Ethos:       structs.Ethos{Ambition: major, Caution: -1 * major, Pacifism: -1 * major},
 			Cost: config.Distribution{
 				Min:       500000000,  // 50000gp
 				Max:       2500000000, // 250000gp
@@ -822,6 +877,7 @@ func Actions() map[structs.ActionType]*config.Action {
 				SMITH:         4,
 				LEATHERWORKER: 2,
 			},
+			Goals: []structs.Goal{structs.GoalMilitary, structs.GoalTerritory, structs.GoalPower},
 		},
 	}
 }

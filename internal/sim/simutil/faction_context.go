@@ -14,8 +14,23 @@ type FactionContext struct {
 	Summary     *structs.FactionSummary
 	Areas       map[string]bool                // map areaID -> bool (in which the faction has influence)
 	Governments map[string]*structs.Government // map areaID -> government (only the above areas)
+	openRanks   *structs.DemographicRankSpread
+}
 
-	openRanks *structs.DemographicRankSpread
+func (f *FactionContext) AllGovernments() []*structs.Government {
+	seen := map[string]bool{}
+
+	govs := []*structs.Government{}
+	for _, gov := range f.Governments {
+		_, ok := seen[gov.ID]
+		if ok {
+			continue
+		}
+		govs = append(govs, gov)
+		seen[gov.ID] = true
+	}
+
+	return govs
 }
 
 func (f *FactionContext) ClosestOpenRank(desired structs.FactionRank) structs.FactionRank {

@@ -118,6 +118,7 @@ func (s *Base) InspireFactionAffiliation(cfg *config.Affiliation, factionID stri
 						newFactionChangeEvent(p, tick, prev),
 						newFactionPromotionEvent(p, tick, factionID),
 					)
+					affil += (structs.MaxEthos / 50 * int(rank)) // higher rank -> higher affiliation
 					done += 1
 				} else {
 					// we've added full members, so we'll just set some affiliation on the rest

@@ -1,4 +1,4 @@
-package premade
+package fantasy
 
 import (
 	"math/rand"

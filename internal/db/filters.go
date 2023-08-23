@@ -82,7 +82,7 @@ const (
 	TargetMetaKey   Field = "target_meta_key"
 	TargetMetaVal   Field = "target_meta_val"
 	Secrecy         Field = "secrecy"
-	State           Field = "state"
+	JobState        Field = "state"
 
 	// tuple, modifiers
 	Subject Field = "subject"

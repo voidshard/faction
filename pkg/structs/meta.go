@@ -18,4 +18,5 @@ const (
 	MetaKeyArea       MetaKey = "area"       // targets specific area Val:AREA_ID
 	MetaKeyRoute      MetaKey = "route"      // targets specific route Val:ROUTE_ID
 	MetaKeyEvent      MetaKey = "event"      // targets specific event (ie. person_birth) Val:EVENT_ID
+	MetaKeyGoal       MetaKey = "goal"       // targets specific goal (ie. wealth) Val:GOAL_ID
 )

@@ -14,6 +14,15 @@ type Action struct {
 	MinPeople int // min: 1
 	MaxPeople int // numbers <= 0 are ignored (considered "no max")
 
+	// Weight given to performing this Action
+	Probability float64
+
+	// Target denotes that this action requires a target (faction) and the targets min/max trust
+	// Ie. we only trade with factions we trust, and only make war on factions we don't.
+	Target         bool
+	TargetMinTrust int
+	TargetMaxTrust int
+
 	// Cost in whatever units the economy is using.
 	// Additional explicit cost to performing the action.
 	Cost Distribution
@@ -41,16 +50,12 @@ type Action struct {
 	// them applies.
 	ProfessionWeights map[string]float64
 
-	// used as Key on Event object when the job with this Action has
-	// a state change.
-	// If not set, the string(ActionType) is used.
-	EventKey string
-
-	// % of initial cost refunded if cancelled
-	// (Ie. the action fails to gather enough people to kick off)
-	RefundOnCancel float64
-
 	// % of initial cost refunded on failure
 	// (Ie. the action kicks off, but fails)
 	RefundOnFailure float64
+
+	// Goals are used so our code can determine which action might best suit the factions
+	// current goal(s). What we mean here is what immediate goal does this action help with?
+	// Ie. a faction low on money might look to "Wealth"
+	Goals []structs.Goal
 }

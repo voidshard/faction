@@ -13,6 +13,11 @@ const (
 	MinEthos = -10000
 )
 
+var (
+	// max possible distance between two ethos values
+	maxDist = ethosDistance((&Ethos{}).Add(MinEthos), (&Ethos{}).Add(MaxEthos))
+)
+
 // Ethos is a set of guiding principles that someone (or a faction) abides by,
 // and how strongly the do so (or do not).
 type Ethos struct {
@@ -60,38 +65,38 @@ func (e *Ethos) String() string {
 
 // Add v to Ethos values returning a new Ethos
 func (e *Ethos) Add(v int) *Ethos {
-	return &Ethos{
+	return (&Ethos{
 		Ambition:  int(e.Ambition + v),
 		Altruism:  int(e.Altruism + v),
 		Tradition: int(e.Tradition + v),
 		Pacifism:  int(e.Pacifism + v),
 		Piety:     int(e.Piety + v),
 		Caution:   int(e.Caution + v),
-	}
+	}).Clamp()
 }
 
 // AddEthos adds ethos values returning a new Ethos
 func (e *Ethos) AddEthos(v *Ethos) *Ethos {
-	return &Ethos{
+	return (&Ethos{
 		Ambition:  int(e.Ambition + v.Ambition),
 		Altruism:  int(e.Altruism + v.Altruism),
 		Tradition: int(e.Tradition + v.Tradition),
 		Pacifism:  int(e.Pacifism + v.Pacifism),
 		Piety:     int(e.Piety + v.Piety),
 		Caution:   int(e.Caution + v.Caution),
-	}
+	}).Clamp()
 }
 
 // Multiply ethos values by v returning a new Ethos
 func (e *Ethos) Multiply(v float64) *Ethos {
-	return &Ethos{
+	return (&Ethos{
 		Ambition:  int(float64(e.Ambition) * v),
 		Altruism:  int(float64(e.Altruism) * v),
 		Tradition: int(float64(e.Tradition) * v),
 		Pacifism:  int(float64(e.Pacifism) * v),
 		Piety:     int(float64(e.Piety) * v),
 		Caution:   int(float64(e.Caution) * v),
-	}
+	}).Clamp()
 }
 
 // Clamp ethos values to min / max values
@@ -105,21 +110,43 @@ func (e *Ethos) Clamp() *Ethos {
 	return e
 }
 
-// EthosDistance returns the distance between two ethos values
+// EthosDistance returns the distance between two ethos values as a value 0.0 - 1.0
 func EthosDistance(a, b *Ethos) float64 {
-	values := []float64{
-		math.Pow(float64(a.Altruism-b.Altruism), 2),
-		math.Pow(float64(a.Ambition-b.Ambition), 2),
-		math.Pow(float64(a.Tradition-b.Tradition), 2),
-		math.Pow(float64(a.Pacifism-b.Pacifism), 2),
-		math.Pow(float64(a.Piety-b.Piety), 2),
-		math.Pow(float64(a.Caution-b.Caution), 2),
+	return ethosDistance(a, b) / maxDist
+}
+
+// ethosDistance returns the distance between two ethos values in absolute terms
+func ethosDistance(a, b *Ethos) float64 {
+	a.Clamp()
+	b.Clamp()
+
+	dist := 0.0
+	count := 0
+
+	for _, j := range [][2]int{
+		{a.Altruism, b.Altruism},
+		{a.Ambition, b.Ambition},
+		{a.Tradition, b.Tradition},
+		{a.Pacifism, b.Pacifism},
+		{a.Piety, b.Piety},
+		{a.Caution, b.Caution},
+	} {
+		if j[0] == 0 && j[1] == 0 {
+			continue
+		}
+		count++
+		if j[0] > j[1] {
+			dist += float64(j[0] - j[1])
+		} else {
+			dist += float64(j[1] - j[0])
+		}
 	}
-	var sum float64
-	for _, v := range values {
-		sum += v
+
+	if count == 0 {
+		return 0.0
 	}
-	return math.Sqrt(sum)
+
+	return dist / float64(count)
 }
 
 // EthosAverage returns the average of the given ethos values
@@ -130,6 +157,7 @@ func EthosAverage(in ...*Ethos) *Ethos {
 	}
 
 	for _, i := range in {
+		i.Clamp()
 		e.Altruism += i.Altruism
 		e.Ambition += i.Ambition
 		e.Tradition += i.Tradition

@@ -1,4 +1,4 @@
-package premade
+package fantasy
 
 import (
 	"github.com/voidshard/faction/pkg/config"

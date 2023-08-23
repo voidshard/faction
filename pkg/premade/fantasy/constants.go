@@ -1,4 +1,4 @@
-package premade
+package fantasy
 
 /*
 Constants here form the basis of our premade configuarations.
