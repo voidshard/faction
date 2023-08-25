@@ -46,6 +46,16 @@ func NewActionWeights(actions map[structs.ActionType]*config.Action) *ActionWeig
 	}
 }
 
+// WeightByActionCost multiplies the probability of actions whose min cost is more than `maxPrice` by the given `mult`
+// Ie. we use this to prevent us from chosing actions out of our budget
+func (w *ActionWeights) WeightByActionCost(mult, maxPrice float64) {
+	for atype, act := range w.defn {
+		if act.Cost.Min > maxPrice {
+			w.prob[atype] *= mult
+		}
+	}
+}
+
 // SetIsReligion sets the probability of all religion-only actions to their starting values.
 // If not set, the probability of these actions is 0.0
 func (w *ActionWeights) SetIsReligion() {

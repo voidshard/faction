@@ -529,6 +529,9 @@ func setJobs(op sqlOperator, in []*structs.Job) error {
 		if !dbutils.IsValidID(f.SourceAreaID) {
 			return fmt.Errorf("job source area id %s is invalid", f.SourceAreaID)
 		}
+		if !dbutils.IsValidID(f.TargetFactionID) {
+			return fmt.Errorf("job target faction id %s is invalid", f.TargetFactionID)
+		}
 	}
 
 	// we only need to update the job state.
@@ -536,7 +539,7 @@ func setJobs(op sqlOperator, in []*structs.Job) error {
 	    id, parent_job_id,
 	    source_faction_id, source_area_id,
 	    action,
-	    target_area_id, target_meta_key, target_meta_val,
+	    target_faction_id, target_area_id, target_meta_key, target_meta_val,
 	    people_min, people_max,
 	    tick_created, tick_starts, tick_ends,
 	    secrecy,
@@ -546,14 +549,22 @@ func setJobs(op sqlOperator, in []*structs.Job) error {
 	    :id, :parent_job_id,
 	    :source_faction_id, :source_area_id,
 	    :action,
-	    :target_area_id, :target_meta_key, :target_meta_val,
+	    :target_faction_id, :target_area_id, :target_meta_key, :target_meta_val,
 	    :people_min, :people_max,
 	    :tick_created, :tick_starts, :tick_ends,
 	    :secrecy,
 	    :is_illegal,
 	    :state
 	) ON CONFLICT (id) DO UPDATE SET 
-	   state=EXCLUDED.state
+	    state=EXCLUDED.state,
+	    secrecy=EXCLUDED.secrecy,
+	    is_illegal=EXCLUDED.is_illegal,
+	    tick_starts=EXCLUDED.tick_starts,
+	    tick_ends=EXCLUDED.tick_ends,
+	    people_now=EXCLUDED.people_now,
+	    target_area_id=EXCLUDED.target_area_id,
+	    target_meta_key=EXCLUDED.target_meta_key,
+	    target_meta_val=EXCLUDED.target_meta_val
 	;`, tableJobs)
 
 	_, err := op.NamedExec(qstr, in)

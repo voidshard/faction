@@ -1,6 +1,8 @@
 package base
 
 import (
+	"math"
+
 	"github.com/voidshard/faction/internal/db"
 	"github.com/voidshard/faction/internal/sim/simutil"
 	"github.com/voidshard/faction/pkg/structs"
@@ -74,34 +76,6 @@ func (s *Base) PlanFactionJobs(factionID string) ([]*structs.Job, error) {
 		return nil, err
 	}
 
-	// probabilities of doing various actions
-	weights := simutil.NewActionWeights(s.cfg.Actions)
-	if ctx.Summary.IsReligion {
-		weights.SetIsReligion()
-	}
-	if ctx.Summary.IsGovernment {
-		weights.SetIsGovernment()
-	}
-	weights.WeightByEthos(&ctx.Summary.Ethos)
-
-	// weight based on the law & how tradition focused / law abiding the faction is
-	tradition := float64(ctx.Summary.Ethos.Tradition/structs.MinEthos) + 1.0 // 2.0 -> 0.0
-	if ctx.Summary.IsCovert {
-		// factions that deliberately avoid the law tend to do so for a reason
-		// Nb. a value of 1.1 means a faction with tradition of X becomes Yx more likely to break the law
-		// -10k -> 2.2x
-		// -5k -> 1.65x
-		// -2.5k -> 1.375x
-		// -1k -> 1.21x
-		// -500 -> 1.122x
-		weights.WeightByIllegal(1.1*tradition, ctx.AllGovernments()...)
-	} else {
-		// law abiding factions
-		// Nb. a value of 0.85 means this value will be > 1 for factions with Tradition < -1.8k (ie. they don't respect traditions)
-		// meaning factions that have low respect for traditions become slightly more likely to break the law
-		weights.WeightByIllegal(0.85*tradition, ctx.AllGovernments()...)
-	}
-
 	// people we have available for work
 	people := estimateAvailablePeople(ctx.Summary.Ranks)
 
@@ -110,32 +84,126 @@ func (s *Base) PlanFactionJobs(factionID string) ([]*structs.Job, error) {
 		db.F(db.SourceFactionID, db.Equal, factionID),
 		db.F(db.JobState, db.In, incompleteJobs),
 	).DisableSort()
-
-	// TODO: implies we only check the first 1k jobs (or whatever the default limit is).
-	// We  probably shouldn't have this many jobs in progress for a single faction.
 	jobs, _, err := s.dbconn.Jobs("", q)
 	if err != nil {
 		return nil, err
 	}
-
-	plannedMin := 0
-	plannedMax := 0
-	currentMin := 0
-	currentMax := 0
+	redeemableFunds := 0.0
 	for _, j := range jobs {
-		act, ok := s.cfg.Actions[j.Action]
-		if !ok { // removed from config ??
-			continue
-		}
-
 		if j.State == structs.JobStateActive {
-			currentMin += act.MinPeople
-			currentMax += act.MaxPeople
+			people -= j.PeopleNow
 		} else {
-			plannedMin += act.MinPeople
-			plannedMax += act.MaxPeople
+			act, ok := s.cfg.Actions[j.Action]
+			if !ok {
+				continue
+			}
+			// jobs we could cancel if we wanted to recoup cash
+			redeemableFunds += act.Cost.Min
 		}
 	}
+
+	// how likely we are to do various actions
+	weights, err := s.actionWeightsForFaction(ctx)
+	if err != nil {
+		return nil, err
+	}
+	// nullify stuff we can't afford
+	weights.WeightByActionCost(0.0, redeemableFunds+float64(ctx.Summary.Wealth))
+
+}
+
+func (s *Base) factionPropertyValuation(tickOffset int, factionID string) (float64, int, error) {
+	count := 0
+	q := db.Q(db.F(db.FactionID, db.Equal, factionID))
+	var (
+		value    float64
+		property []*structs.Plot
+		token    string
+		err      error
+	)
+	for {
+		property, token, err = s.dbconn.Plots(token, q)
+		if err != nil {
+			return 0, 0, err
+		}
+		for _, p := range property {
+			count += 1
+			value += s.eco.LandValue(p.AreaID, tickOffset) * float64(p.Size)
+		}
+		if token == "" {
+			break
+		}
+	}
+
+	return value, count, nil
+}
+
+func (s *Base) actionWeightsForFaction(ctx *simutil.FactionContext, wealth float64) (*simutil.ActionWeights, error) {
+	weights := simutil.NewActionWeights(s.cfg.Actions)
+
+	// allow actions we otherwise can't use if applicable
+	if ctx.Summary.IsReligion {
+		weights.SetIsReligion()
+	}
+	if ctx.Summary.IsGovernment {
+		weights.SetIsGovernment()
+	}
+
+	// actions we agree with we're more likely to do & vice versa
+	weights.WeightByEthos(&ctx.Summary.Ethos)
+
+	// weight based on the law & how tradition focused / law abiding the faction is
+	tradition := float64(ctx.Summary.Ethos.Tradition/structs.MinEthos) + 1.0 // 2.0 -> 0.0
+	if ctx.Summary.IsCovert {
+		// Nb. a value of 1.1 means a faction with tradition of X becomes Yx more likely to break the law
+		// -10k -> 2.2x
+		// -5k -> 1.65x
+		// -2.5k -> 1.375x
+		// -1k -> 1.21x
+		// -500 -> 1.122x
+		weights.WeightByIllegal(1.1*tradition, ctx.AllGovernments()...)
+	} else {
+		// Nb. a value of 0.85 means this value will be > 1 for factions with Tradition < -1.8k (ie. they don't respect traditions)
+		// meaning factions that have low respect for traditions become slightly more likely to break the law
+		weights.WeightByIllegal(0.85*tradition, ctx.AllGovernments()...)
+	}
+
+	// survival: we need money to operate
+	valuation, plots, err := s.factionPropertyValuation(0, ctx.Summary.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	desired := valuation / 10
+	if !ctx.Summary.IsCovert && ctx.LocalGovernment != nil {
+		// if we pay tax (not covert) and there is a local government, try to keep enough money to pay tax
+		if ctx.LocalGovernment.TaxRate > 0 && ctx.LocalGovernment.TaxFrequency > 0 {
+			desired = math.Max(desired, valuation*ctx.LocalGovernment.TaxRate)
+		}
+	}
+
+	if wealth < desired { // we believe we're at risk of running out of money
+		weights.WeightByGoal(s.cfg.Settings.SurvivalGoalWeight, structs.GoalWealth)
+	}
+
+	// survival: we need to keep cohesion up
+	if ctx.Summary.Cohesion < structs.MaxEthos/10 {
+		weights.WeightByGoal(s.cfg.Settings.SurvivalGoalWeight, structs.GoalStability)
+	}
+
+	// survival: we need to keep corruption down
+	if ctx.Summary.Corruption > structs.MaxEthos-(structs.MaxEthos/10) {
+		weights.WeightByGoal(s.cfg.Settings.SurvivalGoalWeight, structs.GoalStability)
+	}
+
+	// survival: we need to have place(s) of work
+	if plots < 2 && ctx.Summary.IsCovert { // covert places like a backup hide-y hole ..
+		weights.WeightByGoal(s.cfg.Settings.SurvivalGoalWeight, structs.GoalTerritory)
+	} else if plots < 1 {
+		weights.WeightByGoal(s.cfg.Settings.SurvivalGoalWeight, structs.GoalTerritory)
+	}
+
+	return weights, nil
 }
 
 func estimateAvailablePeople(d *structs.DemographicRankSpread) int {

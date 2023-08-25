@@ -11,10 +11,11 @@ import (
 // FactionContext stores full faction information plus data about all areas
 // and governments that rule those areas
 type FactionContext struct {
-	Summary     *structs.FactionSummary
-	Areas       map[string]bool                // map areaID -> bool (in which the faction has influence)
-	Governments map[string]*structs.Government // map areaID -> government (only the above areas)
-	openRanks   *structs.DemographicRankSpread
+	Summary         *structs.FactionSummary
+	Areas           map[string]bool                // map areaID -> bool (in which the faction has influence)
+	Governments     map[string]*structs.Government // map areaID -> government (only the above areas)
+	LocalGovernment *structs.Government            // the government of the area the faction HQ is in
+	openRanks       *structs.DemographicRankSpread
 }
 
 func (f *FactionContext) AllGovernments() []*structs.Government {
@@ -90,9 +91,12 @@ func NewFactionContext(dbconn *db.FactionDB, factionID string) (*FactionContext,
 		return nil, err
 	}
 
+	gov, _ := areaGovs[summaries[0].HomeAreaID] // can be nil
+
 	return &FactionContext{
-		Summary:     summaries[0],
-		Areas:       areas,
-		Governments: areaGovs,
+		Summary:         summaries[0],
+		Areas:           areas,
+		Governments:     areaGovs,
+		LocalGovernment: gov,
 	}, nil
 }

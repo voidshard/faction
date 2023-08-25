@@ -29,7 +29,8 @@ type Job struct {
 
 	Action ActionType `db:"action"` // action that is due to take place
 
-	TargetAreaID string `db:"target_area_id"` // where the action will take place
+	TargetFactionID string `db:"target_faction_id"` // ID of the faction the action is aimed at
+	TargetAreaID    string `db:"target_area_id"`    // where the action will take place
 
 	// key/val pair to hold adv. target metadata (ie. key:PERSON val:PERSON_ID)
 	// In general the target will be a faction, and the value a faction ID.
@@ -38,6 +39,7 @@ type Job struct {
 
 	PeopleMin int `db:"people_min"` // required min number of people (else job fails to kick off)
 	PeopleMax int `db:"people_max"` // max number of people that can work this (if any)
+	PeopleNow int `db:"people_now"` // people signed up to work this
 
 	TickCreated int `db:"tick_created"` // when the job was created
 	TickStarts  int `db:"tick_starts"`  // when the job is due to start
