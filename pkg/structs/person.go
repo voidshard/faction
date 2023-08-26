@@ -35,7 +35,7 @@ type Person struct {
 	PreferredFactionID  string `db:"preferred_faction_id"` // ie. who they want to work for
 
 	// used for blind randomisation without needing to read a record from the DB.
-	// ie. if a disease might kills 1 in 10000 people we can just roll a random
+	// ie. if a disease kills 1 in 10000 people we can just roll a random
 	// number and set the death cause with a single update without needing to read any records.
 	//
 	// A number 0 -> 1000000

@@ -51,6 +51,8 @@ type Economy interface {
 	// base resources.
 	// Ie. iron ore
 	IsHarvestable(commodity string) bool
+
+	// TravelTime(??) float64 <-- TODO
 }
 
 func commodityToProfession(eco Economy, areas ...string) map[string]string {

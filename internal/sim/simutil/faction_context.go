@@ -15,7 +15,28 @@ type FactionContext struct {
 	Areas           map[string]bool                // map areaID -> bool (in which the faction has influence)
 	Governments     map[string]*structs.Government // map areaID -> government (only the above areas)
 	LocalGovernment *structs.Government            // the government of the area the faction HQ is in
-	openRanks       *structs.DemographicRankSpread
+
+	openRanks *structs.DemographicRankSpread
+	rels      *FactionRelations
+}
+
+// RelationWeight returns a number representing how much this faction prefers peace / caution over ambition / war.
+// Applied to Trust to generally make more aggressive / unfriendly factions more likely to throw the first punch,
+// and more peaceful factions more likely to try to avoid conflict.
+func (f *FactionContext) RelationWeight() int {
+	return (f.Summary.Ethos.Caution / 50) + (f.Summary.Ethos.Altruism / 20) - (f.Summary.Ethos.Ambition / 20) + (f.Summary.Ethos.Pacifism / 50)
+}
+
+func (f *FactionContext) Relations() *FactionRelations {
+	if f.rels == nil {
+		fr := NewFactionRelations()
+		w := f.RelationWeight()
+		for factionID, trust := range f.Summary.Trust {
+			fr.Add(factionID, trust+w)
+		}
+		f.rels = fr
+	}
+	return f.rels
 }
 
 func (f *FactionContext) AllGovernments() []*structs.Government {

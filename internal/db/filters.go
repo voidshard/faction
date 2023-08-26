@@ -83,6 +83,7 @@ const (
 	TargetMetaVal   Field = "target_meta_val"
 	Secrecy         Field = "secrecy"
 	JobState        Field = "state"
+	TickEnds        Field = "tick_ends"
 
 	// tuple, modifiers
 	Subject Field = "subject"

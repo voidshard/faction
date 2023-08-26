@@ -223,7 +223,7 @@ func Actions() map[structs.ActionType]*config.Action {
 				Deviation: 30 * DEFAULT_TICKS_PER_DAY,
 			},
 			SecrecyWeight: 1,
-			Goals:         []structs.Goal{structs.GoalMilitary, structs.GoalPower},
+			Goals:         []structs.Goal{structs.GoalGrowth},
 		},
 		structs.ActionTypeExpand: { // cost determined by land prices in economy
 			MinPeople:    1,
@@ -391,7 +391,7 @@ func Actions() map[structs.ActionType]*config.Action {
 				Deviation: 60 * DEFAULT_TICKS_PER_DAY,
 			},
 			SecrecyWeight: 1.4,
-			Goals:         []structs.Goal{structs.GoalScience},
+			Goals:         []structs.Goal{structs.GoalResearch},
 		},
 		structs.ActionTypeExcommunicate: {
 			MinPeople:    1,
@@ -418,7 +418,7 @@ func Actions() map[structs.ActionType]*config.Action {
 			SecrecyWeight:  1.2,
 			Goals:          []structs.Goal{structs.GoalPiety, structs.GoalPower},
 			Target:         true,
-			TargetMinTrust: structs.MinEthos / 2,
+			TargetMinTrust: (structs.MinEthos * 3) / 4,
 			TargetMaxTrust: structs.MaxEthos / 10,
 		},
 		structs.ActionTypeConcealSecrets: {
@@ -703,7 +703,7 @@ func Actions() map[structs.ActionType]*config.Action {
 			SecrecyWeight:  1.3,
 			Goals:          []structs.Goal{structs.GoalWealth},
 			Target:         true,
-			TargetMinTrust: (structs.MinEthos * 3) / 4,
+			TargetMinTrust: (structs.MinEthos * 4) / 5,
 			TargetMaxTrust: structs.MinEthos / 5,
 		},
 		structs.ActionTypePillage: {
@@ -742,8 +742,8 @@ func Actions() map[structs.ActionType]*config.Action {
 			SecrecyWeight:   1.1,
 			Goals:           []structs.Goal{structs.GoalMilitary, structs.GoalPower},
 			Target:          true,
-			TargetMinTrust:  (structs.MinEthos * 3) / 4,
-			TargetMaxTrust:  structs.MinEthos / 2,
+			TargetMinTrust:  structs.MinEthos,
+			TargetMaxTrust:  (structs.MinEthos * 2) / 3,
 		},
 		structs.ActionTypeBlackmail: {
 			MinPeople:   1,
@@ -771,7 +771,7 @@ func Actions() map[structs.ActionType]*config.Action {
 				THIEF:  4,
 			},
 			SecrecyWeight:  2,
-			Goals:          []structs.Goal{structs.GoalPower, structs.GoalEspionage, structs.GoalWealth},
+			Goals:          []structs.Goal{structs.GoalEspionage, structs.GoalWealth},
 			Target:         true,
 			TargetMinTrust: structs.MinEthos / 2,
 			TargetMaxTrust: structs.MaxEthos / 2,
@@ -811,7 +811,7 @@ func Actions() map[structs.ActionType]*config.Action {
 		structs.ActionTypeShadowWar: {
 			MinPeople:   100,
 			MaxPeople:   -1,
-			Probability: 0.01,
+			Probability: 0.05,
 			Ethos:       structs.Ethos{Ambition: major, Caution: -1 * minor, Pacifism: -1 * major},
 			Cost: config.Distribution{
 				Min:       20000000,  // 2000gp
@@ -847,13 +847,13 @@ func Actions() map[structs.ActionType]*config.Action {
 			SecrecyWeight:  1,
 			Goals:          []structs.Goal{structs.GoalMilitary, structs.GoalEspionage, structs.GoalPower},
 			Target:         true,
-			TargetMinTrust: (structs.MinEthos * 4) / 5,
-			TargetMaxTrust: structs.MinEthos,
+			TargetMinTrust: structs.MinEthos,
+			TargetMaxTrust: (structs.MinEthos * 9) / 10,
 		},
 		structs.ActionTypeCrusade: {
 			MinPeople:   500,
 			MaxPeople:   -1,
-			Probability: 0.01,
+			Probability: 0.10,
 			Ethos:       structs.Ethos{Ambition: major, Piety: major, Caution: -1 * major, Pacifism: -1 * major},
 			Cost: config.Distribution{
 				Min:       500000000,  // 50000gp
@@ -887,13 +887,13 @@ func Actions() map[structs.ActionType]*config.Action {
 			},
 			Goals:          []structs.Goal{structs.GoalMilitary, structs.GoalPiety, structs.GoalPower},
 			Target:         true,
-			TargetMinTrust: (structs.MinEthos * 4) / 5,
-			TargetMaxTrust: structs.MinEthos,
+			TargetMinTrust: structs.MinEthos,
+			TargetMaxTrust: (structs.MinEthos * 9) / 10,
 		},
 		structs.ActionTypeWar: {
 			MinPeople:   500,
 			MaxPeople:   -1,
-			Probability: 0.01,
+			Probability: 0.10,
 			Ethos:       structs.Ethos{Ambition: major, Caution: -1 * major, Pacifism: -1 * major},
 			Cost: config.Distribution{
 				Min:       500000000,  // 50000gp
@@ -927,8 +927,8 @@ func Actions() map[structs.ActionType]*config.Action {
 			},
 			Goals:          []structs.Goal{structs.GoalMilitary, structs.GoalTerritory, structs.GoalPower},
 			Target:         true,
-			TargetMinTrust: (structs.MinEthos * 4) / 5,
-			TargetMaxTrust: structs.MinEthos,
+			TargetMinTrust: structs.MinEthos,
+			TargetMaxTrust: (structs.MinEthos * 9) / 10,
 		},
 	}
 }

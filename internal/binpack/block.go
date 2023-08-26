@@ -5,6 +5,8 @@ import (
 	"sort"
 )
 
+// Block let's us binpack anything really, given some set of items and some idea of
+// what size (x,y) means for it.
 type Block struct {
 	items []interface{}
 	sizes []image.Point
@@ -19,9 +21,9 @@ func NewBlock() *Block {
 	}
 }
 
-func (b *Block) Add(item interface{}, size image.Point) {
+func (b *Block) Add(item interface{}, x, y int) {
 	b.items = append(b.items, item)
-	b.sizes = append(b.sizes, size)
+	b.sizes = append(b.sizes, image.Point{x, y})
 	b.place = append(b.place, image.Point{})
 }
 

@@ -33,7 +33,7 @@ func New(cfg *config.Simulation, opts ...simOption) (Simulation, error) {
 		cfg.Actions = fantasy.Actions()
 	}
 	if cfg.Settings == nil {
-		cfg.Settings = config.NewSimulationSettings()
+		cfg.Settings = config.DefaultSimulationSettings()
 	}
 
 	me, err := base.New(cfg)

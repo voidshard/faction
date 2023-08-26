@@ -64,6 +64,71 @@ func (f *FactionDB) InTransaction(do func(tx ReaderWriter) error) error {
 	return tx.Commit()
 }
 
+func (f *FactionDB) LandSummary(areas, factions []string) (*structs.LandSummary, error) {
+	filters := []*Filter{}
+	if len(areas) > 0 {
+		filters = append(filters, F(AreaID, In, areas))
+	}
+	if len(factions) > 0 {
+		filters = append(filters, F(FactionID, In, factions))
+	}
+	if len(filters) == 0 {
+		return nil, fmt.Errorf("no filters supplied")
+	}
+
+	q := Q(filters...)
+	sum := structs.NewLandSummary()
+
+	var (
+		plots []*structs.Plot
+		token string
+		err   error
+	)
+	for {
+		plots, token, err = f.Plots(token, q)
+		if err != nil {
+			return nil, err
+		}
+
+		for _, p := range plots {
+			com, ok := sum.Commodities[p.Commodity]
+			if !ok {
+				com = &structs.Crop{}
+			}
+			com.Size += p.Size
+			com.Yield += p.Yield
+
+			sum.TotalSize += p.Size
+			sum.Count++
+
+			sum.Commodities[p.Commodity] = com
+
+			area, ok := sum.Areas[p.AreaID]
+			if !ok {
+				area = structs.NewLandSummary()
+			}
+			acom, ok := area.Commodities[p.Commodity]
+			if !ok {
+				acom = &structs.Crop{}
+			}
+			acom.Size += p.Size
+			acom.Yield += p.Yield
+
+			area.TotalSize += p.Size
+			area.Count++
+
+			area.Commodities[p.Commodity] = acom
+			sum.Areas[p.AreaID] = area
+		}
+
+		if token == "" {
+			break
+		}
+	}
+
+	return sum, nil
+}
+
 // FactionSummary is a helper function that returns a summary of a faction,
 // including related tuples summed with their corresponding modifiers.
 //

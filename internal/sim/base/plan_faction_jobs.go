@@ -2,6 +2,8 @@ package base
 
 import (
 	"math"
+	"math/rand"
+	"time"
 
 	"github.com/voidshard/faction/internal/db"
 	"github.com/voidshard/faction/internal/sim/simutil"
@@ -9,12 +11,6 @@ import (
 )
 
 var (
-	incompleteJobs = []string{
-		string(structs.JobStatePending),
-		string(structs.JobStateReady),
-		string(structs.JobStateActive),
-	}
-
 	ranksHigh = []structs.FactionRank{
 		structs.FactionRankRuler,
 		structs.FactionRankElder,
@@ -30,6 +26,8 @@ var (
 		structs.FactionRankNovice,
 		structs.FactionRankApprentice,
 	}
+
+	rnggen = rand.New(rand.NewSource(time.Now().UnixNano()))
 )
 
 /*
@@ -71,6 +69,11 @@ if we're not under some existential threat, we can pursue higher level goals
 */
 
 func (s *Base) PlanFactionJobs(factionID string) ([]*structs.Job, error) {
+	tick, err := s.dbconn.Tick()
+	if err != nil {
+		return nil, err
+	}
+
 	ctx, err := simutil.NewFactionContext(s.dbconn, factionID)
 	if err != nil {
 		return nil, err
@@ -78,67 +81,138 @@ func (s *Base) PlanFactionJobs(factionID string) ([]*structs.Job, error) {
 
 	// people we have available for work
 	people := estimateAvailablePeople(ctx.Summary.Ranks)
+	availablePeople := people
 
-	// Get all jobs for this faction that haven't finished yet
+	// Get all jobs for this faction that are active & wont finish next tick
 	q := db.Q(
 		db.F(db.SourceFactionID, db.Equal, factionID),
-		db.F(db.JobState, db.In, incompleteJobs),
+		db.F(db.JobState, db.Equal, structs.JobStateActive),
+		db.F(db.TickEnds, db.Greater, tick),
 	).DisableSort()
 	jobs, _, err := s.dbconn.Jobs("", q)
 	if err != nil {
 		return nil, err
 	}
-	redeemableFunds := 0.0
 	for _, j := range jobs {
 		if j.State == structs.JobStateActive {
-			people -= j.PeopleNow
-		} else {
-			act, ok := s.cfg.Actions[j.Action]
-			if !ok {
-				continue
-			}
-			// jobs we could cancel if we wanted to recoup cash
-			redeemableFunds += act.Cost.Min
+			availablePeople -= j.PeopleNow
 		}
 	}
 
-	// how likely we are to do various actions
-	weights, err := s.actionWeightsForFaction(ctx)
+	// summary of the faction's land
+	land, err := s.dbconn.LandSummary(nil, []string{factionID})
 	if err != nil {
 		return nil, err
 	}
-	// nullify stuff we can't afford
-	weights.WeightByActionCost(0.0, redeemableFunds+float64(ctx.Summary.Wealth))
 
+	// how likely we are to do various actions
+	weights, survivalConcerns, err := s.actionWeightsForFaction(ctx, land, people, availablePeople)
+	if err != nil {
+		return nil, err
+	}
+
+	if !survivalConcerns {
+		// we'll only apply higher level goals if imminent death isn't a concern
+		goals := determineFactionGoals(ctx)
+		weights.WeightByGoal(s.cfg.Settings.GoalWeight, goals...)
+	}
 }
 
-func (s *Base) factionPropertyValuation(tickOffset int, factionID string) (float64, int, error) {
-	count := 0
-	q := db.Q(db.F(db.FactionID, db.Equal, factionID))
-	var (
-		value    float64
-		property []*structs.Plot
-		token    string
-		err      error
-	)
-	for {
-		property, token, err = s.dbconn.Plots(token, q)
-		if err != nil {
-			return 0, 0, err
-		}
-		for _, p := range property {
-			count += 1
-			value += s.eco.LandValue(p.AreaID, tickOffset) * float64(p.Size)
-		}
-		if token == "" {
-			break
+func determineFactionGoals(ctx *simutil.FactionContext) []structs.Goal {
+	goals := map[structs.Goal]bool{}
+
+	// if we're a research faction, GoalResearch
+	researchTopics := []string{}
+	researchProb := []float64{}
+	for topic, weight := range ctx.Summary.Research {
+		researchTopics = append(researchTopics, topic)
+		researchProb = append(researchProb, float64(weight))
+	}
+	if len(researchTopics) > 0 {
+		goals[structs.GoalResearch] = true
+	}
+
+	// if we're a religion or highly religious, GoalPiety
+	if ctx.Summary.IsReligion || ctx.Summary.Piety > (structs.MaxEthos*9)/10 {
+		goals[structs.GoalPiety] = true
+	} else if ctx.Summary.Piety > structs.MaxEthos/10 {
+		if rnggen.Float64() < toProbability(ctx.Summary.Piety) {
+			goals[structs.GoalPiety] = true
 		}
 	}
 
-	return value, count, nil
+	relations := ctx.Relations()
+
+	// decide if we need a military or military intelligence
+	if len(relations.Nemesis)+len(relations.Hostile) > 0 {
+		goals[structs.GoalMilitary] = true
+	} else if len(relations.Hostile)+len(relations.Rival) > 0 {
+		goals[structs.GoalEspionage] = true
+	} else if ctx.Summary.IsCovert && rnggen.Float64() < toProbability(ctx.Summary.Ethos.Caution) {
+		goals[structs.GoalEspionage] = true
+	}
+
+	// maybe make friends
+	if len(relations.Unfriendly)+len(relations.Neutral) > 0 && (ctx.Summary.Altruism > structs.MaxEthos/4 || ctx.Summary.Pacifism > structs.MaxEthos/4) {
+		goals[structs.GoalDiplomacy] = true
+	} else if len(relations.Unfriendly) > 0 && rnggen.Float64()*2 < (toProbability(ctx.Summary.Altruism)+toProbability(ctx.Summary.Pacifism)) {
+		goals[structs.GoalDiplomacy] = true
+	}
+
+	// improve stability
+	if ctx.Summary.Corruption > structs.MaxEthos/4 && rnggen.Float64() < toProbability(ctx.Summary.Altruism) {
+		goals[structs.GoalStability] = true
+	} else if ctx.Summary.Cohesion < structs.MaxEthos/4 && rnggen.Float64() < toProbability(ctx.Summary.Tradition) {
+		goals[structs.GoalStability] = true
+	} else if rnggen.Float64() < toProbability(ctx.Summary.Ethos.Caution) && ctx.Summary.Cohesion > structs.MaxEthos/5 {
+		goals[structs.GoalStability] = true
+	}
+
+	// increase our power & reach
+	if rnggen.Float64() < toProbability(ctx.Summary.Ethos.Ambition) {
+		goals[structs.GoalPower] = true
+	} else if rnggen.Float64() < toProbability(ctx.Summary.Ethos.Ambition) {
+		goals[structs.GoalTerritory] = true
+	}
+
+	// increase our wealth / influence
+	if rnggen.Float64() < toProbability(ctx.Summary.Ethos.Altruism) {
+		goals[structs.GoalWealth] = true
+	} else if rnggen.Float64() < toProbability(ctx.Summary.Ethos.Altruism) {
+		goals[structs.GoalGrowth] = true
+	}
+
+	// increase our military power / knowledge
+	if rnggen.Float64() > toProbability(ctx.Summary.Ethos.Pacifism) {
+		goals[structs.GoalMilitary] = true
+	} else if rnggen.Float64() > toProbability(ctx.Summary.Ethos.Pacifism) {
+		goals[structs.GoalEspionage] = true
+	}
+
+	// finally, randomly ensure one of these is included (they're always good background goals)
+	rvalue := rnggen.Float64()
+	if rvalue < 0.33 {
+		goals[structs.GoalWealth] = true
+	} else if rvalue < 0.66 {
+		goals[structs.GoalGrowth] = true
+	} else {
+		goals[structs.GoalTerritory] = true
+	}
+
+	// make sure we return unique goals
+	res := []structs.Goal{}
+	for g := range goals {
+		res = append(res, g)
+	}
+	return res
 }
 
-func (s *Base) actionWeightsForFaction(ctx *simutil.FactionContext, wealth float64) (*simutil.ActionWeights, error) {
+func toProbability(x int) float64 {
+	return (float64(x) + structs.MaxEthos) / float64(structs.MaxEthos*2)
+}
+
+func (s *Base) actionWeightsForFaction(ctx *simutil.FactionContext, land *structs.LandSummary, people, peopleAvail int) (*simutil.ActionWeights, bool, error) {
+	survivalConcerns := false
 	weights := simutil.NewActionWeights(s.cfg.Actions)
 
 	// allow actions we otherwise can't use if applicable
@@ -149,7 +223,15 @@ func (s *Base) actionWeightsForFaction(ctx *simutil.FactionContext, wealth float
 		weights.SetIsGovernment()
 	}
 
-	// actions we agree with we're more likely to do & vice versa
+	// nullify actions we can't afford
+	wealth := float64(ctx.Summary.Wealth)
+	weights.WeightByCost(0.0, wealth)
+	weights.WeightByCost(0.5, wealth*0.75) // we don't want to spend all our money on one action
+
+	// nullify actions we don't have the people for
+	weights.WeightByMinPeople(0.0, peopleAvail)
+
+	// actions we aglin with we're more likely to do & vice versa
 	weights.WeightByEthos(&ctx.Summary.Ethos)
 
 	// weight based on the law & how tradition focused / law abiding the faction is
@@ -169,9 +251,10 @@ func (s *Base) actionWeightsForFaction(ctx *simutil.FactionContext, wealth float
 	}
 
 	// survival: we need money to operate
-	valuation, plots, err := s.factionPropertyValuation(0, ctx.Summary.ID)
-	if err != nil {
-		return nil, err
+	valuation := 0.0
+	for areaID, arealand := range land.Areas {
+		// valuation of the base land
+		valuation += s.eco.LandValue(areaID, 0) * float64(arealand.TotalSize)
 	}
 
 	desired := valuation / 10
@@ -184,26 +267,40 @@ func (s *Base) actionWeightsForFaction(ctx *simutil.FactionContext, wealth float
 
 	if wealth < desired { // we believe we're at risk of running out of money
 		weights.WeightByGoal(s.cfg.Settings.SurvivalGoalWeight, structs.GoalWealth)
+		survivalConcerns = true
+	} else if wealth < desired*1.2 { // we're starting to run low on money
+		weights.WeightByGoal(s.cfg.Settings.SurvivalGoalWeight/2, structs.GoalWealth)
+	}
+
+	// survival: we need people to work for us
+	if people < s.cfg.Settings.SurvivalMinPeople {
+		weights.WeightByGoal(s.cfg.Settings.SurvivalGoalWeight, structs.GoalGrowth)
+	} else if people < (s.cfg.Settings.SurvivalMinPeople*6)/5 { // 1.2x
+		weights.WeightByGoal(s.cfg.Settings.SurvivalGoalWeight/2, structs.GoalGrowth)
 	}
 
 	// survival: we need to keep cohesion up
 	if ctx.Summary.Cohesion < structs.MaxEthos/10 {
 		weights.WeightByGoal(s.cfg.Settings.SurvivalGoalWeight, structs.GoalStability)
+		survivalConcerns = true
+	} else if ctx.Summary.Cohesion < structs.MaxEthos/5 {
+		weights.WeightByGoal(s.cfg.Settings.SurvivalGoalWeight/2, structs.GoalStability)
 	}
 
 	// survival: we need to keep corruption down
 	if ctx.Summary.Corruption > structs.MaxEthos-(structs.MaxEthos/10) {
 		weights.WeightByGoal(s.cfg.Settings.SurvivalGoalWeight, structs.GoalStability)
+		survivalConcerns = true
+	} else if ctx.Summary.Corruption > structs.MaxEthos-(structs.MaxEthos/5) {
+		weights.WeightByGoal(s.cfg.Settings.SurvivalGoalWeight/2, structs.GoalStability)
 	}
 
 	// survival: we need to have place(s) of work
-	if plots < 2 && ctx.Summary.IsCovert { // covert places like a backup hide-y hole ..
-		weights.WeightByGoal(s.cfg.Settings.SurvivalGoalWeight, structs.GoalTerritory)
-	} else if plots < 1 {
+	if land.Count < 2 && ctx.Summary.IsCovert || land.Count < 1 {
 		weights.WeightByGoal(s.cfg.Settings.SurvivalGoalWeight, structs.GoalTerritory)
 	}
 
-	return weights, nil
+	return weights, survivalConcerns, nil
 }
 
 func estimateAvailablePeople(d *structs.DemographicRankSpread) int {

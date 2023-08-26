@@ -27,10 +27,8 @@ type Simulation struct {
 	// Culture name -> Culture
 	Cultures map[string]*Culture
 
+	// Global settings that control how the simulation runs
 	Settings *SimulationSettings
-
-	// TODO: graph? (future w/ path calculations for trade)
-	// TODO: event sink (allow caller to collect decisions)
 }
 
 // SimulationSettings are settings that control how the simulation runs & global values / weights
@@ -38,12 +36,23 @@ type Simulation struct {
 type SimulationSettings struct {
 	// When planning jobs, this is the multiplier used when a faction believes it's survival
 	// is at stake. (Probably, a large one).
+	// Ie. if we're at risk of running out of money, this is applied to all "wealth" generating
+	// actions when we're planning our next move.
 	SurvivalGoalWeight float64
+
+	// If our faction has less than this, we'll consider growth a priority.
+	SurvivalMinPeople int
+
+	// When planning jobs, this is the multiplier used to apply to faction goals when survival is
+	// not at stake.
+	GoalWeight float64
 }
 
-// NewSimulationSettings returns a new SimulationSettings object with default values.
-func NewSimulationSettings() *SimulationSettings {
+// DefaultSimulationSettings returns a new SimulationSettings object with default values.
+func DefaultSimulationSettings() *SimulationSettings {
 	return &SimulationSettings{
 		SurvivalGoalWeight: 10.0,
+		GoalWeight:         3.0,
+		SurvivalMinPeople:  50,
 	}
 }

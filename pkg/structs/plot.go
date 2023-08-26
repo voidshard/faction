@@ -3,6 +3,9 @@ package structs
 // Plot is some package of land, buildings and attachments that a faction
 // can buy, sell or use as a place of work / trade / whatever.
 //
+// Plots may yield some resource (eg. a Commodity) or simply be a plot of
+// land / building(s) that can be used for some purpose.
+//
 // It might be a farm + land, a castle complete with moat, a high rise building,
 // a small sea-side house + jetty .. for the purposes of the simulation all that
 // matters is that it can be used as a place of work, for whatever work means
@@ -13,13 +16,22 @@ type Plot struct {
 	AreaID    string `db:"area_id"`
 	FactionID string `db:"faction_id"` // the owner
 
-	Size int `db:"size"` // in land units
+	Crop
+}
 
+// Crop holds extra data about the land & it's usage
+type Crop struct {
 	// Commodity that can be harvested from this land (if any)
 	Commodity string `db:"commodity"`
 
+	// Size in land units squared
+	Size int `db:"size"`
+
 	// Yield of the resource, ie how many "units" of `resource` are produced
-	// (or expected to be produced) from this land.
+	// (or expected to be produced) from this per unit squared of land.
+	//
+	// This is an average, the actual value is dictated by the Economy interface
+	// for the given tick(s) when needed.
 	//
 	// (If Commodity is set, otherwise this is 0).
 	//
@@ -28,4 +40,22 @@ type Plot struct {
 	// this land is productive for a given purpose, and can be owned & run
 	// by a faction.
 	Yield int `db:"yield"`
+}
+
+type LandSummary struct {
+	// commodity -> crop
+	Commodities map[string]*Crop
+
+	// area -> LandSummary
+	Areas map[string]*LandSummary
+
+	TotalSize int
+	Count     int
+}
+
+func NewLandSummary() *LandSummary {
+	return &LandSummary{
+		Commodities: map[string]*Crop{},
+		Areas:       map[string]*LandSummary{},
+	}
 }

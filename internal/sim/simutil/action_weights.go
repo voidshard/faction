@@ -46,9 +46,18 @@ func NewActionWeights(actions map[structs.ActionType]*config.Action) *ActionWeig
 	}
 }
 
-// WeightByActionCost multiplies the probability of actions whose min cost is more than `maxPrice` by the given `mult`
+// WeightByMinPeople multiplies the probability of actions whose min people is more than `minPeople` by the given `mult`
+func (w *ActionWeights) WeightByMinPeople(mult float64, i int) {
+	for atype, act := range w.defn {
+		if act.MinPeople > i {
+			w.prob[atype] *= mult
+		}
+	}
+}
+
+// WeightByCost multiplies the probability of actions whose min cost is more than `maxPrice` by the given `mult`
 // Ie. we use this to prevent us from chosing actions out of our budget
-func (w *ActionWeights) WeightByActionCost(mult, maxPrice float64) {
+func (w *ActionWeights) WeightByCost(mult, maxPrice float64) {
 	for atype, act := range w.defn {
 		if act.Cost.Min > maxPrice {
 			w.prob[atype] *= mult

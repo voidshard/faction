@@ -43,6 +43,7 @@ var (
 		AdulthoodTick:      {isInt},
 		Type:               {isEventType, isListEventType},
 		Tick:               {isInt},
+		TickEnds:           {isInt},
 	}
 	metaKeys   = map[string]bool{}
 	eventTypes = map[string]bool{}
