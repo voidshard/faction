@@ -15,6 +15,16 @@ const (
 	JobStateFailed  JobState = "failed"  // job failed to start (not enough people / cancelled)
 )
 
+var (
+	AllJobStates = []JobState{
+		JobStatePending,
+		JobStateReady,
+		JobStateActive,
+		JobStateDone,
+		JobStateFailed,
+	}
+)
+
 // Job is what a faction creates when it wishes to perform an Action.
 //
 // People sympathetic to the faction who don't already have work sign on to 'work'
@@ -33,7 +43,8 @@ type Job struct {
 	TargetAreaID    string `db:"target_area_id"`    // where the action will take place
 
 	// key/val pair to hold adv. target metadata (ie. key:PERSON val:PERSON_ID)
-	// In general the target will be a faction, and the value a faction ID.
+	// We only set this if TargetFactionID and TargetAreaID (always set) are not enough
+	// ie. we target a specfic person, or a specific building etc within some area & faction
 	TargetMetaKey MetaKey `db:"target_meta_key"`
 	TargetMetaVal string  `db:"target_meta_val"`
 

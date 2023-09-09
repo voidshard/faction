@@ -23,6 +23,23 @@ const (
 	EventFactionPromotion EventType = "faction_promotion" // faction rank-- (regardless of preferred faction)
 )
 
+var (
+	AllEventTypes = []EventType{
+		EventPersonDeath,
+		EventPersonBirth,
+		EventPersonMove,
+		EventPersonChangeProf,
+		EventPersonChangeFaction,
+		EventFamilyMarriage,
+		EventFamilyDivorce,
+		EventFamilyPregnant,
+		EventFamilyAdoption,
+		EventFamilyMove,
+		EventFactionDemo,
+		EventFactionPromotion,
+	}
+)
+
 // Event is something we want to report to the caller
 type Event struct {
 	ID   string    `db:"id"`

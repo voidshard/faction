@@ -129,6 +129,52 @@ func (f *FactionDB) LandSummary(areas, factions []string) (*structs.LandSummary,
 	return sum, nil
 }
 
+// FactionRanks returns a map of FactionID -> *FactionLeadership
+//
+// `limit` is the max number of people to return per faction leadership
+func (f *FactionDB) FactionLeadership(limit int, in ...string) (map[string]*FactionLeadership, error) {
+	// nb. this works because Tuples are `SELECT ... ORDER BY value DESC`
+	q := Q(F(Object, In, in))
+	result := map[string]*FactionLeadership{}
+	done := 0
+
+	var (
+		tups  []*structs.Tuple
+		token string
+		err   error
+	)
+	for {
+		tups, token, err = f.Tuples(RelationPersonFactionRank, token, q)
+		if err != nil {
+			return nil, err
+		}
+
+		for _, t := range tups {
+			ranks, ok := result[t.Object]
+			if !ok {
+				ranks = &FactionLeadership{}
+				result[t.Object] = ranks
+			}
+			if ranks.Total >= limit {
+				continue
+			}
+			ranks.Add(structs.FactionRank(t.Value), t.Subject)
+			if ranks.Total >= limit {
+				done++
+				if done >= len(result) {
+					return result, nil
+				}
+			}
+		}
+
+		if token == "" {
+			break
+		}
+	}
+
+	return result, nil
+}
+
 // FactionSummary is a helper function that returns a summary of a faction,
 // including related tuples summed with their corresponding modifiers.
 //

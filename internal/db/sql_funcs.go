@@ -292,61 +292,6 @@ func setPlots(op sqlOperator, in []*structs.Plot) error {
 	return err
 }
 
-func routes(op sqlOperator, token string, in *Query) ([]*structs.Route, string, error) {
-	if in == nil {
-		in = Q()
-	}
-
-	tk, err := dbutils.ParseToken(token)
-	if err != nil {
-		return nil, token, err
-	}
-
-	q, args, err := sqlFromRouteFilters(tk, in)
-	if err != nil {
-		return nil, token, err
-	}
-
-	var out []*structs.Route
-	err = op.Select(&out, q, args...)
-	if err != nil {
-		return nil, token, err
-	}
-
-	return out, nextToken(tk, len(out)), nil
-}
-
-func setRoutes(op sqlOperator, in []*structs.Route) error {
-	if len(in) == 0 {
-		return nil
-	}
-
-	for _, f := range in {
-		if !dbutils.IsValidID(f.SourceAreaID) {
-			return fmt.Errorf("route source area id %s is invalid", f.SourceAreaID)
-		}
-		if !dbutils.IsValidID(f.TargetAreaID) {
-			return fmt.Errorf("route target area id %s is invalid", f.TargetAreaID)
-		}
-		if f.SourceAreaID == f.TargetAreaID {
-			return fmt.Errorf("source and target area ids are the same: %s", f.SourceAreaID)
-		}
-		if f.TravelTime < 0 { // we do not allow time travel, but instantaneous teleportation is fine
-			return fmt.Errorf("invalid travel time, expected >= 0: %d", f.TravelTime)
-		}
-	}
-
-	qstr := fmt.Sprintf(`INSERT INTO %s (
-	    source_area_id, target_area_id, travel_time
-	) VALUES (
-	    :source_area_id, :target_area_id, :travel_time
-	) ON CONFLICT (source_area_id, target_area_id) DO UPDATE SET
-	    travel_time=EXCLUDED.travel_time;`, tableRoutes)
-
-	_, err := op.NamedExec(qstr, in)
-	return err
-}
-
 func people(op sqlOperator, token string, in *Query) ([]*structs.Person, string, error) {
 	if in == nil {
 		in = Q()

@@ -31,13 +31,13 @@ func (s *Base) spawnFamily(tick int, areaID, race, culture string) *simutil.Meta
 	mum.SetBirthTick(tick - demo.RandomParentingAge())
 	_, mumFaiths := simutil.AddSkillAndFaith(s.dice, mp, mum)
 	mum.IsMale = false
-	mp.Events = append(mp.Events, newBirthEvent(mum, ""))
+	mp.Events = append(mp.Events, simutil.NewBirthEvent(mum, ""))
 
 	dad := demo.RandomPerson(areaID)
 	dad.SetBirthTick(tick - demo.RandomParentingAge())
 	_, dadFaiths := simutil.AddSkillAndFaith(s.dice, mp, dad)
 	dad.IsMale = true
-	mp.Events = append(mp.Events, newBirthEvent(dad, ""))
+	mp.Events = append(mp.Events, simutil.NewBirthEvent(dad, ""))
 
 	mp.Adults = append(mp.Adults, mum, dad)
 
@@ -70,7 +70,7 @@ func (s *Base) spawnFamily(tick int, areaID, race, culture string) *simutil.Meta
 		Random:              int(s.dice.Float64() * structs.FamilyRandomMax),
 	}
 	mp.Families = append(mp.Families, family)
-	mp.Events = append(mp.Events, newMarriageEvent(family, tick-demo.RandomChildbearingTerm()))
+	mp.Events = append(mp.Events, simutil.NewMarriageEvent(family, tick-demo.RandomChildbearingTerm()))
 
 	havingAffair := demo.RandomIsHavingAffair(parentingTicks)
 	if havingAffair {
@@ -78,7 +78,7 @@ func (s *Base) spawnFamily(tick int, areaID, race, culture string) *simutil.Meta
 		affair.SetBirthTick(tick - demo.RandomParentingAge())
 		simutil.AddSkillAndFaith(s.dice, mp, affair)
 		mp.Adults = append(mp.Adults, affair)
-		mp.Events = append(mp.Events, newBirthEvent(affair, ""))
+		mp.Events = append(mp.Events, simutil.NewBirthEvent(affair, ""))
 
 		if affair.IsMale {
 			mp.Relations = append(
@@ -112,14 +112,14 @@ func (s *Base) spawnFamily(tick int, areaID, race, culture string) *simutil.Meta
 
 		child := demo.RandomPerson(areaID)
 		child.SetBirthTick(tick)
-		mp.Events = append(mp.Events, newBirthEvent(child, family.ID))
+		mp.Events = append(mp.Events, simutil.NewBirthEvent(child, family.ID))
 
 		if demo.RandomDeathInfantMortality() {
 			child.DeathMetaReason = diedInChildbirth
 			child.DeathTick = tick
 			child.DeathMetaKey = structs.MetaKeyPerson
 			child.DeathMetaVal = mum.ID
-			mp.Events = append(mp.Events, newDeathEvent(child))
+			mp.Events = append(mp.Events, simutil.NewDeathEvent(child))
 		}
 
 		simutil.AddChildToFamily(demo, child, family)
@@ -130,7 +130,7 @@ func (s *Base) spawnFamily(tick int, areaID, race, culture string) *simutil.Meta
 			mum.DeathMetaReason = diedInChildbirth
 			mum.DeathMetaKey = structs.MetaKeyPerson
 			mum.DeathMetaVal = child.ID
-			mp.Events = append(mp.Events, newDeathEvent(mum))
+			mp.Events = append(mp.Events, simutil.NewDeathEvent(mum))
 			family.IsChildBearing = false
 			family.WidowedTick = tick
 		}
@@ -165,7 +165,7 @@ func (s *Base) spawnFamily(tick int, areaID, race, culture string) *simutil.Meta
 			family.WidowedTick = tick
 		} else {
 			family.DivorceTick = tick
-			mp.Events = append(mp.Events, newDivorceEvent(family, tick))
+			mp.Events = append(mp.Events, simutil.NewDivorceEvent(family, tick))
 		}
 	} else {
 		div := 1
@@ -210,7 +210,7 @@ func (s *Base) spawnCouple(tick int, areaID, race, culture string, mp *simutil.M
 
 	person := demo.RandomPerson(areaID)
 	person.SetBirthTick(tick - demo.RandomParentingAge())
-	mp.Events = append(mp.Events, newBirthEvent(person, ""))
+	mp.Events = append(mp.Events, simutil.NewBirthEvent(person, ""))
 
 	mp.Adults = append(mp.Adults, person)
 	simutil.AddSkillAndFaith(s.dice, mp, person)
@@ -219,7 +219,7 @@ func (s *Base) spawnCouple(tick int, areaID, race, culture string, mp *simutil.M
 	if died {
 		person.DeathTick = tick
 		person.DeathMetaReason = cause
-		mp.Events = append(mp.Events, newDeathEvent(person))
+		mp.Events = append(mp.Events, simutil.NewDeathEvent(person))
 	} else {
 		alive++
 	}
@@ -230,7 +230,7 @@ func (s *Base) spawnCouple(tick int, areaID, race, culture string, mp *simutil.M
 
 	lover := demo.RandomPerson(areaID)
 	lover.SetBirthTick(tick - demo.RandomParentingAge())
-	mp.Events = append(mp.Events, newBirthEvent(lover, ""))
+	mp.Events = append(mp.Events, simutil.NewBirthEvent(lover, ""))
 	lover.IsMale = !person.IsMale
 	alive++
 

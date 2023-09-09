@@ -51,9 +51,37 @@ type factionRand struct {
 	plotSize       *rng.Rand
 }
 
-func (fr *factionRand) randResearch(f *simutil.MetaFaction, count int) []*structs.Tuple {
+// randResearch returns a list of research topic weights for a faction.
+func (fr *factionRand) randResearch(f *simutil.MetaFaction, count int, requiredTopics []string) []*structs.Tuple {
 	if count <= 0 {
 		return []*structs.Tuple{}
+	}
+
+	weight := rng.NewRand(
+		// TODO: could expose this in config
+		structs.MaxEthos/8,
+		structs.MaxEthos,
+		structs.MaxEthos/2,
+		structs.MaxEthos,
+	)
+	weights := []*structs.Tuple{}
+
+	excludeTopics := map[string]bool{}
+	for _, topic := range requiredTopics {
+		_, ok := excludeTopics[topic]
+		if ok {
+			continue
+		}
+		excludeTopics[topic] = true
+		weights = append(weights, &structs.Tuple{
+			Subject: f.Faction.ID,
+			Object:  topic,
+			Value:   weight.Int(),
+		})
+	}
+	if len(weights) >= count {
+		// we don't need any more topics
+		return weights
 	}
 
 	areas := []string{} // all areas faction has presence in
@@ -62,6 +90,7 @@ func (fr *factionRand) randResearch(f *simutil.MetaFaction, count int) []*struct
 	}
 
 	topics := fr.tech.Topics(areas...) // all possible topics
+
 	probs := []float64{}
 	byProfession := map[string][]string{}
 	for _, topic := range topics {
@@ -69,6 +98,12 @@ func (fr *factionRand) randResearch(f *simutil.MetaFaction, count int) []*struct
 		if !ok {
 			prob = 0.0
 		}
+
+		_, ok = excludeTopics[topic.Name] // since this topic is done already
+		if ok {
+			prob = 0.0
+		}
+
 		probs = append(probs, prob)
 
 		ptopics, ok := byProfession[topic.Profession]
@@ -104,15 +139,7 @@ func (fr *factionRand) randResearch(f *simutil.MetaFaction, count int) []*struct
 	// finally, we can choose actual research topics
 	norm := rng.NewNormalised(probs)
 	seen := map[int]bool{}
-	weight := rng.NewRand(
-		// TODO: could expose this in config
-		structs.MaxEthos/8,
-		structs.MaxEthos,
-		structs.MaxEthos/2,
-		structs.MaxEthos,
-	)
 
-	weights := []*structs.Tuple{}
 	for i := 0; i < count; i++ {
 		choice := norm.Int()
 		if choice < 0 {

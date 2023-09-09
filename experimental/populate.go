@@ -27,15 +27,6 @@ func main() {
 		panic(err)
 	}
 
-	err = simulator.SetRoutes(
-		&structs.Route{SourceAreaID: area1.ID, TargetAreaID: area2.ID, TravelTime: 12},
-		&structs.Route{SourceAreaID: area2.ID, TargetAreaID: area3.ID, TravelTime: 16},
-		&structs.Route{SourceAreaID: area3.ID, TargetAreaID: area1.ID, TravelTime: 20},
-	)
-	if err != nil {
-		panic(err)
-	}
-
 	err = simulator.SpawnPopulace(
 		30000, // nb. this is approximate & doesn't include people spawned dead
 		"human",

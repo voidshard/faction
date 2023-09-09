@@ -38,9 +38,6 @@ type Simulation interface {
 	// or a combination of the above.
 	SetPlots(p ...*structs.Plot) error
 
-	// SetRoutes upserts links between two areas
-	SetRoutes(r ...*structs.Route) error
-
 	// SpawnGovernment creates a new government.
 	//
 	// This does not create a faction nor grant the government any area(s).

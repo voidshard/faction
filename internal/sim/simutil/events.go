@@ -1,10 +1,19 @@
-package base
+package simutil
 
 import (
 	"github.com/voidshard/faction/pkg/structs"
 )
 
-func newFactionPromotionEvent(p *structs.Person, tick int, factionID string) *structs.Event {
+func NewJobPending(j *structs.Job) *structs.Event {
+	return &structs.Event{
+		ID:             structs.NewID(),
+		Tick:           j.TickCreated,
+		SubjectMetaKey: structs.MetaKeyJob,
+		SubjectMetaVal: j.ID,
+	}
+}
+
+func NewFactionPromotionEvent(p *structs.Person, tick int, factionID string) *structs.Event {
 	return &structs.Event{
 		ID:             structs.NewID(),
 		Type:           structs.EventFactionPromotion,
@@ -16,7 +25,7 @@ func newFactionPromotionEvent(p *structs.Person, tick int, factionID string) *st
 	}
 }
 
-func newFactionChangeEvent(p *structs.Person, tick int, previousPreferredFaction string) *structs.Event {
+func NewFactionChangeEvent(p *structs.Person, tick int, previousPreferredFaction string) *structs.Event {
 	return &structs.Event{
 		ID:             structs.NewID(),
 		Type:           structs.EventPersonChangeFaction,
@@ -28,7 +37,7 @@ func newFactionChangeEvent(p *structs.Person, tick int, previousPreferredFaction
 	}
 }
 
-func newMarriageEvent(f *structs.Family, tick int) *structs.Event {
+func NewMarriageEvent(f *structs.Family, tick int) *structs.Event {
 	return &structs.Event{
 		ID:             structs.NewID(),
 		Type:           structs.EventFamilyMarriage,
@@ -38,7 +47,7 @@ func newMarriageEvent(f *structs.Family, tick int) *structs.Event {
 	}
 }
 
-func newDivorceEvent(f *structs.Family, tick int) *structs.Event {
+func NewDivorceEvent(f *structs.Family, tick int) *structs.Event {
 	return &structs.Event{
 		ID:             structs.NewID(),
 		Type:           structs.EventFamilyDivorce,
@@ -48,7 +57,7 @@ func newDivorceEvent(f *structs.Family, tick int) *structs.Event {
 	}
 }
 
-func newBirthEvent(p *structs.Person, familiyID string) *structs.Event {
+func NewBirthEvent(p *structs.Person, familiyID string) *structs.Event {
 	return &structs.Event{
 		ID:             structs.NewID(),
 		Type:           structs.EventPersonBirth,
@@ -60,7 +69,7 @@ func newBirthEvent(p *structs.Person, familiyID string) *structs.Event {
 	}
 }
 
-func newDeathEvent(p *structs.Person) *structs.Event {
+func NewDeathEvent(p *structs.Person) *structs.Event {
 	return &structs.Event{
 		ID:             structs.NewID(),
 		Type:           structs.EventPersonDeath,
@@ -72,7 +81,7 @@ func newDeathEvent(p *structs.Person) *structs.Event {
 	}
 }
 
-func newDeathEventWithCause(tick int, subject string, causek structs.MetaKey, causev string) *structs.Event {
+func NewDeathEventWithCause(tick int, subject string, causek structs.MetaKey, causev string) *structs.Event {
 	return &structs.Event{
 		ID:             structs.NewID(),
 		Type:           structs.EventPersonDeath,

@@ -25,18 +25,21 @@ type ActionType string
 // - research
 //
 // Government Only Actions (faction.IsGovernment must be true)
-// - grant land, revoke land
+// - revoke land
 //
 // Religion Only Actions (faction.IsReligion must be true):
 // - crusade, excommunicate
+//
+// Legal (non covert) non-Government factions:
+// - requestland
 const (
-	// Friendly actions (most of these target another faction)
-	ActionTypeTrade      ActionType = "trade"      // trade goods with another faction, everyone wins
-	ActionTypeBribe      ActionType = "bribe"      // pay a faction to increase their favor
-	ActionTypeFestival   ActionType = "festival"   // hold a festival (usually religious in nature), increases general favor & affiliation
-	ActionTypePilgrimage ActionType = "pilgrimage" // hold a pilgrimage, increases faith
-	ActionTypeGrantLand  ActionType = "grantland"  // government grants the use of some land
-	ActionTypeCharity    ActionType = "charity"    // donate money to people of an area(s), increases general favor
+	// Friendly actions (some of these target another faction)
+	ActionTypeTrade       ActionType = "trade"       // trade goods with another faction, everyone wins
+	ActionTypeBribe       ActionType = "bribe"       // pay a faction to increase their favor
+	ActionTypeFestival    ActionType = "festival"    // hold a festival (usually religious in nature), increases general favor & affiliation
+	ActionTypeRitual      ActionType = "ritual"      // hold a public ritual, increases faith
+	ActionTypeRequestLand ActionType = "requestland" // request the government grant the use of some land
+	ActionTypeCharity     ActionType = "charity"     // donate money to people of an area(s), increases general favor
 
 	// Neutral actions (these target "self")
 	ActionTypePropoganda     ActionType = "propoganda"      // increases general favor towards you, cheaper than 'Charity' but less um, honest
@@ -58,6 +61,7 @@ const (
 	ActionTypeAssassinate     ActionType = "assassinate"      // someone is selected for elimination
 	ActionTypeFrame           ActionType = "frame"            // the non religious version of 'excommunicate,' but can involve legal .. entanglements
 	ActionTypeRaid            ActionType = "raid"             // small armed conflict with the aim of destroying as much as possible
+	ActionTypeEnslave         ActionType = "enslave"          // similar to raid, but with the aim of capturing people
 	ActionTypeSteal           ActionType = "steal"            // similar to raid, but with less stabbing
 	ActionTypePillage         ActionType = "pillage"          // small armed conflict with the aim of stealing wealth
 	ActionTypeBlackmail       ActionType = "blackmail"        // trade in a secret for a pile of gold, or ruin a reputation
@@ -71,16 +75,78 @@ const (
 
 var (
 	// Factions with a IsReligion & ReligionID may perform these actions
-	ReligionOnlyActions = []ActionType{}
+	ActionsReligionOnly = []ActionType{}
 
 	// Factions with a IsGovernment & GovernmentID may perform these actions
-	GovernmentOnlyActions = []ActionType{}
+	ActionsGovernmentOnly = []ActionType{}
+
+	// Factions that are not Governments nor convert may perform these actions
+	ActionsLegalFactionOnly = []ActionType{}
+
+	// TargetType, if not given default to no target (ie. "self" or "we don't need to choose a target")
+	// nb. Jobs always include a Faction and Area target, so we only do more work in picking a target if it's something else.
+	ActionTarget = map[ActionType]MetaKey{
+		ActionTypeExcommunicate:   MetaKeyPerson,   // excommunicate someone
+		ActionTypeBribe:           MetaKeyPerson,   // pay someone to buff favor with them & their faction
+		ActionTypeAssassinate:     MetaKeyPerson,   // assassinate someone
+		ActionTypeFrame:           MetaKeyPerson,   // frame someone
+		ActionTypeBlackmail:       MetaKeyPerson,   // blackmail someone
+		ActionTypeKidnap:          MetaKeyPerson,   // kidnap someone
+		ActionTypeRequestLand:     MetaKeyPlot,     // ask government to grant land
+		ActionTypeRevokeLand:      MetaKeyPlot,     // revoke land from a faction
+		ActionTypeDownsize:        MetaKeyPlot,     // sell a plot in some area
+		ActionTypeSteal:           MetaKeyPlot,     // steal from some building
+		ActionTypeRaid:            MetaKeyArea,     // raid some area
+		ActionTypePillage:         MetaKeyArea,     // pillage some area
+		ActionTypeEnslave:         MetaKeyArea,     // enslave people from some area
+		ActionTypeExpand:          MetaKeyArea,     // buy a plot in some area
+		ActionTypeResearch:        MetaKeyResearch, // research some tech
+		ActionTypeHireMercenaries: MetaKeyJob,      // create a job (MetaTarget) for some other faction, to attack *another* faction (TargetFactionID)
+	}
+
+	// All actions known to us
+	AllActions = []ActionType{
+		ActionTypeTrade,
+		ActionTypeBribe,
+		ActionTypeFestival,
+		ActionTypeRitual,
+		ActionTypeRequestLand,
+		ActionTypeCharity,
+		ActionTypePropoganda,
+		ActionTypeRecruit,
+		ActionTypeExpand,
+		ActionTypeDownsize,
+		ActionTypeCraft,
+		ActionTypeHarvest,
+		ActionTypeConsolidate,
+		ActionTypeResearch,
+		ActionTypeExcommunicate,
+		ActionTypeConcealSecrets,
+		ActionTypeGatherSecrets,
+		ActionTypeRevokeLand,
+		ActionTypeHireMercenaries,
+		ActionTypeSpreadRumors,
+		ActionTypeAssassinate,
+		ActionTypeFrame,
+		ActionTypeRaid,
+		ActionTypeEnslave,
+		ActionTypeSteal,
+		ActionTypePillage,
+		ActionTypeBlackmail,
+		ActionTypeKidnap,
+		ActionTypeShadowWar,
+		ActionTypeCrusade,
+		ActionTypeWar,
+	}
 )
 
 func init() {
 	// Factions with a IsReligion & ReligionID may perform these actions
-	ReligionOnlyActions = []ActionType{ActionTypeCrusade, ActionTypeExcommunicate}
+	ActionsReligionOnly = []ActionType{ActionTypeCrusade, ActionTypeExcommunicate, ActionTypeRitual}
 
 	// Factions with a IsGovernment & GovernmentID may perform these actions
-	GovernmentOnlyActions = []ActionType{ActionTypeGrantLand, ActionTypeRevokeLand}
+	ActionsGovernmentOnly = []ActionType{ActionTypeRevokeLand}
+
+	// Factions that are not Governments nor convert may perform these actions
+	ActionsLegalFactionOnly = []ActionType{ActionTypeRequestLand}
 }

@@ -1,13 +1,23 @@
 package base
 
 import (
+	"fmt"
 	"math"
 	"math/rand"
 	"time"
 
 	"github.com/voidshard/faction/internal/db"
 	"github.com/voidshard/faction/internal/sim/simutil"
+	"github.com/voidshard/faction/pkg/config"
 	"github.com/voidshard/faction/pkg/structs"
+)
+
+type actionTypeCategory int
+
+const (
+	Friendly actionTypeCategory = iota
+	Neutral
+	Unfriendly
 )
 
 var (
@@ -46,34 +56,56 @@ var (
 order:
 - survival
 a. wealth: we need money to operate
-    i. we define "enough money" to be operating expenses for some number of favoured actions
+
+	i. we define "enough money" to be operating expenses for some number of favoured actions
+
 b. membership: (growth) we need people to work for us
-    i. we define "enough people" to be the number of people we need to do our favoured actions
-    ii. if we're at war (or similar) we don't have "enough people" if we're significantly below our enemies
-        espionage and/or military rating(s)
+
+	i. we define "enough people" to be the number of people we need to do our favoured actions
+	ii. if we're at war (or similar) we don't have "enough people" if we're significantly below our enemies
+	    espionage and/or military rating(s)
+
 c. if we have active enemies:
-    i. military_defense: we need to defend ourselves
-	nb. covert factions do not consider military defense an option; the aim is not to be seen, not fight openly.
-    ii. espionage_defense: we need to defend our secrets
+
+	    i. military_defense: we need to defend ourselves
+		nb. covert factions do not consider military defense an option; the aim is not to be seen, not fight openly.
+	    ii. espionage_defense: we need to defend our secrets
+
 d. cohesion: (stability) we need people to be happy or we risk splitting
 e. corruption: we need to keep corruption down or we hemorage money / work / people
 - goals
 if we're not under some existential threat, we can pursue higher level goals
 
 => determine list of desired jobs
-    i. we should remove jobs we realistically can't do (eg. war, avoid some huge bribe)
+
+	i. we should remove jobs we realistically can't do (eg. war, avoid some huge bribe)
+
 => get faction's current jobs
 => remove currently active jobs from desired jobs (that have the same target & action)
 => jobs that are for survival can trump non-survival jobs & cause us to cancel otherwise planned work
-
 */
-
 func (s *Base) PlanFactionJobs(factionID string) ([]*structs.Job, error) {
 	tick, err := s.dbconn.Tick()
 	if err != nil {
 		return nil, err
 	}
 
+	// check if we're at war with other factions
+	attacking, defending, err := s.determineFactionAtWar(tick, factionID)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(attacking) > 0 || len(defending) > 0 {
+		// if we're at war, not dying consumes most of our concerns
+		return s.planFactionJobsWartime(tick, factionID, attacking, defending)
+	} else {
+		// if we're at peace, we have lots of competing concerns
+		return s.planFactionJobsPeacetime(tick, factionID)
+	}
+}
+
+func (s *Base) planFactionJobsPeacetime(tick int, factionID string) ([]*structs.Job, error) {
 	ctx, err := simutil.NewFactionContext(s.dbconn, factionID)
 	if err != nil {
 		return nil, err
@@ -86,17 +118,23 @@ func (s *Base) PlanFactionJobs(factionID string) ([]*structs.Job, error) {
 	// Get all jobs for this faction that are active & wont finish next tick
 	q := db.Q(
 		db.F(db.SourceFactionID, db.Equal, factionID),
-		db.F(db.JobState, db.Equal, structs.JobStateActive),
+		db.F(db.JobState, db.In, []string{
+			string(structs.JobStatePending),
+			string(structs.JobStateReady),
+			string(structs.JobStateActive),
+		}),
 		db.F(db.TickEnds, db.Greater, tick),
 	).DisableSort()
 	jobs, _, err := s.dbconn.Jobs("", q)
 	if err != nil {
 		return nil, err
 	}
+	inflight := map[string]bool{}
 	for _, j := range jobs {
 		if j.State == structs.JobStateActive {
 			availablePeople -= j.PeopleNow
 		}
+		inflight[jobKey(j.TargetFactionID, j.Action)] = true
 	}
 
 	// summary of the faction's land
@@ -116,10 +154,274 @@ func (s *Base) PlanFactionJobs(factionID string) ([]*structs.Job, error) {
 		goals := determineFactionGoals(ctx)
 		weights.WeightByGoal(s.cfg.Settings.GoalWeight, goals...)
 	}
+
+	// decide which actions we should do
+	if weights.Normalise() <= 0 {
+		// there are no actions we wish to do / can do
+		return nil, nil
+	}
+
+	// pick actions to do, if we can't find valid targets we'll move on
+	plans := []*structs.Job{}
+	setTargets := []*structs.Job{}
+	for {
+		// pick out an action
+		act := weights.Choose()
+		cfg, ok := s.cfg.Actions[act]
+		if !ok {
+			continue
+		}
+
+		target := s.chooseJobTargetFaction(ctx, inflight, act, cfg)
+		if target == "" {
+			weights.WeightAction(0.0, act) // we can't do this action, remove it from the list
+			if weights.Normalise() <= 0 {
+				break // no more choices :(
+			}
+			continue
+		}
+
+		job := simutil.NewJob(tick, act, cfg)
+		job.SourceFactionID = factionID
+		job.TargetFactionID = target
+		job.IsIllegal = ctx.Summary.IsCovert || simutil.IsIllegalAction(act, ctx.AllGovernments()...)
+		if job.IsIllegal {
+			act, _ := s.cfg.Actions[job.Action]
+			job.Secrecy = int(float64(rnggen.Intn(structs.MaxTuple)+ctx.Summary.EspionageDefense) * act.SecrecyWeight)
+		}
+
+		if job.SourceFactionID == job.TargetFactionID {
+			// set here as we already have all the faction info we need
+			job.TargetAreaID = ctx.RandomArea(act)
+			if job.Action == structs.ActionTypeResearch {
+				job.TargetMetaKey = structs.MetaKeyResearch
+				job.TargetMetaVal = ctx.RandomResearch()
+			}
+		}
+
+		_, ok = structs.ActionTarget[act]
+		if ok && job.TargetMetaKey == "" { // we need to set a more specific target
+			setTargets = append(setTargets, job)
+		}
+
+		inflight[jobKey(job.TargetFactionID, act)] = true
+
+		// reduce the number of available people / money by the actions min
+		availablePeople -= cfg.MinPeople
+		ctx.Summary.Wealth -= int(cfg.Cost.Min)
+		if availablePeople <= 0 {
+			break
+		} else {
+			weights.WeightByMinPeople(0.0, availablePeople)
+			weights.WeightByCost(0.0, float64(ctx.Summary.Wealth))
+			if weights.Normalise() <= 0 {
+				break
+			}
+		}
+
+		plans = append(plans, job)
+	}
+
+	if len(setTargets) > 0 {
+		err = s.setSpecificJobTargets(setTargets)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	// nb. save jobs, faction
+
+	return plans, err
+}
+
+func (s *Base) setSpecificJobTargetsPerson(jobs []*structs.Job) error {
+	factionIDs := []string{}
+	for _, j := range jobs {
+		factionIDs = append(factionIDs, j.TargetFactionID)
+	}
+
+	// put out top 10 people of each faction
+	people, err := s.dbconn.FactionLeadership(10, factionIDs...)
+	if err != nil {
+		return err
+	}
+
+	for _, j := range jobs {
+		targets, ok := people[j.TargetFactionID]
+		if !ok {
+			return fmt.Errorf("no people found for faction %s", j.TargetFactionID)
+		}
+
+		chosen := targets.Get(rnggen.Intn(targets.Total))
+		if chosen == "" {
+			return fmt.Errorf("no target person found for faction %s", j.TargetFactionID)
+		}
+
+		j.TargetMetaKey = structs.MetaKeyPerson
+		j.TargetMetaVal = chosen
+	}
+
+	return nil
+}
+
+func (s *Base) setSpecificJobTargetsPlot(jobs []*structs.Job) error {
+	factionIDs := []string{}
+
+	for _, j := range jobs {
+		switch j.Action {
+		case structs.ActionTypeDownsize:
+			// targeting our own land(s)
+			factionIDs = append(factionIDs, j.SourceFactionID)
+		default:
+			// targeting lands of the target
+			factionIDs = append(factionIDs, j.TargetFactionID)
+		}
+	}
+
+	return nil
+}
+
+func (s *Base) setSpecificJobTargets(plans []*structs.Job) error {
+	// bucket jobs based on what kind of target they need
+	needed := map[structs.MetaKey][]*structs.Job{}
+	for _, j := range plans {
+		metakey, ok := structs.ActionTarget[j.Action]
+		if !ok {
+			return nil
+		}
+
+		sofar, ok := needed[metakey]
+		if !ok {
+			sofar = []*structs.Job{}
+		}
+		sofar = append(sofar, j)
+		needed[metakey] = sofar
+	}
+
+	// for each target type, select targets (ie. batched by ActionType)
+	for metakey, jobs := range needed {
+		switch metakey {
+		case structs.MetaKeyPlot:
+
+		case structs.MetaKeyPerson:
+			err := s.setSpecificJobTargetsPerson(jobs)
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
+}
+
+func jobKey(targetID string, t structs.ActionType) string {
+	return fmt.Sprintf("%s:%s", targetID, string(t))
+}
+
+func actionCategory(cfg *config.Action) actionTypeCategory {
+	if cfg.TargetMinTrust < 0 {
+		if cfg.TargetMaxTrust > 0 {
+			return Neutral
+		} else {
+			return Unfriendly // min & max are both < 0
+		}
+	} else {
+		return Friendly // min & max are both > 0
+	}
+}
+
+// chooseJobTargetFaction picks a target for a job.
+func (s *Base) chooseJobTargetFaction(ctx *simutil.FactionContext, inflight map[string]bool, act structs.ActionType, cfg *config.Action) string {
+	relations := ctx.Relations()
+
+	if cfg.TargetMinTrust == 0 && cfg.TargetMaxTrust == 0 {
+		return ctx.Summary.ID // target ourselves
+	}
+
+	// for friendly actions, we order potential targets by how much we like them
+	// for unfriendly actions, we order potential targets by how much we dislike them
+	reverse := false
+	if actionCategory(cfg) != Friendly {
+		reverse = true
+	}
+
+	// choices here is sorted by Trust
+	choices := relations.TrustBetween(cfg.TargetMinTrust, cfg.TargetMaxTrust, reverse)
+	if len(choices) == 0 {
+		return ""
+	}
+
+	// pick the first valid target that for which we don't already have a job
+	for _, targetFactionID := range choices {
+		_, ok := inflight[jobKey(targetFactionID, act)]
+		if ok { // this job & target is already inflight
+			continue
+		}
+		return targetFactionID
+	}
+
+	return ""
+}
+
+func (s *Base) planFactionJobsWartime(tick int, factionID string, attacking, defending []string) ([]*structs.Job, error) {
+	return nil, nil
+}
+
+func (s *Base) determineFactionAtWar(tick int, factionID string) ([]string, []string, error) {
+	q := db.Q(
+		// people attacking us
+		db.F(db.TargetFactionID, db.Equal, factionID),
+		db.F(db.JobState, db.Equal, structs.JobStateActive),
+		db.F(db.ActionType, db.In, []string{
+			string(structs.ActionTypeWar),
+			string(structs.ActionTypeCrusade),
+			string(structs.ActionTypeShadowWar),
+		}),
+		db.F(db.TickEnds, db.Greater, tick),
+	).Or(
+		// people planning to attack us
+		db.F(db.TargetFactionID, db.Equal, factionID),
+		db.F(db.JobState, db.In, []string{
+			string(structs.JobStatePending),
+			string(structs.JobStateReady),
+		}),
+		db.F(db.ActionType, db.In, []string{
+			string(structs.ActionTypeWar),
+			string(structs.ActionTypeCrusade),
+			// nb. shadow wars are covert, we don't know about them until they start
+		}),
+		db.F(db.TickEnds, db.Greater, tick),
+	).Or(
+		// people we're attacking
+		db.F(db.SourceFactionID, db.Equal, factionID),
+		db.F(db.ActionType, db.In, []string{
+			string(structs.ActionTypeWar),
+			string(structs.ActionTypeCrusade),
+			string(structs.ActionTypeShadowWar),
+		}),
+		db.F(db.TickEnds, db.Greater, tick),
+	).DisableSort()
+
+	jobs, _, err := s.dbconn.Jobs("", q)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	attacking := []string{}
+	defending := []string{}
+	for _, j := range jobs {
+		if j.SourceFactionID == factionID {
+			attacking = append(attacking, j.TargetFactionID)
+		} else {
+			defending = append(defending, j.SourceFactionID)
+		}
+	}
+
+	return attacking, defending, nil
 }
 
 func determineFactionGoals(ctx *simutil.FactionContext) []structs.Goal {
-	goals := map[structs.Goal]bool{}
+	goals := []structs.Goal{}
 
 	// if we're a research faction, GoalResearch
 	researchTopics := []string{}
@@ -129,15 +431,15 @@ func determineFactionGoals(ctx *simutil.FactionContext) []structs.Goal {
 		researchProb = append(researchProb, float64(weight))
 	}
 	if len(researchTopics) > 0 {
-		goals[structs.GoalResearch] = true
+		goals = append(goals, structs.GoalResearch)
 	}
 
 	// if we're a religion or highly religious, GoalPiety
 	if ctx.Summary.IsReligion || ctx.Summary.Piety > (structs.MaxEthos*9)/10 {
-		goals[structs.GoalPiety] = true
+		goals = append(goals, structs.GoalPiety)
 	} else if ctx.Summary.Piety > structs.MaxEthos/10 {
 		if rnggen.Float64() < toProbability(ctx.Summary.Piety) {
-			goals[structs.GoalPiety] = true
+			goals = append(goals, structs.GoalPiety)
 		}
 	}
 
@@ -145,66 +447,61 @@ func determineFactionGoals(ctx *simutil.FactionContext) []structs.Goal {
 
 	// decide if we need a military or military intelligence
 	if len(relations.Nemesis)+len(relations.Hostile) > 0 {
-		goals[structs.GoalMilitary] = true
+		goals = append(goals, structs.GoalMilitary)
 	} else if len(relations.Hostile)+len(relations.Rival) > 0 {
-		goals[structs.GoalEspionage] = true
+		goals = append(goals, structs.GoalEspionage)
 	} else if ctx.Summary.IsCovert && rnggen.Float64() < toProbability(ctx.Summary.Ethos.Caution) {
-		goals[structs.GoalEspionage] = true
+		goals = append(goals, structs.GoalEspionage)
 	}
 
 	// maybe make friends
 	if len(relations.Unfriendly)+len(relations.Neutral) > 0 && (ctx.Summary.Altruism > structs.MaxEthos/4 || ctx.Summary.Pacifism > structs.MaxEthos/4) {
-		goals[structs.GoalDiplomacy] = true
+		goals = append(goals, structs.GoalDiplomacy)
 	} else if len(relations.Unfriendly) > 0 && rnggen.Float64()*2 < (toProbability(ctx.Summary.Altruism)+toProbability(ctx.Summary.Pacifism)) {
-		goals[structs.GoalDiplomacy] = true
+		goals = append(goals, structs.GoalDiplomacy)
 	}
 
 	// improve stability
 	if ctx.Summary.Corruption > structs.MaxEthos/4 && rnggen.Float64() < toProbability(ctx.Summary.Altruism) {
-		goals[structs.GoalStability] = true
+		goals = append(goals, structs.GoalStability)
 	} else if ctx.Summary.Cohesion < structs.MaxEthos/4 && rnggen.Float64() < toProbability(ctx.Summary.Tradition) {
-		goals[structs.GoalStability] = true
+		goals = append(goals, structs.GoalStability)
 	} else if rnggen.Float64() < toProbability(ctx.Summary.Ethos.Caution) && ctx.Summary.Cohesion > structs.MaxEthos/5 {
-		goals[structs.GoalStability] = true
+		goals = append(goals, structs.GoalStability)
 	}
 
 	// increase our power & reach
 	if rnggen.Float64() < toProbability(ctx.Summary.Ethos.Ambition) {
-		goals[structs.GoalPower] = true
+		goals = append(goals, structs.GoalPower)
 	} else if rnggen.Float64() < toProbability(ctx.Summary.Ethos.Ambition) {
-		goals[structs.GoalTerritory] = true
+		goals = append(goals, structs.GoalTerritory)
 	}
 
 	// increase our wealth / influence
 	if rnggen.Float64() < toProbability(ctx.Summary.Ethos.Altruism) {
-		goals[structs.GoalWealth] = true
+		goals = append(goals, structs.GoalWealth)
 	} else if rnggen.Float64() < toProbability(ctx.Summary.Ethos.Altruism) {
-		goals[structs.GoalGrowth] = true
+		goals = append(goals, structs.GoalGrowth)
 	}
 
 	// increase our military power / knowledge
 	if rnggen.Float64() > toProbability(ctx.Summary.Ethos.Pacifism) {
-		goals[structs.GoalMilitary] = true
+		goals = append(goals, structs.GoalMilitary)
 	} else if rnggen.Float64() > toProbability(ctx.Summary.Ethos.Pacifism) {
-		goals[structs.GoalEspionage] = true
+		goals = append(goals, structs.GoalEspionage)
 	}
 
 	// finally, randomly ensure one of these is included (they're always good background goals)
 	rvalue := rnggen.Float64()
-	if rvalue < 0.33 {
-		goals[structs.GoalWealth] = true
-	} else if rvalue < 0.66 {
-		goals[structs.GoalGrowth] = true
-	} else {
-		goals[structs.GoalTerritory] = true
-	}
+	if rvalue < 0.20 {
+		goals = append(goals, structs.GoalWealth)
+	} else if rvalue < 0.40 {
+		goals = append(goals, structs.GoalGrowth)
+	} else if rvalue < 0.60 {
+		goals = append(goals, structs.GoalTerritory)
+	} // 40% nothing added
 
-	// make sure we return unique goals
-	res := []structs.Goal{}
-	for g := range goals {
-		res = append(res, g)
-	}
-	return res
+	return goals
 }
 
 func toProbability(x int) float64 {
@@ -275,6 +572,7 @@ func (s *Base) actionWeightsForFaction(ctx *simutil.FactionContext, land *struct
 	// survival: we need people to work for us
 	if people < s.cfg.Settings.SurvivalMinPeople {
 		weights.WeightByGoal(s.cfg.Settings.SurvivalGoalWeight, structs.GoalGrowth)
+		survivalConcerns = true
 	} else if people < (s.cfg.Settings.SurvivalMinPeople*6)/5 { // 1.2x
 		weights.WeightByGoal(s.cfg.Settings.SurvivalGoalWeight/2, structs.GoalGrowth)
 	}

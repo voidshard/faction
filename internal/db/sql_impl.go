@@ -16,7 +16,6 @@ const (
 	tableLaws        = "laws"
 	tableJobs        = "jobs"
 	tablePeople      = "people"
-	tableRoutes      = "routes"
 	tablePlots       = "plots"
 	tableEvents      = "events"
 
@@ -28,7 +27,7 @@ const (
 )
 
 type Row interface {
-	*structs.Plot | *structs.Route | *structs.Person | *structs.Job | *structs.Government | *structs.Family | *structs.Faction | *structs.Area | *structs.Tuple | *structs.Modifier | *structs.Event
+	*structs.Plot | *structs.Person | *structs.Job | *structs.Government | *structs.Family | *structs.Faction | *structs.Area | *structs.Tuple | *structs.Modifier | *structs.Event
 }
 
 // sqlDB represents a generic DB wrapper -- this allows SQLite & Postgres to run
@@ -64,10 +63,6 @@ func (s *sqlDB) Tick() (int, error) {
 
 func (s *sqlDB) Plots(token string, in *Query) ([]*structs.Plot, string, error) {
 	return plots(s.conn, token, in)
-}
-
-func (s *sqlDB) Routes(token string, in *Query) ([]*structs.Route, string, error) {
-	return routes(s.conn, token, in)
 }
 
 func (s *sqlDB) People(token string, in *Query) ([]*structs.Person, string, error) {
@@ -166,10 +161,6 @@ func (t *sqlTx) Plots(token string, in *Query) ([]*structs.Plot, string, error) 
 	return plots(t.tx, token, in)
 }
 
-func (t *sqlTx) Routes(token string, in *Query) ([]*structs.Route, string, error) {
-	return routes(t.tx, token, in)
-}
-
 func (t *sqlTx) People(token string, in *Query) ([]*structs.Person, string, error) {
 	return people(t.tx, token, in)
 }
@@ -228,10 +219,6 @@ func chunkWrite[R Row](fn func(sqlOperator, []R) error, tx sqlOperator, in []R) 
 
 func (t *sqlTx) SetPlots(in ...*structs.Plot) error {
 	return chunkWrite(setPlots, t.tx, in)
-}
-
-func (t *sqlTx) SetRoutes(in ...*structs.Route) error {
-	return chunkWrite(setRoutes, t.tx, in)
 }
 
 func (t *sqlTx) SetPeople(in ...*structs.Person) error {

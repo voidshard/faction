@@ -89,6 +89,7 @@ func Faction() *config.Faction {
 					structs.ActionTypeWar,
 					structs.ActionTypeBribe,
 					structs.ActionTypeRaid,
+					structs.ActionTypeEnslave,
 				},
 				Probability: 0.02,
 				Weight: config.Distribution{
@@ -124,6 +125,7 @@ func Faction() *config.Faction {
 				Actions: []structs.ActionType{ // removing people
 					structs.ActionTypeAssassinate,
 					structs.ActionTypeFrame,
+					structs.ActionTypeSpreadRumors,
 				},
 				Probability: 0.02,
 				Weight: config.Distribution{
@@ -157,8 +159,10 @@ func Faction() *config.Faction {
 			config.Focus{
 				Actions: []structs.ActionType{ // research institution
 					structs.ActionTypeResearch,
+					structs.ActionTypeResearch,
 				},
-				Probability: 0.15,
+				ResearchTopics: []string{MAGIC_ARCANA},
+				Probability:    0.10,
 				Weight: config.Distribution{
 					Min:       3000,
 					Max:       7000,
@@ -171,13 +175,54 @@ func Faction() *config.Faction {
 				MilitaryDefenseBonus:  0.0,
 			},
 			config.Focus{
+				Actions: []structs.ActionType{ // standard fantasy temple / healing institution
+					structs.ActionTypeResearch,
+					structs.ActionTypeResearch,
+					structs.ActionTypeCharity,
+				},
+				ResearchTopics: []string{MEDICINE, THEOLOGY},
+				Probability:    0.08,
+				Weight: config.Distribution{
+					Min:       1000,
+					Max:       3000,
+					Mean:      2000,
+					Deviation: 1000,
+				},
+				EspionageOffenseBonus: 0.25,
+				EspionageDefenseBonus: 0.0,
+				MilitaryOffenseBonus:  -0.25,
+				MilitaryDefenseBonus:  -0.25,
+			},
+			config.Focus{
+				Actions: []structs.ActionType{ // knightly order
+					structs.ActionTypeResearch,
+					structs.ActionTypeResearch,
+					structs.ActionTypeRaid,
+					structs.ActionTypePillage,
+					structs.ActionTypeRecruit,
+				},
+				ResearchTopics: []string{WARFARE, THEOLOGY},
+				Probability:    0.05,
+				Weight: config.Distribution{
+					Min:       3000,
+					Max:       7000,
+					Mean:      4000,
+					Deviation: 3000,
+				},
+				EspionageOffenseBonus: 0.0,
+				EspionageDefenseBonus: 0.0,
+				MilitaryOffenseBonus:  0.5,
+				MilitaryDefenseBonus:  0.5,
+			},
+			config.Focus{
 				Actions: []structs.ActionType{ // cult
 					structs.ActionTypeKidnap,
 					structs.ActionTypeResearch,
 					structs.ActionTypeConcealSecrets,
 					structs.ActionTypeGatherSecrets,
 				},
-				Probability: 0.02,
+				ResearchTopics: []string{MAGIC_OCCULT},
+				Probability:    0.02,
 				Weight: config.Distribution{
 					Min:       4000,
 					Max:       8000,
@@ -230,6 +275,7 @@ func Faction() *config.Faction {
 				Actions: []structs.ActionType{
 					structs.ActionTypeSpreadRumors,
 					structs.ActionTypePropoganda,
+					structs.ActionTypeFrame,
 				},
 				Probability: 0.15,
 				Weight: config.Distribution{
@@ -259,6 +305,24 @@ func Faction() *config.Faction {
 				EspionageOffenseBonus: 0.0,
 				EspionageDefenseBonus: 0.0,
 				MilitaryOffenseBonus:  0.1,
+				MilitaryDefenseBonus:  0.1,
+			},
+			config.Focus{ // expansion, unfriendly style
+				Actions: []structs.ActionType{
+					structs.ActionTypeRecruit,
+					structs.ActionTypeExpand,
+					structs.ActionTypeEnslave,
+				},
+				Probability: 0.2,
+				Weight: config.Distribution{
+					Min:       3000,
+					Max:       7000,
+					Mean:      5000,
+					Deviation: 2000,
+				},
+				EspionageOffenseBonus: 0.0,
+				EspionageDefenseBonus: 0.0,
+				MilitaryOffenseBonus:  0.2,
 				MilitaryDefenseBonus:  0.1,
 			},
 			config.Focus{ // trade

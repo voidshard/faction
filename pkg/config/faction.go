@@ -59,6 +59,10 @@ type Focus struct {
 	EspionageDefenseBonus float64
 	MilitaryOffenseBonus  float64
 	MilitaryDefenseBonus  float64
+
+	// Explicitly set research topic(s) for this faction.
+	// If there are more Research actions than topics, then topics will be randomly chosen to match.
+	ResearchTopics []string
 }
 
 // Faction represents configuration for randomly creating a faction.

@@ -81,13 +81,6 @@ var (
 	    yield INTEGER NOT NULL DEFAULT 0
 	);`, tablePlots)
 
-	createRoutes = fmt.Sprintf(`CREATE TABLE IF NOT EXISTS %s (
-	    source_area_id VARCHAR(36) NOT NULL,
-	    target_area_id VARCHAR(36) NOT NULL,
-	    travel_time INTEGER NOT NULL DEFAULT 0,
-	    UNIQUE(source_area_id, target_area_id)
-	);`, tableRoutes)
-
 	createJobs = fmt.Sprintf(`CREATE TABLE IF NOT EXISTS %s (
 	    id VARCHAR(36) PRIMARY KEY,
 	    parent_job_id VARCHAR(36) NOT NULL DEFAULT "",
@@ -289,7 +282,6 @@ func (s *Sqlite) createTables() error {
 		createPlots,
 		createGovernments,
 		createLaws,
-		createRoutes,
 		createJobs,
 		createFamilies,
 		createPeople,

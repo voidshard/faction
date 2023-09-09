@@ -16,6 +16,8 @@ type Plot struct {
 	AreaID    string `db:"area_id"`
 	FactionID string `db:"faction_id"` // the owner
 
+	Value int `db:"value"` // average value for this plot (to the owner)
+
 	Crop
 }
 

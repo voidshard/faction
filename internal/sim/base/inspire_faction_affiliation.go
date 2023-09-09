@@ -115,8 +115,8 @@ func (s *Base) InspireFactionAffiliation(cfg *config.Affiliation, factionID stri
 					p.PreferredFactionID = factionID
 					ranks = append(ranks, &structs.Tuple{Subject: p.ID, Object: factionID, Value: int(rank)})
 					events = append(events,
-						newFactionChangeEvent(p, tick, prev),
-						newFactionPromotionEvent(p, tick, factionID),
+						simutil.NewFactionChangeEvent(p, tick, prev),
+						simutil.NewFactionPromotionEvent(p, tick, factionID),
 					)
 					affil += (structs.MaxEthos / 50 * int(rank)) // higher rank -> higher affiliation
 					done += 1

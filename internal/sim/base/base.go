@@ -145,12 +145,6 @@ func (s *Base) SetAreaGovernment(governmentID string, areas ...string) error {
 	return s.dbconn.SetAreaGovernment(governmentID, areas)
 }
 
-func (s *Base) SetRoutes(in ...*structs.Route) error {
-	return s.dbconn.InTransaction(func(tx db.ReaderWriter) error {
-		return tx.SetRoutes(in...)
-	})
-}
-
 func (s *Base) Tick() (tick int, err error) {
 	s.dbconn.InTransaction(func(tx db.ReaderWriter) error {
 		tick, err = tx.Tick()

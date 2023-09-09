@@ -21,6 +21,7 @@ var (
 	}
 	colChecks = map[Field][]isValid{
 		ID:                 {isID, isListID},
+		ActionType:         {isActionType, isListActionType},
 		JobID:              {isID, isListID},
 		AreaID:             {isID, isListID},
 		GovernmentID:       {isID, isListID},
@@ -33,6 +34,7 @@ var (
 		MaleID:             {isID, isListID},
 		FemaleID:           {isID, isListID},
 		SourceFactionID:    {isID, isListID},
+		TargetFactionID:    {isID, isListID},
 		TargetMetaKey:      {isMetaKey, isListMetaKey},
 		Random:             {isInt},
 		BirthTick:          {isInt},
@@ -45,46 +47,27 @@ var (
 		Tick:               {isInt},
 		TickEnds:           {isInt},
 	}
-	metaKeys   = map[string]bool{}
-	eventTypes = map[string]bool{}
-	jobStates  = map[string]bool{}
+	metaKeys    = map[string]bool{}
+	eventTypes  = map[string]bool{}
+	jobStates   = map[string]bool{}
+	actionTypes = map[string]bool{}
 )
 
 func init() {
-	metaKeys = map[string]bool{
-		string(structs.MetaKeyPerson):     true,
-		string(structs.MetaKeyPlot):       true,
-		string(structs.MetaKeyResearch):   true,
-		string(structs.MetaKeyFaction):    true,
-		string(structs.MetaKeyReligion):   true,
-		string(structs.MetaKeyGovernment): true,
-		string(structs.MetaKeyFamily):     true,
-		string(structs.MetaKeyCommodity):  true,
-		string(structs.MetaKeyAction):     true,
-		string(structs.MetaKeyArea):       true,
-		string(structs.MetaKeyJob):        true,
-		string(structs.MetaKeyRoute):      true,
-		string(structs.MetaKeyEvent):      true,
+	for _, m := range structs.AllMetaKeys {
+		metaKeys[string(m)] = true
 	}
 
-	eventTypes = map[string]bool{
-		string(structs.EventPersonBirth):      true,
-		string(structs.EventPersonDeath):      true,
-		string(structs.EventPersonMove):       true,
-		string(structs.EventPersonChangeProf): true,
-		string(structs.EventFamilyMarriage):   true,
-		string(structs.EventFamilyDivorce):    true,
-		string(structs.EventFamilyAdoption):   true,
-		string(structs.EventFamilyPregnant):   true,
-		string(structs.EventFamilyMove):       true,
+	for _, e := range structs.AllEventTypes {
+		eventTypes[string(e)] = true
 	}
 
-	jobStates = map[string]bool{
-		string(structs.JobStatePending): true,
-		string(structs.JobStateReady):   true,
-		string(structs.JobStateActive):  true,
-		string(structs.JobStateDone):    true,
-		string(structs.JobStateFailed):  true,
+	for _, s := range structs.AllJobStates {
+		jobStates[string(s)] = true
+	}
+
+	for _, a := range structs.AllActions {
+		actionTypes[string(a)] = true
 	}
 }
 
@@ -249,6 +232,29 @@ func isListEventType(v interface{}) bool {
 	return true
 }
 
+func isActionType(v interface{}) bool {
+	i, ok := v.(string)
+	if !ok {
+		return false
+	}
+	_, ok = actionTypes[i]
+	return ok
+}
+
+func isListActionType(v interface{}) bool {
+	i, ok := v.([]string)
+	if !ok {
+		return false
+	}
+	for _, j := range i {
+		_, ok = actionTypes[j]
+		if !ok {
+			return false
+		}
+	}
+	return true
+}
+
 func isMetaKey(v interface{}) bool {
 	i, ok := v.(string)
 	if !ok {
@@ -344,7 +350,7 @@ func sqlFromModifierFilters(r Relation, tk *dbutils.IterToken, in *Query) (strin
 
 	order := ""
 	if in.sort {
-		order = "ORDER BY subject"
+		order = "ORDER BY value DESC"
 	}
 
 	return fmt.Sprintf(`SELECT * FROM %s %s %s LIMIT $%d OFFSET $%d;`,
@@ -360,7 +366,7 @@ func sqlFromTupleFilters(r Relation, tk *dbutils.IterToken, in *Query) (string, 
 
 	order := ""
 	if in.sort {
-		order = "ORDER BY subject"
+		order = "ORDER BY value DESC"
 	}
 
 	return fmt.Sprintf(
@@ -407,21 +413,4 @@ func sqlIn(in []string) (string, []interface{}) {
 		bindvars[i] = fmt.Sprintf("$%d", i+1)
 	}
 	return strings.Join(bindvars, ", "), args
-}
-
-func sqlFromRouteFilters(tk *dbutils.IterToken, in *Query) (string, []interface{}, error) {
-	where, args, err := in.sqlQuery(0)
-	if err != nil {
-		return "", nil, err
-	}
-
-	order := ""
-	if in.sort {
-		order = "ORDER BY source_area_id"
-	}
-
-	return fmt.Sprintf(`SELECT * 
-	    FROM %s %s %s LIMIT $%d OFFSET $%d;`,
-		tableRoutes, where, order, len(args)+1, len(args)+2,
-	), append(args, tk.Limit, tk.Offset), nil
 }

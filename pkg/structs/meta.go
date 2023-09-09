@@ -20,3 +20,22 @@ const (
 	MetaKeyEvent      MetaKey = "event"      // targets specific event (ie. person_birth) Val:EVENT_ID
 	MetaKeyGoal       MetaKey = "goal"       // targets specific goal (ie. wealth) Val:GOAL_ID
 )
+
+var (
+	AllMetaKeys = []MetaKey{
+		MetaKeyPerson,
+		MetaKeyPlot,
+		MetaKeyResearch,
+		MetaKeyFaction,
+		MetaKeyReligion,
+		MetaKeyGovernment,
+		MetaKeyFamily,
+		MetaKeyCommodity,
+		MetaKeyAction,
+		MetaKeyJob,
+		MetaKeyArea,
+		MetaKeyRoute,
+		MetaKeyEvent,
+		MetaKeyGoal,
+	}
+)

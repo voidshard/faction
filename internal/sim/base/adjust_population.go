@@ -156,18 +156,18 @@ func (s *Base) birthChildren(tick int, area string) error {
 
 			mp.Children = append(mp.Children, child)
 
-			mp.Events = append(mp.Events, newBirthEvent(child, f.ID))
+			mp.Events = append(mp.Events, simutil.NewBirthEvent(child, f.ID))
 
 			if dice.RandomDeathInfantMortality() {
 				child.DeathMetaReason = diedInChildbirth
 				child.DeathTick = tick
 				child.DeathMetaKey = structs.MetaKeyPerson
 				child.DeathMetaVal = f.FemaleID
-				mp.Events = append(mp.Events, newDeathEvent(child))
+				mp.Events = append(mp.Events, simutil.NewDeathEvent(child))
 			}
 
 			if dice.RandomAdultDeathInChildbirth() {
-				mp.Events = append(mp.Events, newDeathEventWithCause(
+				mp.Events = append(mp.Events, simutil.NewDeathEventWithCause(
 					tick,
 					f.FemaleID,
 					structs.MetaKeyPerson,

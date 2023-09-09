@@ -195,6 +195,7 @@ func (s *Base) randFaction(fr *factionRand) *simutil.MetaFaction {
 	seen := map[int]bool{}
 	actionsEthos := []*structs.Ethos{&mf.Faction.Ethos}
 	researchCount := 0
+	researchTopics := []string{}
 	for i := 0; i < fr.focusCount.Int(); i++ {
 		choice := fr.focusOccur.Int()
 		_, ok := seen[choice]
@@ -219,6 +220,9 @@ func (s *Base) randFaction(fr *factionRand) *simutil.MetaFaction {
 
 			if act == structs.ActionTypeResearch {
 				researchCount++
+				if focus.ResearchTopics != nil && len(focus.ResearchTopics) > 0 {
+					researchTopics = append(researchTopics, focus.ResearchTopics...)
+				}
 			}
 
 			mf.ActionWeights = append(mf.ActionWeights, &structs.Tuple{
@@ -261,14 +265,18 @@ func (s *Base) randFaction(fr *factionRand) *simutil.MetaFaction {
 			continue
 		}
 
+		actions = append(actions, structs.ActionTypeTrade)
+
 		for _, land := range landrights {
 			land.FactionID = mf.Faction.ID
 
 			if s.eco.IsCraftable(land.Commodity) {
 				countCraft++
+				actions = append(actions, structs.ActionTypeCraft)
 			}
 			if s.eco.IsHarvestable(land.Commodity) {
 				countHarvest++
+				actions = append(actions, structs.ActionTypeHarvest)
 			}
 			mf.Areas[land.AreaID] = true
 		}
@@ -318,14 +326,16 @@ func (s *Base) randFaction(fr *factionRand) *simutil.MetaFaction {
 			ID:        structs.NewID(),
 			AreaID:    area,
 			FactionID: mf.Faction.ID,
-			Size:      fr.plotSize.Int(),
+			Crop: structs.Crop{
+				Size: fr.plotSize.Int(),
+			},
 		})
 		mf.Areas[area] = true
 	}
 
 	// if we need to pick research topics, we can do so now sensibly
 	// (since we know where the faction is and what professions it prefers)
-	mf.ResearchWeights = fr.randResearch(mf, researchCount)
+	mf.ResearchWeights = fr.randResearch(mf, researchCount, researchTopics)
 
 	// pick a headquarters
 	switch len(mf.Plots) {

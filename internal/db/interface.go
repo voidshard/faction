@@ -32,7 +32,6 @@ type Reader interface {
 	People(token string, q *Query) ([]*structs.Person, string, error)
 	Plots(token string, q *Query) ([]*structs.Plot, string, error)
 	Tuples(table Relation, token string, q *Query) ([]*structs.Tuple, string, error)
-	Routes(token string, q *Query) ([]*structs.Route, string, error)
 	Meta(id string) (string, int, error)
 	Modifiers(table Relation, token string, q *Query) ([]*structs.Modifier, string, error)
 	ModifiersSum(table Relation, token string, q *Query) ([]*structs.Tuple, string, error)
@@ -51,7 +50,6 @@ type Writer interface {
 	SetTuples(table Relation, in ...*structs.Tuple) error
 	SetModifiers(table Relation, in ...*structs.Modifier) error
 	DeleteModifiers(table Relation, expires_before_tick int) error
-	SetRoutes(in ...*structs.Route) error
 	SetMeta(id, str_val string, int_val int) error
 	IncrTuples(table Relation, v int, q *Query) error
 	SetEvents(in ...*structs.Event) error

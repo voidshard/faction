@@ -79,11 +79,13 @@ const (
 
 	// job
 	SourceFactionID Field = "source_faction_id"
+	TargetFactionID Field = "target_faction_id"
 	TargetMetaKey   Field = "target_meta_key"
 	TargetMetaVal   Field = "target_meta_val"
 	Secrecy         Field = "secrecy"
 	JobState        Field = "state"
 	TickEnds        Field = "tick_ends"
+	ActionType      Field = "action_type"
 
 	// tuple, modifiers
 	Subject Field = "subject"

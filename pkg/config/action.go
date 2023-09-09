@@ -19,7 +19,6 @@ type Action struct {
 
 	// Target denotes that this action requires a target (faction) and the targets min/max trust
 	// Ie. we only trade with factions we trust, and only make war on factions we don't.
-	Target         bool
 	TargetMinTrust int
 	TargetMaxTrust int
 

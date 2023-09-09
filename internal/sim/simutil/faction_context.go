@@ -2,11 +2,16 @@ package simutil
 
 import (
 	"fmt"
+	"math/rand"
+	"time"
 
 	"github.com/voidshard/faction/internal/db"
 	"github.com/voidshard/faction/internal/dbutils"
+	"github.com/voidshard/faction/internal/random/rng"
 	"github.com/voidshard/faction/pkg/structs"
 )
+
+var rnggen = rand.New(rand.NewSource(time.Now().UnixNano()))
 
 // FactionContext stores full faction information plus data about all areas
 // and governments that rule those areas
@@ -16,8 +21,14 @@ type FactionContext struct {
 	Governments     map[string]*structs.Government // map areaID -> government (only the above areas)
 	LocalGovernment *structs.Government            // the government of the area the faction HQ is in
 
-	openRanks *structs.DemographicRankSpread
-	rels      *FactionRelations
+	cachedTargetAreas map[string][]string
+	areaIDs           []string
+	openRanks         *structs.DemographicRankSpread
+	rels              *FactionRelations
+	dbconn            *db.FactionDB
+
+	researchTopics []string
+	research       rng.Normalised
 }
 
 // RelationWeight returns a number representing how much this faction prefers peace / caution over ambition / war.
@@ -25,6 +36,22 @@ type FactionContext struct {
 // and more peaceful factions more likely to try to avoid conflict.
 func (f *FactionContext) RelationWeight() int {
 	return (f.Summary.Ethos.Caution / 50) + (f.Summary.Ethos.Altruism / 20) - (f.Summary.Ethos.Ambition / 20) + (f.Summary.Ethos.Pacifism / 50)
+}
+
+func (f *FactionContext) RandomArea(purpose structs.ActionType) string {
+	if len(f.areaIDs) == 0 {
+		return f.Summary.HomeAreaID
+	}
+	return f.areaIDs[rnggen.Intn(len(f.areaIDs))]
+}
+
+func (f *FactionContext) RandomResearch() string {
+	if len(f.researchTopics) == 0 {
+		return ""
+	} else if len(f.researchTopics) == 1 {
+		return f.researchTopics[0]
+	}
+	return f.researchTopics[f.research.Int()]
 }
 
 func (f *FactionContext) Relations() *FactionRelations {
@@ -38,6 +65,27 @@ func (f *FactionContext) Relations() *FactionRelations {
 	}
 	return f.rels
 }
+
+/*
+func (f *FactionContext) TargetFactionAreas(factionID string) ([]string, error) {
+	areas, ok := f.cachedTargetAreas[factionID]
+	if !ok {
+		result, err := f.dbconn.FactionAreas(factionID)
+		if err != nil {
+			return nil, err
+		}
+		areaIDMap, _ := result[factionID]
+		areas = []string{}
+		if areaIDMap != nil {
+			for areaID := range areaIDMap {
+				areas = append(areas, areaID)
+			}
+		}
+		f.cachedTargetAreas[factionID] = areas
+	}
+	return areas, nil
+}
+*/
 
 func (f *FactionContext) AllGovernments() []*structs.Government {
 	seen := map[string]bool{}
@@ -114,10 +162,23 @@ func NewFactionContext(dbconn *db.FactionDB, factionID string) (*FactionContext,
 
 	gov, _ := areaGovs[summaries[0].HomeAreaID] // can be nil
 
+	// research
+	researchTopics := []string{}
+	prob := []float64{}
+	for topic, weight := range summaries[0].Research {
+		researchTopics = append(researchTopics, topic)
+		prob = append(prob, float64(weight))
+	}
+
 	return &FactionContext{
-		Summary:         summaries[0],
-		Areas:           areas,
-		Governments:     areaGovs,
-		LocalGovernment: gov,
+		Summary:           summaries[0],
+		Areas:             areas,
+		Governments:       areaGovs,
+		LocalGovernment:   gov,
+		cachedTargetAreas: map[string][]string{},
+		areaIDs:           areaIDs,
+		dbconn:            dbconn,
+		researchTopics:    researchTopics,
+		research:          rng.NewNormalised(prob),
 	}, nil
 }

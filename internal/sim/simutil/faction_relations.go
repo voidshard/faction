@@ -1,6 +1,10 @@
 package simutil
 
-import "github.com/voidshard/faction/pkg/structs"
+import (
+	"sort"
+
+	"github.com/voidshard/faction/pkg/structs"
+)
 
 type FactionRelations struct {
 	// So aligned it's almost the same faction
@@ -29,6 +33,9 @@ type FactionRelations struct {
 
 	// Sworn enemies, actively working to destroy one another
 	Nemesis []string // -9k -> -10k
+
+	// trust is a map of faction ID to trust value
+	trust map[string]int
 }
 
 func NewFactionRelations() *FactionRelations {
@@ -42,10 +49,31 @@ func NewFactionRelations() *FactionRelations {
 		Rival:       []string{},
 		Hostile:     []string{},
 		Nemesis:     []string{},
+		trust:       map[string]int{},
 	}
 }
 
+func (r *FactionRelations) TrustBetween(a, b int, reverseSort bool) []string {
+	results := []string{}
+	for k, v := range r.trust {
+		if v >= a && v <= b {
+			results = append(results, k)
+		}
+	}
+	sort.Slice(results, func(i, j int) bool {
+		ti, _ := r.trust[results[i]]
+		tj, _ := r.trust[results[j]]
+		if reverseSort {
+			return ti > tj
+		} else {
+			return ti < tj
+		}
+	})
+	return results
+}
+
 func (r *FactionRelations) Add(id string, w int) {
+	r.trust[id] = w
 	if w < structs.MaxTuple/10 && w > structs.MinTuple/10 {
 		r.Neutral = append(r.Neutral, id)
 	} else if w > 0 { // positive
