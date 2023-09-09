@@ -5,6 +5,7 @@ import (
 
 	"github.com/voidshard/faction/internal/db"
 	demographics "github.com/voidshard/faction/internal/random/demographics"
+	"github.com/voidshard/faction/internal/sim/simutil"
 	"github.com/voidshard/faction/pkg/config"
 	"github.com/voidshard/faction/pkg/economy"
 	fantasy "github.com/voidshard/faction/pkg/premade/fantasy"
@@ -124,6 +125,12 @@ func (s *Base) SetAreas(in ...*structs.Area) error {
 }
 
 func (s *Base) SetPlots(in ...*structs.Plot) error {
+	if s.eco != nil {
+		// whenever we write a plot, set the valuation
+		for _, p := range in {
+			p.Value = int(simutil.PlotValuation(p, s.eco, 0))
+		}
+	}
 	return s.dbconn.InTransaction(func(tx db.ReaderWriter) error {
 		return tx.SetPlots(in...)
 	})

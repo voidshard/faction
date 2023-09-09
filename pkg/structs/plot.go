@@ -16,7 +16,13 @@ type Plot struct {
 	AreaID    string `db:"area_id"`
 	FactionID string `db:"faction_id"` // the owner
 
-	Value int `db:"value"` // average value for this plot (to the owner)
+	// secrecy value if it isn't widely known who owns this plot
+	Hidden int `db:"hidden"`
+
+	// average value for this plot (to the owner)
+	// - size * land value + commodity value * yield
+	// Nb. rough estimation at last write given current market values
+	Value int `db:"value"`
 
 	Crop
 }

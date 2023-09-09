@@ -328,7 +328,7 @@ func sqlSummationTuplesFromModifiers(r Relation, tk *dbutils.IterToken, q *Query
 
 	order := ""
 	if q.sort {
-		order = "ORDER BY subject"
+		order = "ORDER BY value DESC"
 	}
 
 	return fmt.Sprintf(`SELECT
@@ -375,6 +375,27 @@ func sqlFromTupleFilters(r Relation, tk *dbutils.IterToken, in *Query) (string, 
 	), append(args, tk.Limit, tk.Offset), nil
 }
 
+func sqlFromPlotFilters(tk *dbutils.IterToken, in *Query) (string, []interface{}, error) {
+	where, args, err := in.sqlQuery(0)
+	if err != nil {
+		return "", nil, err
+	}
+
+	order := ""
+	if in.sort {
+		order = "ORDER BY value DESC"
+	}
+
+	return fmt.Sprintf(`SELECT *
+		FROM %s %s %s LIMIT $%d OFFSET $%d;`,
+		tablePlots,
+		where,
+		order,
+		len(args)+1,
+		len(args)+2,
+	), append(args, tk.Limit, tk.Offset), nil
+}
+
 func genericSQLFromFilters(tk *dbutils.IterToken, in *Query, table string) (string, []interface{}, error) {
 	where, args, err := in.sqlQuery(0)
 	if err != nil {
@@ -400,9 +421,7 @@ func genericSQLFromFilters(tk *dbutils.IterToken, in *Query, table string) (stri
 
 func sqlLawsFromSourceIDs(in []string) (string, []interface{}) {
 	inGovtIDs, args := sqlIn(in)
-	return fmt.Sprintf(`SELECT *
-	    FROM %s WHERE source_id IN (%s);
-	`, tableLaws, inGovtIDs), args
+	return fmt.Sprintf(`SELECT * FROM %s WHERE source_id IN (%s);`, tableLaws, inGovtIDs), args
 }
 
 func sqlIn(in []string) (string, []interface{}) {

@@ -76,6 +76,8 @@ var (
 	    id VARCHAR(36) PRIMARY KEY,
 	    area_id VARCHAR(36) NOT NULL,
 	    faction_id VARCHAR(36) NOT NULL DEFAULT "",
+	    hidden INTEGER NOT NULL DEFAULT 0,
+	    value INTEGER NOT NULL DEFAULT 0,
 	    size INTEGER NOT NULL DEFAULT 1,
 	    commodity VARCHAR(255) NOT NULL DEFAULT "",
 	    yield INTEGER NOT NULL DEFAULT 0

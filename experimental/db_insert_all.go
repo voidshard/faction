@@ -40,14 +40,11 @@ func main() {
 	}
 
 	plotland1 := &structs.Plot{
-		ID: structs.NewID(), AreaID: area2.ID, FactionID: faction1.ID, Commodity: "apples", Yield: 10,
+		ID: structs.NewID(), AreaID: area2.ID, FactionID: faction1.ID, Crop: structs.Crop{Commodity: "apples", Yield: 10},
 	}
 	plotland2 := &structs.Plot{
-		ID: structs.NewID(), AreaID: area1.ID, FactionID: faction1.ID, Commodity: "fur", Yield: 5,
+		ID: structs.NewID(), AreaID: area1.ID, FactionID: faction1.ID, Crop: structs.Crop{Commodity: "fur", Yield: 5},
 	}
-
-	route1 := &structs.Route{SourceAreaID: area1.ID, TargetAreaID: area2.ID, TravelTime: 3}  // downhill
-	route2 := &structs.Route{SourceAreaID: area2.ID, TargetAreaID: area1.ID, TravelTime: 50} // uphill
 
 	husband1 := &structs.Person{
 		ID:            structs.NewID(),
@@ -136,7 +133,7 @@ func main() {
 
 	// A house for our family
 	plot1 := &structs.Plot{
-		ID: structs.NewID(), AreaID: area1.ID, FactionID: faction1.ID, Size: 10,
+		ID: structs.NewID(), AreaID: area1.ID, FactionID: faction1.ID, Crop: structs.Crop{Size: 10},
 	}
 
 	job1 := &structs.Job{
@@ -145,6 +142,7 @@ func main() {
 		SourceAreaID:    area1.ID,
 		Action:          structs.ActionTypeFestival,
 		TargetAreaID:    area1.ID,
+		TargetFactionID: faction1.ID,
 		TargetMetaKey:   structs.MetaKeyFamily,
 		TargetMetaVal:   family1.ID,
 		PeopleMin:       2,
@@ -175,10 +173,6 @@ func main() {
 	err = tx.SetAreas(area1, area2)
 	errRollback(err)
 	fmt.Println("Areas set")
-
-	err = tx.SetRoutes(route1, route2)
-	errRollback(err)
-	fmt.Println("Routes set")
 
 	err = tx.SetGovernments(govt1)
 	errRollback(err)

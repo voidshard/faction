@@ -61,6 +61,14 @@ func (s *sqlDB) Tick() (int, error) {
 	return t, err
 }
 
+func (s *sqlDB) FactionLeadership(limit int, ids ...string) (map[string]*FactionLeadership, error) {
+	return factionLeadership(s.conn, limit, ids...)
+}
+
+func (s *sqlDB) FactionPlots(limit int, ids ...string) (map[string][]*structs.Plot, error) {
+	return factionPlots(s.conn, limit, ids...)
+}
+
 func (s *sqlDB) Plots(token string, in *Query) ([]*structs.Plot, string, error) {
 	return plots(s.conn, token, in)
 }
@@ -140,6 +148,14 @@ func (t *sqlTx) Meta(id string) (string, int, error) {
 // SetMeta sets some metadata within a transaction
 func (t *sqlTx) SetMeta(id, strv string, intv int) error {
 	return setMeta(t.tx, id, strv, intv)
+}
+
+func (t *sqlTx) FactionLeadership(limit int, ids ...string) (map[string]*FactionLeadership, error) {
+	return factionLeadership(t.tx, limit, ids...)
+}
+
+func (t *sqlTx) FactionPlots(limit int, ids ...string) (map[string][]*structs.Plot, error) {
+	return factionPlots(t.tx, limit, ids...)
 }
 
 func (t *sqlTx) Tick() (int, error) {

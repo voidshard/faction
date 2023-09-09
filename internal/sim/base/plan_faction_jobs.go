@@ -241,10 +241,12 @@ func (s *Base) setSpecificJobTargetsPerson(jobs []*structs.Job) error {
 	}
 
 	// put out top 10 people of each faction
-	people, err := s.dbconn.FactionLeadership(10, factionIDs...)
-	if err != nil {
-		return err
-	}
+	//	people, err := s.dbconn.FactionLeadership(10, factionIDs...)
+	//	if err != nil {
+	//		return err
+	//	}
+
+	people := map[string]*db.FactionLeadership{}
 
 	for _, j := range jobs {
 		targets, ok := people[j.TargetFactionID]

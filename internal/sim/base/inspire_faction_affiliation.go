@@ -244,7 +244,7 @@ func (s *Base) InspireFactionAffiliation(cfg *config.Affiliation, factionID stri
 		noProfessions := ctx.Summary.Professions == nil || len(ctx.Summary.Professions) == 0
 		if noProfessions {
 			pf.Or(
-				db.F(db.AreaID, db.In, ctx.Areas),
+				db.F(db.AreaID, db.In, ctx.AreaIDs()),
 				db.F(db.AdulthoodTick, db.Less, tick),
 				db.F(db.DeathTick, db.Equal, 0),
 			)
@@ -254,7 +254,7 @@ func (s *Base) InspireFactionAffiliation(cfg *config.Affiliation, factionID stri
 				professions = append(professions, p)
 			}
 			pf.Or(
-				db.F(db.AreaID, db.In, ctx.Areas),
+				db.F(db.AreaID, db.In, ctx.AreaIDs()),
 				db.F(db.PreferredProfession, db.In, professions),
 				db.F(db.AdulthoodTick, db.Less, tick),
 				db.F(db.DeathTick, db.Equal, 0),
@@ -293,8 +293,8 @@ func (s *Base) InspireFactionAffiliation(cfg *config.Affiliation, factionID stri
 					continue
 				}
 
-				if p.AdulthoodTick < tick || p.DeathTick > 0 {
-					continue // invalid
+				if p.AdulthoodTick > tick || p.DeathTick > 0 { // the filter above shouldn't allow this anyhow
+					continue // invalid (child and/or dead)
 				} else if p.PreferredFactionID == "" {
 					toconsider = append(toconsider, p) // easy case
 				} else if cfg.PoachBelowRank > 0 {

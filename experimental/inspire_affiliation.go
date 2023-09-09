@@ -86,8 +86,8 @@ func main() {
 	}
 
 	err = simulator.SetPlots(
-		&structs.Plot{ID: structs.NewID("lr1"), FactionID: faction2.ID, AreaID: area3, Commodity: "wood"},
-		&structs.Plot{ID: structs.NewID("lr2"), FactionID: faction3.ID, AreaID: area3, Commodity: "wood"},
+		&structs.Plot{ID: structs.NewID("lr1"), FactionID: faction2.ID, AreaID: area3, Crop: structs.Crop{Commodity: "wood", Yield: 1, Size: 10}},
+		&structs.Plot{ID: structs.NewID("lr2"), FactionID: faction3.ID, AreaID: area3, Crop: structs.Crop{Commodity: "wood", Yield: 1, Size: 15}},
 	)
 	if err != nil {
 		panic(err)

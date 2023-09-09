@@ -45,6 +45,10 @@ func (f *FactionContext) RandomArea(purpose structs.ActionType) string {
 	return f.areaIDs[rnggen.Intn(len(f.areaIDs))]
 }
 
+func (f *FactionContext) AreaIDs() []string {
+	return f.areaIDs
+}
+
 func (f *FactionContext) RandomResearch() string {
 	if len(f.researchTopics) == 0 {
 		return ""

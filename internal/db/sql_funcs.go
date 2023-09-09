@@ -33,12 +33,97 @@ type mstruct struct {
 }
 
 // lawStruct holds a law row. We don't provide these as a first class object,
-// but internally a government(s) laws are written as individual rows.
+// but internally laws are written as individual rows.
 type lawStruct struct {
 	SourceID string          `db:"source_id"`
 	MetaKey  structs.MetaKey `db:"meta_key"`
 	MetaVal  string          `db:"meta_val"`
 	Illegal  bool            `db:"illegal"`
+}
+
+func factionLeadership(op sqlOperator, limit int, ids ...string) (map[string]*FactionLeadership, error) {
+	result := map[string]*FactionLeadership{}
+	if len(ids) == 0 {
+		return result, nil
+	}
+
+	if limit < 1 {
+		limit = 1
+	}
+
+	inClause, vals := sqlIn(ids)
+
+	// Essentially for tuples in our list of faction IDs (the "object" here) we partition
+	// sort by value and then take the top N (limit) for each faction.
+	// Thus we return the highest ranked people of each faction given to us, down to some given limit.
+	//
+	// stackoverflow.com/questions/28119176/select-top-n-record-from-each-group-sqlite
+	qstr := fmt.Sprintf(`SELECT * FROM (
+	    SELECT ROW_NUMBER() OVER (
+		PARTITION BY object
+		ORDER BY value DESC
+	    ) as rnk, *
+	    FROM %s
+	    WHERE object IN (%s)
+	)
+	WHERE rnk <= %d;`, RelationPersonFactionRank.tupleTable(), inClause, limit)
+
+	var out []*structs.Tuple
+	err := op.Select(&out, qstr, vals...)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, t := range out {
+		leaders, ok := result[t.Object]
+		if !ok {
+			leaders = NewFactionLeadership()
+		}
+		leaders.Add(structs.FactionRank(t.Value), t.Subject)
+		result[t.Object] = leaders
+	}
+
+	return result, nil
+}
+
+func factionPlots(op sqlOperator, limit int, ids ...string) (map[string][]*structs.Plot, error) {
+	result := map[string][]*structs.Plot{}
+	if len(ids) == 0 {
+		return result, nil
+	}
+
+	if limit < 1 {
+		limit = 1
+	}
+
+	inClause, vals := sqlIn(ids)
+
+	qstr := fmt.Sprintf(`SELECT * FROM (
+	    SELECT ROW_NUMBER() OVER (
+		PARTITION BY faction_id
+		ORDER BY value DESC
+	    ) as rnk, *
+	    FROM %s
+	    WHERE faction_id IN (%s)
+	)
+	WHERE rnk <= %d;`, tablePlots, inClause, limit)
+
+	var out []*structs.Plot
+	err := op.Select(&out, qstr, vals...)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, t := range out {
+		fplots, ok := result[t.FactionID]
+		if !ok {
+			fplots = []*structs.Plot{}
+		}
+		fplots = append(fplots, t)
+		result[t.FactionID] = fplots
+	}
+
+	return result, nil
 }
 
 func deleteModifiers(op sqlOperator, r Relation, expires_before_tick int) error {
@@ -237,7 +322,7 @@ func plots(op sqlOperator, token string, in *Query) ([]*structs.Plot, string, er
 		return nil, token, err
 	}
 
-	q, args, err := genericSQLFromFilters(tk, in, tablePlots)
+	q, args, err := sqlFromPlotFilters(tk, in)
 	if err != nil {
 		return nil, token, err
 	}
@@ -278,11 +363,13 @@ func setPlots(op sqlOperator, in []*structs.Plot) error {
 	}
 
 	qstr := fmt.Sprintf(`INSERT INTO %s (
-	    id, area_id, faction_id, size, commodity, yield
+	    id, area_id, faction_id, hidden, value, size, commodity, yield
 	) VALUES (
-	    :id, :area_id, :faction_id, :size, :commodity, :yield
+	    :id, :area_id, :faction_id, :hidden, :value, :size, :commodity, :yield
 	) ON CONFLICT (id) DO UPDATE SET 
 	    faction_id=EXCLUDED.faction_id,
+	    hidden=EXCLUDED.hidden,
+	    value=EXCLUDED.value,
 	    size=EXCLUDED.size,
 	    commodity=EXCLUDED.commodity,
 	    yield=EXCLUDED.yield
