@@ -55,7 +55,8 @@ var (
 	createArea = fmt.Sprintf(`CREATE TABLE IF NOT EXISTS %s (
 	    id VARCHAR(36) PRIMARY KEY,
 	    government_id VARCHAR(36),
-	    biome VARCHAR(255) NOT NULL DEFAULT ""
+	    biome VARCHAR(255) NOT NULL DEFAULT "",
+	    random INTEGER NOT NULL DEFAULT 0
 	);`, tableAreas)
 
 	createGovernments = fmt.Sprintf(`CREATE TABLE IF NOT EXISTS %s (
@@ -162,6 +163,7 @@ var (
             id VARCHAR(36) PRIMARY KEY,
 	    name VARCHAR(255) NOT NULL default "",
 	    home_area_id VARCHAR(36) NOT NULL,
+	    hq_plot_id VARCHAR(36) NOT NULL,
             ethos_altruism INTEGER NOT NULL DEFAULT 0,
             ethos_ambition INTEGER NOT NULL DEFAULT 0,
             ethos_tradition INTEGER NOT NULL DEFAULT 0,

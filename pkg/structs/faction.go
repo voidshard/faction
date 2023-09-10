@@ -10,6 +10,7 @@ type Faction struct {
 	Name string `db:"name"`
 
 	HomeAreaID string `db:"home_area_id"` // the area where the faction is based
+	HQPlotID   string `db:"hq_plot_id"`   // faction headquarters
 
 	ActionFrequencyTicks int `db:"action_frequency_ticks"` // faction offers new jobs every X ticks
 
@@ -55,6 +56,10 @@ type FactionSummary struct {
 
 	// counts of people in each rank
 	Ranks *DemographicRankSpread
+}
+
+func (fs *FactionSummary) ToFaction() *Faction {
+	return &(fs).Faction
 }
 
 func NewFactionSummary(f *Faction) *FactionSummary {

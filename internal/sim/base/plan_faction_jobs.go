@@ -96,28 +96,69 @@ func (s *Base) PlanFactionJobs(factionID string) ([]*structs.Job, error) {
 		return nil, err
 	}
 
-	if len(attacking) > 0 || len(defending) > 0 {
-		// if we're at war, not dying consumes most of our concerns
-		return s.planFactionJobsWartime(tick, factionID, attacking, defending)
-	} else {
-		// if we're at peace, we have lots of competing concerns
-		return s.planFactionJobsPeacetime(tick, factionID)
-	}
-}
-
-func (s *Base) planFactionJobsPeacetime(tick int, factionID string) ([]*structs.Job, error) {
 	ctx, err := simutil.NewFactionContext(s.dbconn, factionID)
 	if err != nil {
 		return nil, err
 	}
 
+	var plans []*structs.Job
+	if len(attacking) > 0 || len(defending) > 0 {
+		// if we're at war, not dying consumes most of our concerns
+		plans, err = s.planFactionJobsWartime(tick, ctx, attacking, defending)
+	} else {
+		// if we're at peace, we have lots of competing concerns
+		plans, err = s.planFactionJobsPeacetime(tick, ctx)
+	}
+	if err != nil || plans == nil || len(plans) == 0 {
+		// whatever happened, we're done
+		return nil, err
+	}
+
+	// final checks & event creation
+	jobs := []*structs.Job{}
+	events := []*structs.Event{}
+	for _, j := range plans {
+		cfg, ok := s.cfg.Actions[j.Action]
+		if !ok {
+			// we have no config for the Job, we can't do it (how did it even get here?!)
+			continue
+		}
+
+		extraTarget, ok := structs.ActionTarget[j.Action]
+		if ok && j.TargetMetaKey != extraTarget {
+			// we need extra target info, but it's not set (probably we couldn't find a target)
+			continue
+		}
+
+		ctx.Summary.Wealth -= int(cfg.Cost.Min)
+		events = append(events, simutil.NewJobPending(j))
+	}
+
+	// push everything into the DB
+	err = s.dbconn.InTransaction(func(tx db.ReaderWriter) error {
+		err := tx.SetFactions(ctx.Summary.ToFaction()) // updated Wealth
+		if err != nil {
+			return err
+		}
+		err = tx.SetJobs(jobs...)
+		if err != nil {
+			return err
+		}
+		return tx.SetEvents(events...)
+	})
+
+	return jobs, err
+}
+
+func (s *Base) planFactionJobsPeacetime(tick int, ctx *simutil.FactionContext) ([]*structs.Job, error) {
 	// people we have available for work
 	people := estimateAvailablePeople(ctx.Summary.Ranks)
 	availablePeople := people
+	availableWealth := float64(ctx.Summary.Wealth)
 
 	// Get all jobs for this faction that are active & wont finish next tick
 	q := db.Q(
-		db.F(db.SourceFactionID, db.Equal, factionID),
+		db.F(db.SourceFactionID, db.Equal, ctx.Summary.ID),
 		db.F(db.JobState, db.In, []string{
 			string(structs.JobStatePending),
 			string(structs.JobStateReady),
@@ -138,7 +179,7 @@ func (s *Base) planFactionJobsPeacetime(tick int, factionID string) ([]*structs.
 	}
 
 	// summary of the faction's land
-	land, err := s.dbconn.LandSummary(nil, []string{factionID})
+	land, err := s.dbconn.LandSummary(nil, []string{ctx.Summary.ID})
 	if err != nil {
 		return nil, err
 	}
@@ -155,6 +196,9 @@ func (s *Base) planFactionJobsPeacetime(tick int, factionID string) ([]*structs.
 		weights.WeightByGoal(s.cfg.Settings.GoalWeight, goals...)
 	}
 
+	// hirable services in our area(s) (we'll fill out if we need)
+	services := map[structs.ActionType][]string{}
+
 	// decide which actions we should do
 	if weights.Normalise() <= 0 {
 		// there are no actions we wish to do / can do
@@ -162,9 +206,15 @@ func (s *Base) planFactionJobsPeacetime(tick int, factionID string) ([]*structs.
 	}
 
 	// pick actions to do, if we can't find valid targets we'll move on
+	limitCount := 100
 	plans := []*structs.Job{}
-	setTargets := []*structs.Job{}
 	for {
+		// we should remove jobs as we decide we can't do them, but this adds a hard limit
+		limitCount -= 1
+		if limitCount <= 0 {
+			break
+		}
+
 		// pick out an action
 		act := weights.Choose()
 		cfg, ok := s.cfg.Actions[act]
@@ -182,38 +232,51 @@ func (s *Base) planFactionJobsPeacetime(tick int, factionID string) ([]*structs.
 		}
 
 		job := simutil.NewJob(tick, act, cfg)
-		job.SourceFactionID = factionID
+		job.SourceFactionID = ctx.Summary.ID
 		job.TargetFactionID = target
 		job.IsIllegal = ctx.Summary.IsCovert || simutil.IsIllegalAction(act, ctx.AllGovernments()...)
 		if job.IsIllegal {
-			act, _ := s.cfg.Actions[job.Action]
-			job.Secrecy = int(float64(rnggen.Intn(structs.MaxTuple)+ctx.Summary.EspionageDefense) * act.SecrecyWeight)
+			job.Secrecy = int(float64(rnggen.Intn(structs.MaxTuple)+ctx.Summary.EspionageDefense) * cfg.SecrecyWeight)
 		}
 
-		if job.SourceFactionID == job.TargetFactionID {
-			// set here as we already have all the faction info we need
-			job.TargetAreaID = ctx.RandomArea(act)
-			if job.Action == structs.ActionTypeResearch {
-				job.TargetMetaKey = structs.MetaKeyResearch
-				job.TargetMetaVal = ctx.RandomResearch()
+		if job.Action == structs.ActionTypeHireMercenaries || job.Action == structs.ActionTypeHireSpies {
+			if services == nil { // services cached at this level so we don't re-fetch data
+				services, err = simutil.ServicesForHire(s.dbconn, ctx.AreaIDs())
+				if err != nil {
+					return nil, err
+				}
 			}
-		}
 
-		_, ok = structs.ActionTarget[act]
-		if ok && job.TargetMetaKey == "" { // we need to set a more specific target
-			setTargets = append(setTargets, job)
+			hirelingJob, err := s.buildMercenaryJob(services, job)
+			if err != nil {
+				return nil, err
+			}
+			if hirelingJob == nil {
+				weights.WeightAction(0.0, act) // we can't do this action, remove it from the list
+				if weights.Normalise() <= 0 {
+					break // no more choices :(
+				}
+				continue
+			}
+
+			hirelingJob.IsIllegal = ctx.Summary.IsCovert || simutil.IsIllegalAction(hirelingJob.Action, ctx.AllGovernments()...)
+			if hirelingJob.IsIllegal {
+				hirelingJob.Secrecy = int(float64(rnggen.Intn(structs.MaxTuple)+ctx.Summary.EspionageDefense) * cfg.SecrecyWeight)
+			}
+			job.TargetAreaID = ctx.Summary.HomeAreaID // we sit at home while someone else works
+			plans = append(plans, hirelingJob)
 		}
 
 		inflight[jobKey(job.TargetFactionID, act)] = true
 
 		// reduce the number of available people / money by the actions min
 		availablePeople -= cfg.MinPeople
-		ctx.Summary.Wealth -= int(cfg.Cost.Min)
+		availableWealth -= cfg.Cost.Min
 		if availablePeople <= 0 {
 			break
 		} else {
 			weights.WeightByMinPeople(0.0, availablePeople)
-			weights.WeightByCost(0.0, float64(ctx.Summary.Wealth))
+			weights.WeightByCost(0.0, availableWealth)
 			if weights.Normalise() <= 0 {
 				break
 			}
@@ -222,14 +285,10 @@ func (s *Base) planFactionJobsPeacetime(tick int, factionID string) ([]*structs.
 		plans = append(plans, job)
 	}
 
-	if len(setTargets) > 0 {
-		err = s.setSpecificJobTargets(setTargets)
-		if err != nil {
-			return nil, err
-		}
+	err = s.setSpecificJobTargets(ctx, land, plans)
+	if err != nil {
+		return nil, err
 	}
-
-	// nb. save jobs, faction
 
 	return plans, err
 }
@@ -240,13 +299,11 @@ func (s *Base) setSpecificJobTargetsPerson(jobs []*structs.Job) error {
 		factionIDs = append(factionIDs, j.TargetFactionID)
 	}
 
-	// put out top 10 people of each faction
-	//	people, err := s.dbconn.FactionLeadership(10, factionIDs...)
-	//	if err != nil {
-	//		return err
-	//	}
-
-	people := map[string]*db.FactionLeadership{}
+	// pull out top 10 people of each faction
+	people, err := s.dbconn.FactionLeadership(10, factionIDs...)
+	if err != nil {
+		return err
+	}
 
 	for _, j := range jobs {
 		targets, ok := people[j.TargetFactionID]
@@ -259,11 +316,64 @@ func (s *Base) setSpecificJobTargetsPerson(jobs []*structs.Job) error {
 			return fmt.Errorf("no target person found for faction %s", j.TargetFactionID)
 		}
 
+		personObj, ok := targets.People[chosen]
+		if ok {
+			j.TargetAreaID = personObj.AreaID
+		}
+
 		j.TargetMetaKey = structs.MetaKeyPerson
 		j.TargetMetaVal = chosen
 	}
 
 	return nil
+}
+
+func (s *Base) buildMercenaryJob(services map[structs.ActionType][]string, job *structs.Job) (*structs.Job, error) {
+	// choose who we will hire and for what action
+	var vendorAction structs.ActionType
+	var vendorID string
+
+	choices := structs.ActionsForMercenaries
+	if job.Action == structs.ActionTypeHireSpies {
+		choices = structs.ActionsForSpies
+	}
+	for _, act := range choices {
+		_, ok := s.cfg.Actions[act] // check it's a valid action
+		if !ok {
+			continue
+		}
+
+		factionsThatOfferService, ok := services[act]
+		if !ok {
+			continue
+		}
+		for _, fid := range factionsThatOfferService {
+			if fid != job.TargetFactionID { // don't hire target to attack itself
+				vendorID = fid
+				vendorAction = act
+				break
+			}
+		}
+		if vendorID != "" {
+			break
+		}
+	}
+	if vendorID == "" {
+		return nil, nil
+	}
+
+	// build a new child job
+	cfg, _ := s.cfg.Actions[vendorAction] // we checked this is valid above
+	hirejob := simutil.NewJob(job.TickCreated, vendorAction, cfg)
+	hirejob.ParentJobID = job.ID
+	hirejob.SourceFactionID = vendorID
+	hirejob.TargetFactionID = job.TargetFactionID
+
+	// set the meta information on the parent job
+	job.TargetMetaKey = structs.MetaKeyJob
+	job.TargetMetaVal = hirejob.ID
+
+	return hirejob, nil
 }
 
 func (s *Base) setSpecificJobTargetsPlot(jobs []*structs.Job) error {
@@ -280,16 +390,125 @@ func (s *Base) setSpecificJobTargetsPlot(jobs []*structs.Job) error {
 		}
 	}
 
+	// pull out the most expensive plots
+	plots, err := s.dbconn.FactionPlots(20, factionIDs...)
+	if err != nil {
+		return err
+	}
+
+	// read out what we know about the targets
+	intel, err := s.dbconn.TuplesSumModsBySubject(
+		db.RelationFactionFactionIntelligence,
+		jobs[0].SourceFactionID,
+		factionIDs...,
+	)
+	if err != nil {
+		return err
+	}
+
+	for _, j := range jobs {
+		if j.Action == structs.ActionTypeDownsize {
+			// one of the few actions where we target our own land
+			fplots, ok := plots[j.SourceFactionID]
+			if ok && len(fplots) > 0 {
+				j.TargetMetaKey = structs.MetaKeyPlot
+				// sell the "cheapest"
+				j.TargetMetaVal = fplots[len(fplots)-1].ID
+				j.TargetAreaID = fplots[len(fplots)-1].AreaID
+			}
+			continue
+		}
+
+		intelligence, _ := intel[j.TargetFactionID]
+
+		fplots, ok := plots[j.TargetFactionID]
+		if !ok || len(fplots) == 0 {
+			continue
+		}
+
+		potentialTargets := []*structs.Plot{}
+		for _, p := range fplots {
+			// plot isn't hidden or we know it belongs to the target
+			if p.Hidden <= 0 || intelligence > p.Hidden {
+				potentialTargets = append(potentialTargets, p)
+			}
+		}
+
+		if len(potentialTargets) == 0 {
+			continue
+		}
+
+		target := potentialTargets[rnggen.Intn(len(potentialTargets))]
+		j.TargetAreaID = target.AreaID
+		j.TargetMetaKey = structs.MetaKeyPlot
+		j.TargetMetaVal = target.ID
+	}
+
 	return nil
 }
 
-func (s *Base) setSpecificJobTargets(plans []*structs.Job) error {
+func (s *Base) setSpecificJobTargetsArea(ctx *simutil.FactionContext, land *structs.LandSummary, jobs []*structs.Job) error {
+	needAreas := []string{}
+	for _, j := range jobs {
+
+		if j.SourceFactionID != j.TargetFactionID {
+			// we need areas these factions are based in
+			needAreas = append(needAreas, j.TargetFactionID)
+		}
+	}
+
+	factionToArea, err := s.dbconn.FactionAreas(false, needAreas...)
+	if err != nil {
+		return err
+	}
+
+	for _, j := range jobs {
+		if j.SourceFactionID == j.TargetFactionID {
+			j.TargetAreaID = ctx.RandomArea(j.Action)
+			if j.Action == structs.ActionTypeHarvest {
+				// Pick some area in which we can harvest resources.
+				for areaID, summary := range land.Areas { // because order of iteration of maps is undefined
+					if len(summary.Commodities) > 0 {
+						j.TargetAreaID = areaID
+						break
+					}
+				}
+			}
+		} else {
+			fareas, ok := factionToArea[j.TargetFactionID]
+			if !ok {
+				continue
+			}
+			for areaID := range fareas { // because order of iteration of maps is undefined
+				j.TargetAreaID = areaID
+				break
+			}
+		}
+	}
+
+	return nil
+}
+
+func (s *Base) setSpecificJobTargets(ctx *simutil.FactionContext, land *structs.LandSummary, plans []*structs.Job) error {
 	// bucket jobs based on what kind of target they need
 	needed := map[structs.MetaKey][]*structs.Job{}
 	for _, j := range plans {
+		if j.Action == structs.ActionTypeResearch {
+			j.TargetAreaID = ctx.RandomArea(j.Action)
+			j.TargetMetaKey = structs.MetaKeyResearch
+			j.TargetMetaVal = ctx.RandomResearch()
+			continue
+		}
+
 		metakey, ok := structs.ActionTarget[j.Action]
 		if !ok {
-			return nil
+			// Area -> everything needs this if nothing else
+			metakey = structs.MetaKeyArea
+			if j.SourceFactionID == j.TargetFactionID {
+				j.SourceAreaID = ctx.RandomArea(j.Action)
+				j.TargetAreaID = j.SourceAreaID
+				continue
+			}
 		}
 
 		sofar, ok := needed[metakey]
@@ -304,9 +523,21 @@ func (s *Base) setSpecificJobTargets(plans []*structs.Job) error {
 	for metakey, jobs := range needed {
 		switch metakey {
 		case structs.MetaKeyPlot:
-
+			err := s.setSpecificJobTargetsPlot(jobs)
+			if err != nil {
+				return err
+			}
 		case structs.MetaKeyPerson:
 			err := s.setSpecificJobTargetsPerson(jobs)
+			if err != nil {
+				return err
+			}
+		case structs.MetaKeyJob:
+			// only HireMercenaries & HireSpies need this and it's Area / Job targets are set above.
+			// Any child job(s) they spawn target Plots / Areas / People the same
+			// as everything else.
+		default:
+			err := s.setSpecificJobTargetsArea(ctx, land, jobs)
 			if err != nil {
 				return err
 			}
@@ -365,7 +596,7 @@ func (s *Base) chooseJobTargetFaction(ctx *simutil.FactionContext, inflight map[
 	return ""
 }
 
-func (s *Base) planFactionJobsWartime(tick int, factionID string, attacking, defending []string) ([]*structs.Job, error) {
+func (s *Base) planFactionJobsWartime(tick int, ctx *simutil.FactionContext, attacking, defending []string) ([]*structs.Job, error) {
 	return nil, nil
 }
 
@@ -520,6 +751,13 @@ func (s *Base) actionWeightsForFaction(ctx *simutil.FactionContext, land *struct
 	}
 	if ctx.Summary.IsGovernment {
 		weights.SetIsGovernment()
+	} else if !ctx.Summary.IsCovert {
+		weights.SetIsLegalFaction()
+	}
+
+	// we have nothing to harvest :(
+	if len(land.Commodities) == 0 {
+		weights.WeightAction(0.0, structs.ActionTypeHarvest)
 	}
 
 	// nullify actions we can't afford

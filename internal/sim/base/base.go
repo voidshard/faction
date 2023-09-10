@@ -119,6 +119,11 @@ func (s *Base) FactionSummaries(in ...string) ([]*structs.FactionSummary, error)
 }
 
 func (s *Base) SetAreas(in ...*structs.Area) error {
+	for _, a := range in {
+		if a.Random == 0 {
+			a.Random = rnggen.Intn(structs.AreaRandomMax)
+		}
+	}
 	return s.dbconn.InTransaction(func(tx db.ReaderWriter) error {
 		return tx.SetAreas(in...)
 	})

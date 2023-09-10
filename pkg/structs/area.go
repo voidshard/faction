@@ -1,5 +1,9 @@
 package structs
 
+const (
+	AreaRandomMax = 1000000000
+)
+
 // Area represents a logical area of land .. since our simulation cares about people
 // and factions, it should probably represent somewhere people can live.
 //
@@ -21,4 +25,7 @@ type Area struct {
 	// something to denote the area
 	// - in general an unset biome implies it's suitable for anything / catch all
 	Biome string `db:"biome"`
+
+	// Random value for getting areas are random from the DB
+	Random int `db:"random"`
 }

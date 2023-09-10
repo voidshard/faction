@@ -57,6 +57,7 @@ const (
 	ActionTypeGatherSecrets   ActionType = "gather-secrets"   // attempt to discover secrets of target faction
 	ActionTypeRevokeLand      ActionType = "revoke-land"      // government retracts right to use some land
 	ActionTypeHireMercenaries ActionType = "hire-mercenaries" // hire another faction to do something for you
+	ActionTypeHireSpies       ActionType = "hire-spies"       // hire another faction to spy on another faction
 	ActionTypeSpreadRumors    ActionType = "spread-rumors"    // inverse of Propoganda; decrease general favor toward target
 	ActionTypeAssassinate     ActionType = "assassinate"      // someone is selected for elimination
 	ActionTypeFrame           ActionType = "frame"            // the non religious version of 'excommunicate,' but can involve legal .. entanglements
@@ -85,6 +86,8 @@ var (
 
 	// TargetType, if not given default to no target (ie. "self" or "we don't need to choose a target")
 	// nb. Jobs always include a Faction and Area target, so we only do more work in picking a target if it's something else.
+	//     That is we do not include MetaKeyFaction or MetaKeyTarget here, since it's always required, this is for actions
+	//     that need *another* more specific target.
 	ActionTarget = map[ActionType]MetaKey{
 		ActionTypeExcommunicate:   MetaKeyPerson,   // excommunicate someone
 		ActionTypeBribe:           MetaKeyPerson,   // pay someone to buff favor with them & their faction
@@ -96,12 +99,27 @@ var (
 		ActionTypeRevokeLand:      MetaKeyPlot,     // revoke land from a faction
 		ActionTypeDownsize:        MetaKeyPlot,     // sell a plot in some area
 		ActionTypeSteal:           MetaKeyPlot,     // steal from some building
-		ActionTypeRaid:            MetaKeyArea,     // raid some area
-		ActionTypePillage:         MetaKeyArea,     // pillage some area
-		ActionTypeEnslave:         MetaKeyArea,     // enslave people from some area
-		ActionTypeExpand:          MetaKeyArea,     // buy a plot in some area
+		ActionTypeRaid:            MetaKeyPlot,     // raid an area, centered on a plot
+		ActionTypePillage:         MetaKeyPlot,     // pillage an area, centered on some plot
+		ActionTypeEnslave:         MetaKeyPlot,     // enslave people in some area
+		ActionTypeRitual:          MetaKeyPlot,     // perform a ritual in given building
+		ActionTypeGatherSecrets:   MetaKeyFaction,  // gather secrets about some faction from people in some area / plot
 		ActionTypeResearch:        MetaKeyResearch, // research some tech
 		ActionTypeHireMercenaries: MetaKeyJob,      // create a job (MetaTarget) for some other faction, to attack *another* faction (TargetFactionID)
+		ActionTypeHireSpies:       MetaKeyJob,      // create a job (MetaTarget) for some other faction, to spy on *another* faction (TargetFactionID)
+	}
+
+	// Actions that may be performed by mercenaries (eg. HireMercenaries action)
+	ActionsForMercenaries = []ActionType{
+		ActionTypeRaid,
+		ActionTypePillage,
+	}
+
+	//
+	ActionsForSpies = []ActionType{
+		ActionTypeFrame,
+		ActionTypeAssassinate,
+		ActionTypeBlackmail,
 	}
 
 	// All actions known to us
@@ -125,6 +143,7 @@ var (
 		ActionTypeGatherSecrets,
 		ActionTypeRevokeLand,
 		ActionTypeHireMercenaries,
+		ActionTypeHireSpies,
 		ActionTypeSpreadRumors,
 		ActionTypeAssassinate,
 		ActionTypeFrame,

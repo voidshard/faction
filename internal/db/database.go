@@ -3,6 +3,8 @@ package db
 import (
 	"fmt"
 
+	mapset "github.com/deckarep/golang-set/v2"
+
 	"github.com/voidshard/faction/internal/dbutils"
 	"github.com/voidshard/faction/pkg/structs"
 )
@@ -64,12 +66,68 @@ func (f *FactionDB) InTransaction(do func(tx ReaderWriter) error) error {
 	return tx.Commit()
 }
 
+// TuplesSumModsBySubject is a helper function that returns a map of object -> int
+// for a given relation.
+//
+// If a relation doesn't support modifiers, this is simply tuples with the given subject & object(s).
+// If it does support modifiers we add on to these tuples the sum of modifiers for the given subject & object(s) too.
+func (f *FactionDB) TuplesSumModsBySubject(r Relation, subject string, objects ...string) (map[string]int, error) {
+	q := Q(F(Object, In, objects), F(Subject, Equal, subject))
+	if len(objects) == 0 {
+		q = Q(F(Subject, Equal, subject))
+	}
+
+	var (
+		tuples []*structs.Tuple
+		token  string
+		err    error
+		result = map[string]int{}
+	)
+
+	for {
+		tuples, token, err = f.Tuples(r, token, q)
+		if err != nil {
+			return nil, err
+		}
+
+		for _, t := range tuples {
+			result[t.Object] = t.Value
+		}
+
+		if token == "" {
+			break
+		}
+	}
+
+	if !r.SupportsModifiers() {
+		return result, nil
+	}
+
+	for {
+		tuples, token, err = f.ModifiersSum(r, token, q)
+		if err != nil {
+			return nil, err
+		}
+
+		for _, t := range tuples {
+			v, _ := result[t.Object]
+			result[t.Object] = v + t.Value
+		}
+
+		if token == "" {
+			break
+		}
+	}
+
+	return result, nil
+}
+
 func (f *FactionDB) LandSummary(areas, factions []string) (*structs.LandSummary, error) {
 	filters := []*Filter{}
-	if len(areas) > 0 {
+	if areas != nil && len(areas) > 0 {
 		filters = append(filters, F(AreaID, In, areas))
 	}
-	if len(factions) > 0 {
+	if factions != nil && len(factions) > 0 {
 		filters = append(filters, F(FactionID, In, factions))
 	}
 	if len(filters) == 0 {
@@ -91,34 +149,7 @@ func (f *FactionDB) LandSummary(areas, factions []string) (*structs.LandSummary,
 		}
 
 		for _, p := range plots {
-			com, ok := sum.Commodities[p.Commodity]
-			if !ok {
-				com = &structs.Crop{}
-			}
-			com.Size += p.Size
-			com.Yield += p.Yield
-
-			sum.TotalSize += p.Size
-			sum.Count++
-
-			sum.Commodities[p.Commodity] = com
-
-			area, ok := sum.Areas[p.AreaID]
-			if !ok {
-				area = structs.NewLandSummary()
-			}
-			acom, ok := area.Commodities[p.Commodity]
-			if !ok {
-				acom = &structs.Crop{}
-			}
-			acom.Size += p.Size
-			acom.Yield += p.Yield
-
-			area.TotalSize += p.Size
-			area.Count++
-
-			area.Commodities[p.Commodity] = acom
-			sum.Areas[p.AreaID] = area
+			sum.Add(p)
 		}
 
 		if token == "" {
@@ -136,8 +167,12 @@ func (f *FactionDB) LandSummary(areas, factions []string) (*structs.LandSummary,
 //
 // Warning: This requires quite a few queries, so it's probably wise to limit exactly
 // when & where this is called.
+//
 // It's useful for getting a high level view of a faction & all related info, but it's
 // excessive for when you only need a small snippet of info.
+//
+// In general we call this when deciding on what a given faction wants to do when planning an action;
+// because we need to check pretty much all of it's values & settings to decide wisely.
 func (f *FactionDB) FactionSummary(rels []Relation, in ...string) ([]*structs.FactionSummary, error) {
 	if rels == nil {
 		rels = FactionSummaryRelations
@@ -425,11 +460,15 @@ func (f *FactionDB) AreaFactions(areaIDs ...string) (map[string]map[string]bool,
 	return result, nil
 }
 
-// FactionAreas returns a map of FactionID -> AreaID -> true
+// FactionAreas returns a map of FactionID -> AreaID -> nil || Area
 //
 // That is, given a set of factions, this is where factions have influence.
 // (Inverse of AreaFactions)
-func (f *FactionDB) FactionAreas(factionIDs ...string) (map[string]map[string]bool, error) {
+//
+// if `includeAreas` we do the additional query to return the Area structs, otherwise
+// the map will be populated with nil values (that indicate the faction has influence
+// in an area, but the area data isn't fetched).
+func (f *FactionDB) FactionAreas(includeAreas bool, factionIDs ...string) (map[string]map[string]*structs.Area, error) {
 	pfilters := Q(F(FactionID, In, factionIDs))
 
 	var (
@@ -438,7 +477,8 @@ func (f *FactionDB) FactionAreas(factionIDs ...string) (map[string]map[string]bo
 		err   error
 	)
 
-	result := map[string]map[string]bool{}
+	result := map[string]map[string]*structs.Area{}
+	aset := mapset.NewSet[string]()
 
 	for {
 		plots, token, err = f.Plots(token, pfilters)
@@ -448,13 +488,33 @@ func (f *FactionDB) FactionAreas(factionIDs ...string) (map[string]map[string]bo
 		for _, p := range plots {
 			farea, ok := result[p.FactionID]
 			if !ok {
-				farea = map[string]bool{}
+				farea = map[string]*structs.Area{}
 			}
-			farea[p.AreaID] = true
+			farea[p.AreaID] = nil
 			result[p.FactionID] = farea
+			aset.Add(p.AreaID)
 		}
 		if token == "" {
 			break
+		}
+	}
+
+	if !includeAreas {
+		return result, nil
+	}
+
+	areas, _, err := f.Areas("", Q(F(ID, In, aset.ToSlice())))
+	if err != nil {
+		return result, err
+	}
+	amap := map[string]*structs.Area{}
+	for _, a := range areas {
+		amap[a.ID] = a
+	}
+
+	for _, fareas := range result {
+		for areaID := range fareas {
+			fareas[areaID] = amap[areaID]
 		}
 	}
 

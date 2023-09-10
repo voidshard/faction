@@ -37,11 +37,14 @@ func main() {
 		panic(err)
 	}
 
-	land1 := &structs.Plot{ID: structs.NewID(), AreaID: area1.ID, Commodity: fantasy.WHEAT, Yield: 120}
-	land2 := &structs.Plot{ID: structs.NewID(), AreaID: area2.ID, Commodity: fantasy.WHEAT, Yield: 200}
-	land3 := &structs.Plot{ID: structs.NewID(), AreaID: area2.ID, Commodity: fantasy.IRON_ORE, Yield: 20}
-	land4 := &structs.Plot{ID: structs.NewID(), AreaID: area3.ID, Commodity: fantasy.WHEAT, Yield: 50}
-	land5 := &structs.Plot{ID: structs.NewID(), AreaID: area3.ID, Commodity: fantasy.IRON_ORE, Yield: 500}
+	// nb. numbers here are just picked from thin air. In actual use where your units mean something this is due
+	// some consideration. Size is land units squared, yield is the expected yield (units of commodity) per unit squared of land.
+	// What does that mean? Whatever you want really.
+	land1 := &structs.Plot{ID: structs.NewID(), AreaID: area1.ID, Crop: structs.Crop{Size: 100, Commodity: fantasy.WHEAT, Yield: 120}}
+	land2 := &structs.Plot{ID: structs.NewID(), AreaID: area2.ID, Crop: structs.Crop{Size: 20, Commodity: fantasy.WHEAT, Yield: 200}}
+	land3 := &structs.Plot{ID: structs.NewID(), AreaID: area2.ID, Crop: structs.Crop{Size: 300, Commodity: fantasy.IRON_ORE, Yield: 20}}
+	land4 := &structs.Plot{ID: structs.NewID(), AreaID: area3.ID, Crop: structs.Crop{Size: 500, Commodity: fantasy.WHEAT, Yield: 50}}
+	land5 := &structs.Plot{ID: structs.NewID(), AreaID: area3.ID, Crop: structs.Crop{Size: 30, Commodity: fantasy.IRON_ORE, Yield: 500}}
 	err = simulator.SetPlots(land1, land2, land3, land4, land5)
 	if err != nil {
 		panic(err)

@@ -44,14 +44,11 @@ func (s *Base) SpawnFactions(count int, cfg *config.Faction, areas ...string) ([
 		govt, _ := govtToGovt[govtID]
 
 		if govt != nil {
-			factionOutlawed := isFactionIllegal(govt, f)
-
 			f.Faction.GovernmentID = govtID
-			f.Faction.IsCovert = factionOutlawed
-
-			if factionOutlawed {
+			if isFactionIllegal(govt, f) {
 				govt.Outlawed.Factions[f.Faction.ID] = true
 				govsToWrite[govtID] = govt
+				makeFactionCovert(dice, f)
 			}
 
 		}
@@ -65,11 +62,11 @@ func (s *Base) SpawnFactions(count int, cfg *config.Faction, areas ...string) ([
 	}
 
 	// finally, flush law change(s) to govt (if needed)
-	govs := []*structs.Government{}
-	for _, govt := range govsToWrite {
-		govs = append(govs, govt)
-	}
-	if len(govs) > 0 {
+	if len(govsToWrite) > 0 {
+		govs := []*structs.Government{}
+		for _, govt := range govsToWrite {
+			govs = append(govs, govt)
+		}
 		err = s.dbconn.InTransaction(func(tx db.ReaderWriter) error {
 			return tx.SetGovernments(govs...)
 		})
@@ -99,6 +96,21 @@ func isFactionIllegal(govt *structs.Government, f *simutil.MetaFaction) bool {
 		}
 	}
 	return false
+}
+
+func makeFactionCovert(fr *factionRand, f *simutil.MetaFaction) {
+	f.Faction.IsCovert = true
+
+	tenth := structs.MaxTuple / 10
+	for _, p := range f.Plots {
+		if f.Faction.HQPlotID == p.ID {
+			// Headquarters plots are always hidden & harder to find
+			p.Hidden = fr.rng.Intn(structs.MaxTuple/2) + structs.MaxTuple/2
+		} else if fr.rng.Float64() < 0.90 {
+			// 90% of plots of "covert" are hidden (or fronts that masquerade as something else)
+			p.Hidden = fr.rng.Intn(structs.MaxTuple-tenth) + tenth
+		}
+	}
 }
 
 // areaGovernments returns
@@ -341,8 +353,11 @@ func (s *Base) randFaction(fr *factionRand) *simutil.MetaFaction {
 	switch len(mf.Plots) {
 	case 0:
 		mf.Faction.HomeAreaID = mf.Plots[0].AreaID
+		mf.Faction.HQPlotID = mf.Plots[0].ID
 	default:
-		mf.Faction.HomeAreaID = mf.Plots[fr.rng.Intn(len(mf.Plots))].AreaID
+		rnum := fr.rng.Intn(len(mf.Plots))
+		mf.Faction.HomeAreaID = mf.Plots[rnum].AreaID
+		mf.Faction.HQPlotID = mf.Plots[rnum].ID
 	}
 
 	return mf

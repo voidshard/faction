@@ -92,6 +92,10 @@ const (
 	// If not given people are assumed to be at 0 (ie. "not a member")
 	// So: <person_id> <faction_id> <rank>
 	RelationPersonFactionRank Relation = "rank_person_to_faction"
+
+	// RelationFactionFactionIntelligence holds how much intelligence a faction has on another faction.
+	// So: <faction_id> <faction_id> <intelligence_level>
+	RelationFactionFactionIntelligence Relation = "intelligence_faction_to_faction"
 )
 
 var (
@@ -107,6 +111,7 @@ var (
 		RelationFactionActionTypeWeight,
 		RelationFactionProfessionWeight,
 		RelationPersonFactionRank,
+		RelationFactionFactionIntelligence,
 	}
 )
 
@@ -124,7 +129,7 @@ func (r Relation) SupportsModifiers() bool {
 	// modifiers complicate queries & add calculations but are a nice way of adding
 	// slow burn buffs / debuffs.
 	// In general we only support these on super important tuples (where we have
-	// a use case).
+	// a use case) since it requires us to track & query a lot more variables.
 	switch r {
 	case RelationPersonFactionAffiliation:
 		return true

@@ -74,13 +74,32 @@ func factionLeadership(op sqlOperator, limit int, ids ...string) (map[string]*Fa
 		return nil, err
 	}
 
+	// TODO: consider a join?
+	peopleIDs := []string{}
+	for _, t := range out {
+		peopleIDs = append(peopleIDs, t.Subject)
+	}
+
+	peeps, _, err := people(op, "", Q(F(ID, In, peopleIDs), F(DeathTick, Equal, 0)))
+	if err != nil {
+		return nil, err
+	}
+
+	pmap := map[string]*structs.Person{}
+	for _, p := range peeps {
+		pmap[p.ID] = p
+	}
+
 	for _, t := range out {
 		leaders, ok := result[t.Object]
 		if !ok {
 			leaders = NewFactionLeadership()
 		}
-		leaders.Add(structs.FactionRank(t.Value), t.Subject)
-		result[t.Object] = leaders
+		person, ok := pmap[t.Subject]
+		if ok {
+			leaders.Add(structs.FactionRank(t.Value), person)
+			result[t.Object] = leaders
+		}
 	}
 
 	return result, nil
@@ -929,7 +948,7 @@ func setFactions(op sqlOperator, in []*structs.Faction) error {
 
 	// We could make this shorter, but I like to be very specific in SQL :P
 	qstr := fmt.Sprintf(`INSERT INTO %s (
-            id, name, home_area_id,
+            id, name, home_area_id, hq_plot_id,
 	    ethos_altruism, ethos_ambition, ethos_tradition, ethos_pacifism, ethos_piety, ethos_caution,
             action_frequency_ticks,
             leadership, structure, wealth, cohesion, corruption,
@@ -943,7 +962,7 @@ func setFactions(op sqlOperator, in []*structs.Faction) error {
 	    parent_faction_relation
 	) VALUES (
 	    :id, :name,
-	    :home_area_id,
+	    :home_area_id, :hq_plot_id,
 	    :ethos_altruism, :ethos_ambition, :ethos_tradition, :ethos_pacifism, :ethos_piety, :ethos_caution,
 	    :action_frequency_ticks,
 	    :leadership, :structure, :wealth, :cohesion, :corruption,
@@ -958,6 +977,7 @@ func setFactions(op sqlOperator, in []*structs.Faction) error {
 	) ON CONFLICT (id) DO UPDATE SET
 	    name=EXCLUDED.name,
 	    home_area_id=EXCLUDED.home_area_id,
+	    hq_plot_id=EXCLUDED.hq_plot_id,
 	    ethos_altruism=EXCLUDED.ethos_altruism,
 	    ethos_ambition=EXCLUDED.ethos_ambition,
 	    ethos_tradition=EXCLUDED.ethos_tradition,
@@ -1023,8 +1043,8 @@ func setAreas(op sqlOperator, in []*structs.Area) error {
 		}
 	}
 
-	qstr := fmt.Sprintf(`INSERT INTO %s (id, government_id, biome)
-		        VALUES (:id, :government_id, :biome)
+	qstr := fmt.Sprintf(`INSERT INTO %s (id, government_id, biome, random)
+			VALUES (:id, :government_id, :biome, :random)
 		        ON CONFLICT (id) DO UPDATE SET
 		            government_id=EXCLUDED.government_id,
 			    biome=EXCLUDED.biome

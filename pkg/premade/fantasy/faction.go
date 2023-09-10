@@ -90,6 +90,7 @@ func Faction() *config.Faction {
 					structs.ActionTypeBribe,
 					structs.ActionTypeRaid,
 					structs.ActionTypeEnslave,
+					structs.ActionTypeHireSpies,
 				},
 				Probability: 0.02,
 				Weight: config.Distribution{
@@ -122,10 +123,11 @@ func Faction() *config.Faction {
 				MilitaryDefenseBonus:  0.25,
 			},
 			config.Focus{
-				Actions: []structs.ActionType{ // removing people
+				Actions: []structs.ActionType{ // removing people (directly or reputation)
 					structs.ActionTypeAssassinate,
 					structs.ActionTypeFrame,
 					structs.ActionTypeSpreadRumors,
+					structs.ActionTypeHireMercenaries,
 				},
 				Probability: 0.02,
 				Weight: config.Distribution{
@@ -161,7 +163,7 @@ func Faction() *config.Faction {
 					structs.ActionTypeResearch,
 					structs.ActionTypeResearch,
 				},
-				ResearchTopics: []string{MAGIC_ARCANA},
+				ResearchTopics: []string{MAGIC_ARCANA}, // ie. MAGIC_ARCANA + another research topic
 				Probability:    0.10,
 				Weight: config.Distribution{
 					Min:       3000,
@@ -257,7 +259,7 @@ func Faction() *config.Faction {
 				Actions: []structs.ActionType{
 					structs.ActionTypeBribe,
 					structs.ActionTypeBlackmail,
-					structs.ActionTypeHireMercenaries,
+					structs.ActionTypeHireSpies,
 				},
 				Probability: 0.1,
 				Weight: config.Distribution{
@@ -293,7 +295,6 @@ func Faction() *config.Faction {
 				Actions: []structs.ActionType{
 					structs.ActionTypeRecruit,
 					structs.ActionTypeExpand,
-					structs.ActionTypeHireMercenaries,
 				},
 				Probability: 0.3,
 				Weight: config.Distribution{
@@ -312,6 +313,8 @@ func Faction() *config.Faction {
 					structs.ActionTypeRecruit,
 					structs.ActionTypeExpand,
 					structs.ActionTypeEnslave,
+					structs.ActionTypeHireMercenaries,
+					structs.ActionTypeHireSpies,
 				},
 				Probability: 0.2,
 				Weight: config.Distribution{
@@ -328,7 +331,7 @@ func Faction() *config.Faction {
 			config.Focus{ // trade
 				Actions: []structs.ActionType{
 					structs.ActionTypeTrade,
-					structs.ActionTypeHireMercenaries,
+					structs.ActionTypeHireSpies,
 				},
 				Probability: 0.30,
 				Weight: config.Distribution{

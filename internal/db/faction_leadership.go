@@ -16,6 +16,8 @@ type FactionLeadership struct {
 	Apprentice  []string
 
 	Total int
+
+	People map[string]*structs.Person
 }
 
 func NewFactionLeadership() *FactionLeadership {
@@ -29,10 +31,17 @@ func NewFactionLeadership() *FactionLeadership {
 		Journeyman:  []string{},
 		Novice:      []string{},
 		Apprentice:  []string{},
+		People:      map[string]*structs.Person{},
 	}
 }
 
 func (l *FactionLeadership) Get(index int) string {
+	// we only intend to return a small number of entries here, so in theory
+	// this shouldn't be too bad.
+	// Obviously if the faction has thousands of people and an int is requested for
+	// some random appentice that's .. not great.
+	// But this internal struct is simply for looking at faction leaders .. which
+	// should be a small number of people.
 	if index < 0 || index >= l.Total {
 		return ""
 	}
@@ -74,28 +83,29 @@ func (l *FactionLeadership) Get(index int) string {
 	return ""
 }
 
-func (l *FactionLeadership) Add(rank structs.FactionRank, personID string) {
+func (l *FactionLeadership) Add(rank structs.FactionRank, p *structs.Person) {
+	l.People[p.ID] = p
 	l.Total++
 	switch rank {
 	case structs.FactionRankRuler:
-		l.Ruler = append(l.Ruler, personID)
+		l.Ruler = append(l.Ruler, p.ID)
 	case structs.FactionRankElder:
-		l.Elder = append(l.Elder, personID)
+		l.Elder = append(l.Elder, p.ID)
 	case structs.FactionRankGrandMaster:
-		l.GrandMaster = append(l.GrandMaster, personID)
+		l.GrandMaster = append(l.GrandMaster, p.ID)
 	case structs.FactionRankMaster:
-		l.Master = append(l.Master, personID)
+		l.Master = append(l.Master, p.ID)
 	case structs.FactionRankExpert:
-		l.Expert = append(l.Expert, personID)
+		l.Expert = append(l.Expert, p.ID)
 	case structs.FactionRankAdept:
-		l.Adept = append(l.Adept, personID)
+		l.Adept = append(l.Adept, p.ID)
 	case structs.FactionRankJourneyman:
-		l.Journeyman = append(l.Journeyman, personID)
+		l.Journeyman = append(l.Journeyman, p.ID)
 	case structs.FactionRankNovice:
-		l.Novice = append(l.Novice, personID)
+		l.Novice = append(l.Novice, p.ID)
 	case structs.FactionRankApprentice:
-		l.Apprentice = append(l.Apprentice, personID)
+		l.Apprentice = append(l.Apprentice, p.ID)
 	case structs.FactionRankAssociate:
-		l.Apprentice = append(l.Apprentice, personID)
+		l.Apprentice = append(l.Apprentice, p.ID)
 	}
 }

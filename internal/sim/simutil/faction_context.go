@@ -17,7 +17,7 @@ var rnggen = rand.New(rand.NewSource(time.Now().UnixNano()))
 // and governments that rule those areas
 type FactionContext struct {
 	Summary         *structs.FactionSummary
-	Areas           map[string]bool                // map areaID -> bool (in which the faction has influence)
+	Areas           map[string]*structs.Area       // map areaID -> nil (in which the faction has influence)
 	Governments     map[string]*structs.Government // map areaID -> government (only the above areas)
 	LocalGovernment *structs.Government            // the government of the area the faction HQ is in
 
@@ -70,27 +70,6 @@ func (f *FactionContext) Relations() *FactionRelations {
 	return f.rels
 }
 
-/*
-func (f *FactionContext) TargetFactionAreas(factionID string) ([]string, error) {
-	areas, ok := f.cachedTargetAreas[factionID]
-	if !ok {
-		result, err := f.dbconn.FactionAreas(factionID)
-		if err != nil {
-			return nil, err
-		}
-		areaIDMap, _ := result[factionID]
-		areas = []string{}
-		if areaIDMap != nil {
-			for areaID := range areaIDMap {
-				areas = append(areas, areaID)
-			}
-		}
-		f.cachedTargetAreas[factionID] = areas
-	}
-	return areas, nil
-}
-*/
-
 func (f *FactionContext) AllGovernments() []*structs.Government {
 	seen := map[string]bool{}
 
@@ -141,7 +120,7 @@ func NewFactionContext(dbconn *db.FactionDB, factionID string) (*FactionContext,
 	}
 
 	// lookup where a faction has influence
-	fareas, err := dbconn.FactionAreas(factionID)
+	fareas, err := dbconn.FactionAreas(false, factionID)
 	if err != nil {
 		return nil, err
 	} else if len(fareas) == 0 {
