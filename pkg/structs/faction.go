@@ -38,6 +38,11 @@ type Faction struct {
 
 	ParentFactionID       string          `db:"parent_faction_id"`       // ID of parent faction (if any)
 	ParentFactionRelation FactionRelation `db:"parent_faction_relation"` // relation to parent faction (if any)
+
+	// Numbers are best-effort calculated as part of a faction's Job decision process
+	Members int `db:"members"` // number of members in the faction
+	Plots   int `db:"plots"`   // number of plots owned by the faction
+	Areas   int `db:"areas"`   // number of areas the faction is present in
 }
 
 // FactionSummary is a high level overview of a faction, including related tuples

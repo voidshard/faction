@@ -101,13 +101,22 @@ func (s *Base) PlanFactionJobs(factionID string) ([]*structs.Job, error) {
 		return nil, err
 	}
 
+	land, err := s.dbconn.LandSummary(nil, []string{ctx.Summary.ID})
+	if err != nil {
+		return nil, err
+	}
+
+	ctx.Summary.Members = ctx.Summary.Ranks.Total
+	ctx.Summary.Plots = land.Count
+	ctx.Summary.Areas = len(ctx.Areas)
+
 	var plans []*structs.Job
 	if len(attacking) > 0 || len(defending) > 0 {
 		// if we're at war, not dying consumes most of our concerns
 		plans, err = s.planFactionJobsWartime(tick, ctx, attacking, defending)
 	} else {
 		// if we're at peace, we have lots of competing concerns
-		plans, err = s.planFactionJobsPeacetime(tick, ctx)
+		plans, err = s.planFactionJobsPeacetime(tick, ctx, land)
 	}
 	if err != nil || plans == nil || len(plans) == 0 {
 		// whatever happened, we're done
@@ -150,7 +159,7 @@ func (s *Base) PlanFactionJobs(factionID string) ([]*structs.Job, error) {
 	return jobs, err
 }
 
-func (s *Base) planFactionJobsPeacetime(tick int, ctx *simutil.FactionContext) ([]*structs.Job, error) {
+func (s *Base) planFactionJobsPeacetime(tick int, ctx *simutil.FactionContext, land *structs.LandSummary) ([]*structs.Job, error) {
 	// people we have available for work
 	people := estimateAvailablePeople(ctx.Summary.Ranks)
 	availablePeople := people
@@ -176,12 +185,6 @@ func (s *Base) planFactionJobsPeacetime(tick int, ctx *simutil.FactionContext) (
 			availablePeople -= j.PeopleNow
 		}
 		inflight[jobKey(j.TargetFactionID, j.Action)] = true
-	}
-
-	// summary of the faction's land
-	land, err := s.dbconn.LandSummary(nil, []string{ctx.Summary.ID})
-	if err != nil {
-		return nil, err
 	}
 
 	// how likely we are to do various actions

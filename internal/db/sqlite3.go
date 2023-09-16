@@ -187,7 +187,10 @@ var (
 	    military_offense INTEGER NOT NULL DEFAULT 0,
 	    military_defense INTEGER NOT NULL DEFAULT 0,
             parent_faction_id VARCHAR(36) NOT NULL DEFAULT "",
-            parent_faction_relation INTEGER NOT NULL DEFAULT 0
+            parent_faction_relation INTEGER NOT NULL DEFAULT 0,
+	    members INTEGER NOT NULL DEFAULT 0,
+	    plots INTEGER NOT NULL DEFAULT 0,
+	    areas INTEGER NOT NULL DEFAULT 0
         );`, tableFactions)
 
 	createEvents = fmt.Sprintf(`CREATE TABLE IF NOT EXISTS %s (

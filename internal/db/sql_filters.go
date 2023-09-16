@@ -424,6 +424,16 @@ func sqlLawsFromSourceIDs(in []string) (string, []interface{}) {
 	return fmt.Sprintf(`SELECT * FROM %s WHERE source_id IN (%s);`, tableLaws, inGovtIDs), args
 }
 
+func sqlInInt(in []int) (string, []interface{}) {
+	bindvars := make([]string, len(in))
+	args := make([]interface{}, len(in))
+	for i, id := range in {
+		args[i] = id
+		bindvars[i] = fmt.Sprintf("$%d", i+1)
+	}
+	return strings.Join(bindvars, ", "), args
+}
+
 func sqlIn(in []string) (string, []interface{}) {
 	bindvars := make([]string, len(in))
 	args := make([]interface{}, len(in))

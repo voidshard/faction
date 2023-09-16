@@ -4,9 +4,18 @@ type FactionRelation int
 
 // FactionRelation denotes how a faction relates to it's parent faction (if any)
 const (
-	FactionRelationMember    FactionRelation = iota // equal member of a super faction (ie. members of the EU)
-	FactionRelationDivision                         // a specialization ie. a government spawns a specialist spy faction
-	FactionRelationTributary                        // pays tax to super faction, but does it's own thing
-	FactionRelationVassal                           // strictly subordinate, but with regin over it's own affairs
+	FactionRelationTributary FactionRelation = iota // pays tax to super faction, but does it's own thing
 	FactionRelationPuppet                           // strictly subordinate, very little self rule
+	FactionRelationVassal                           // strictly subordinate, but with regin over it's own affairs
+	FactionRelationMember                           // equal member of a super faction (ie. members of the EU)
+)
+
+var (
+	// All known faction relations
+	FactionRelationsAll = []FactionRelation{
+		FactionRelationTributary,
+		FactionRelationPuppet,
+		FactionRelationVassal,
+		FactionRelationMember,
+	}
 )

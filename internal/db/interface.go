@@ -37,6 +37,9 @@ type Reader interface {
 	ModifiersSum(table Relation, token string, q *Query) ([]*structs.Tuple, string, error)
 	Events(token string, q *Query) ([]*structs.Event, string, error)
 
+	FactionParents(id string, rs []structs.FactionRelation) ([]*structs.Faction, error)
+	FactionChildren(id string, rs []structs.FactionRelation) ([]*structs.Faction, error)
+
 	FactionLeadership(limit int, ids ...string) (map[string]*FactionLeadership, error)
 	FactionPlots(limit int, ids ...string) (map[string][]*structs.Plot, error)
 }
