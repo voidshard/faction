@@ -6,6 +6,7 @@ import (
 	"math/rand"
 	"time"
 
+	mapset "github.com/deckarep/golang-set/v2"
 	"github.com/voidshard/faction/internal/db"
 	"github.com/voidshard/faction/internal/sim/simutil"
 	"github.com/voidshard/faction/pkg/config"
@@ -21,7 +22,10 @@ const (
 )
 
 const (
-	estimateVassalPeopleDegradeByStep = 0.4
+	estimateVassalPeopleDegradeByStep = 0.4 // estimate for people of vassal factions who might work for us
+	maxWarTargetSizeDifference        = 1.3 // we wont make war on factions too much larger than us
+	estimateParentWarFactor           = 0.6 // we'll add this % of the parent faction size to the child faction size
+	warArroganceFactor                = 0.3 // if an opponent(s) are less that this % of our membership we assume victory
 )
 
 var (
@@ -108,7 +112,7 @@ func (s *Base) PlanFactionJobs(factionID string) ([]*structs.Job, error) {
 	var plans []*structs.Job
 	if len(attacking) > 0 || len(defending) > 0 {
 		// if we're at war, not dying consumes most of our concerns
-		plans, err = s.planFactionJobsWartime(tick, ctx, attacking, defending)
+		plans, err = s.planFactionJobsWartime(tick, ctx, attacking, defending, availablePeople)
 	} else {
 		// if we're at peace, we have lots of competing concerns
 		plans, err = s.planFactionJobsPeacetime(tick, ctx, availablePeople)
@@ -248,7 +252,10 @@ func (s *Base) planFactionJobsPeacetime(tick int, ctx *simutil.FactionContext, a
 			continue
 		}
 
-		target := s.chooseJobTargetFaction(ctx, inflight, act, cfg)
+		target, err := s.chooseJobTargetFaction(ctx, inflight, act, cfg)
+		if err != nil {
+			return nil, err
+		}
 		if target == "" {
 			weights.WeightAction(0.0, act) // we can't do this action, remove it from the list
 			if weights.Normalise() <= 0 {
@@ -519,6 +526,7 @@ func (s *Base) setSpecificJobTargets(ctx *simutil.FactionContext, plans []*struc
 	// bucket jobs based on what kind of target they need
 	needed := map[structs.MetaKey][]*structs.Job{}
 	for _, j := range plans {
+		// a few actions need special handling
 		if j.Action == structs.ActionTypeResearch {
 			j.TargetAreaID = ctx.RandomArea(j.Action)
 			j.TargetMetaKey = structs.MetaKeyResearch
@@ -590,11 +598,11 @@ func actionCategory(cfg *config.Action) actionTypeCategory {
 }
 
 // chooseJobTargetFaction picks a target for a job.
-func (s *Base) chooseJobTargetFaction(ctx *simutil.FactionContext, inflight map[string]bool, act structs.ActionType, cfg *config.Action) string {
+func (s *Base) chooseJobTargetFaction(ctx *simutil.FactionContext, inflight map[string]bool, act structs.ActionType, cfg *config.Action) (string, error) {
 	relations := ctx.Relations()
 
 	if cfg.TargetMinTrust == 0 && cfg.TargetMaxTrust == 0 {
-		return ctx.Summary.ID // target ourselves
+		return ctx.Summary.ID, nil // target ourselves
 	}
 
 	// for friendly actions, we order potential targets by how much we like them
@@ -607,7 +615,45 @@ func (s *Base) chooseJobTargetFaction(ctx *simutil.FactionContext, inflight map[
 	// choices here is sorted by Trust
 	choices := relations.TrustBetween(cfg.TargetMinTrust, cfg.TargetMaxTrust, reverse)
 	if len(choices) == 0 {
-		return ""
+		return "", nil
+	}
+
+	// before starting a war we have extra things to consider
+	if act == structs.ActionTypeWar || act == structs.ActionTypeCrusade || act == structs.ActionTypeShadowWar {
+		factions, _, err := s.dbconn.Factions("", db.Q(db.F(db.ID, db.In, choices)).DisableSort())
+		if err != nil {
+			return "", err
+		}
+		// if they have parent factions, we need to grab those too
+		parentIds := []string{}
+		for _, f := range factions {
+			if f.ParentFactionID != "" {
+				parentIds = append(parentIds, f.ParentFactionID)
+			}
+		}
+		parents := map[string]*structs.Faction{}
+		if len(parentIds) > 0 {
+			parentFactions, _, err := s.dbconn.Factions("", db.Q(db.F(db.ID, db.In, parentIds)).DisableSort())
+			if err != nil {
+				return "", err
+			}
+			for _, f := range parentFactions {
+				parents[f.ID] = f
+			}
+		}
+		// work out how much larger a faction (might) be compared to us
+		me := float64(ctx.Summary.Members+ctx.Summary.Vassals) * maxWarTargetSizeDifference
+		choices = []string{}
+		for _, f := range factions {
+			size := float64(f.Members + f.Vassals)
+			pf, ok := parents[f.ParentFactionID] // nb. "" here ('no parent') will yield !ok
+			if ok {
+				size += (float64(pf.Members+pf.Vassals) - float64(f.Members)*estimateVassalPeopleDegradeByStep) * estimateParentWarFactor
+			}
+			if size <= me {
+				choices = append(choices, f.ID)
+			}
+		}
 	}
 
 	// pick the first valid target that for which we don't already have a job
@@ -616,17 +662,84 @@ func (s *Base) chooseJobTargetFaction(ctx *simutil.FactionContext, inflight map[
 		if ok { // this job & target is already inflight
 			continue
 		}
-		return targetFactionID
+		return targetFactionID, nil
 	}
 
-	return ""
+	return "", nil
 }
 
-func (s *Base) planFactionJobsWartime(tick int, ctx *simutil.FactionContext, attacking, defending []string) ([]*structs.Job, error) {
+func (s *Base) planFactionJobsWartime(tick int, ctx *simutil.FactionContext, attacking, defending []*structs.Job, people int) ([]*structs.Job, error) {
+	// get factions we're at war with
+	atkSet := mapset.NewSet[string]()
+	defSet := mapset.NewSet[string]()
+	factionIDs := []string{}
+	for _, j := range attacking {
+		factionIDs = append(factionIDs, j.TargetFactionID)
+		atkSet.Add(j.TargetFactionID)
+	}
+	needsMoreSoldiers := false
+	for _, j := range defending {
+		factionIDs = append(factionIDs, j.SourceFactionID)
+		defSet.Add(j.SourceFactionID)
+		needsMoreSoldiers = needsMoreSoldiers || j.State == structs.JobStatePending
+	}
+	if needsMoreSoldiers {
+		// we're already fighting a war we don't have enough people signed up to fight -> no need to queue any more jobs
+		return nil, nil
+	}
+
+	counterAtk := defSet.Difference(atkSet).ToSlice() // people we're defending against that we're not attacking
+	if len(counterAtk) > 0 && len(defending) > 0 {
+		act := structs.ActionTypeWar
+		if ctx.Summary.IsCovert {
+			act = structs.ActionTypeShadowWar
+		} else if ctx.Summary.IsReligion {
+			act = structs.ActionTypeCrusade
+		}
+
+		cfg, ok := s.cfg.Actions[act]
+		if !ok {
+			act = defending[0].Action
+			cfg, ok = s.cfg.Actions[act] // this should certainly have a config ..!
+			if !ok {
+				return nil, fmt.Errorf("no config for action %s", act)
+			}
+		}
+
+		j := simutil.NewJob(tick, act, cfg)
+		j.SourceFactionID = ctx.Summary.ID
+		j.SourceAreaID = ctx.RandomArea(j.Action)
+		j.TargetFactionID = counterAtk[0]
+
+		plans := []*structs.Job{j}
+		err := s.setSpecificJobTargets(ctx, plans)
+		return plans, err
+	}
+
+	// pull out the factions we're fighting with
+	factions, _, err := s.dbconn.Factions("", db.Q(db.F(db.ID, db.In, factionIDs)).DisableSort())
+	if err != nil {
+		return nil, err
+	}
+
+	// sum up how large the enemy faction(s) are
+	enemyScale := 0.0
+	for _, f := range factions {
+		enemyScale += float64(f.Members + f.Vassals)
+	}
+
+	// check how worried we are (if we're not worried, we'll queue jobs like we're not at war)
+	// high caution yields closer to 50%, low caution closer to 30% (the base)
+	arrogance := warArroganceFactor + (toProbability(ctx.Summary.Caution) * 0.2)
+	if enemyScale <= arrogance*float64(ctx.Summary.Members+ctx.Summary.Vassals) {
+		return s.planFactionJobsPeacetime(tick, ctx, people) // HA IS THAT ALL YOU GOT
+	}
+
+	// nb. we hope in doing this that more people join the fight, alternatively, we hope to save money for the war
 	return nil, nil
 }
 
-func (s *Base) determineFactionAtWar(tick int, factionID string) ([]string, []string, error) {
+func (s *Base) determineFactionAtWar(tick int, factionID string) ([]*structs.Job, []*structs.Job, error) {
 	q := db.Q(
 		// people attacking us
 		db.F(db.TargetFactionID, db.Equal, factionID),
@@ -666,13 +779,13 @@ func (s *Base) determineFactionAtWar(tick int, factionID string) ([]string, []st
 		return nil, nil, err
 	}
 
-	attacking := []string{}
-	defending := []string{}
+	attacking := []*structs.Job{}
+	defending := []*structs.Job{}
 	for _, j := range jobs {
 		if j.SourceFactionID == factionID {
-			attacking = append(attacking, j.TargetFactionID)
+			attacking = append(attacking, j)
 		} else {
-			defending = append(defending, j.SourceFactionID)
+			defending = append(defending, j)
 		}
 	}
 
