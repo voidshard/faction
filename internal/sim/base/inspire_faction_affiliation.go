@@ -105,6 +105,8 @@ func (s *Base) InspireFactionAffiliation(cfg *config.Affiliation, factionID stri
 			faith := []*structs.Tuple{}
 			events := []*structs.Event{}
 
+			peopleUpdated := []*structs.Person{}
+
 			for _, p := range people {
 				affil := affdice.Int()
 				desiredRank := simutil.RankFromAffiliation(affil)
@@ -120,6 +122,7 @@ func (s *Base) InspireFactionAffiliation(cfg *config.Affiliation, factionID stri
 					)
 					affil += (structs.MaxEthos / 50 * int(rank)) // higher rank -> higher affiliation
 					done += 1
+					peopleUpdated = append(peopleUpdated, p)
 				} else {
 					// we've added full members, so we'll just set some affiliation on the rest
 					// ie. this person isn't a full member, but they're sympathetic to the faction
@@ -165,6 +168,10 @@ func (s *Base) InspireFactionAffiliation(cfg *config.Affiliation, factionID stri
 			}
 
 			errors <- s.dbconn.InTransaction(func(tx db.ReaderWriter) error {
+				err = tx.SetPeople(peopleUpdated...)
+				if err != nil {
+					return err
+				}
 				err = tx.SetTuples(db.RelationPersonReligionFaith, faith...)
 				if err != nil {
 					return err
@@ -188,6 +195,15 @@ func (s *Base) InspireFactionAffiliation(cfg *config.Affiliation, factionID stri
 				return tx.SetEvents(events...)
 			})
 		}
+
+		if done == 0 {
+			return
+		}
+
+		ctx.Summary.Faction.Members += done // the faction has grown :)
+		s.dbconn.InTransaction(func(tx db.ReaderWriter) error {
+			return tx.SetFactions(&ctx.Summary.Faction)
+		})
 	}()
 
 	go func() {

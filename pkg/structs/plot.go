@@ -62,7 +62,17 @@ type LandSummary struct {
 }
 
 func (ls *LandSummary) Add(p *Plot) {
-	// summary by commodity
+	ls.addCommodity(p)
+
+	areaSum, ok := ls.Areas[p.AreaID]
+	if !ok {
+		areaSum = NewLandSummary()
+	}
+	areaSum.addCommodity(p)
+	ls.Areas[p.AreaID] = areaSum
+}
+
+func (ls *LandSummary) addCommodity(p *Plot) {
 	crop := ls.Commodities[p.Commodity]
 	if crop == nil {
 		crop = &Crop{}
@@ -74,14 +84,6 @@ func (ls *LandSummary) Add(p *Plot) {
 	ls.TotalSize += p.Size
 	ls.Count += 1
 	ls.Commodities[p.Commodity] = crop
-
-	// summary by area
-	areaSum, ok := ls.Areas[p.AreaID]
-	if !ok {
-		areaSum = NewLandSummary()
-	}
-	areaSum.Add(p)
-	ls.Areas[p.AreaID] = areaSum
 }
 
 func NewLandSummary() *LandSummary {

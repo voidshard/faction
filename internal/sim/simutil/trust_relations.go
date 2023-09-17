@@ -6,11 +6,13 @@ import (
 	"github.com/voidshard/faction/pkg/structs"
 )
 
-type FactionRelations struct {
-	// So aligned it's almost the same faction
+// TrustRelations maps ids to trust values & buckets them by their values.
+// This applies equally well to Factions or People, which both have Trust associated with them.
+type TrustRelations struct {
+	// So aligned they're almost the same
 	Federated []string // 9k -> 10k
 
-	// Share many agreements, goals, usually enemies of the same factions
+	// Share many agreements, goals, usually enemies
 	Allied []string // 6k -> 9k
 
 	// Share many goals & agreements
@@ -34,12 +36,12 @@ type FactionRelations struct {
 	// Sworn enemies, actively working to destroy one another
 	Nemesis []string // -9k -> -10k
 
-	// trust is a map of faction ID to trust value
+	// trust is a map of ID to trust value
 	trust map[string]int
 }
 
-func NewFactionRelations() *FactionRelations {
-	return &FactionRelations{
+func NewTrustRelations() *TrustRelations {
+	return &TrustRelations{
 		Federated:   []string{},
 		Allied:      []string{},
 		Sympathetic: []string{},
@@ -53,7 +55,7 @@ func NewFactionRelations() *FactionRelations {
 	}
 }
 
-func (r *FactionRelations) TrustBetween(a, b int, reverseSort bool) []string {
+func (r *TrustRelations) TrustBetween(a, b int, reverseSort bool) []string {
 	results := []string{}
 	for k, v := range r.trust {
 		if v >= a && v <= b {
@@ -72,7 +74,7 @@ func (r *FactionRelations) TrustBetween(a, b int, reverseSort bool) []string {
 	return results
 }
 
-func (r *FactionRelations) Add(id string, w int) {
+func (r *TrustRelations) Add(id string, w int) {
 	r.trust[id] = w
 	if w < structs.MaxTuple/10 && w > structs.MinTuple/10 {
 		r.Neutral = append(r.Neutral, id)

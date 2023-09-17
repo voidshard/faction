@@ -189,6 +189,7 @@ var (
             parent_faction_id VARCHAR(36) NOT NULL DEFAULT "",
             parent_faction_relation INTEGER NOT NULL DEFAULT 0,
 	    members INTEGER NOT NULL DEFAULT 0,
+	    vassals INTEGER NOT NULL DEFAULT 0,
 	    plots INTEGER NOT NULL DEFAULT 0,
 	    areas INTEGER NOT NULL DEFAULT 0
         );`, tableFactions)

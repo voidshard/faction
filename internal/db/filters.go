@@ -58,6 +58,10 @@ const (
 	EthosPiety      Field = "ethos_piety"
 	EthosCaution    Field = "ethos_caution"
 
+	// faction
+	ParentFactionID       Field = "parent_faction_id"
+	ParentFactionRelation Field = "parent_faction_relation"
+
 	// person
 	PreferredProfession Field = "preferred_profession"
 	PreferredFactionID  Field = "preferred_faction_id"

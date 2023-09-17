@@ -344,6 +344,8 @@ func (s *Base) randFaction(fr *factionRand) *simutil.MetaFaction {
 		})
 		mf.Areas[area] = true
 	}
+	mf.Faction.Plots = len(mf.Plots)
+	mf.Faction.Areas = len(mf.Areas)
 
 	// if we need to pick research topics, we can do so now sensibly
 	// (since we know where the faction is and what professions it prefers)

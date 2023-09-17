@@ -110,6 +110,7 @@ func (d *Demographics) AddRank(in string, val FactionRank) {
 }
 
 func (d *DemographicRankSpread) Add(val FactionRank, i int) {
+	d.Total += i
 	switch val {
 	case FactionRankRuler:
 		d.Ruler += i
@@ -132,7 +133,6 @@ func (d *DemographicRankSpread) Add(val FactionRank, i int) {
 	case FactionRankAssociate:
 		d.Associate += i
 	}
-	d.Total += i
 }
 
 func (d *DemographicStatSpread) Add(in int) {

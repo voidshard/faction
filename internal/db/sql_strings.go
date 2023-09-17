@@ -79,7 +79,7 @@ var (
 	    espionage_offense, espionage_defense,
 	    military_offense, military_defense,
             parent_faction_id, parent_faction_relation,
-	    members, plots, areas
+	    members, vassals, plots, areas
 	) VALUES (
 	    :id, :name,
 	    :home_area_id, :hq_plot_id,
@@ -93,7 +93,7 @@ var (
 	    :espionage_offense, :espionage_defense,
 	    :military_offense, :military_defense,
 	    :parent_faction_id, :parent_faction_relation,
-	    :members, :plots, :areas
+	    :members, :vassals, :plots, :areas
 	) ON CONFLICT (id) DO UPDATE SET
 	    name=EXCLUDED.name,
 	    home_area_id=EXCLUDED.home_area_id,
@@ -123,6 +123,7 @@ var (
 	    parent_faction_id=EXCLUDED.parent_faction_id,
 	    parent_faction_relation=EXCLUDED.parent_faction_relation,
 	    members=EXCLUDED.members,
+	    vassals=EXCLUDED.vassals,
 	    plots=EXCLUDED.plots,
 	    areas=EXCLUDED.areas
 	;`, tableFactions)

@@ -20,11 +20,12 @@ type FactionContext struct {
 	Areas           map[string]*structs.Area       // map areaID -> nil (in which the faction has influence)
 	Governments     map[string]*structs.Government // map areaID -> government (only the above areas)
 	LocalGovernment *structs.Government            // the government of the area the faction HQ is in
+	Land            *structs.LandSummary
 
 	cachedTargetAreas map[string][]string
 	areaIDs           []string
 	openRanks         *structs.DemographicRankSpread
-	rels              *FactionRelations
+	rels              *TrustRelations
 	dbconn            *db.FactionDB
 
 	researchTopics []string
@@ -58,9 +59,9 @@ func (f *FactionContext) RandomResearch() string {
 	return f.researchTopics[f.research.Int()]
 }
 
-func (f *FactionContext) Relations() *FactionRelations {
+func (f *FactionContext) Relations() *TrustRelations {
 	if f.rels == nil {
-		fr := NewFactionRelations()
+		fr := NewTrustRelations()
 		w := f.RelationWeight()
 		for factionID, trust := range f.Summary.Trust {
 			fr.Add(factionID, trust+w)
@@ -153,9 +154,16 @@ func NewFactionContext(dbconn *db.FactionDB, factionID string) (*FactionContext,
 		prob = append(prob, float64(weight))
 	}
 
+	// land
+	land, err := dbconn.LandSummary(nil, []string{factionID})
+	if err != nil {
+		return nil, err
+	}
+
 	return &FactionContext{
 		Summary:           summaries[0],
 		Areas:             areas,
+		Land:              land,
 		Governments:       areaGovs,
 		LocalGovernment:   gov,
 		cachedTargetAreas: map[string][]string{},

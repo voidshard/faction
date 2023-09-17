@@ -20,6 +20,10 @@ const (
 	Unfriendly
 )
 
+const (
+	estimateVassalPeopleDegradeByStep = 0.4
+)
+
 var (
 	ranksHigh = []structs.FactionRank{
 		structs.FactionRankRuler,
@@ -96,19 +100,10 @@ func (s *Base) PlanFactionJobs(factionID string) ([]*structs.Job, error) {
 		return nil, err
 	}
 
-	ctx, err := simutil.NewFactionContext(s.dbconn, factionID)
+	ctx, _, availablePeople, err := s.prepFactionData(factionID)
 	if err != nil {
 		return nil, err
 	}
-
-	land, err := s.dbconn.LandSummary(nil, []string{ctx.Summary.ID})
-	if err != nil {
-		return nil, err
-	}
-
-	ctx.Summary.Members = ctx.Summary.Ranks.Total
-	ctx.Summary.Plots = land.Count
-	ctx.Summary.Areas = len(ctx.Areas)
 
 	var plans []*structs.Job
 	if len(attacking) > 0 || len(defending) > 0 {
@@ -116,7 +111,7 @@ func (s *Base) PlanFactionJobs(factionID string) ([]*structs.Job, error) {
 		plans, err = s.planFactionJobsWartime(tick, ctx, attacking, defending)
 	} else {
 		// if we're at peace, we have lots of competing concerns
-		plans, err = s.planFactionJobsPeacetime(tick, ctx, land)
+		plans, err = s.planFactionJobsPeacetime(tick, ctx, availablePeople)
 	}
 	if err != nil || plans == nil || len(plans) == 0 {
 		// whatever happened, we're done
@@ -159,10 +154,38 @@ func (s *Base) PlanFactionJobs(factionID string) ([]*structs.Job, error) {
 	return jobs, err
 }
 
-func (s *Base) planFactionJobsPeacetime(tick int, ctx *simutil.FactionContext, land *structs.LandSummary) ([]*structs.Job, error) {
+func (s *Base) prepFactionData(factionID string) (*simutil.FactionContext, []*structs.Faction, int, error) {
+	// reads most data relevant to the faction
+	ctx, err := simutil.NewFactionContext(s.dbconn, factionID)
+	if err != nil {
+		return nil, nil, 0, err
+	}
+
+	// look up all child factions that might lend us people
+	children, _, err := s.dbconn.Factions(
+		"",
+		db.Q(
+			db.F(db.ParentFactionID, db.Equal, factionID),
+			db.F(db.ParentFactionRelation, db.Greater, structs.FactionRelationPuppet),
+		),
+	)
+	if err != nil {
+		return nil, nil, 0, err
+	}
+
 	// people we have available for work
-	people := estimateAvailablePeople(ctx.Summary.Ranks)
-	availablePeople := people
+	vassals := estimateVassalPeople(factionID, children)
+	people := estimateAvailablePeople(ctx.Summary.Ranks) + vassals/2
+
+	ctx.Summary.Members = ctx.Summary.Ranks.Total // nb. this is people with ranks, not available people for work
+	ctx.Summary.Vassals = vassals                 // estimation of the number of people from child factions we could use
+	ctx.Summary.Plots = ctx.Land.Count
+	ctx.Summary.Areas = len(ctx.Areas)
+
+	return ctx, children, people, nil
+}
+
+func (s *Base) planFactionJobsPeacetime(tick int, ctx *simutil.FactionContext, availablePeople int) ([]*structs.Job, error) {
 	availableWealth := float64(ctx.Summary.Wealth)
 
 	// Get all jobs for this faction that are active & wont finish next tick
@@ -188,7 +211,7 @@ func (s *Base) planFactionJobsPeacetime(tick int, ctx *simutil.FactionContext, l
 	}
 
 	// how likely we are to do various actions
-	weights, survivalConcerns, err := s.actionWeightsForFaction(ctx, land, people, availablePeople)
+	weights, survivalConcerns, err := s.actionWeightsForFaction(ctx, availablePeople)
 	if err != nil {
 		return nil, err
 	}
@@ -288,7 +311,7 @@ func (s *Base) planFactionJobsPeacetime(tick int, ctx *simutil.FactionContext, l
 		plans = append(plans, job)
 	}
 
-	err = s.setSpecificJobTargets(ctx, land, plans)
+	err = s.setSpecificJobTargets(ctx, plans)
 	if err != nil {
 		return nil, err
 	}
@@ -450,7 +473,7 @@ func (s *Base) setSpecificJobTargetsPlot(jobs []*structs.Job) error {
 	return nil
 }
 
-func (s *Base) setSpecificJobTargetsArea(ctx *simutil.FactionContext, land *structs.LandSummary, jobs []*structs.Job) error {
+func (s *Base) setSpecificJobTargetsArea(ctx *simutil.FactionContext, jobs []*structs.Job) error {
 	needAreas := []string{}
 	for _, j := range jobs {
 
@@ -470,7 +493,7 @@ func (s *Base) setSpecificJobTargetsArea(ctx *simutil.FactionContext, land *stru
 			j.TargetAreaID = ctx.RandomArea(j.Action)
 			if j.Action == structs.ActionTypeHarvest {
 				// Pick some area in which we can harvest resources.
-				for areaID, summary := range land.Areas { // because order of iteration of maps is undefined
+				for areaID, summary := range ctx.Land.Areas { // because order of iteration of maps is undefined
 					if len(summary.Commodities) > 0 {
 						j.TargetAreaID = areaID
 						break
@@ -492,7 +515,7 @@ func (s *Base) setSpecificJobTargetsArea(ctx *simutil.FactionContext, land *stru
 	return nil
 }
 
-func (s *Base) setSpecificJobTargets(ctx *simutil.FactionContext, land *structs.LandSummary, plans []*structs.Job) error {
+func (s *Base) setSpecificJobTargets(ctx *simutil.FactionContext, plans []*structs.Job) error {
 	// bucket jobs based on what kind of target they need
 	needed := map[structs.MetaKey][]*structs.Job{}
 	for _, j := range plans {
@@ -540,7 +563,7 @@ func (s *Base) setSpecificJobTargets(ctx *simutil.FactionContext, land *structs.
 			// Any child job(s) they spawn target Plots / Areas / People the same
 			// as everything else.
 		default:
-			err := s.setSpecificJobTargetsArea(ctx, land, jobs)
+			err := s.setSpecificJobTargetsArea(ctx, jobs)
 			if err != nil {
 				return err
 			}
@@ -744,7 +767,7 @@ func toProbability(x int) float64 {
 	return (float64(x) + structs.MaxEthos) / float64(structs.MaxEthos*2)
 }
 
-func (s *Base) actionWeightsForFaction(ctx *simutil.FactionContext, land *structs.LandSummary, people, peopleAvail int) (*simutil.ActionWeights, bool, error) {
+func (s *Base) actionWeightsForFaction(ctx *simutil.FactionContext, peopleAvail int) (*simutil.ActionWeights, bool, error) {
 	survivalConcerns := false
 	weights := simutil.NewActionWeights(s.cfg.Actions)
 
@@ -759,7 +782,7 @@ func (s *Base) actionWeightsForFaction(ctx *simutil.FactionContext, land *struct
 	}
 
 	// we have nothing to harvest :(
-	if len(land.Commodities) == 0 {
+	if len(ctx.Land.Commodities) == 0 {
 		weights.WeightAction(0.0, structs.ActionTypeHarvest)
 	}
 
@@ -792,7 +815,7 @@ func (s *Base) actionWeightsForFaction(ctx *simutil.FactionContext, land *struct
 
 	// survival: we need money to operate
 	valuation := 0.0
-	for areaID, arealand := range land.Areas {
+	for areaID, arealand := range ctx.Land.Areas {
 		// valuation of the base land
 		valuation += s.eco.LandValue(areaID, 0) * float64(arealand.TotalSize)
 	}
@@ -813,10 +836,10 @@ func (s *Base) actionWeightsForFaction(ctx *simutil.FactionContext, land *struct
 	}
 
 	// survival: we need people to work for us
-	if people < s.cfg.Settings.SurvivalMinPeople {
+	if ctx.Summary.Ranks.Total < s.cfg.Settings.SurvivalMinPeople {
 		weights.WeightByGoal(s.cfg.Settings.SurvivalGoalWeight, structs.GoalGrowth)
 		survivalConcerns = true
-	} else if people < (s.cfg.Settings.SurvivalMinPeople*6)/5 { // 1.2x
+	} else if ctx.Summary.Ranks.Total < (s.cfg.Settings.SurvivalMinPeople*6)/5 { // 1.2x
 		weights.WeightByGoal(s.cfg.Settings.SurvivalGoalWeight/2, structs.GoalGrowth)
 	}
 
@@ -837,11 +860,20 @@ func (s *Base) actionWeightsForFaction(ctx *simutil.FactionContext, land *struct
 	}
 
 	// survival: we need to have place(s) of work
-	if land.Count < 2 && ctx.Summary.IsCovert || land.Count < 1 {
+	if ctx.Land.Count < 2 && ctx.Summary.IsCovert || ctx.Land.Count < 1 {
 		weights.WeightByGoal(s.cfg.Settings.SurvivalGoalWeight, structs.GoalTerritory)
 	}
 
 	return weights, survivalConcerns, nil
+}
+
+func estimateVassalPeople(id string, vassals []*structs.Faction) int {
+	total := 0
+	for _, v := range vassals {
+		total += int(float64(v.Members) * estimateVassalPeopleDegradeByStep)
+		total += int(float64(v.Vassals) * estimateVassalPeopleDegradeByStep * estimateVassalPeopleDegradeByStep)
+	}
+	return total
 }
 
 func estimateAvailablePeople(d *structs.DemographicRankSpread) int {

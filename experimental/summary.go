@@ -11,9 +11,8 @@ import (
 
 func main() {
 	faction1 := structs.NewID("faction1")
-	//faction2 := structs.NewID("faction2")
-	//faction3 := structs.NewID("faction3")
-	//
+	faction2 := structs.NewID("faction2")
+	faction3 := structs.NewID("faction3")
 
 	cfg := &config.Database{
 		Driver:   config.DatabaseSQLite3,
@@ -31,7 +30,7 @@ func main() {
 		panic(err)
 	}
 
-	summaries, err := simulator.FactionSummaries(faction1) // , faction2, faction3)
+	summaries, err := simulator.FactionSummaries(faction1, faction2, faction3)
 	if err != nil {
 		panic(err)
 	}
@@ -42,7 +41,8 @@ func main() {
 	}
 
 	for _, s := range summaries {
-		fmt.Println("Faction", s.ID, "summary:", s.Ranks)
+		fmt.Println("Faction", s.ID)
+		fmt.Println("Ranks:", s.Ranks)
 
 		adata, ok := areas[s.ID]
 		if !ok {
