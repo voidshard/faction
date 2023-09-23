@@ -16,6 +16,7 @@ func eventTask(e structs.EventType) string {
 func (s *Base) registerTasksWithQueue() error {
 	s.queue.Register(eventTask(structs.EventPersonBirth), s.handlerOnEventPersonBirth)
 	s.queue.Register(eventTask(structs.EventPersonDeath), s.handlerOnEventPersonDeath)
+	s.queue.Register(eventTask(structs.EventFactionCreated), s.handlerOnEventFactionCreated)
 	return nil
 }
 
@@ -39,6 +40,23 @@ func eventSubjects(in []*structs.Event) []string {
 		out.Add(string(e.SubjectMetaVal))
 	}
 	return out.ToSlice()
+}
+
+func (s *Base) handlerOnEventFactionCreated(in ...*queue.JobMeta) error {
+	events, err := s.toEvents(in)
+	if err != nil {
+		return err
+	}
+	if len(events) == 0 {
+		return nil
+	}
+
+	tick, err := s.dbconn.Tick()
+	if err != nil {
+		return err
+	}
+
+	return s.applyFactionCreated(tick, events)
 }
 
 func (s *Base) handlerOnEventPersonBirth(in ...*queue.JobMeta) error {

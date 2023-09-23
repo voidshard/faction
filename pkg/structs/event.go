@@ -21,6 +21,7 @@ const (
 
 	EventFactionDemo      EventType = "faction_demotion"  // faction rank++ (regardless of preferred faction)
 	EventFactionPromotion EventType = "faction_promotion" // faction rank-- (regardless of preferred faction)
+	EventFactionCreated   EventType = "faction_created"   // faction created
 )
 
 var (

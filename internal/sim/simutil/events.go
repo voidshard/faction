@@ -13,6 +13,16 @@ func NewJobPending(j *structs.Job) *structs.Event {
 	}
 }
 
+func NewFactionCreatedEvent(f *structs.Faction, tick int) *structs.Event {
+	return &structs.Event{
+		ID:             structs.NewID(),
+		Type:           structs.EventFactionCreated,
+		Tick:           tick,
+		SubjectMetaKey: structs.MetaKeyFaction,
+		SubjectMetaVal: f.ID,
+	}
+}
+
 func NewFactionPromotionEvent(p *structs.Person, tick int, factionID string) *structs.Event {
 	return &structs.Event{
 		ID:             structs.NewID(),

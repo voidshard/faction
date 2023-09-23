@@ -14,6 +14,7 @@ type MetaFaction struct {
 	ProfWeights     []*structs.Tuple
 	ResearchWeights []*structs.Tuple
 	Areas           map[string]bool
+	Events          []*structs.Event
 }
 
 func NewMetaFaction() *MetaFaction {
@@ -25,6 +26,7 @@ func NewMetaFaction() *MetaFaction {
 		ProfWeights:     []*structs.Tuple{},
 		ResearchWeights: []*structs.Tuple{},
 		Areas:           map[string]bool{},
+		Events:          []*structs.Event{},
 	}
 }
 
@@ -35,6 +37,10 @@ func WriteMetaFaction(conn *db.FactionDB, f *MetaFaction) error {
 			return err
 		}
 		err = tx.SetPlots(f.Plots...)
+		if err != nil {
+			return err
+		}
+		err = tx.SetEvents(f.Events...)
 		if err != nil {
 			return err
 		}

@@ -10,7 +10,7 @@ func (s *Base) applyDeathFamilyEffect(tick int, events []*structs.Event) error {
 	query := db.Q(
 		db.F(db.ID, db.In, eventSubjects(events)),
 	).DisableSort()
-	in, _, err := s.dbconn.People("", query)
+	in, _, err := s.dbconn.People(dbutils.NewTokenWith(len(events), 0), query)
 	if err != nil {
 		return err
 	}

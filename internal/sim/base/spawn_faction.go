@@ -12,6 +12,11 @@ import (
 )
 
 func (s *Base) SpawnFactions(count int, cfg *config.Faction, areas ...string) ([]*structs.Faction, error) {
+	tick, err := s.dbconn.Tick()
+	if err != nil {
+		return nil, err
+	}
+
 	// prep some filters
 	arf := db.Q(db.F(db.ID, db.In, areas))
 	lrf := db.Q(
@@ -53,6 +58,7 @@ func (s *Base) SpawnFactions(count int, cfg *config.Faction, areas ...string) ([
 
 		}
 
+		f.Events = append(f.Events, simutil.NewFactionCreatedEvent(f.Faction, tick))
 		err = simutil.WriteMetaFaction(s.dbconn, f)
 		if err != nil {
 			return nil, err
@@ -73,6 +79,100 @@ func (s *Base) SpawnFactions(count int, cfg *config.Faction, areas ...string) ([
 	}
 
 	return factions, err
+}
+
+func determineBaseTrust(f1, f2 *simutil.MetaFaction) int {
+	// In general we give larger negatives than positives. Trust is much harder to build than suspicion.
+
+	// base value starts from Ethos distance
+	// y = -0.4x + 0.2 where x is the distance between the two factions' ethos (0-1)
+	// Yields
+	// ->  1/5 where x = 0
+	// -> -1/5 where x = 1
+	// ->  0   where x = 0.5
+	dist := structs.EthosDistance(&f1.Faction.Ethos, &f2.Faction.Ethos)
+	base := int(float64(structs.MaxEthos)*(-0.4*dist+0.2)) - structs.MaxEthos/20
+
+	// apply some basic "are we alike" modifiers
+	if f1.Faction.IsGovernment && f2.Faction.IsCovert {
+		base -= structs.MaxEthos / 5
+	}
+	if f1.Faction.IsCovert && f2.Faction.IsCovert {
+		base += structs.MaxEthos / 20
+	}
+	if f1.Faction.ReligionID != "" {
+		if f1.Faction.ReligionID == f2.Faction.ReligionID {
+			base += structs.MaxEthos / 10
+		} else {
+			if f1.Faction.IsReligion {
+				base -= structs.MaxEthos / 5
+			} else {
+				base -= structs.MaxEthos / 10
+			}
+		}
+	}
+
+	// more specific modifiers for favoured actions / resources
+	research := map[string]bool{}
+	for _, topic := range f1.ResearchWeights { // my research topics
+		research[topic.Object] = true
+	}
+	sharedResearch := false
+	for _, topic := range f2.ResearchWeights { // their research topics
+		_, ok := research[topic.Object]
+		if ok {
+			base -= structs.MaxEthos / 10 // research rivalry
+			sharedResearch = true
+		}
+	}
+	if !sharedResearch {
+		base += structs.MaxEthos / 10 // research cooperation
+	}
+
+	// favoured actions
+	actions := map[structs.ActionType]bool{}
+	for _, act := range f2.Actions { // their actions
+		actions[act] = true
+		switch act {
+		case structs.ActionTypeFestival, structs.ActionTypeCharity:
+			base += structs.MaxEthos / 20 // they're nice / charitable
+		case structs.ActionTypeWar, structs.ActionTypeCrusade, structs.ActionTypeShadowWar:
+			base -= structs.MaxEthos / 5 // they're warlike
+		case structs.ActionTypeRaid, structs.ActionTypePillage, structs.ActionTypeEnslave:
+			base -= structs.MaxEthos / 10 // they're raiders
+		}
+	}
+	for _, act := range f1.Actions { // my actions
+		switch act {
+		case structs.ActionTypeTrade, structs.ActionTypeCraft, structs.ActionTypeHarvest:
+			_, ok := actions[structs.ActionTypeSteal]
+			if ok {
+				base -= structs.MaxEthos / 10 // dirty theif!
+			}
+		case structs.ActionTypeSteal, structs.ActionTypeRaid, structs.ActionTypePillage, structs.ActionTypeEnslave:
+			_, trade := actions[structs.ActionTypeTrade]
+			_, craft := actions[structs.ActionTypeCraft]
+			_, harvest := actions[structs.ActionTypeHarvest]
+			if trade || craft || harvest {
+				base -= structs.MaxEthos / 5 // looks like a tempting target ;)
+			}
+		case structs.ActionTypeConcealSecrets:
+			_, investigate := actions[structs.ActionTypeGatherSecrets]
+			_, spy := actions[structs.ActionTypeHireSpies]
+			if investigate || spy {
+				base -= structs.MaxEthos / 5 // we don't like people who snoop on us
+			}
+		case structs.ActionTypeConsolidate, structs.ActionTypePropoganda:
+			_, frame := actions[structs.ActionTypeFrame]
+			_, blackmail := actions[structs.ActionTypeBlackmail]
+			_, propoganda := actions[structs.ActionTypePropoganda]
+			if frame || blackmail || propoganda {
+				base -= structs.MaxEthos / 5 // we don't like people who talk about us
+			}
+		}
+	}
+
+	return base
 }
 
 func isFactionIllegal(govt *structs.Government, f *simutil.MetaFaction) bool {

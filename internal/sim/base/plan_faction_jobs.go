@@ -139,7 +139,7 @@ func (s *Base) PlanFactionJobs(factionID string) ([]*structs.Job, error) {
 		}
 
 		ctx.Summary.Wealth -= int(cfg.Cost.Min)
-		events = append(events, simutil.NewJobPending(j))
+		events = append(events, simutil.NewJobPendingEvent(j))
 		jobs = append(jobs, j)
 	}
 
