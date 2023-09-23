@@ -4,7 +4,7 @@ import (
 	"github.com/voidshard/faction/pkg/structs"
 )
 
-func NewJobPending(j *structs.Job) *structs.Event {
+func NewJobPendingEvent(j *structs.Job) *structs.Event {
 	return &structs.Event{
 		ID:             structs.NewID(),
 		Tick:           j.TickCreated,

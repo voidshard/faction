@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/voidshard/faction/internal/db"
+	"github.com/voidshard/faction/internal/dbutils"
 	"github.com/voidshard/faction/internal/sim/simutil"
 	"github.com/voidshard/faction/pkg/structs"
 
@@ -16,7 +17,7 @@ func (s *Base) applyBirthSiblingRelations(tick int, events []*structs.Event) err
 	query := db.Q(
 		db.F(db.ID, db.In, eventSubjects(events)),
 	).DisableSort()
-	in, _, err := s.dbconn.People("", query)
+	in, _, err := s.dbconn.People(dbutils.NewTokenWith(len(events), 0), query)
 	if err != nil {
 		return err
 	}
