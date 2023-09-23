@@ -12,7 +12,7 @@ const (
 
 var (
 	// All known faction relations
-	FactionRelationsAll = []FactionRelation{
+	AllFactionRelations = []FactionRelation{
 		FactionRelationTributary,
 		FactionRelationPuppet,
 		FactionRelationVassal,

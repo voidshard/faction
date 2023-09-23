@@ -247,32 +247,6 @@ func Actions() map[structs.ActionType]*config.Action {
 			SecrecyWeight: 1,
 			Goals:         []structs.Goal{structs.GoalTerritory},
 		},
-		structs.ActionTypeDownsize: {
-			MinPeople:    1,
-			MaxPeople:    15,
-			Probability:  0.02,
-			Ethos:        structs.Ethos{Caution: -1 * modest},
-			PersonWeight: 1,
-			ProfessionWeights: map[string]float64{
-				CLERK:  2,
-				NOBLE:  5,
-				SCRIBE: 4,
-			},
-			TimeToPrepare: config.Distribution{
-				Min:       1 * DEFAULT_TICKS_PER_DAY,
-				Max:       3 * DEFAULT_TICKS_PER_DAY,
-				Mean:      1 * DEFAULT_TICKS_PER_DAY,
-				Deviation: 2 * DEFAULT_TICKS_PER_DAY,
-			},
-			TimeToExecute: config.Distribution{
-				Min:       1 * DEFAULT_TICKS_PER_DAY,
-				Max:       30 * DEFAULT_TICKS_PER_DAY,
-				Mean:      7 * DEFAULT_TICKS_PER_DAY,
-				Deviation: 30 * DEFAULT_TICKS_PER_DAY,
-			},
-			SecrecyWeight: 1,
-			Goals:         []structs.Goal{structs.GoalStability, structs.GoalWealth},
-		},
 		structs.ActionTypeCraft: {
 			MinPeople:    1,
 			MaxPeople:    -1,

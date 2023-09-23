@@ -13,16 +13,16 @@ import (
 
 var (
 	fieldTypes = map[Op][]isValid{
-		Equal:    {isInt, isString, isBool},
-		NotEqual: {isInt, isString},
-		In:       {isListID, isListString},
-		Greater:  {isInt},
-		Less:     {isInt},
+		Equal:    {isInt, isString, isBool, isJobState, isActionType, isMetaKey, isEventType, isFactionRelation},
+		NotEqual: {isInt, isString, isBool, isJobState, isActionType, isMetaKey, isEventType, isFactionRelation},
+		In:       {isListID, isListString, isListJobState, isListActionType, isListMetaKey, isListEventType},
+		Greater:  {isInt, isFactionRelation},
+		Less:     {isInt, isFactionRelation},
 	}
 	colChecks = map[Field][]isValid{
 		ID:                    {isID, isListID},
 		ParentFactionID:       {isID, isListID},
-		ParentFactionRelation: {isInt},
+		ParentFactionRelation: {isFactionRelation},
 		ActionType:            {isActionType, isListActionType},
 		JobID:                 {isID, isListID},
 		AreaID:                {isID, isListID},
@@ -53,6 +53,7 @@ var (
 	eventTypes  = map[string]bool{}
 	jobStates   = map[string]bool{}
 	actionTypes = map[string]bool{}
+	fnRelations = map[int]bool{}
 )
 
 func init() {
@@ -70,6 +71,9 @@ func init() {
 
 	for _, a := range structs.AllActions {
 		actionTypes[string(a)] = true
+	}
+	for _, r := range structs.AllFactionRelations {
+		fnRelations[int(r)] = true
 	}
 }
 
@@ -131,7 +135,7 @@ func (f *Filter) validate() error {
 		}
 	}
 	if !valid {
-		return fmt.Errorf("invalid filter value %v (failed check for '%s' operation)", f.Value, f.Op)
+		return fmt.Errorf("invalid filter value %v (failed check for '%s' operation on %s)", f.Value, f.Op, f.Field)
 	}
 
 	// check the value vs. the column we're talking about
@@ -149,7 +153,7 @@ func (f *Filter) validate() error {
 		}
 	}
 	if !valid {
-		return fmt.Errorf("invalid filter value %v for field %s", f.Value, f.Field)
+		return fmt.Errorf("invalid filter value %v for field %s for operation %s", f.Value, f.Field, f.Op)
 	}
 	return nil
 }
@@ -211,7 +215,26 @@ func isID(v interface{}) bool {
 	return dbutils.IsValidID(i)
 }
 
+func isFactionRelation(v interface{}) bool {
+	_, ok := v.(structs.FactionRelation)
+	if ok {
+		return true
+	}
+
+	i, ok := v.(int)
+	if !ok {
+		return false
+	}
+	_, ok = fnRelations[i]
+	return ok
+}
+
 func isEventType(v interface{}) bool {
+	_, ok := v.(structs.EventType)
+	if ok {
+		return true
+	}
+
 	i, ok := v.(string)
 	if !ok {
 		return false
@@ -221,6 +244,11 @@ func isEventType(v interface{}) bool {
 }
 
 func isListEventType(v interface{}) bool {
+	_, ok := v.([]structs.EventType)
+	if ok {
+		return true
+	}
+
 	i, ok := v.([]string)
 	if !ok {
 		return false
@@ -235,6 +263,11 @@ func isListEventType(v interface{}) bool {
 }
 
 func isActionType(v interface{}) bool {
+	_, ok := v.(structs.ActionType)
+	if ok {
+		return true
+	}
+
 	i, ok := v.(string)
 	if !ok {
 		return false
@@ -244,6 +277,11 @@ func isActionType(v interface{}) bool {
 }
 
 func isListActionType(v interface{}) bool {
+	_, ok := v.([]structs.ActionType)
+	if ok {
+		return true
+	}
+
 	i, ok := v.([]string)
 	if !ok {
 		return false
@@ -258,6 +296,11 @@ func isListActionType(v interface{}) bool {
 }
 
 func isMetaKey(v interface{}) bool {
+	_, ok := v.(structs.MetaKey)
+	if ok {
+		return true
+	}
+
 	i, ok := v.(string)
 	if !ok {
 		return false
@@ -267,6 +310,11 @@ func isMetaKey(v interface{}) bool {
 }
 
 func isListMetaKey(v interface{}) bool {
+	_, ok := v.([]structs.MetaKey)
+	if ok {
+		return true
+	}
+
 	i, ok := v.([]string)
 	if !ok {
 		return false
@@ -281,6 +329,11 @@ func isListMetaKey(v interface{}) bool {
 }
 
 func isJobState(v interface{}) bool {
+	_, ok := v.(structs.JobState)
+	if ok {
+		return true
+	}
+
 	i, ok := v.(string)
 	if !ok {
 		return false
@@ -290,6 +343,11 @@ func isJobState(v interface{}) bool {
 }
 
 func isListJobState(v interface{}) bool {
+	_, ok := v.([]structs.JobState)
+	if ok {
+		return true
+	}
+
 	i, ok := v.([]string)
 	if !ok {
 		return false

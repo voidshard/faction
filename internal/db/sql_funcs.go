@@ -41,6 +41,18 @@ type lawStruct struct {
 	Illegal  bool            `db:"illegal"`
 }
 
+// rankedPlot holds a Plot along side a rank setting (for windowed queries)
+type rankedPlot struct {
+	structs.Plot
+	Rank int `db:"rnk"`
+}
+
+// rankedTuple holds a Tuple along side a rank setting (for windowed queries)
+type rankedTuple struct {
+	structs.Tuple
+	Rank int `db:"rnk"`
+}
+
 func factionLeadership(op sqlOperator, limit int, ids ...string) (map[string]*FactionLeadership, error) {
 	result := map[string]*FactionLeadership{}
 	if len(ids) == 0 {
@@ -68,7 +80,7 @@ func factionLeadership(op sqlOperator, limit int, ids ...string) (map[string]*Fa
 	)
 	WHERE rnk <= %d;`, RelationPersonFactionRank.tupleTable(), inClause, limit)
 
-	var out []*structs.Tuple
+	var out []*rankedTuple
 	err := op.Select(&out, qstr, vals...)
 	if err != nil {
 		return nil, err
@@ -127,7 +139,7 @@ func factionPlots(op sqlOperator, limit int, ids ...string) (map[string][]*struc
 	)
 	WHERE rnk <= %d;`, tablePlots, inClause, limit)
 
-	var out []*structs.Plot
+	var out []*rankedPlot
 	err := op.Select(&out, qstr, vals...)
 	if err != nil {
 		return nil, err
@@ -138,7 +150,7 @@ func factionPlots(op sqlOperator, limit int, ids ...string) (map[string][]*struc
 		if !ok {
 			fplots = []*structs.Plot{}
 		}
-		fplots = append(fplots, t)
+		fplots = append(fplots, &(t).Plot)
 		result[t.FactionID] = fplots
 	}
 
@@ -760,7 +772,7 @@ func factionChildren(op sqlOperator, id string, rs []structs.FactionRelation) ([
 		return nil, fmt.Errorf("faction id %s is invalid", id)
 	}
 	if rs == nil || len(rs) == 0 {
-		rs = structs.FactionRelationsAll
+		rs = structs.AllFactionRelations
 	}
 
 	// TODO we could make this smarter with GreaterThan / LessThan but we have 4 relation types right now,
@@ -782,7 +794,7 @@ func factionParents(op sqlOperator, id string, rs []structs.FactionRelation) ([]
 		return nil, fmt.Errorf("faction id %s is invalid", id)
 	}
 	if rs == nil || len(rs) == 0 {
-		rs = structs.FactionRelationsAll
+		rs = structs.AllFactionRelations
 	}
 
 	// TODO we could make this smarter with GreaterThan / LessThan but we have 4 relation types right now,

@@ -46,10 +46,6 @@ const (
 	// plot
 	FactionID Field = "faction_id"
 
-	// route, job
-	SourceAreaID Field = "source_area_id"
-	TargetAreaID Field = "target_area_id"
-
 	// faction, person, family
 	EthosAltruism   Field = "ethos_altruism"
 	EthosAmbition   Field = "ethos_ambition"
@@ -84,12 +80,14 @@ const (
 	// job
 	SourceFactionID Field = "source_faction_id"
 	TargetFactionID Field = "target_faction_id"
+	SourceAreaID    Field = "source_area_id"
+	TargetAreaID    Field = "target_area_id"
 	TargetMetaKey   Field = "target_meta_key"
 	TargetMetaVal   Field = "target_meta_val"
 	Secrecy         Field = "secrecy"
 	JobState        Field = "state"
 	TickEnds        Field = "tick_ends"
-	ActionType      Field = "action_type"
+	ActionType      Field = "action"
 
 	// tuple, modifiers
 	Subject Field = "subject"

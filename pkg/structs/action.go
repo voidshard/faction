@@ -45,7 +45,6 @@ const (
 	ActionTypePropoganda     ActionType = "propoganda"      // increases general favor towards you, cheaper than 'Charity' but less um, honest
 	ActionTypeRecruit        ActionType = "recruit"         // push recuitment (overtly or covertly), increases general affiliation
 	ActionTypeExpand         ActionType = "expand"          // purchase more land / property, add base of operations in another city etc
-	ActionTypeDownsize       ActionType = "downsize"        // sell land / property to recoup funds
 	ActionTypeCraft          ActionType = "craft"           // focus on crafting, increasing funds
 	ActionTypeHarvest        ActionType = "harvest"         // focus on harvesting, increasing crop yield, mining - increasing funds
 	ActionTypeConsolidate    ActionType = "consolidate"     // consolidate; internal re-organisation, process streamlining etc (increases cohession)
@@ -97,7 +96,6 @@ var (
 		ActionTypeKidnap:          MetaKeyPerson,   // kidnap someone
 		ActionTypeRequestLand:     MetaKeyPlot,     // ask government to grant land
 		ActionTypeRevokeLand:      MetaKeyPlot,     // revoke land from a faction
-		ActionTypeDownsize:        MetaKeyPlot,     // sell a plot in some area
 		ActionTypeSteal:           MetaKeyPlot,     // steal from some building
 		ActionTypeRaid:            MetaKeyPlot,     // raid an area, centered on a plot
 		ActionTypePillage:         MetaKeyPlot,     // pillage an area, centered on some plot
@@ -133,7 +131,6 @@ var (
 		ActionTypePropoganda,
 		ActionTypeRecruit,
 		ActionTypeExpand,
-		ActionTypeDownsize,
 		ActionTypeCraft,
 		ActionTypeHarvest,
 		ActionTypeConsolidate,

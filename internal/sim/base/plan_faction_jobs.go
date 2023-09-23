@@ -140,11 +140,12 @@ func (s *Base) PlanFactionJobs(factionID string) ([]*structs.Job, error) {
 
 		ctx.Summary.Wealth -= int(cfg.Cost.Min)
 		events = append(events, simutil.NewJobPending(j))
+		jobs = append(jobs, j)
 	}
 
 	// push everything into the DB
 	err = s.dbconn.InTransaction(func(tx db.ReaderWriter) error {
-		err := tx.SetFactions(ctx.Summary.ToFaction()) // updated Wealth
+		err := tx.SetFactions(ctx.Summary.ToFaction()) // updated Wealth & Members values
 		if err != nil {
 			return err
 		}
@@ -266,6 +267,7 @@ func (s *Base) planFactionJobsPeacetime(tick int, ctx *simutil.FactionContext, a
 
 		job := simutil.NewJob(tick, act, cfg)
 		job.SourceFactionID = ctx.Summary.ID
+		job.SourceAreaID = ctx.RandomArea(act)
 		job.TargetFactionID = target
 		job.IsIllegal = ctx.Summary.IsCovert || simutil.IsIllegalAction(act, ctx.AllGovernments()...)
 		if job.IsIllegal {
@@ -413,14 +415,8 @@ func (s *Base) setSpecificJobTargetsPlot(jobs []*structs.Job) error {
 	factionIDs := []string{}
 
 	for _, j := range jobs {
-		switch j.Action {
-		case structs.ActionTypeDownsize:
-			// targeting our own land(s)
-			factionIDs = append(factionIDs, j.SourceFactionID)
-		default:
-			// targeting lands of the target
-			factionIDs = append(factionIDs, j.TargetFactionID)
-		}
+		// targeting lands of the target
+		factionIDs = append(factionIDs, j.TargetFactionID)
 	}
 
 	// pull out the most expensive plots
@@ -440,18 +436,6 @@ func (s *Base) setSpecificJobTargetsPlot(jobs []*structs.Job) error {
 	}
 
 	for _, j := range jobs {
-		if j.Action == structs.ActionTypeDownsize {
-			// one of the few actions where we target our own land
-			fplots, ok := plots[j.SourceFactionID]
-			if ok && len(fplots) > 0 {
-				j.TargetMetaKey = structs.MetaKeyPlot
-				// sell the "cheapest"
-				j.TargetMetaVal = fplots[len(fplots)-1].ID
-				j.TargetAreaID = fplots[len(fplots)-1].AreaID
-			}
-			continue
-		}
-
 		intelligence, _ := intel[j.TargetFactionID]
 
 		fplots, ok := plots[j.TargetFactionID]
@@ -602,6 +586,10 @@ func (s *Base) chooseJobTargetFaction(ctx *simutil.FactionContext, inflight map[
 	relations := ctx.Relations()
 
 	if cfg.TargetMinTrust == 0 && cfg.TargetMaxTrust == 0 {
+		_, ok := inflight[jobKey(ctx.Summary.ID, act)]
+		if ok { // this job & target is already inflight
+			return "", nil
+		}
 		return ctx.Summary.ID, nil // target ourselves
 	}
 
