@@ -52,12 +52,12 @@ func main() {
 
 	fcfg := fantasy.Faction()
 
-	factions, err := simulator.SpawnFactions(10, fcfg, area1.ID, area2.ID, area3.ID)
-	if err != nil {
-		panic(err)
-	}
+	for i := 0; i < 10; i++ {
+		f, err := simulator.SpawnFaction(fcfg, area1.ID, area2.ID, area3.ID)
+		if err != nil {
+			panic(err)
+		}
 
-	for _, f := range factions {
 		fmt.Println("ID:", f.ID, "\n\tHomeAreaID:", f.HomeAreaID, "\n\tIsCovert:", f.IsCovert, "\n\tGovernmentID:", f.GovernmentID)
 		fmt.Println("\tAltruism:", f.Altruism, "Ambition:", f.Ambition, "Tradition:", f.Tradition, "Pacifism:", f.Pacifism, "Piety:", f.Piety, "Caution:", f.Caution)
 		fmt.Println("\tEspionageOffense", f.EspionageOffense, "EspionageDefense", f.EspionageDefense)

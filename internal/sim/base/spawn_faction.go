@@ -15,17 +15,8 @@ import (
 	"github.com/voidshard/faction/pkg/structs"
 )
 
-func (s *Base) SpawnFactions(count int, cfg *config.Faction, areas ...string) ([]*structs.Faction, error) {
+func (s *Base) SpawnFaction(cfg *config.Faction, areas ...string) (*structs.Faction, error) {
 	tick, err := s.dbconn.Tick()
-	if err != nil {
-		return nil, err
-	}
-
-	// prep some filters
-	arf := db.Q(db.F(db.ID, db.In, areas))
-
-	// what land is good for what / who
-	landsummary, err := s.dbconn.LandSummary(areas, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -34,43 +25,36 @@ func (s *Base) SpawnFactions(count int, cfg *config.Faction, areas ...string) ([
 	dice := newFactionRand(cfg, s.tech, areas)
 
 	// lookup which areas are run by which governments (determines faction legality / covert status)
+	arf := db.Q(db.F(db.ID, db.In, areas))
 	areaToGovt, govtToGovt, err := s.areaGovernments(arf)
 	if err != nil {
 		return nil, err
 	}
 
 	// generate factions
-	factions := []*structs.Faction{}
 	govsToWrite := map[string]*structs.Government{}
-	for i := 0; i < count; i++ {
-		f, err := s.randFaction(dice, landsummary)
-		if err != nil {
-			return nil, err
-		}
-		if f == nil {
-			break // we ran out of land and can't make more
-		}
+	f, err := s.randFaction(dice)
+	if err != nil {
+		return nil, err
+	}
 
-		govtID, _ := areaToGovt[f.Faction.HomeAreaID]
-		govt, _ := govtToGovt[govtID]
+	govtID, _ := areaToGovt[f.Faction.HomeAreaID]
+	govt, _ := govtToGovt[govtID]
 
-		if govt != nil {
-			f.Faction.GovernmentID = govtID
-			if isFactionIllegal(govt, f) {
-				govt.Outlawed.Factions[f.Faction.ID] = true
-				govsToWrite[govtID] = govt
-				makeFactionCovert(dice, f)
-			}
-
+	if govt != nil {
+		f.Faction.GovernmentID = govtID
+		if isFactionIllegal(govt, f) {
+			govt.Outlawed.Factions[f.Faction.ID] = true
+			govsToWrite[govtID] = govt
+			makeFactionCovert(dice, f)
 		}
 
-		f.Events = append(f.Events, simutil.NewFactionCreatedEvent(f.Faction, tick))
-		err = simutil.WriteMetaFaction(s.dbconn, f)
-		if err != nil {
-			return nil, err
-		}
+	}
 
-		factions = append(factions, f.Faction)
+	f.Events = append(f.Events, simutil.NewFactionCreatedEvent(f.Faction, tick))
+	err = simutil.WriteMetaFaction(s.dbconn, f)
+	if err != nil {
+		return nil, err
 	}
 
 	// finally, flush law change(s) to govt (if needed)
@@ -84,7 +68,7 @@ func (s *Base) SpawnFactions(count int, cfg *config.Faction, areas ...string) ([
 		})
 	}
 
-	return factions, err
+	return f.Faction, err
 }
 
 func isFactionIllegal(govt *structs.Government, f *simutil.MetaFaction) bool {
@@ -189,7 +173,7 @@ func (s *Base) areaGovernments(in *db.Query) (map[string]string, map[string]*str
 }
 
 // randFaction spits out a random faction.
-func (s *Base) randFaction(fr *factionRand, landsummary *structs.LandSummary) (*simutil.MetaFaction, error) {
+func (s *Base) randFaction(fr *factionRand) (*simutil.MetaFaction, error) {
 	// start with a lot of randomly inserted fields
 	mf := simutil.NewMetaFaction()
 	mf.Faction = &structs.Faction{
@@ -266,35 +250,18 @@ func (s *Base) randFaction(fr *factionRand, landsummary *structs.LandSummary) (*
 	// favoured actions influence faction's starting ethos
 	mf.Faction.Ethos = *structs.EthosAverage(actionsEthos...)
 
-	// work out how much land we want
-	desiredArea := fr.plotSize.Int()
-	emptyArea, ok := landsummary.Commodities[""]
-	if !ok {
-		emptyArea = &structs.Crop{Commodity: ""}
-		landsummary.Commodities[""] = emptyArea
-	}
-	if emptyArea.Size < desiredArea {
-		if emptyArea.Size > int(fr.cfg.PlotSize.Min) {
-			desiredArea = emptyArea.Size // use less than we want
-		} else if !fr.cfg.AllowEmptyPlotCreation && emptyArea.Size < int(fr.cfg.PlotSize.Min) {
-			// we cannot create land, and we don't even have the min :(
-			return nil, nil
-		}
-	}
-	emptyArea.Size -= desiredArea
-
 	// consider a profession based guild
 	seen = map[int]bool{}
+	desiredArea := fr.plotSize.Int()
 	landRequirements := map[string]int{"": desiredArea}
+	guilds := []*config.Guild{}
 	for i := 0; i < fr.guildCount.Int(); i++ {
 		choice := fr.guildOccur.Int()
-		fmt.Println("[debug]GUILD CHECK", choice)
 		if choice < 0 {
 			break // there is no choice
 		}
 
 		_, ok := seen[choice]
-		fmt.Println("[debug]GUILD SEEN", ok)
 		if ok {
 			continue
 		}
@@ -305,48 +272,29 @@ func (s *Base) randFaction(fr *factionRand, landsummary *structs.LandSummary) (*
 			continue // guild doesn't need land .. technically this config is invalid
 		}
 
-		enoughLand := true
 		for commodity, requirement := range guild.LandMinCommodityYield {
-			// check if we have enough land of each type
-			croptotal, ok := landsummary.Commodities[commodity]
-			if !ok {
-				croptotal = &structs.Crop{Commodity: commodity}
-				landsummary.Commodities[commodity] = croptotal
-			}
-			if croptotal.Yield < requirement && !fr.cfg.AllowCommodityPlotCreation {
-				enoughLand = false
-				break
-			}
-		}
-		if !enoughLand {
-			continue
-		}
-		for commodity, requirement := range guild.LandMinCommodityYield {
-			// record that we're taking some land
-			croptotal, _ := landsummary.Commodities[commodity]
-			croptotal.Yield -= requirement
-			landsummary.Commodities[commodity] = croptotal
-
+			// record that we'd like some land
 			v, _ := landRequirements[commodity]
 			landRequirements[commodity] = v + requirement
 		}
 
-		professions = append(professions, guild.Professions...)
+		guilds = append(guilds, &guild)
 	}
 
 	// take some land for our faction
-	grantedPlots, err := s.chooseFactionLand(fr.areas, landRequirements, fr.cfg.AllowEmptyPlotCreation, fr.cfg.AllowCommodityPlotCreation)
+	plots, resources, err := s.chooseFactionLand(fr.areas, landRequirements, fr.cfg.AllowEmptyPlotCreation, fr.cfg.AllowCommodityPlotCreation)
 	if err != nil {
 		return nil, err
 	}
-	if len(grantedPlots) == 0 {
+	if len(plots) == 0 {
 		return nil, fmt.Errorf("no land found for faction %v", landRequirements)
 	}
-	for _, plot := range grantedPlots {
+
+	for _, plot := range plots {
 		plot.FactionID = mf.Faction.ID
 		mf.Plots = append(mf.Plots, plot)
 	}
-	rnum := fr.rng.Intn(len(grantedPlots))
+	rnum := fr.rng.Intn(len(plots))
 	mf.Faction.HomeAreaID = mf.Plots[rnum].AreaID
 	mf.Faction.HQPlotID = mf.Plots[rnum].ID
 
@@ -392,11 +340,17 @@ func (s *Base) randFaction(fr *factionRand, landsummary *structs.LandSummary) (*
 	return mf, nil
 }
 
-func (s *Base) chooseFactionLand(areas []string, requirements map[string]int, createEmpty, createCmd bool) ([]*structs.Plot, error) {
+func (s *Base) chooseFactionLand(areas []string, requirements map[string]int, createEmpty, createCmd bool) ([]*structs.Plot, map[string]int, error) {
 	requirementMet := 0
 	resourcesSoFar := map[string]int{}
 	found := []*structs.Plot{}
-	q := db.Q(db.F(db.AreaID, db.In, areas), db.F(db.FactionID, db.Equal, ""))
+
+	commodities := []string{}
+	for commodity := range requirements {
+		commodities = append(commodities, commodity)
+	}
+
+	q := db.Q(db.F(db.AreaID, db.In, areas), db.F(db.FactionID, db.Equal, ""), db.F(db.Commodity, db.In, commodities))
 
 	var (
 		plots []*structs.Plot
@@ -406,14 +360,14 @@ func (s *Base) chooseFactionLand(areas []string, requirements map[string]int, cr
 	for {
 		plots, token, err = s.dbconn.Plots(token, q)
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 
 		for _, plot := range plots {
 			want, _ := requirements[plot.Commodity]
 			have, _ := resourcesSoFar[plot.Commodity]
 
-			if want >= have {
+			if have >= want {
 				continue
 			}
 
@@ -429,7 +383,7 @@ func (s *Base) chooseFactionLand(areas []string, requirements map[string]int, cr
 				requirementMet++
 			}
 			if requirementMet >= len(requirements) {
-				return found, nil
+				return found, resourcesSoFar, nil
 			}
 		}
 
@@ -451,7 +405,7 @@ func (s *Base) chooseFactionLand(areas []string, requirements map[string]int, cr
 		}
 
 		if commodity == "" && createEmpty || commodity != "" && createCmd {
-			// we can create commodity land
+			// create land from thin air
 			found = append(found, &structs.Plot{
 				ID:     structs.NewID(),
 				AreaID: areaID,
@@ -461,8 +415,9 @@ func (s *Base) chooseFactionLand(areas []string, requirements map[string]int, cr
 					Yield:     1,
 				},
 			})
+			resourcesSoFar[commodity] = want
 		}
 	}
 
-	return found, nil
+	return found, resourcesSoFar, nil
 }

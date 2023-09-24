@@ -255,7 +255,7 @@ func (s *Base) spawnCouple(tick int, areaID, race, culture string, mp *simutil.M
 	return alive
 }
 
-func (s *Base) SpawnPopulace(desiredTotal int, race, culture string, areas []string) error {
+func (s *Base) SpawnPopulace(desiredTotal int, race, culture string, areas ...string) error {
 	if len(areas) < 1 {
 		return nil
 	}

@@ -116,7 +116,7 @@ func main() {
 
 	// step 4. create some people spread fairly evenly (this is easier here, realisitically distribution should be uneven)
 	fmt.Println("spawning populace")
-	err = simulator.SpawnPopulace(30000, "human", "human", areaIDs)
+	err = simulator.SpawnPopulace(30000, "human", "human", areaIDs...)
 	if err != nil {
 		panic(err)
 	}
@@ -129,9 +129,13 @@ func main() {
 	for govID, govAreaIDs := range areasByGovernment {
 		fmt.Printf("\tspawning %d factions for government %s\n", factionsByArea, govID)
 
-		localFactions, err := simulator.SpawnFactions(factionsByArea, fantasy.Faction(), govAreaIDs...)
-		if err != nil {
-			panic(err)
+		localFactions := []*structs.Faction{}
+		for i := 0; i < factionsByArea; i++ {
+			f, err := simulator.SpawnFaction(fantasy.Faction(), govAreaIDs...)
+			if err != nil {
+				panic(err)
+			}
+			localFactions = append(localFactions, f)
 		}
 
 		// select someone as government

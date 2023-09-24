@@ -55,7 +55,7 @@ type Simulation interface {
 	// if an area is conquered or similar.
 	SetAreaGovernment(governmentID string, areas ...string) error
 
-	// SpawnFactions creates `number` of new faction(s) within the given area(s).
+	// SpawnFaction creates a faction within the given area(s).
 	//
 	// Note that factions settings will depend on landrights in these areas and government.
 	// That is, if there are no mines in the area, then it makes no sense to spawn mining based
@@ -66,7 +66,7 @@ type Simulation interface {
 	//
 	// Note that none of these factions will be marked as the Government itself, so you'll
 	// want to explicitly pick one to set that, or spawn a new faction for that reason.
-	SpawnFactions(number int, f *config.Faction, areas ...string) ([]*structs.Faction, error)
+	SpawnFaction(f *config.Faction, areas ...string) (*structs.Faction, error)
 
 	// FactionSummaries returns a summary of the given faction(s).
 	//
@@ -88,7 +88,7 @@ type Simulation interface {
 	// we can create more people than this; as we sometimes create people dead
 	// in order to simulate some past family tragedy or something.
 	// - The number created is approximate
-	SpawnPopulace(people int, race, culture string, areas []string) error
+	SpawnPopulace(people int, race, culture string, areas ...string) error
 
 	// Demographics for the given area(s).
 	Demographics(areas ...string) (*structs.Demographics, error)

@@ -386,11 +386,11 @@ func Faction() *config.Faction {
 			},
 		},
 		GuildProbability: []float64{0.30, 0.55, 0.1, 0.05},
-		PlotSize: config.Distribution{
+		PlotSize: config.Distribution{ // metres squared
 			Min:       100,
-			Max:       10000,
-			Mean:      500,
-			Deviation: 9500,
+			Max:       500,
+			Mean:      250,
+			Deviation: 250,
 		},
 		ResearchProbability: map[string]float64{
 			AGRICULTURE:  0.01,
