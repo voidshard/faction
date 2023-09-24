@@ -23,6 +23,7 @@ type sqlOperator interface {
 	NamedExec(query string, arg interface{}) (sql.Result, error)
 	Exec(query string, args ...interface{}) (sql.Result, error)
 	Select(dest interface{}, query string, args ...interface{}) error
+	Get(dest interface{}, query string, args ...interface{}) error
 }
 
 // mstruct is a row of metadata
@@ -267,6 +268,16 @@ func incrModifiers(op sqlOperator, r Relation, v int, in *Query) error {
 
 	_, err = op.Exec(qstr, args...)
 	return err
+}
+
+func countTuples(op sqlOperator, r Relation, in *Query) (int, error) {
+	in.DisableSort() // not that we use sort anyway but :shrug:
+	q, args, err := genericCountSQLFromFilters(in, r.tupleTable())
+	if err != nil {
+		return 0, err
+	}
+	var count int
+	return count, op.Get(&count, q, args...)
 }
 
 func tuples(op sqlOperator, r Relation, token string, in *Query) ([]*structs.Tuple, string, error) {

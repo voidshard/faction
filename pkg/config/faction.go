@@ -4,27 +4,30 @@ import (
 	"github.com/voidshard/faction/pkg/structs"
 )
 
-// Guild represents configuration for randomly creating a guild.
-// (Profession based faction).
+// Guild represents configuration for randomly creating a guild which involves or revolves
+// around some commodities & associated professions
+//
+// (Commodity based faction).
 type Guild struct {
-	// Profession that this guild prefers
-	Profession string
+	// Professions that this guild prefers
+	Professions []string
 
 	// Probability of this profession being selected (at all)
 	Probability float64
 
-	// MinYield is the minimum yield that a guild will accept, that assuming
-	// the resource is attached to a Plot.
+	// LandMinCommodityYield notes that the guild needs areas of land that produce the given
+	// commodities in order to form.
 	//
-	// That is, if the land we're looking at when randomly building factions
-	// yields only 1 iron ore, then that may not be enough for a guild of
-	// miners to form -- since it's not a large enough part of the economy
-	// to form a guild around.
+	// Ie. a Mining / Iron working guild might need
+	// 	IRON_ORE: 10
+	// 	TIMBER: 100
+	// Or whatever.
 	//
-	// A 0 here can make sense if a land yield isn't relevant for guild formation;
-	// ie. a silversmiths guild can form even if silver is imported from elsewhere.
-	// But a guild of silver-ore miners require silver mines to operate.
-	MinYield int
+	// When the guild is formed it will be given enough land to meet this across some
+	// number of area(s).
+	//
+	// Applies to Plots with Commodity set.
+	LandMinCommodityYield map[string]int
 }
 
 // Focus represents a set of actions that a faction prefers to perform.
@@ -132,6 +135,16 @@ type Faction struct {
 	// acquire extra land if this isn't met.
 	PropertyProbability []float64
 
-	// Size of plots that can be allocated
+	// Size of (non-commodity) plots that should be allocated.
+	// Warning; factions will need to find this total land area (in Plot.Size) in
+	// order to form.
 	PlotSize Distribution
+
+	// AllowEmptyPlotCreation allows the process spawning factions to generate empty plots
+	// if not enough Plots are found.
+	AllowEmptyPlotCreation bool
+
+	// AllowCommodityPlotCreation allows the process spawning factions to generate plots
+	// that yield Commodities if not enough Plots are found.
+	AllowCommodityPlotCreation bool
 }

@@ -212,7 +212,7 @@ func isID(v interface{}) bool {
 	if !ok {
 		return false
 	}
-	return dbutils.IsValidID(i)
+	return i == "" || dbutils.IsValidID(i)
 }
 
 func isFactionRelation(v interface{}) bool {
@@ -454,6 +454,14 @@ func sqlFromPlotFilters(tk *dbutils.IterToken, in *Query) (string, []interface{}
 		len(args)+1,
 		len(args)+2,
 	), append(args, tk.Limit, tk.Offset), nil
+}
+
+func genericCountSQLFromFilters(in *Query, table string) (string, []interface{}, error) {
+	where, args, err := in.sqlQuery(0)
+	if err != nil {
+		return "", nil, err
+	}
+	return fmt.Sprintf("SELECT COUNT(*) FROM %s %s;", table, where), args, nil
 }
 
 func genericSQLFromFilters(tk *dbutils.IterToken, in *Query, table string) (string, []interface{}, error) {

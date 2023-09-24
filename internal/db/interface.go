@@ -24,6 +24,7 @@ type Reader interface {
 	// be parsed by the end user(s), and it's design & encoding may change.
 
 	Tick() (int, error)
+
 	Areas(token string, q *Query) ([]*structs.Area, string, error)
 	Factions(token string, q *Query) ([]*structs.Faction, string, error)
 	Families(token string, q *Query) ([]*structs.Family, string, error)
@@ -42,6 +43,8 @@ type Reader interface {
 
 	FactionLeadership(limit int, ids ...string) (map[string]*FactionLeadership, error)
 	FactionPlots(limit int, ids ...string) (map[string][]*structs.Plot, error)
+
+	CountTuples(table Relation, q *Query) (int, error)
 }
 
 type Writer interface {

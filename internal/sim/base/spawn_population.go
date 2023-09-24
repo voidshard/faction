@@ -5,7 +5,6 @@ package base
 
 import (
 	"fmt"
-	"sync"
 
 	"github.com/voidshard/faction/internal/random/rng"
 	"github.com/voidshard/faction/internal/sim/simutil"
@@ -270,90 +269,68 @@ func (s *Base) SpawnPopulace(desiredTotal int, race, culture string, areas []str
 		return err
 	}
 
-	var finalerr error
-	errs := make(chan error)
-
-	go func() {
-		for err := range errs {
-			if err == nil {
-				continue
-			}
-			if finalerr == nil {
-				finalerr = err
-			} else {
-				finalerr = fmt.Errorf("%w %v", finalerr, err)
-			}
-		}
-	}()
-
 	desiredArea := desiredTotal / len(areas)
-	wg := &sync.WaitGroup{}
 
 	// we place people one area at a time because it feels more natural as this results in more
 	// links between people within a given area than between areas.
-	for _, a := range areas {
-		wg.Add(1)
-		go func(areaID string) {
-			defer wg.Done()
+	for _, areaID := range areas {
+		dice := s.dice.MustDemographic(race, culture) // initialise our dice with probabilities
 
-			dice := s.dice.MustDemographic(race, culture) // initialise our dice with probabilities
-
-			prevAdults := []*structs.Person{} // some saved people to inter-link chunks
-			prevChildren := []*structs.Person{}
-			aliveArea := 0
-			for {
-				if finalerr != nil || aliveArea >= desiredArea {
-					break
-				}
-
-				mp := simutil.NewMetaPeople()
-
-				// we'll have 1 in 20 unmarried (just to force some variety)
-				if aliveArea%20 > 0 && dice.RandomIsMarried(float64(dice.MinParentingAge())) {
-					// spawn explicit familiy
-					mp = s.spawnFamily(tick, areaID, race, culture)
-					for _, p := range append(mp.Adults, mp.Children...) {
-						if p.DeathTick <= 0 {
-							aliveArea++
-						}
-					}
-				} else {
-					// spawn random couples
-					for i := 0; i < s.dice.Intn(5)+1; i++ {
-						aliveArea += s.spawnCouple(tick, areaID, race, culture, mp)
-					}
-				}
-
-				// randomly add a few relationships
-				if len(prevAdults) > 0 && len(mp.Adults) > 0 {
-					for _, a := range mp.Adults {
-						for _, p := range rng.ChooseIndexes(len(prevAdults), s.dice.Intn(3)) {
-							relationships, trust := dice.RandomRelationship(a.ID, prevAdults[p].ID)
-							mp.Relations = append(mp.Relations, relationships...)
-							mp.Trust = append(mp.Trust, trust...)
-						}
-					}
-				}
-				if len(prevChildren) > 0 && len(mp.Children) > 0 {
-					for _, a := range mp.Children {
-						for _, p := range rng.ChooseIndexes(len(prevChildren), s.dice.Intn(2)) {
-							relationships, trust := dice.RandomRelationship(a.ID, prevChildren[p].ID)
-							mp.Relations = append(mp.Relations, relationships...)
-							mp.Trust = append(mp.Trust, trust...)
-						}
-					}
-				}
-
-				prevAdults = mp.Adults
-				prevChildren = mp.Children
-
-				errs <- simutil.WriteMetaPeople(s.dbconn, mp)
+		prevAdults := []*structs.Person{} // some saved people to inter-link chunks
+		prevChildren := []*structs.Person{}
+		aliveArea := 0
+		for {
+			if aliveArea >= desiredArea {
+				break
 			}
-		}(a)
+
+			mp := simutil.NewMetaPeople()
+
+			// we'll have 1 in 20 unmarried (just to force some variety)
+			if aliveArea%20 > 0 && dice.RandomIsMarried(float64(dice.MinParentingAge())) {
+				// spawn explicit familiy
+				mp = s.spawnFamily(tick, areaID, race, culture)
+				for _, p := range append(mp.Adults, mp.Children...) {
+					if p.DeathTick <= 0 {
+						aliveArea++
+					}
+				}
+			} else {
+				// spawn random couples
+				for i := 0; i < s.dice.Intn(5)+1; i++ {
+					aliveArea += s.spawnCouple(tick, areaID, race, culture, mp)
+				}
+			}
+
+			// randomly add a few relationships
+			if len(prevAdults) > 0 && len(mp.Adults) > 0 {
+				for _, a := range mp.Adults {
+					for _, p := range rng.ChooseIndexes(len(prevAdults), s.dice.Intn(3)) {
+						relationships, trust := dice.RandomRelationship(a.ID, prevAdults[p].ID)
+						mp.Relations = append(mp.Relations, relationships...)
+						mp.Trust = append(mp.Trust, trust...)
+					}
+				}
+			}
+			if len(prevChildren) > 0 && len(mp.Children) > 0 {
+				for _, a := range mp.Children {
+					for _, p := range rng.ChooseIndexes(len(prevChildren), s.dice.Intn(2)) {
+						relationships, trust := dice.RandomRelationship(a.ID, prevChildren[p].ID)
+						mp.Relations = append(mp.Relations, relationships...)
+						mp.Trust = append(mp.Trust, trust...)
+					}
+				}
+			}
+
+			prevAdults = mp.Adults
+			prevChildren = mp.Children
+
+			err := simutil.WriteMetaPeople(s.dbconn, mp)
+			if err != nil {
+				return err
+			}
+		}
 	}
 
-	wg.Wait()
-	close(errs)
-
-	return finalerr
+	return nil
 }

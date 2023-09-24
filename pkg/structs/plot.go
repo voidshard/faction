@@ -79,7 +79,7 @@ func (ls *LandSummary) addCommodity(p *Plot) {
 	}
 
 	crop.Size += p.Size
-	crop.Yield += p.Yield
+	crop.Yield += (p.Size * p.Yield)
 
 	ls.TotalSize += p.Size
 	ls.Count += 1

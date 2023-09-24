@@ -20,7 +20,6 @@ import (
 //
 // Probably it's too annoying to do nicely to be worth it?
 type factionRand struct {
-	yieldRand      *yieldRand
 	cfg            *config.Faction
 	tech           technology.Technology
 	rng            *rand.Rand
@@ -163,63 +162,9 @@ func (fr *factionRand) randResearch(f *simutil.MetaFaction, count int, requiredT
 	return weights
 }
 
-func (fr *factionRand) randLandForGuild(g *config.Guild) []*structs.Plot {
-	options, ok := fr.yieldRand.professionLand[g.Profession]
-	if !ok {
-		return nil
-	}
-
-	index := 0
-	total := 0
-	for _, l := range options {
-		index++
-		total += l.Yield
-		if total >= g.MinYield {
-			break
-		}
-	}
-
-	if total < g.MinYield {
-		return nil
-	}
-
-	defer fr.recalcGuildProb()
-
-	if index >= len(options) {
-		// we've assigned all available land
-		delete(fr.yieldRand.professionLand, g.Profession)
-		delete(fr.yieldRand.professionYield, g.Profession)
-		return options
-	}
-
-	// we've assigned some subset of available land
-	fr.yieldRand.professionLand[g.Profession] = options[index+1:]
-	ftotal := fr.yieldRand.professionYield[g.Profession]
-	fr.yieldRand.professionYield[g.Profession] = ftotal - total
-
-	return options[:index+1]
-}
-
-func (fr *factionRand) recalcGuildProb() {
-	// as we hand out land, it becomes increasingly unlikely that some commodities
-	// form the backbone of a(nother) guild.
-	guildProb := []float64{}
-	if fr.yieldRand != nil {
-		for _, guild := range fr.cfg.Guilds {
-			total, _ := fr.yieldRand.professionYield[guild.Profession]
-			prob := 0.0
-			if total >= guild.MinYield {
-				prob = guild.Probability
-			}
-			guildProb = append(guildProb, prob)
-		}
-	}
-	fr.guildOccur = rng.NewNormalised(guildProb)
-}
-
 // newFactionRand creates a new dice roller for creationg factions based on faction config
 // and the available land rights in some area(s).
-func newFactionRand(f *config.Faction, tech technology.Technology, yields *yieldRand, areas []string) *factionRand {
+func newFactionRand(f *config.Faction, tech technology.Technology, areas []string) *factionRand {
 	focusOccurProb := []float64{}
 	focusWeights := []*rng.Rand{}
 	for _, focus := range f.Focuses {
@@ -241,8 +186,15 @@ func newFactionRand(f *config.Faction, tech technology.Technology, yields *yield
 		slist = append(slist, structure)
 	}
 
+	guildOccurProb := []float64{}
+	for _, guild := range f.Guilds {
+		if guild.LandMinCommodityYield == nil {
+			guild.LandMinCommodityYield = map[string]int{}
+		}
+		guildOccurProb = append(guildOccurProb, guild.Probability)
+	}
+
 	fr := &factionRand{
-		yieldRand:      yields,
 		cfg:            f,
 		tech:           tech,
 		rng:            rand.New(rand.NewSource(time.Now().UnixNano())),
@@ -267,11 +219,11 @@ func newFactionRand(f *config.Faction, tech technology.Technology, yields *yield
 		focusCount:     rng.NewNormalised(f.FocusProbability),
 		focusWeights:   focusWeights,
 		guildCount:     rng.NewNormalised(f.GuildProbability),
+		guildOccur:     rng.NewNormalised(guildOccurProb),
 		propertyCount:  rng.NewNormalised(f.PropertyProbability),
 		areas:          areas,
 		plotSize:       rng.NewRand(f.PlotSize.Min, f.PlotSize.Max, f.PlotSize.Mean, f.PlotSize.Deviation),
 	}
 
-	fr.recalcGuildProb()
 	return fr
 }

@@ -113,6 +113,10 @@ func (s *sqlDB) Tuples(r Relation, token string, in *Query) ([]*structs.Tuple, s
 	return tuples(s.conn, r, token, in)
 }
 
+func (s *sqlDB) CountTuples(r Relation, f *Query) (int, error) {
+	return countTuples(s.conn, r, f)
+}
+
 func (s *sqlDB) Modifiers(r Relation, token string, in *Query) ([]*structs.Modifier, string, error) {
 	return modifiers(s.conn, r, token, in)
 }
@@ -223,6 +227,10 @@ func (t *sqlTx) Areas(token string, in *Query) ([]*structs.Area, string, error) 
 
 func (t *sqlTx) Tuples(r Relation, token string, in *Query) ([]*structs.Tuple, string, error) {
 	return tuples(t.tx, r, token, in)
+}
+
+func (t *sqlTx) CountTuples(r Relation, f *Query) (int, error) {
+	return countTuples(t.tx, r, f)
 }
 
 func (t *sqlTx) Modifiers(r Relation, token string, in *Query) ([]*structs.Modifier, string, error) {

@@ -349,42 +349,40 @@ func Faction() *config.Faction {
 		FocusProbability: []float64{0.0, 0.05, 0.65, 0.25, 0.05},
 		Guilds: []config.Guild{
 			config.Guild{
-				Profession:  MERCHANT,
-				Probability: 0.5,
-			},
-			config.Guild{
-				Profession:  SMITH,
+				Professions: []string{SMITH, MINER, SMELTER, CLERK},
 				Probability: 0.2,
+				LandMinCommodityYield: map[string]int{
+					IRON_ORE: 250,
+				},
 			},
 			config.Guild{
-				Profession:  ALCHEMIST,
-				Probability: 0.1,
-			},
-			config.Guild{
-				Profession:  MAGE,
-				Probability: 0.02,
-			},
-			config.Guild{
-				Profession:  CLOTHIER,
+				Professions: []string{CLOTHIER, WEAVER, LEATHERWORKER},
 				Probability: 0.05,
+				LandMinCommodityYield: map[string]int{
+					FLAX: 400,
+				},
 			},
 			config.Guild{
-				Profession:  CARPENTER,
+				Professions: []string{CARPENTER, FORESTER},
 				Probability: 0.05,
+				LandMinCommodityYield: map[string]int{
+					TIMBER: 500,
+				},
 			},
 			config.Guild{
-				Profession:  SCRIBE,
-				Probability: 0.05,
+				Professions: []string{FARMER},
+				Probability: 0.20,
+				LandMinCommodityYield: map[string]int{
+					OPIUM: 10,
+					WHEAT: 500,
+				},
 			},
 			config.Guild{
-				Profession:  MINER,
+				Professions: []string{FARMER},
 				Probability: 0.9,
-				MinYield:    100,
-			},
-			config.Guild{
-				Profession:  FARMER,
-				Probability: 0.9,
-				MinYield:    200,
+				LandMinCommodityYield: map[string]int{
+					WHEAT: 1000,
+				},
 			},
 		},
 		GuildProbability: []float64{0.30, 0.55, 0.1, 0.05},
@@ -410,5 +408,7 @@ func Faction() *config.Faction {
 			MAGIC_OCCULT: 0.03,
 			ALCHEMY:      0.03,
 		},
+		AllowEmptyPlotCreation:     true,  // allow non-commodity yielding plots to be created if not enough can be found
+		AllowCommodityPlotCreation: false, // require commodity yielding plots to be found in the DB
 	}
 }

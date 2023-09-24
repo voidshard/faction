@@ -529,12 +529,12 @@ func (f *FactionDB) AreaGovernments(in ...string) (map[string]*structs.Governmen
 	// look up areas
 	af := Q(F(ID, In, in))
 
+	govIDs := map[string]bool{}
+	areaToGovt := map[string]string{}
 	var (
-		govIDs     map[string]bool
-		areaToGovt map[string]string
-		areas      []*structs.Area
-		token      string
-		err        error
+		areas []*structs.Area
+		token string
+		err   error
 	)
 	for {
 		areas, token, err = f.Areas(token, af)
@@ -562,10 +562,8 @@ func (f *FactionDB) AreaGovernments(in ...string) (map[string]*structs.Governmen
 	}
 	gf := Q(F(ID, In, gids))
 
-	var (
-		govs    []*structs.Government
-		govById map[string]*structs.Government
-	)
+	var govs []*structs.Government
+	govById := map[string]*structs.Government{}
 	for {
 		govs, token, err = f.Governments(token, gf)
 		if err != nil {

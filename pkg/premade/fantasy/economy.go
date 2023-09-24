@@ -83,6 +83,20 @@ func NewEconomy() *Economy {
 				Name:       OPIUM,
 				Profession: FARMER,
 			},
+			COTTON: &structs.Commodity{
+				Name:       COTTON,
+				Profession: FARMER,
+			},
+			COTTON_CLOTH: &structs.Commodity{
+				Name:       COTTON_CLOTH,
+				Profession: WEAVER,
+				Requires:   map[string]float64{COTTON: 5.0},
+			},
+			COTTON_CLOTHING: &structs.Commodity{
+				Name:       COTTON_CLOTHING,
+				Profession: CLOTHIER,
+				Requires:   map[string]float64{COTTON_CLOTH: 1.0},
+			},
 			FLAX: &structs.Commodity{
 				Name:       FLAX,
 				Profession: FARMER,
@@ -97,13 +111,19 @@ func NewEconomy() *Economy {
 				Profession: CLOTHIER,
 				Requires:   map[string]float64{LINEN: 1.0},
 			},
+			WILD_GAME: &structs.Commodity{
+				Name:       WILD_GAME,
+				Profession: HUNTER,
+			},
 			HIDE: &structs.Commodity{
 				Name:       HIDE,
 				Profession: HUNTER,
+				Requires:   map[string]float64{WILD_GAME: 1.0},
 			},
 			MEAT: &structs.Commodity{
 				Name:       MEAT,
 				Profession: HUNTER,
+				Requires:   map[string]float64{WILD_GAME: 1.0},
 			},
 			LEATHER: &structs.Commodity{
 				Name:       LEATHER,
@@ -175,9 +195,13 @@ func NewEconomy() *Economy {
 		baseValues: map[string]float64{ // base value per unit (in copper pieces)
 			FISH:             5.0,
 			OPIUM:            1000.0, // 1sp
+			COTTON:           1.0,
+			COTTON_CLOTH:     500.0,  // 0.5sp
+			COTTON_CLOTHING:  1000.0, // 1 sp
 			FLAX:             3.0,
 			LINEN:            5000.0, // 5 sp
 			LINEN_CLOTHING:   7000.0, // 7 sp
+			WILD_GAME:        400.0,  // .4 sp
 			HIDE:             10.0,
 			MEAT:             1000.0, // 1sp
 			TIMBER:           5.0,
