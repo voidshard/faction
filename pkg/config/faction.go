@@ -28,6 +28,12 @@ type Guild struct {
 	//
 	// Applies to Plots with Commodity set.
 	LandMinCommodityYield map[string]int
+
+	// Desired import(s) (Commoidity names)
+	Imports []string
+
+	// Desired export(s) (Commoidity names)
+	Exports []string
 }
 
 // Focus represents a set of actions that a faction prefers to perform.
@@ -142,9 +148,11 @@ type Faction struct {
 
 	// AllowEmptyPlotCreation allows the process spawning factions to generate empty plots
 	// if not enough Plots are found.
+	// If this isn't permitted, we'll error if we can't find enough Plots when spawning a faction.
 	AllowEmptyPlotCreation bool
 
 	// AllowCommodityPlotCreation allows the process spawning factions to generate plots
 	// that yield Commodities if not enough Plots are found.
+	// If this isn't permitted, we'll error if we can't find enough Plots when spawning a faction.
 	AllowCommodityPlotCreation bool
 }

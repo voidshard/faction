@@ -15,28 +15,26 @@ const (
 const (
 	// commodities
 	IRON_ORE         = "iron-ore"
-	IRON_INGOT       = "iron-ingot"
+	IRON_INGOT       = "iron-ingot" // or "bloom" I guess
 	WHEAT            = "wheat"
 	FLOUR_WHEAT      = "flour-wheat"
 	STEEL_INGOT      = "steel-ingot"
 	WILD_GAME        = "wild-game" // produces meat & hide
+	FODDER           = "fodder"    // fodder "grass" suitable for grazing animals
 	HIDE             = "hide"
 	MEAT             = "meat"
 	LEATHER          = "leather"
-	TIMBER           = "timber"
-	FLAX             = "flax" // used for linen / textiles
-	COTTON           = "cotton"
-	COTTON_CLOTH     = "cotton-cloth"
-	LINEN            = "linen" // used for clothing
+	TIMBER           = "timber" // place holder for wood / charcoal (which .. really aren't the same)
+	FLAX             = "flax"   // used for linen / textiles
+	LINEN            = "linen"  // used for clothing
 	FISH             = "fish"
-	COTTON_CLOTHING  = "cotton-clothing"
 	LINEN_CLOTHING   = "linen-clothing"
-	LEATHER_CLOTHING = "leather-clothing"
-	IRON_WEAPON      = "iron-weapon"
-	IRON_ARMOUR      = "iron-armour"
-	STEEL_WEAPON     = "steel-weapon"
+	IRON_TOOLS       = "iron-tools"
+	STEEL_WEAPON     = "steel-weapon" // nb. if we have steel, probably iron is sub-standard for weapons / armour
 	STEEL_ARMOUR     = "steel-armour"
+	STEEL_TOOLS      = "steel-tools"
 	WOODEN_FURNITURE = "wooden-furniture"
+	WOODEN_TOOLS     = "wooden-tools"
 	OPIUM            = "opium"
 )
 
@@ -78,12 +76,14 @@ const (
 const (
 	// Professions
 	// - people who craft / harvest
+	// Nb. for our simple example we're vastly simplifying / collapsing what was a variety of professions.
+	// There's a lot more complexity here in a closer-to-real-world implementation.
 	FARMER        = "farmer"
 	MINER         = "miner"
 	FISHERMAN     = "fisherman"
 	HUNTER        = "hunter"
-	FORESTER      = "forester"
-	WEAVER        = "weaver"
+	FORESTER      = "forester" // + someone who makes charcoal
+	WEAVER        = "weaver"   // + spinner
 	CLOTHIER      = "clothier"
 	TANNER        = "tanner"
 	LEATHERWORKER = "leatherworker"
@@ -101,7 +101,7 @@ const (
 	SCHOLAR  = "scholar"
 	// - medieval
 	NOBLE = "noble"
-	// - more fantasy style professions
+	// - more fantasy style professions (well, alchemist was actually a profession I guess ..)
 	MAGE      = "mage"
 	SPY       = "spy"
 	ASSASSIN  = "assassin"

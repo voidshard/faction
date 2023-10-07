@@ -24,5 +24,8 @@ type Commodity struct {
 	// Nb. this only makes sense for stuff that isn't harvested or mined directly.
 	// Ie. harvesting wheat doesn't have a requirement, but producing flour requires
 	// some units of wheat to hand.
-	Requires map[string]float64
+	//
+	// Commodities can be created from different recipies, ie.
+	// we can collect meat from wild_game or domestic livestock.
+	Requires []map[string]float64
 }

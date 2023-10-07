@@ -32,7 +32,7 @@ var (
 		{fantasy.TIMBER, 50, 50, 300, 1, 2},
 		{fantasy.WILD_GAME, 25, 200, 1000, 1, 4},
 		{fantasy.FLAX, 10, 100, 600, 1, 2},
-		{fantasy.COTTON, 30, 50, 500, 1, 3},
+		{fantasy.FLAX, 30, 50, 500, 1, 3},
 		{fantasy.OPIUM, 5, 10, 50, 1, 3},
 	}
 )

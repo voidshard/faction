@@ -1,6 +1,7 @@
 package fantasy
 
 import (
+	"log"
 	"math"
 
 	"github.com/voidshard/faction/pkg/structs"
@@ -8,7 +9,7 @@ import (
 
 // Economy is a simple economy that is used for testing and demonstration purposes.
 //
-// In general a user is expected to provide their own.
+// In general a user is expected to provide their own (this is just a janky demo)
 type Economy struct {
 	commodities      map[string]*structs.Commodity
 	baseValues       map[string]float64
@@ -37,7 +38,10 @@ func (e *Economy) IsCraftable(commodity string) bool {
 }
 
 func (e *Economy) Commodity(name string) *structs.Commodity {
-	c := e.commodities[name]
+	c, _ := e.commodities[name]
+	if c == nil {
+		log.Println("warning; no commodity configured in the economy, probably this will blow up", name)
+	}
 	return c
 }
 
@@ -83,20 +87,6 @@ func NewEconomy() *Economy {
 				Name:       OPIUM,
 				Profession: FARMER,
 			},
-			COTTON: &structs.Commodity{
-				Name:       COTTON,
-				Profession: FARMER,
-			},
-			COTTON_CLOTH: &structs.Commodity{
-				Name:       COTTON_CLOTH,
-				Profession: WEAVER,
-				Requires:   map[string]float64{COTTON: 5.0},
-			},
-			COTTON_CLOTHING: &structs.Commodity{
-				Name:       COTTON_CLOTHING,
-				Profession: CLOTHIER,
-				Requires:   map[string]float64{COTTON_CLOTH: 1.0},
-			},
 			FLAX: &structs.Commodity{
 				Name:       FLAX,
 				Profession: FARMER,
@@ -104,12 +94,16 @@ func NewEconomy() *Economy {
 			LINEN: &structs.Commodity{
 				Name:       LINEN,
 				Profession: WEAVER,
-				Requires:   map[string]float64{FLAX: 5.0},
+				Requires:   []map[string]float64{{FLAX: 5.0}},
 			},
 			LINEN_CLOTHING: &structs.Commodity{
 				Name:       LINEN_CLOTHING,
 				Profession: CLOTHIER,
-				Requires:   map[string]float64{LINEN: 1.0},
+				Requires:   []map[string]float64{{LINEN: 1.0}},
+			},
+			FODDER: &structs.Commodity{
+				Name:       FODDER,
+				Profession: FARMER,
 			},
 			WILD_GAME: &structs.Commodity{
 				Name:       WILD_GAME,
@@ -118,22 +112,17 @@ func NewEconomy() *Economy {
 			HIDE: &structs.Commodity{
 				Name:       HIDE,
 				Profession: HUNTER,
-				Requires:   map[string]float64{WILD_GAME: 1.0},
+				Requires:   []map[string]float64{{WILD_GAME: 1.0}},
 			},
 			MEAT: &structs.Commodity{
 				Name:       MEAT,
 				Profession: HUNTER,
-				Requires:   map[string]float64{WILD_GAME: 1.0},
+				Requires:   []map[string]float64{{WILD_GAME: 1.0}},
 			},
 			LEATHER: &structs.Commodity{
 				Name:       LEATHER,
 				Profession: TANNER,
-				Requires:   map[string]float64{HIDE: 1.0},
-			},
-			LEATHER_CLOTHING: &structs.Commodity{
-				Name:       LEATHER_CLOTHING,
-				Profession: LEATHERWORKER,
-				Requires:   map[string]float64{LEATHER: 5.0},
+				Requires:   []map[string]float64{{HIDE: 1.0}},
 			},
 			WHEAT: &structs.Commodity{
 				// www.theartofdoingstuff.com/im-growing-wheat-this-year-and-you-can-too/
@@ -145,7 +134,7 @@ func NewEconomy() *Economy {
 				// For every 0.5 units of wheat, we produce 1 unit of flour.
 				Name:       FLOUR_WHEAT,
 				Profession: FARMER,
-				Requires:   map[string]float64{WHEAT: 0.5},
+				Requires:   []map[string]float64{{WHEAT: 0.5}},
 			},
 			IRON_ORE: &structs.Commodity{
 				Name:       IRON_ORE,
@@ -154,50 +143,54 @@ func NewEconomy() *Economy {
 			IRON_INGOT: &structs.Commodity{
 				Name:       IRON_INGOT,
 				Profession: SMELTER,
-				Requires:   map[string]float64{IRON_ORE: 10.0},
+				Requires:   []map[string]float64{{IRON_ORE: 10.0}},
+			},
+			IRON_TOOLS: &structs.Commodity{
+				Name:       IRON_TOOLS,
+				Profession: SMITH,
+				Requires:   []map[string]float64{{IRON_INGOT: 1.0, TIMBER: 1.0}},
 			},
 			STEEL_INGOT: &structs.Commodity{
 				Name:       STEEL_INGOT,
 				Profession: SMELTER,
-				Requires:   map[string]float64{IRON_INGOT: 2.0},
+				Requires:   []map[string]float64{{IRON_INGOT: 2.0}},
 			},
 			TIMBER: &structs.Commodity{
 				Name:       TIMBER,
 				Profession: FORESTER,
 			},
-			IRON_WEAPON: &structs.Commodity{
-				Name:       IRON_WEAPON,
-				Profession: SMITH,
-				Requires:   map[string]float64{IRON_INGOT: 1.0, LEATHER: 1.0},
-			},
-			IRON_ARMOUR: &structs.Commodity{
-				Name:       IRON_ARMOUR,
-				Profession: SMITH,
-				Requires:   map[string]float64{IRON_INGOT: 5.0, LEATHER: 2.0},
-			},
 			STEEL_WEAPON: &structs.Commodity{
 				Name:       STEEL_WEAPON,
 				Profession: SMITH,
-				Requires:   map[string]float64{STEEL_INGOT: 1.0, LEATHER: 1.0},
+				Requires:   []map[string]float64{{STEEL_INGOT: 2.0, LEATHER: 1.0}},
 			},
 			STEEL_ARMOUR: &structs.Commodity{
 				Name:       STEEL_ARMOUR,
 				Profession: SMITH,
-				Requires:   map[string]float64{STEEL_INGOT: 5.0, LEATHER: 2.0},
+				Requires:   []map[string]float64{{STEEL_INGOT: 5.0, LEATHER: 2.0}},
+			},
+			STEEL_TOOLS: &structs.Commodity{
+				Name:       STEEL_TOOLS,
+				Profession: SMITH,
+				Requires:   []map[string]float64{{STEEL_INGOT: 1.0, TIMBER: 1.0}},
+			},
+			WOODEN_TOOLS: &structs.Commodity{
+				Name:       WOODEN_TOOLS,
+				Profession: CARPENTER,
+				Requires:   []map[string]float64{{TIMBER: 1.0}},
 			},
 			WOODEN_FURNITURE: &structs.Commodity{
 				Name:       WOODEN_FURNITURE,
 				Profession: CARPENTER,
-				Requires:   map[string]float64{TIMBER: 4.0},
+				Requires:   []map[string]float64{{TIMBER: 4.0}},
 			},
 		},
-		// Values are in copper pieces.
 		baseValues: map[string]float64{ // base value per unit (in copper pieces)
+			// nb. these prices need revision. Also "price" here could be a misnomer as it implies
+			// use of coinage & a healthy market, which depends on a lot of factors that may not
+			// be at play here .. but then this is how our modern brains work so .. eh.
 			FISH:             5.0,
 			OPIUM:            1000.0, // 1sp
-			COTTON:           1.0,
-			COTTON_CLOTH:     500.0,  // 0.5sp
-			COTTON_CLOTHING:  1000.0, // 1 sp
 			FLAX:             3.0,
 			LINEN:            5000.0, // 5 sp
 			LINEN_CLOTHING:   7000.0, // 7 sp
@@ -211,12 +204,12 @@ func NewEconomy() *Economy {
 			IRON_INGOT:       200000.0,  // 20gp
 			STEEL_INGOT:      1000000.0, // 100gp
 			LEATHER:          30.0,
-			LEATHER_CLOTHING: 1000.0,    // 1sp
-			IRON_WEAPON:      500000.0,  // 50gp
-			IRON_ARMOUR:      1000000.0, // 100gp
+			IRON_TOOLS:       100000.0,  // 10gp
+			STEEL_TOOLS:      500000.0,  // 50gp
 			STEEL_WEAPON:     2000000.0, // 200gp
 			STEEL_ARMOUR:     5000000.0, // 500gp
-			WOODEN_FURNITURE: 5000.0,    // 5sp
+			WOODEN_TOOLS:     6.0,
+			WOODEN_FURNITURE: 5000.0, // 5sp
 		},
 	}
 }

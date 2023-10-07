@@ -50,6 +50,14 @@ const (
 	// So: <faction_id> <faction_id> <trust_level>
 	RelationFactionFactionTrust Relation = "trust_faction_to_faction"
 
+	// RelationFactionCommodityImport holds how much a faction wishes to import a commodity
+	// So: <faction_id> <commodity> <import_level>
+	RelationFactionCommodityImport Relation = "import_faction_to_commodity"
+
+	// RelationFactionCommodityExport holds how much a faction wishes to export a commodity
+	// So: <faction_id> <commodity> <export_level>
+	RelationFactionCommodityExport Relation = "export_faction_to_commodity"
+
 	// RelationFactionTopicResearch holds how much research a faction has done on a topic
 	// (we use the ActionType as the object)
 	// So: <faction_id> <topic> <research_level>
@@ -101,6 +109,8 @@ const (
 var (
 	allRelations = []Relation{
 		RelationFactionFactionTrust,
+		RelationFactionCommodityImport,
+		RelationFactionCommodityExport,
 		RelationFactionTopicResearch,
 		RelationFactionTopicResearchWeight,
 		RelationPersonFactionAffiliation,

@@ -346,46 +346,71 @@ func Faction() *config.Faction {
 				MilitaryDefenseBonus:  -0.2,
 			},
 		},
-		FocusProbability: []float64{0.0, 0.05, 0.65, 0.25, 0.05},
+		FocusProbability: []float64{0.0, 0.60, 0.25, 0.15},
 		Guilds: []config.Guild{
-			config.Guild{
-				Professions: []string{SMITH, MINER, SMELTER, CLERK},
-				Probability: 0.2,
+			// Nb. guilds are factions that focus on some good(s) or production chain(s).
+			config.Guild{ // iron / steel working + charcoal production
+				// this sweeping vertical integration is probably exclusively state run / appointed
+				Professions: []string{SMITH, MINER, SMELTER, CLERK, FORESTER},
+				Probability: 0.01,
 				LandMinCommodityYield: map[string]int{
 					IRON_ORE: 250,
+					TIMBER:   500,
 				},
+				Exports: []string{IRON_TOOLS, STEEL_ARMOUR, STEEL_WEAPON, STEEL_TOOLS},
 			},
-			config.Guild{
-				Professions: []string{CLOTHIER, WEAVER, LEATHERWORKER},
-				Probability: 0.05,
+			config.Guild{},
+			config.Guild{ // a more classic "metal smith" guild
+				// this sweeping vertical integration is probably exclusively state run / appointed
+				Professions:           []string{SMITH, MERCHANT, CLERK},
+				Probability:           0.08,
+				LandMinCommodityYield: map[string]int{},
+				Exports:               []string{IRON_TOOLS, STEEL_ARMOUR, STEEL_WEAPON, STEEL_TOOLS},
+			},
+			config.Guild{ // textile production (flax -> linen)
+				Professions: []string{FARMER, CLOTHIER, WEAVER, MERCHANT, CLERK},
+				Probability: 0.40, // textile production & trade was absurdly common
 				LandMinCommodityYield: map[string]int{
 					FLAX: 400,
 				},
+				Exports: []string{LINEN}, // pre-made clothing was not so common
 			},
 			config.Guild{
-				Professions: []string{CARPENTER, FORESTER},
-				Probability: 0.05,
+				Professions: []string{TANNER, LEATHERWORKER},
+				Probability: 0.10,
 				LandMinCommodityYield: map[string]int{
-					TIMBER: 500,
+					WILD_GAME: 50,
+					FODDER:    200,
 				},
+				Exports: []string{LEATHER, MEAT},
 			},
-			config.Guild{
-				Professions: []string{FARMER},
-				Probability: 0.20,
+			config.Guild{ // wood working
+				Professions: []string{CARPENTER, FORESTER},
+				Probability: 0.10,
+				LandMinCommodityYield: map[string]int{
+					TIMBER: 400,
+				},
+				Exports: []string{WOODEN_FURNITURE, WOODEN_TOOLS},
+			},
+			config.Guild{ // farming, with a side focus on high value crops
+				Professions: []string{FARMER, THIEF},
+				Probability: 0.01,
 				LandMinCommodityYield: map[string]int{
 					OPIUM: 10,
 					WHEAT: 500,
 				},
+				Exports: []string{OPIUM, WHEAT},
 			},
-			config.Guild{
-				Professions: []string{FARMER},
-				Probability: 0.9,
+			config.Guild{ // farming (rare, selling food stuffs long distance was expensive & awkward)
+				Professions: []string{FARMER, SAILOR, MERCHANT},
+				Probability: 0.02,
 				LandMinCommodityYield: map[string]int{
 					WHEAT: 1000,
 				},
+				Exports: []string{WHEAT},
 			},
 		},
-		GuildProbability: []float64{0.30, 0.55, 0.1, 0.05},
+		GuildProbability: []float64{0.15, 0.65, 0.15},
 		PlotSize: config.Distribution{ // metres squared
 			Min:       100,
 			Max:       500,
