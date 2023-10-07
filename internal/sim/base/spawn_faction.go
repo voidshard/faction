@@ -287,13 +287,10 @@ func (s *Base) randFaction(fr *factionRand) (*simutil.MetaFaction, error) {
 	if err != nil {
 		return nil, err
 	}
-	fmt.Printf("[pre create] land desired:%v have:%v\n", landRequirements, resources)
 
 	// make land (if needed & permitted)
 	morePlots, err := s.createFactionLand(landRequirements, resources, mf.Faction.ID, fr.areas, fr.cfg.AllowEmptyPlotCreation, fr.cfg.AllowCommodityPlotCreation)
-	fmt.Printf("[post create] land desired:%v have:%v\n", landRequirements, resources)
 	if err != nil {
-		fmt.Printf("error creating land: %v %v\n", err, errors.Is(err, structs.ErrNotEnoughPlots))
 		if errors.Is(err, structs.ErrNotEnoughPlots) {
 			emptyLand, _ := resources[""]
 			if emptyLand < desiredArea {
@@ -454,11 +451,10 @@ func (s *Base) createFactionLand(want, have map[string]int, factionID string, ar
 	var err error
 	for commodity, desired := range want { // check if we have to / can make stuff up
 		obtained, _ := have[commodity]
-		fmt.Printf("have %v %s (ok? %v)\n", obtained, commodity, obtained >= desired)
 		if obtained >= desired {
 			continue
 		}
-		fmt.Printf("need %v %s\n", desired-obtained, commodity)
+		need := desired - obtained
 
 		areaID := areas[0]
 		if len(areas) > 1 {
@@ -466,7 +462,6 @@ func (s *Base) createFactionLand(want, have map[string]int, factionID string, ar
 		}
 
 		if commodity == "" && createEmpty || commodity != "" && createCmd {
-			fmt.Printf("creating %v of '%s'\n", desired-obtained, commodity)
 			// create land from thin air
 			newLand = append(newLand, &structs.Plot{
 				ID:        structs.NewID(),
@@ -474,9 +469,10 @@ func (s *Base) createFactionLand(want, have map[string]int, factionID string, ar
 				FactionID: factionID,
 				Crop: structs.Crop{
 					Commodity: commodity,
-					Size:      obtained - desired,
+					Size:      need,
 					Yield:     1,
 				},
+				Value: int(s.eco.LandValue(areaID, 0) * float64(need)),
 			})
 			have[commodity] = desired
 		} else {

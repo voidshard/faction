@@ -349,6 +349,7 @@ func Faction() *config.Faction {
 		FocusProbability: []float64{0.0, 0.60, 0.25, 0.15},
 		Guilds: []config.Guild{
 			// Nb. guilds are factions that focus on some good(s) or production chain(s).
+			// Where guilds are "vertical integrations" or harvest their own inputs, no Imports are needed.
 			config.Guild{ // iron / steel working + charcoal production
 				// this sweeping vertical integration is probably exclusively state run / appointed
 				Professions: []string{SMITH, MINER, SMELTER, CLERK, FORESTER},
@@ -359,12 +360,12 @@ func Faction() *config.Faction {
 				},
 				Exports: []string{IRON_TOOLS, STEEL_ARMOUR, STEEL_WEAPON, STEEL_TOOLS},
 			},
-			config.Guild{},
 			config.Guild{ // a more classic "metal smith" guild
 				// this sweeping vertical integration is probably exclusively state run / appointed
 				Professions:           []string{SMITH, MERCHANT, CLERK},
 				Probability:           0.08,
 				LandMinCommodityYield: map[string]int{},
+				Imports:               []string{IRON_INGOT, STEEL_INGOT, TIMBER},
 				Exports:               []string{IRON_TOOLS, STEEL_ARMOUR, STEEL_WEAPON, STEEL_TOOLS},
 			},
 			config.Guild{ // textile production (flax -> linen)
