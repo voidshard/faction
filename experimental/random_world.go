@@ -7,6 +7,7 @@ import (
 
 	"github.com/voidshard/faction/pkg/config"
 	"github.com/voidshard/faction/pkg/premade/fantasy"
+	"github.com/voidshard/faction/pkg/queue"
 	"github.com/voidshard/faction/pkg/sim"
 	"github.com/voidshard/faction/pkg/structs"
 )
@@ -47,6 +48,13 @@ func main() {
 	}
 
 	simulator, err := sim.New(&config.Simulation{Database: cfg})
+	if err != nil {
+		panic(err)
+	}
+
+	// set the local queue so we can call Await() on it
+	local := queue.NewLocalQueue(10)
+	err = simulator.SetQueue(local)
 	if err != nil {
 		panic(err)
 	}
@@ -167,4 +175,17 @@ func main() {
 			panic(err)
 		}
 	}
+
+	// step 7. fire events (handles all the post processing for all the changes we enacted)
+	fmt.Println("firing events")
+	err = simulator.FireEvents()
+	if err != nil {
+		panic(err)
+	}
+
+	result, err := local.Await() // await all
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println("awaited", len(result), "events")
 }
