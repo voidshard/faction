@@ -25,6 +25,9 @@ type Family struct {
 	// Area where the family is based (where children will be placed)
 	AreaID string `db:"area_id"`
 
+	// social class of the family
+	SocialClass string `db:"social_class"`
+
 	// Faction ID (if any) if this family is simulated as a major player.
 	//
 	// This implies the family is fairly wealthy and/or influential, probably 95% of families

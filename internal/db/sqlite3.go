@@ -116,6 +116,7 @@ var (
             ethos_piety INTEGER NOT NULL DEFAULT 0,
             ethos_caution INTEGER NOT NULL DEFAULT 0,
 	    area_id VARCHAR(36) NOT NULL,
+	    social_class VARCHAR(255) NOT NULL DEFAULT "",
 	    faction_id VARCHAR(36) NOT NULL DEFAULT "",
 	    is_child_bearing BOOLEAN NOT NULL DEFAULT FALSE,
 	    male_id VARCHAR(36) NOT NULL,

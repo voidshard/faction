@@ -72,4 +72,7 @@ type Culture struct {
 
 	// what actually kills someone ("naturally" in adulthood)
 	DeathCauseNaturalProbability map[string]float64
+
+	// social structure denotes how "classes" are decided (if used)
+	SocialStructure SocialStructure
 }

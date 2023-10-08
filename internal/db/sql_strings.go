@@ -38,14 +38,14 @@ var (
 	SELECT * FROM faction_table JOIN recurse on faction_table.id = recurse.parent_faction_id;`, "faction_table", tableFactions)
 
 	sqlInsertFamilies = fmt.Sprintf(`INSERT INTO %s (
-	    id, race, culture, area_id, faction_id, 
+	    id, race, culture, area_id, social_class, faction_id, 
 	    ethos_altruism, ethos_ambition, ethos_tradition, ethos_pacifism, ethos_piety, ethos_caution,
 	    is_child_bearing, max_child_bearing_tick,  pregnancy_end,
 	    male_id, female_id,
 	    ma_grandma_id, ma_grandpa_id, pa_grandma_id, pa_grandpa_id,
 	    number_of_children, random
 	) VALUES (
-	    :id, :race, :culture, :area_id, :faction_id, 
+	    :id, :race, :culture, :area_id, :social_class, :faction_id, 
 	    :ethos_altruism, :ethos_ambition, :ethos_tradition, :ethos_pacifism, :ethos_piety, :ethos_caution,
 	    :is_child_bearing, :max_child_bearing_tick, :pregnancy_end,
 	    :male_id, :female_id,
@@ -61,6 +61,7 @@ var (
 	    ethos_piety=EXCLUDED.ethos_piety,
 	    ethos_caution=EXCLUDED.ethos_caution,
 	    area_id=EXCLUDED.area_id,
+	    social_class=EXCLUDED.social_class,
 	    faction_id=EXCLUDED.faction_id,
 	    is_child_bearing=EXCLUDED.is_child_bearing,
 	    pregnancy_end=EXCLUDED.pregnancy_end,

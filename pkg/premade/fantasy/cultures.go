@@ -288,5 +288,39 @@ func CultureHuman() *config.Culture {
 			},
 		},
 		FaithProbability: []float64{0.05, 0.4, 0.3, 0.15, 0.05},
+		SocialStructure: config.SocialStructure{
+			Base: 0,
+			Classes: map[string]int{
+				"elite":  100,
+				"upper":  75,
+				"middle": 50,
+				"lower":  25,
+				"serf":   0,
+			},
+			Profession: map[string]float64{
+				NOBLE:     0.05,  // 2000 "noble" puts one in the elite class, 1500 in the upper class
+				MERCHANT:  0.009, // high skill as a merchant puts one in the upper class
+				MAGE:      0.009,
+				SCHOLAR:   0.008, // high skill as a scholar puts one in the upper class
+				ALCHEMIST: 0.008,
+				ASSASSIN:  0.006,
+				PRIEST:    0.006,
+				SMITH:     0.005, // high skill as a smith puts one in the high-middle class
+				SMELTER:   0.004,
+				TANNER:    0.004, // high skill as a tanner puts one in the lower-middle class
+				SPY:       0.004,
+				CARPENTER: 0.004,
+				SOLDIER:   0.003, // high skill as a soldier puts one in the lower class
+				CLERK:     0.003,
+				WEAVER:    0.002,
+				THIEF:     -0.002, // high skill as a thief puts one in the lower class
+				FARMER:    -0.001,
+			},
+			Faith: map[string]float64{
+				religion1: 0.002,
+				religion2: 0.001,
+				religion3: -0.001,
+			},
+		},
 	}
 }
