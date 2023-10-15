@@ -40,6 +40,11 @@ func (l *logLine) Str(key string, val string) LogLine {
 	return l
 }
 
+func (l *logLine) Err(err error) LogLine {
+	l.e.Err(err)
+	return l
+}
+
 func (l *logLine) Int(key string, val int) LogLine {
 	l.e.Int(key, val)
 	return l

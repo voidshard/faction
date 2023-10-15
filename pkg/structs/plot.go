@@ -22,7 +22,7 @@ type Plot struct {
 	// average value for this plot (to the owner)
 	// - size * land value + commodity value * yield
 	// Nb. rough estimation at last write given current market values
-	Value int `db:"value"`
+	Value float64 `db:"value"`
 
 	Crop
 }

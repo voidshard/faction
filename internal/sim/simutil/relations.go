@@ -54,6 +54,10 @@ func AddSkillAndFaith(dice *dg.Dice, mp *MetaPeople, person *structs.Person) ([]
 }
 
 func SiblingRelationship(dice *dg.Demographic, mp *MetaPeople, a, b *structs.Person) {
+	if a.ID == b.ID {
+		return
+	}
+
 	brel := structs.PersonalRelationSister
 	if b.IsMale {
 		brel = structs.PersonalRelationBrother

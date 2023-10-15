@@ -1,5 +1,15 @@
 package log
 
+const (
+	// Keys are various keys that can be used in log messages
+	KeyComponent = "component"
+	KeyEventType = "event_type"
+
+	// Components are the various components that can log, just to help narrow things down
+	ComponentQueue = "queue"
+	ComponentEvent = "event"
+)
+
 var activeLogger logger
 
 // logger is the interface that wraps the basic logging methods.
@@ -19,6 +29,7 @@ type LogLine interface {
 	Str(key string, val string) LogLine
 	Int(key string, val int) LogLine
 	Float64(key string, val float64) LogLine
+	Err(err error) LogLine
 
 	// Msg logs a message with the key/value pairs previously set. It must be called.
 	Msg(msg string, args ...interface{})

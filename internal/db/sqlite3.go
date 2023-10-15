@@ -37,9 +37,9 @@ const (
 	    object VARCHAR(255) NOT NULL,
 	    value INTEGER NOT NULL DEFAULT 0,
 	    tick_expires INTEGER NOT NULL DEFAULT 0,
-	    meta_key VARCHAR(255) DEFAULT NULL,
-	    meta_val VARCHAR(255) DEFAULT NULL,
-	    meta_reason TEXT DEFAULT NULL
+	    meta_key VARCHAR(255) DEFAULT '',
+	    meta_val VARCHAR(255) DEFAULT '',
+	    meta_reason TEXT DEFAULT ''
 	);`
 
 	tupleIndexCreateTemplate = `CREATE INDEX IF NOT EXISTS subject_%s ON %s (subject);`
@@ -49,14 +49,14 @@ var (
 	// NB. UUIDs are 36 chars (eg. 123e4567-e89b-12d3-a456-426655440000)
 	createMeta = fmt.Sprintf(`CREATE TABLE IF NOT EXISTS %s (
 	    id VARCHAR(255) PRIMARY KEY,
-	    str VARCHAR(255) DEFAULT NULL,
+	    str VARCHAR(255) DEFAULT '',
 	    int INTEGER NOT NULL DEFAULT 0
 	);`, tableMeta)
 
 	createArea = fmt.Sprintf(`CREATE TABLE IF NOT EXISTS %s (
 	    id VARCHAR(36) PRIMARY KEY,
 	    government_id VARCHAR(36),
-	    biome VARCHAR(255) DEFAULT NULL,
+	    biome VARCHAR(255) DEFAULT '',
 	    random INTEGER NOT NULL DEFAULT 0
 	);`, tableAreas)
 
@@ -77,24 +77,24 @@ var (
 	createPlots = fmt.Sprintf(`CREATE TABLE IF NOT EXISTS %s (
 	    id VARCHAR(36) PRIMARY KEY,
 	    area_id VARCHAR(36) NOT NULL,
-	    faction_id VARCHAR(36) DEFAULT NULL,
+	    faction_id VARCHAR(36) DEFAULT '',
 	    hidden INTEGER NOT NULL DEFAULT 0,
-	    value INTEGER NOT NULL DEFAULT 0,
+	    value REAL NOT NULL DEFAULT 0,
 	    size INTEGER NOT NULL DEFAULT 1,
-	    commodity VARCHAR(255) DEFAULT NULL,
+	    commodity VARCHAR(255) DEFAULT '',
 	    yield INTEGER NOT NULL DEFAULT 0
 	);`, tablePlots)
 
 	createJobs = fmt.Sprintf(`CREATE TABLE IF NOT EXISTS %s (
 	    id VARCHAR(36) PRIMARY KEY,
-	    parent_job_id VARCHAR(36) DEFAULT NULL,
+	    parent_job_id VARCHAR(36) DEFAULT '',
 	    source_faction_id VARCHAR(36) NOT NULL,
 	    source_area_id VARCHAR(36) NOT NULL,
 	    action VARCHAR(255) NOT NULL,
 	    target_area_id VARCHAR(36) NOT NULL,
-	    target_faction_id VARCHAR(36) DEFAULT NULL,
-	    target_meta_key VARCHAR(20) DEFAULT NULL,
-	    target_meta_val VARCHAR(255) DEFAULT NULL,
+	    target_faction_id VARCHAR(36) DEFAULT '',
+	    target_meta_key VARCHAR(20) DEFAULT '',
+	    target_meta_val VARCHAR(255) DEFAULT '',
 	    people_min INTEGER NOT NULL DEFAULT 1,
 	    people_max INTEGER NOT NULL DEFAULT 0,
 	    people_now INTEGER NOT NULL DEFAULT 0,
@@ -108,8 +108,8 @@ var (
 
 	createFamilies = fmt.Sprintf(`CREATE TABLE IF NOT EXISTS %s (
 	    id VARCHAR(36) PRIMARY KEY,
-	    race VARCHAR(255) DEFAULT NULL,
-	    culture VARCHAR(255) DEFAULT NULL,
+	    race VARCHAR(255) DEFAULT '',
+	    culture VARCHAR(255) DEFAULT '',
             ethos_altruism INTEGER NOT NULL DEFAULT 0,
             ethos_ambition INTEGER NOT NULL DEFAULT 0,
             ethos_tradition INTEGER NOT NULL DEFAULT 0,
@@ -117,17 +117,17 @@ var (
             ethos_piety INTEGER NOT NULL DEFAULT 0,
             ethos_caution INTEGER NOT NULL DEFAULT 0,
 	    area_id VARCHAR(36) NOT NULL,
-	    social_class VARCHAR(255) DEFAULT NULL,
-	    faction_id VARCHAR(36) DEFAULT NULL,
+	    social_class VARCHAR(255) DEFAULT '',
+	    faction_id VARCHAR(36) DEFAULT '',
 	    is_child_bearing BOOLEAN NOT NULL DEFAULT FALSE,
 	    male_id VARCHAR(36) NOT NULL,
 	    female_id VARCHAR(36) NOT NULL,
 	    max_child_bearing_tick INTEGER NOT NULL DEFAULT 0,
 	    pregnancy_end INTEGER NOT NULL DEFAULT 0,
-	    ma_grandma_id VARCHAR(36) DEFAULT NULL,
-	    ma_grandpa_id VARCHAR(36) DEFAULT NULL,
-	    pa_grandma_id VARCHAR(36) DEFAULT NULL,
-	    pa_grandpa_id VARCHAR(36) DEFAULT NULL,
+	    ma_grandma_id VARCHAR(36) DEFAULT '',
+	    ma_grandpa_id VARCHAR(36) DEFAULT '',
+	    pa_grandma_id VARCHAR(36) DEFAULT '',
+	    pa_grandpa_id VARCHAR(36) DEFAULT '',
 	    number_of_children INTEGER NOT NULL DEFAULT 0,
 	    random INTEGER NOT NULL DEFAULT 0,
 	    UNIQUE (male_id, female_id)
@@ -135,11 +135,11 @@ var (
 
 	createPeople = fmt.Sprintf(`CREATE TABLE IF NOT EXISTS %s (
             id VARCHAR(36) PRIMARY KEY,
-	    first_name VARCHAR(255) DEFAULT NULL,
-	    last_name VARCHAR(255) DEFAULT NULL,
-	    birth_family_id VARCHAR(36) DEFAULT NULL,
-	    race VARCHAR(255) DEFAULT NULL,
-	    culture VARCHAR(255) DEFAULT NULL,
+	    first_name VARCHAR(255) DEFAULT '',
+	    last_name VARCHAR(255) DEFAULT '',
+	    birth_family_id VARCHAR(36) DEFAULT '',
+	    race VARCHAR(255) DEFAULT '',
+	    culture VARCHAR(255) DEFAULT '',
             ethos_altruism INTEGER NOT NULL DEFAULT 0,
             ethos_ambition INTEGER NOT NULL DEFAULT 0,
             ethos_tradition INTEGER NOT NULL DEFAULT 0,
@@ -147,23 +147,23 @@ var (
             ethos_piety INTEGER NOT NULL DEFAULT 0,
             ethos_caution INTEGER NOT NULL DEFAULT 0,
 	    area_id VARCHAR(36) NOT NULL,
-	    job_id VARCHAR(36) DEFAULT NULL,
+	    job_id VARCHAR(36) DEFAULT '',
 	    birth_tick INTEGER NOT NULL DEFAULT 1,
 	    death_tick INTEGER NOT NULL DEFAULT 0,
 	    is_male BOOLEAN NOT NULL DEFAULT FALSE,
 	    adulthood_tick INTEGER NOT NULL DEFAULT 0,
-	    preferred_profession VARCHAR(255) DEFAULT NULL,
-	    preferred_faction_id VARCHAR(36) DEFAULT NULL,
-	    death_meta_reason TEXT DEFAULT NULL,
-	    death_meta_key VARCHAR(255) DEFAULT NULL,
-	    death_meta_val VARCHAR(255) DEFAULT NULL,
+	    preferred_profession VARCHAR(255) DEFAULT '',
+	    preferred_faction_id VARCHAR(36) DEFAULT '',
+	    death_meta_reason TEXT DEFAULT '',
+	    death_meta_key VARCHAR(255) DEFAULT '',
+	    death_meta_val VARCHAR(255) DEFAULT '',
 	    natural_death_tick INTEGER NOT NULL DEFAULT 0,
 	    random INTEGER NOT NULL DEFAULT 0
 	);`, tablePeople)
 
 	createFactions = fmt.Sprintf(`CREATE TABLE IF NOT EXISTS %s (
             id VARCHAR(36) PRIMARY KEY,
-	    name VARCHAR(255) DEFAULT NULL,
+	    name VARCHAR(255) DEFAULT '',
 	    home_area_id VARCHAR(36) NOT NULL,
 	    hq_plot_id VARCHAR(36) NOT NULL,
             ethos_altruism INTEGER NOT NULL DEFAULT 0,
@@ -181,14 +181,14 @@ var (
             is_covert BOOLEAN NOT NULL DEFAULT FALSE,
             government_id VARCHAR(36) NOT NULL,
             is_government BOOLEAN NOT NULL DEFAULT FALSE,
-            religion_id VARCHAR(36) DEFAULT NULL,
+            religion_id VARCHAR(36) DEFAULT '',
             is_religion BOOLEAN NOT NULL DEFAULT FALSE,
             is_member_by_birth BOOLEAN NOT NULL DEFAULT FALSE,
 	    espionage_offense INTEGER NOT NULL DEFAULT 0,
 	    espionage_defense INTEGER NOT NULL DEFAULT 0,
 	    military_offense INTEGER NOT NULL DEFAULT 0,
 	    military_defense INTEGER NOT NULL DEFAULT 0,
-            parent_faction_id VARCHAR(36) DEFAULT NULL,
+            parent_faction_id VARCHAR(36) DEFAULT '',
             parent_faction_relation INTEGER NOT NULL DEFAULT 0,
 	    members INTEGER NOT NULL DEFAULT 0,
 	    vassals INTEGER NOT NULL DEFAULT 0,
@@ -198,13 +198,13 @@ var (
 
 	createEvents = fmt.Sprintf(`CREATE TABLE IF NOT EXISTS %s (
 	    id VARCHAR(36) PRIMARY KEY,
-	    type VARCHAR(255) DEFAULT NULL,
+	    type VARCHAR(255) DEFAULT '',
 	    tick INTEGER NOT NULL DEFAULT 0,
-	    message TEXT DEFAULT NULL,
-	    subject_meta_key VARCHAR(255) DEFAULT NULL,
-	    subject_meta_val VARCHAR(255) DEFAULT NULL,
-	    cause_meta_key VARCHAR(255) DEFAULT NULL,
-	    cause_meta_val VARCHAR(255) DEFAULT NULL
+	    message TEXT DEFAULT '',
+	    subject_meta_key VARCHAR(255) DEFAULT '',
+	    subject_meta_val VARCHAR(255) DEFAULT '',
+	    cause_meta_key VARCHAR(255) DEFAULT '',
+	    cause_meta_val VARCHAR(255) DEFAULT ''
 	);`, tableEvents)
 
 	// indexes that we should create

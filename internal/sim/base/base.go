@@ -148,7 +148,7 @@ func (s *Base) SetPlots(in ...*structs.Plot) error {
 	if s.eco != nil {
 		// whenever we write a plot, set the valuation
 		for _, p := range in {
-			p.Value = int(simutil.PlotValuation(p, s.eco, 0))
+			p.Value = simutil.PlotValuation(p, s.eco, 0)
 		}
 	}
 	return s.dbconn.InTransaction(func(tx db.ReaderWriter) error {

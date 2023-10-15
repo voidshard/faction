@@ -170,11 +170,17 @@ func (d *Demographic) RandomFaith(subject string) []*structs.Tuple {
 	if count <= 0 {
 		return data
 	}
+	seen := map[string]bool{}
 	for i := 0; i < count*2; i++ {
 		faith := d.culture.Faiths[d.faithOccur.Int()]
 		if len(data) > 0 && faith.IsMonotheistic { // can't add monotheistic faiths if we already have a faith
 			continue
 		}
+		_, ok := seen[faith.ReligionID]
+		if ok {
+			continue
+		}
+		seen[faith.ReligionID] = true
 		faithDice := d.faithLevel[faith.ReligionID]
 		data = append(data, &structs.Tuple{Subject: subject, Object: faith.ReligionID, Value: faithDice.Int()})
 		if faith.IsMonotheistic { // we can't add any more faiths
@@ -245,6 +251,11 @@ func (d *Demographic) RandomProfession(subject string) []*structs.Tuple {
 		if hasPrimaryProfession && prof.ValidSideProfession {
 			continue
 		}
+		_, ok := chosen[prof.Name]
+		if ok {
+			continue
+		}
+
 		hasPrimaryProfession = hasPrimaryProfession || prof.ValidSideProfession
 
 		profDice := d.professionLevel[prof.Name]
@@ -287,6 +298,9 @@ func (d *Demographic) RandomProfession(subject string) []*structs.Tuple {
 //   - a slice of tuples representing the relationship between the two people
 //   - a slice of tuples representing the trust between the two people
 func (d *Demographic) RandomRelationship(personA, personB string) ([]*structs.Tuple, []*structs.Tuple) {
+	if personA == personB {
+		return []*structs.Tuple{}, []*structs.Tuple{}
+	}
 	trust := 1
 	rel := structs.PersonalRelationCloseFriend
 	switch d.friendshipsProb.Int() {

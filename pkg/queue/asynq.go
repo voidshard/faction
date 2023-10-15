@@ -10,6 +10,7 @@ import (
 
 	"github.com/hibiken/asynq"
 
+	"github.com/voidshard/faction/internal/log"
 	"github.com/voidshard/faction/pkg/config"
 )
 
@@ -66,17 +67,21 @@ func (a *Asynq) Register(task string, handler Handler) error {
 	if a.mux == nil {
 		a.buildServer()
 	}
+	log.Debug().Str(log.KeyComponent, log.ComponentQueue).Str("task", task).Msg("registering task")
 	a.mux.HandleFunc(aggregatedTask(task), func(ctx context.Context, t *asynq.Task) error {
 		jobs := []*Job{}
 		for _, load := range bytes.Split(t.Payload(), []byte(asyncAggRune)) {
 			jobs = append(jobs, &Job{Task: task, Args: load})
 		}
-		return handler(jobs...)
+		err := handler(jobs...)
+		log.Debug().Err(err).Str(log.KeyComponent, log.ComponentQueue).Str("task", task).Int("jobs", len(jobs)).Msg("handling jobs")
+		return err
 	})
 	return nil
 }
 
 func (a *Asynq) Start() error {
+	log.Debug().Str(log.KeyComponent, log.ComponentQueue).Msg("starting queue processing")
 	if a.srv == nil {
 		a.buildServer()
 	}
@@ -89,6 +94,7 @@ func (a *Asynq) Enqueue(task string, args []byte) (string, error) {
 	}
 	qtask := asynq.NewTask(task, args)
 	info, err := a.clt.Enqueue(qtask, asynq.Queue(asyncWorkQueue), asynq.Group(aggregatedTask(task)))
+	log.Debug().Err(err).Str(log.KeyComponent, log.ComponentQueue).Str("task", task).Str("id", info.ID).Msg("enqueued task")
 	return info.ID, err
 }
 
@@ -104,9 +110,12 @@ func (a *Asynq) await() error {
 	// wait for everything
 	for {
 		info, err := a.ins.GetQueueInfo(asyncWorkQueue)
+		log.Debug().Err(err).Str(log.KeyComponent, log.ComponentQueue).Int("pending", info.Pending).Int("active", info.Active).Int("retry", info.Retry).Msg("awaiting empty queue")
 		if err != nil {
+			log.Debug().Err(err).Str(log.KeyComponent, log.ComponentQueue).Msg("awaiting empty queue")
 			return err
 		}
+		log.Debug().Str(log.KeyComponent, log.ComponentQueue).Int("pending", info.Pending).Int("active", info.Active).Int("retry", info.Retry).Msg("awaiting empty queue")
 		if info.Pending+info.Active+info.Retry == 0 {
 			return nil
 		}
@@ -115,6 +124,7 @@ func (a *Asynq) await() error {
 }
 
 func (a *Asynq) Stop() error {
+	log.Debug().Str(log.KeyComponent, log.ComponentQueue).Msg("stopping queue processing")
 	if a.srv == nil {
 		return nil
 	}
@@ -156,6 +166,7 @@ func toState(lastErr string, s asynq.TaskState) State {
 }
 
 func aggregate(group string, tasks []*asynq.Task) *asynq.Task {
+	log.Debug().Str(log.KeyComponent, log.ComponentQueue).Str("group", group).Int("tasks", len(tasks)).Msg("aggregating tasks")
 	var b strings.Builder
 	for _, t := range tasks {
 		if t == nil || t.Payload() == nil {

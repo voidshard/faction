@@ -1,7 +1,7 @@
 package structs
 
 const (
-	FamilyRandomMax = 1000000000
+	FamilyRandomMax = 1000000
 )
 
 // Family is created when one of

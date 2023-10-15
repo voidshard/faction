@@ -64,7 +64,7 @@ func main() {
 	areasByGovernment := map[string][]string{}
 	for i := 0; i < countAreas; i++ {
 		gov := governments[i%len(governments)]
-		area := &structs.Area{ID: structs.NewID(i), GovernmentID: gov.ID}
+		area := &structs.Area{ID: structs.NewID(), GovernmentID: gov.ID}
 
 		fmt.Printf("\tarea %s [Government: %s]\n", area.ID, gov.ID)
 
@@ -89,7 +89,7 @@ func main() {
 		for i := 0; i < crop.Plots; i++ {
 			randArea := areas[rng.Intn(len(areas))]
 			p := &structs.Plot{
-				ID:     structs.NewID(crop.Name, i),
+				ID:     structs.NewID(),
 				AreaID: randArea.ID,
 				Crop: structs.Crop{
 					Commodity: crop.Name,

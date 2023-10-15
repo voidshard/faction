@@ -6,6 +6,7 @@ package base
 import (
 	"fmt"
 
+	"github.com/voidshard/faction/internal/log"
 	"github.com/voidshard/faction/internal/random/rng"
 	"github.com/voidshard/faction/internal/sim/simutil"
 	"github.com/voidshard/faction/pkg/structs"
@@ -157,7 +158,7 @@ func (s *Base) spawnFamily(tick int, areaID, race, culture string) *simutil.Meta
 		mp.Trust = append(
 			mp.Trust,
 			&structs.Tuple{Subject: mum.ID, Object: dad.ID, Value: demo.RandomTrust() / 2},
-			&structs.Tuple{Subject: mum.ID, Object: dad.ID, Value: demo.RandomTrust() / 2},
+			&structs.Tuple{Subject: dad.ID, Object: mum.ID, Value: demo.RandomTrust() / 2},
 		)
 		family.IsChildBearing = false
 		if mum.DeathTick > 0 {
@@ -179,14 +180,15 @@ func (s *Base) spawnFamily(tick int, areaID, race, culture string) *simutil.Meta
 		mp.Trust = append(
 			mp.Trust,
 			&structs.Tuple{Subject: mum.ID, Object: dad.ID, Value: demo.RandomTrust() / div},
-			&structs.Tuple{Subject: mum.ID, Object: dad.ID, Value: demo.RandomTrust() / div},
+			&structs.Tuple{Subject: dad.ID, Object: mum.ID, Value: demo.RandomTrust() / div},
 		)
 	}
 
 	if len(mp.Children) > 1 {
 		// add inter-sibling relations
 		for i, child := range mp.Children {
-			for j, sibling := range mp.Children {
+			for j := i + 1; j < len(mp.Children); j++ {
+				sibling := mp.Children[j]
 				if i == j {
 					continue
 				}
@@ -269,6 +271,8 @@ func (s *Base) SpawnPopulace(desiredTotal int, race, culture string, areas ...st
 		return err
 	}
 
+	log.Info().Str("race", race).Str("culture", culture).Int("desired", desiredTotal).Msg("spawning populace")
+
 	desiredArea := desiredTotal / len(areas)
 
 	// we place people one area at a time because it feels more natural as this results in more
@@ -304,8 +308,15 @@ func (s *Base) SpawnPopulace(desiredTotal int, race, culture string, areas ...st
 
 			// randomly add a few relationships
 			if len(prevAdults) > 0 && len(mp.Adults) > 0 {
+				seen := map[string]bool{}
 				for _, a := range mp.Adults {
 					for _, p := range rng.ChooseIndexes(len(prevAdults), s.dice.Intn(3)) {
+						k := fmt.Sprintf("%s-%s", a.ID, prevAdults[p].ID)
+						_, ok := seen[k]
+						if ok {
+							continue
+						}
+						seen[k] = true
 						relationships, trust := dice.RandomRelationship(a.ID, prevAdults[p].ID)
 						mp.Relations = append(mp.Relations, relationships...)
 						mp.Trust = append(mp.Trust, trust...)
@@ -313,8 +324,15 @@ func (s *Base) SpawnPopulace(desiredTotal int, race, culture string, areas ...st
 				}
 			}
 			if len(prevChildren) > 0 && len(mp.Children) > 0 {
+				seen := map[string]bool{}
 				for _, a := range mp.Children {
 					for _, p := range rng.ChooseIndexes(len(prevChildren), s.dice.Intn(2)) {
+						k := fmt.Sprintf("%s-%s", a.ID, prevChildren[p].ID)
+						_, ok := seen[k]
+						if ok {
+							continue
+						}
+						seen[k] = true
 						relationships, trust := dice.RandomRelationship(a.ID, prevChildren[p].ID)
 						mp.Relations = append(mp.Relations, relationships...)
 						mp.Trust = append(mp.Trust, trust...)

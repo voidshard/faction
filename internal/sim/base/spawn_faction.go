@@ -472,7 +472,7 @@ func (s *Base) createFactionLand(want, have map[string]int, factionID string, ar
 					Size:      need,
 					Yield:     1,
 				},
-				Value: int(s.eco.LandValue(areaID, 0) * float64(need)),
+				Value: s.eco.LandValue(areaID, 0) * float64(need),
 			})
 			have[commodity] = desired
 		} else {

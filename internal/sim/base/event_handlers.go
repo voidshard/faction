@@ -2,8 +2,8 @@ package base
 
 import (
 	"fmt"
-	"log"
 
+	"github.com/voidshard/faction/internal/log"
 	"github.com/voidshard/faction/pkg/queue"
 	"github.com/voidshard/faction/pkg/structs"
 
@@ -52,8 +52,8 @@ func eventSubjects(in []*structs.Event) []string {
 }
 
 func (s *Base) handlerOnEventFamilyMarriage(in ...*queue.Job) error {
-	log.Println("handlerOnEventFamilyMarriage", len(in))
 	events, err := s.toEvents(in)
+	log.Debug().Str(log.KeyComponent, log.ComponentEvent).Str(log.KeyEventType, string(structs.EventFamilyMarriage)).Err(err).Int("events", len(in)).Msg("handling event")
 	if err != nil {
 		return err
 	}
@@ -69,8 +69,8 @@ func (s *Base) handlerOnEventFamilyMarriage(in ...*queue.Job) error {
 }
 
 func (s *Base) handlerOnEventFactionCreated(in ...*queue.Job) error {
-	log.Println("handlerOnEventFactionCreated", len(in))
 	events, err := s.toEvents(in)
+	log.Debug().Str(log.KeyComponent, log.ComponentEvent).Str(log.KeyEventType, string(structs.EventFactionCreated)).Err(err).Int("events", len(in)).Msg("handling event")
 	if err != nil {
 		return err
 	}
@@ -87,8 +87,8 @@ func (s *Base) handlerOnEventFactionCreated(in ...*queue.Job) error {
 }
 
 func (s *Base) handlerOnEventPersonBirth(in ...*queue.Job) error {
-	log.Println("handlerOnEventPersonBirth", len(in))
 	events, err := s.toEvents(in)
+	log.Debug().Str(log.KeyComponent, log.ComponentEvent).Str(log.KeyEventType, string(structs.EventPersonBirth)).Err(err).Int("events", len(in)).Msg("handling event")
 	if err != nil {
 		return err
 	}
@@ -105,8 +105,8 @@ func (s *Base) handlerOnEventPersonBirth(in ...*queue.Job) error {
 }
 
 func (s *Base) handlerOnEventPersonDeath(in ...*queue.Job) error {
-	log.Println("handlerOnEventPersonDeath", len(in))
 	events, err := s.toEvents(in)
+	log.Debug().Str(log.KeyComponent, log.ComponentEvent).Str(log.KeyEventType, string(structs.EventPersonDeath)).Err(err).Int("events", len(in)).Msg("handling event")
 	if err != nil {
 		return err
 	}

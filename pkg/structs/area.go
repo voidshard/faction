@@ -1,7 +1,7 @@
 package structs
 
 const (
-	AreaRandomMax = 1000000000
+	AreaRandomMax = 1000000
 )
 
 // Area represents a logical area of land .. since our simulation cares about people

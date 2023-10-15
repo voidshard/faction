@@ -1,7 +1,7 @@
 package structs
 
 const (
-	PersonRandomMax = 1000000000
+	PersonRandomMax = 1000000
 )
 
 // Person roughly outlines someone that can belong to / work for a faction.
