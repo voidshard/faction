@@ -1,0 +1,172 @@
+package queue
+
+import (
+	"bytes"
+	"context"
+	"fmt"
+	"strings"
+	"sync"
+	"time"
+
+	"github.com/hibiken/asynq"
+
+	"github.com/voidshard/faction/pkg/config"
+)
+
+const (
+	asyncWorkQueue   = "work"
+	asyncPollTime    = 1 * time.Second
+	asyncAggMaxSize  = 100
+	asyncAggMaxDelay = 2 * time.Second
+	asyncAggRune     = "¬"
+)
+
+type Asynq struct {
+	cfg *config.Queue
+	ins *asynq.Inspector
+
+	lock *sync.Mutex
+	srv  *asynq.Server
+	mux  *asynq.ServeMux
+
+	clt *asynq.Client
+}
+
+func NewAsynqQueue(cfg *config.Queue) (*Asynq, error) {
+	ins := asynq.NewInspector(asynq.RedisClientOpt{Addr: cfg.Location})
+	return &Asynq{
+		cfg:  cfg,
+		ins:  ins,
+		lock: &sync.Mutex{},
+	}, nil
+}
+
+func (a *Asynq) buildServer() {
+	a.lock.Lock()
+	defer a.lock.Unlock()
+	if a.mux != nil {
+		// someone locked and set this first
+		return
+	}
+	srv := asynq.NewServer(
+		asynq.RedisClientOpt{Addr: a.cfg.Location},
+		asynq.Config{
+			Queues:          map[string]int{asyncWorkQueue: 1},
+			GroupAggregator: asynq.GroupAggregatorFunc(aggregate),
+			GroupMaxSize:    asyncAggMaxSize,
+			GroupMaxDelay:   asyncAggMaxDelay,
+		},
+	)
+	mux := asynq.NewServeMux()
+	a.srv = srv
+	a.mux = mux
+}
+
+func (a *Asynq) Register(task string, handler Handler) error {
+	if a.mux == nil {
+		a.buildServer()
+	}
+	a.mux.HandleFunc(aggregatedTask(task), func(ctx context.Context, t *asynq.Task) error {
+		jobs := []*Job{}
+		for _, load := range bytes.Split(t.Payload(), []byte(asyncAggRune)) {
+			jobs = append(jobs, &Job{Task: task, Args: load})
+		}
+		return handler(jobs...)
+	})
+	return nil
+}
+
+func (a *Asynq) Start() error {
+	if a.srv == nil {
+		a.buildServer()
+	}
+	return a.srv.Run(a.mux)
+}
+
+func (a *Asynq) Enqueue(task string, args []byte) (string, error) {
+	if a.clt == nil {
+		a.clt = asynq.NewClient(asynq.RedisClientOpt{Addr: a.cfg.Location})
+	}
+	qtask := asynq.NewTask(task, args)
+	info, err := a.clt.Enqueue(qtask, asynq.Queue(asyncWorkQueue), asynq.Group(aggregatedTask(task)))
+	return info.ID, err
+}
+
+func (a *Asynq) Status(id string) (*JobMeta, error) {
+	info, err := a.ins.GetTaskInfo(asyncWorkQueue, id)
+	if err != nil {
+		return nil, err
+	}
+	return toMeta(info), nil
+}
+
+func (a *Asynq) await() error {
+	// wait for everything
+	for {
+		info, err := a.ins.GetQueueInfo(asyncWorkQueue)
+		if err != nil {
+			return err
+		}
+		if info.Pending+info.Active+info.Retry == 0 {
+			return nil
+		}
+		time.Sleep(asyncPollTime)
+	}
+}
+
+func (a *Asynq) Stop() error {
+	if a.srv == nil {
+		return nil
+	}
+
+	// stop accepting new tasks
+	a.srv.Stop()
+
+	// shutdown
+	a.srv.Shutdown()
+	return nil
+}
+
+func toMeta(info *asynq.TaskInfo) *JobMeta {
+	return &JobMeta{
+		ID:     info.ID,
+		State:  toState(info.LastErr, info.State),
+		Result: info.Result,
+		Msg:    info.LastErr,
+		Job: &Job{
+			Task: info.Type,
+			Args: info.Payload,
+		},
+	}
+}
+
+func toState(lastErr string, s asynq.TaskState) State {
+	switch s {
+	case asynq.TaskStateActive:
+		return StateRunning
+	case asynq.TaskStatePending, asynq.TaskStateScheduled, asynq.TaskStateRetry, asynq.TaskStateAggregating:
+		return StateQueued
+	default:
+		if lastErr != "" {
+			return StateComplete
+		} else {
+			return StateFailed
+		}
+	}
+}
+
+func aggregate(group string, tasks []*asynq.Task) *asynq.Task {
+	var b strings.Builder
+	for _, t := range tasks {
+		if t == nil || t.Payload() == nil {
+			continue
+		}
+		b.Write(t.Payload())
+		b.WriteString(asyncAggRune)
+	}
+	return asynq.NewTask(group, []byte(b.String()))
+}
+
+func aggregatedTask(group string) string {
+	return fmt.Sprintf("aggregated%s", group)
+}

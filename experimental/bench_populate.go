@@ -1,7 +1,6 @@
 package main
 
 import (
-	"github.com/voidshard/faction/pkg/config"
 	"github.com/voidshard/faction/pkg/sim"
 	"github.com/voidshard/faction/pkg/structs"
 )
@@ -10,13 +9,7 @@ func main() {
 	popPerArea := 100000
 	areas := 10
 
-	cfg := &config.Database{
-		Driver:   config.DatabaseSQLite3,
-		Name:     "test.sqlite",
-		Location: "/tmp",
-	}
-
-	simulator, err := sim.New(&config.Simulation{Database: cfg})
+	simulator, err := sim.New(nil)
 	if err != nil {
 		panic(err)
 	}
@@ -37,7 +30,7 @@ func main() {
 		popPerArea,
 		"human",
 		"human",
-		ids,
+		ids...,
 	)
 	if err != nil {
 		panic(err)

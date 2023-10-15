@@ -1,12 +1,13 @@
 package config
 
-type QueueDriver string
-
-const ()
+const (
+	defaultQueueURL = "localhost:6379" // redis
+)
 
 type Queue struct {
+	Location string
 }
 
 func DefaultQueue() *Queue {
-	return &Queue{}
+	return &Queue{Location: defaultQueueURL}
 }

@@ -12,12 +12,7 @@ func main() {
 	// Reads everything written by db_insert_all.go
 	// Nb. we don't iter with any token here, which generally would be advised
 
-	cfg := &config.Database{
-		Driver:   config.DatabaseSQLite3,
-		Name:     "test.sqlite",
-		Location: "/tmp",
-	}
-	conn, err := db.New(cfg)
+	conn, err := db.New(config.DefaultDatabase())
 	if err != nil {
 		panic(err)
 	}

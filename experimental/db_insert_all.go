@@ -13,12 +13,7 @@ func main() {
 	// inserts at least one of each struct into the DB so we call
 	// all of the SET sql statements.
 
-	cfg := &config.Database{
-		Driver:   config.DatabaseSQLite3,
-		Name:     "test.sqlite",
-		Location: "/tmp",
-	}
-	conn, err := db.New(cfg)
+	conn, err := db.New(config.DefaultDatabase())
 	if err != nil {
 		panic(err)
 	}

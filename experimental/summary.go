@@ -14,12 +14,7 @@ func main() {
 	faction2 := structs.NewID("faction2")
 	faction3 := structs.NewID("faction3")
 
-	cfg := &config.Database{
-		Driver:   config.DatabaseSQLite3,
-		Name:     "test.sqlite",
-		Location: "/tmp",
-	}
-
+	cfg := config.DefaultDatabase()
 	dbconn, err := db.New(cfg)
 	if err != nil {
 		panic(err)

@@ -1,19 +1,12 @@
 package main
 
 import (
-	"github.com/voidshard/faction/pkg/config"
 	"github.com/voidshard/faction/pkg/sim"
 	"github.com/voidshard/faction/pkg/structs"
 )
 
 func main() {
-	cfg := &config.Database{
-		Driver:   config.DatabaseSQLite3,
-		Name:     "test.sqlite",
-		Location: "/tmp",
-	}
-
-	simulator, err := sim.New(&config.Simulation{Database: cfg})
+	simulator, err := sim.New(nil)
 	if err != nil {
 		panic(err)
 	}
@@ -31,11 +24,9 @@ func main() {
 		30000, // nb. this is approximate & doesn't include people spawned dead
 		"human",
 		"human",
-		[]string{
-			area1.ID,
-			area2.ID,
-			area3.ID,
-		},
+		area1.ID,
+		area2.ID,
+		area3.ID,
 	)
 	if err != nil {
 		panic(err)

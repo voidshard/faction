@@ -3,23 +3,13 @@ package main
 import (
 	"fmt"
 
-	"github.com/voidshard/faction/pkg/config"
 	fantasy "github.com/voidshard/faction/pkg/premade/fantasy"
 	"github.com/voidshard/faction/pkg/sim"
 	"github.com/voidshard/faction/pkg/structs"
 )
 
 func main() {
-	cfg := &config.Simulation{
-		Database: &config.Database{
-			Driver:   config.DatabaseSQLite3,
-			Name:     "test.sqlite",
-			Location: "/tmp",
-		},
-		Actions: fantasy.Actions(),
-	}
-
-	simulator, err := sim.New(cfg)
+	simulator, err := sim.New(nil)
 	if err != nil {
 		panic(err)
 	}

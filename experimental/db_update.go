@@ -11,13 +11,7 @@ import (
 
 func main() {
 	// Tests out the incr logic for tuples / modifiers
-
-	cfg := &config.Database{
-		Driver:   config.DatabaseSQLite3,
-		Name:     "test.sqlite",
-		Location: "/tmp",
-	}
-	conn, err := db.New(cfg)
+	conn, err := db.New(config.DefaultDatabase())
 	if err != nil {
 		panic(err)
 	}

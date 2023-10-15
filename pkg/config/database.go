@@ -7,27 +7,33 @@ const (
 	// DatabaseSQLite3 uses sqlite3 to store data.
 	// Easy to manage, good for testing, not recommended for large datasets / large simulations.
 	DatabaseSQLite3 DatabaseDriver = "sqlite3"
+
+	// DatabasePostgres uses postgres to store data.
+	// Probably you want to use this for anything serious -- this is also required for anything involving the
+	// queue.
+	DatabasePostgres DatabaseDriver = "postgres"
 )
 
 // Database configuration struct
 type Database struct {
-	// Driver denotes the underlying db implementation
+	// Driver denotes the underlying db implementation (see above)
 	Driver DatabaseDriver
 
-	// Name of database
-	// [sqlite3]: file name
-	// [postgres]: database name
-	Name string
-
 	// Location of database; where to find
-	// [sqlite3]: folder path
+	// [sqlite3]: file path
 	// [postgres]: connection string
 	Location string
 }
 
 func DefaultDatabase() *Database {
+	/*
+		return &Database{
+			Driver:   DatabaseSQLite3,
+			Location: filepath.Join(os.TempDir(), "faction.sqlite"),
+		}
+	*/
 	return &Database{
-		Driver: DatabaseSQLite3,
-		Name:   "faction-sim.sqlite",
+		Driver:   DatabasePostgres,
+		Location: "postgres://factionreadwrite:readwrite@localhost:5432/faction?sslmode=disable",
 	}
 }

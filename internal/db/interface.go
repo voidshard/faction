@@ -95,6 +95,11 @@ func New(cfg *config.Database) (*FactionDB, error) {
 		if err != nil {
 			return nil, err
 		}
+	case config.DatabasePostgres:
+		dbconn, err = NewPostgres(cfg)
+		if err != nil {
+			return nil, err
+		}
 	default:
 		return nil, fmt.Errorf("unknown database driver: %s", cfg.Driver)
 	}

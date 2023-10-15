@@ -32,18 +32,34 @@ func New(cfg *config.Simulation) (*Base, error) {
 	if err != nil {
 		return nil, err
 	}
+	que, err := queue.NewAsynqQueue(cfg.Queue)
+	if err != nil {
+		return nil, err
+	}
+
 	me := &Base{
 		cfg:    cfg,
 		dbconn: dbconn,
 		// default tech / eco
 		eco:   fantasy.NewEconomy(),
 		tech:  fantasy.NewTechnology(),
-		queue: queue.NewLocalQueue(10),
+		queue: que,
 		// dice for sim configs
 		dice: demographics.New(cfg),
 	}
-	me.registerTasksWithQueue()
 	return me, nil
+}
+
+func (s *Base) StartProcessingEvents() error {
+	err := s.registerTasksWithQueue()
+	if err != nil {
+		return err
+	}
+	return s.queue.Start()
+}
+
+func (s *Base) StopProcessingEvents() error {
+	return s.queue.Stop()
 }
 
 func (s *Base) FireEvents() error {
@@ -101,7 +117,6 @@ func (s *Base) SetEconomy(eco economy.Economy) error {
 
 func (s *Base) SetQueue(q queue.Queue) error {
 	s.queue = q
-	s.registerTasksWithQueue() // register with new queue
 	return nil
 }
 

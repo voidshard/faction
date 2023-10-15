@@ -105,17 +105,6 @@ type Simulation interface {
 	// Tick updates internal time by one tick, returns the current tick.
 	Tick() (int, error)
 
-	// FireEvents will fire any events that have been queued up for the current tick.
-	//
-	// Rather than immediately fire events as they occur in a given tick, we store them in
-	// the DB for firing in batches. We don't really need real time events, and this is way
-	// more efficient to process.
-	//
-	// This should be called as the last function in a given tick and gives us the chance
-	// to perform post-processing based on what has happened over the last tick / apply various
-	// side effects and what not.
-	FireEvents() error
-
 	// PlanFactionJobs tries to figure out given the current context / climate around the
 	// faction what Jobs they wish to enact.
 	// More rarely factions may also cancel Jobs they no longer wish to enact if for example they
@@ -134,4 +123,24 @@ type Simulation interface {
 
 	// AdjustPopulation accounts for natural deaths, births etc in an area
 	AdjustPopulation(areaID string) error
+
+	// -- Event / Async handling --
+
+	// FireEvents will fire any events that have been queued up for the current tick.
+	//
+	// Rather than immediately fire events as they occur in a given tick, we store them in
+	// the DB for firing in batches. We don't really need real time events, and this is way
+	// more efficient to process.
+	//
+	// This should be called as the last function in a given tick and gives us the chance
+	// to perform post-processing based on what has happened over the last tick / apply various
+	// side effects and what not.
+	FireEvents() error
+
+	// StartProcessingEvents will start a background process to process events as they are fired
+	// in batches.
+	StartProcessingEvents() error
+
+	// StopProcessingEvents will stop the background process.
+	StopProcessingEvents() error
 }

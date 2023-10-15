@@ -1,8 +1,6 @@
 package main
 
 import (
-	"fmt"
-
 	"github.com/voidshard/faction/pkg/sim"
 )
 
@@ -12,6 +10,8 @@ func main() {
 		panic(err)
 	}
 
-	t, err := simulator.Tick()
-	fmt.Printf("tick %d (%v)\n", t, err)
+	err = simulator.StartProcessingEvents()
+	if err != nil {
+		panic(err)
+	}
 }
