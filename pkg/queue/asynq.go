@@ -74,14 +74,14 @@ func (a *Asynq) Register(task string, handler Handler) error {
 			jobs = append(jobs, &Job{Task: task, Args: load})
 		}
 		err := handler(jobs...)
-		log.Debug().Err(err).Str(log.KeyComponent, log.ComponentQueue).Str("task", task).Int("jobs", len(jobs)).Msg("handling jobs")
+		log.Info().Err(err).Str(log.KeyComponent, log.ComponentQueue).Str("task", task).Int("jobs", len(jobs)).Msg("handling jobs")
 		return err
 	})
 	return nil
 }
 
 func (a *Asynq) Start() error {
-	log.Debug().Str(log.KeyComponent, log.ComponentQueue).Msg("starting queue processing")
+	log.Info().Str(log.KeyComponent, log.ComponentQueue).Msg("starting queue processing")
 	if a.srv == nil {
 		a.buildServer()
 	}

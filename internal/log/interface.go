@@ -8,6 +8,9 @@ const (
 	// Components are the various components that can log, just to help narrow things down
 	ComponentQueue = "queue"
 	ComponentEvent = "event"
+
+	// Env var to control debug
+	EnvDebug = "ENABLE_DEBUG"
 )
 
 var activeLogger logger

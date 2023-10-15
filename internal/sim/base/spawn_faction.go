@@ -201,6 +201,7 @@ func (s *Base) randFaction(fr *factionRand) (*simutil.MetaFaction, error) {
 	// consider action focuses
 	professions := map[string]int{}
 	actions := map[structs.ActionType]int{}
+	actionWeights := map[structs.ActionType]int{}
 	seen := map[int]bool{}
 	actionsEthos := []*structs.Ethos{&mf.Faction.Ethos}
 	researchCount := 0
@@ -234,11 +235,7 @@ func (s *Base) randFaction(fr *factionRand) (*simutil.MetaFaction, error) {
 				}
 			}
 
-			mf.ActionWeights = append(mf.ActionWeights, &structs.Tuple{
-				Subject: mf.Faction.ID,
-				Object:  string(act),
-				Value:   weight.Int(),
-			})
+			actionWeights[act] += weight.Int()
 			actions[act]++
 
 			actionsEthos = append(actionsEthos, &actionCfg.Ethos)
@@ -373,11 +370,12 @@ func (s *Base) randFaction(fr *factionRand) (*simutil.MetaFaction, error) {
 	}
 	for a, i := range actions {
 		w := clamp(i*structs.MaxEthos/20+fr.rng.Intn(500), 0, structs.MaxEthos)
+		aw, _ := actionWeights[a]
 		mf.Actions = append(mf.Actions, a)
 		mf.ActionWeights = append(mf.ActionWeights, &structs.Tuple{
 			Subject: mf.Faction.ID,
 			Object:  string(a),
-			Value:   w,
+			Value:   w + aw,
 		})
 	}
 

@@ -11,6 +11,8 @@ package log
 
 import (
 	"fmt"
+	"os"
+	"strings"
 	"sync"
 
 	"github.com/rs/zerolog"
@@ -84,5 +86,9 @@ func (z *zLogger) Debug() LogLine {
 
 func newZeroLog() *zLogger {
 	zerolog.TimeFieldFormat = zerolog.TimeFormatUnix
+	debug := strings.ToLower(strings.TrimSpace(os.Getenv(EnvDebug)))
+	if debug == "true" || debug == "1" || debug == "on" || debug == "yes" {
+		zerolog.SetGlobalLevel(zerolog.DebugLevel)
+	}
 	return &zLogger{}
 }

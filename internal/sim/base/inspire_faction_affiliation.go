@@ -143,11 +143,15 @@ func (s *Base) InspireFactionAffiliation(cfg *config.Affiliation, factionID stri
 			}
 
 			if len(people) > 1 {
-				// insert random inter-person relationships
-				for i := 0; i < len(people)/2; i++ {
-					a := people[rng.Intn(len(people))]
-					b := people[rng.Intn(len(people))]
-					if a.ID == b.ID {
+				half := len(people) / 2
+				seen := map[string]bool{}
+
+				for i := 0; i < half; i++ {
+					a := people[i]
+					b := people[rng.Intn(half)+half]
+
+					_, ok := seen[b.ID]
+					if ok {
 						continue
 					}
 

@@ -162,23 +162,10 @@ func main() {
 	}
 
 	// step 7. fire events (handles all the post processing for all the changes we enacted)
-	err = simulator.StartProcessingEvents()
-	if err != nil {
-		// in general we'd do this from other machine(s)
-		panic(err)
-	}
-	time.Sleep(5 * time.Second)
-
+	// -- IMPLIES ANOTHER PROCESS IS PROCESSING EVENTS
 	fmt.Println("firing events")
 	err = simulator.FireEvents()
 	if err != nil {
-		panic(err)
-	}
-
-	// step 8. await all events
-	err = simulator.StopProcessingEvents()
-	if err != nil {
-		// in general we'd do this from other machine(s)
 		panic(err)
 	}
 }
