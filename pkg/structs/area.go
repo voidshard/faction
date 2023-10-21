@@ -29,3 +29,7 @@ type Area struct {
 	// Random value for getting areas are random from the DB
 	Random int `db:"random"`
 }
+
+func (a *Area) ObjectID() string {
+	return a.ID
+}

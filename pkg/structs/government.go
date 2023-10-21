@@ -40,6 +40,10 @@ type Government struct {
 	Outlawed *Laws `db:"-"`
 }
 
+func (g *Government) ObjectID() string {
+	return g.ID
+}
+
 type Laws struct {
 	// We track these as map[<id>]bool meaning: <id> -> is_illegal
 	// Technically we could store that items are specifically legal too, but

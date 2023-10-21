@@ -242,7 +242,7 @@ func (t *sqlTx) ModifiersSum(table Relation, token string, f *Query) ([]*structs
 }
 
 // chunkWrite stops us from trying to write too many rows at once; triggering
-// errors about too many SQL variables
+// errors about too many SQL variables.
 func chunkWrite[R Row](fn func(sqlOperator, []R) error, tx sqlOperator, in []R) error {
 	for i := 0; i < len(in); i += chunksPerWrite {
 		j := i + chunksPerWrite
@@ -290,11 +290,31 @@ func (t *sqlTx) SetAreas(in ...*structs.Area) error {
 }
 
 func (t *sqlTx) SetTuples(r Relation, in ...*structs.Tuple) error {
-	return setTuples(t.tx, r, in)
+	for i := 0; i < len(in); i += chunksPerWrite {
+		j := i + chunksPerWrite
+		if j > len(in) {
+			return setTuples(t.tx, r, in[i:])
+		}
+		err := setTuples(t.tx, r, in[i:j])
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func (t *sqlTx) SetModifiers(r Relation, in ...*structs.Modifier) error {
-	return setModifiers(t.tx, r, in)
+	for i := 0; i < len(in); i += chunksPerWrite {
+		j := i + chunksPerWrite
+		if j > len(in) {
+			return setModifiers(t.tx, r, in[i:])
+		}
+		err := setModifiers(t.tx, r, in[i:j])
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func (t *sqlTx) IncrTuples(r Relation, v int, f *Query) error {

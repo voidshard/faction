@@ -66,3 +66,7 @@ func (e *Event) MarshalJson() ([]byte, error) {
 func (e *Event) UnmarshalJson(b []byte) error {
 	return json.Unmarshal(b, e)
 }
+
+func (e *Event) ObjectID() string {
+	return e.ID
+}

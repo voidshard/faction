@@ -46,6 +46,10 @@ type Faction struct {
 	Areas   int `db:"areas"`   // number of areas the faction is present in
 }
 
+func (f *Faction) ObjectID() string {
+	return f.ID
+}
+
 // FactionSummary is a high level overview of a faction, including related tuples
 // (weights), information on current faction leadership (Ranks) and any research (ResearchProgress).
 type FactionSummary struct {

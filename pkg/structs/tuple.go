@@ -1,5 +1,7 @@
 package structs
 
+import "fmt"
+
 const (
 	MaxTuple = 10000
 	MinTuple = -10000
@@ -26,6 +28,10 @@ type Tuple struct {
 	Subject string `db:"subject"`
 	Object  string `db:"object"`
 	Value   int    `db:"value"`
+}
+
+func (t *Tuple) ObjectID() string {
+	return fmt.Sprintf("%s-%s", t.Subject, t.Object)
 }
 
 // Modifier is some temporary modifier to a Tuple(s).

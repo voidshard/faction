@@ -17,7 +17,7 @@ import (
 const (
 	asyncWorkQueue   = "work"
 	asyncPollTime    = 1 * time.Second
-	asyncAggMaxSize  = 100
+	asyncAggMaxSize  = 1000
 	asyncAggMaxDelay = 2 * time.Second
 	asyncAggRune     = "¬"
 )
@@ -63,7 +63,15 @@ func (a *Asynq) buildServer() {
 	a.mux = mux
 }
 
+func noOpHandler(jobs ...*Job) error {
+	log.Debug().Int("jobs", len(jobs)).Msg()("there is no handler defined for this task")
+	return nil
+}
+
 func (a *Asynq) Register(task string, handler Handler) error {
+	if handler == nil {
+		log.Warn().Str("task", task).Msg()("no handler defined for task, adding a dummy no-op, this should be fixed")
+	}
 	if a.mux == nil {
 		a.buildServer()
 	}
@@ -76,6 +84,10 @@ func (a *Asynq) Register(task string, handler Handler) error {
 				continue
 			}
 			jobs = append(jobs, &Job{Task: task, Args: load})
+		}
+		if handler == nil {
+			log.Warn().Str("task", task).Int("jobs", len(jobs)).Msg()("no handler defined for task")
+			return nil
 		}
 		err := handler(jobs...)
 		log.Info().Err(err).Str("task", task).Int("jobs", len(jobs)).Msg()("handling jobs")
@@ -179,7 +191,7 @@ func aggregate(group string, tasks []*asynq.Task) *asynq.Task {
 		b.Write(t.Payload())
 		b.WriteString(asyncAggRune)
 	}
-	log.Debug().Str("payload", b.String()).Msg()("aggregated tasks payload")
+	//log.Debug().Str("payload", b.String()).Msg()("aggregated tasks payload")
 	return asynq.NewTask(group, []byte(b.String()))
 }
 

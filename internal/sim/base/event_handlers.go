@@ -23,8 +23,17 @@ func (s *Base) registerTasksWithQueue() error {
 	errs := []error{
 		s.queue.Register(eventTask(structs.EventPersonBirth), s.handlerOnEventPersonBirth),
 		s.queue.Register(eventTask(structs.EventPersonDeath), s.handlerOnEventPersonDeath),
+		s.queue.Register(eventTask(structs.EventPersonMove), nil),
+		s.queue.Register(eventTask(structs.EventPersonChangeProf), nil),
+		s.queue.Register(eventTask(structs.EventPersonChangeFaction), nil),
 		s.queue.Register(eventTask(structs.EventFamilyMarriage), s.handlerOnEventFamilyMarriage),
+		s.queue.Register(eventTask(structs.EventFamilyDivorce), nil),
+		s.queue.Register(eventTask(structs.EventFamilyPregnant), nil),
+		s.queue.Register(eventTask(structs.EventFamilyAdoption), nil),
+		s.queue.Register(eventTask(structs.EventFamilyMove), nil),
 		s.queue.Register(eventTask(structs.EventFactionCreated), s.handlerOnEventFactionCreated),
+		s.queue.Register(eventTask(structs.EventFactionPromotion), nil),
+		s.queue.Register(eventTask(structs.EventFactionDemo), nil),
 	}
 	for _, err := range errs {
 		if err != nil {

@@ -36,13 +36,6 @@ func (s *Base) applyBirthSiblingRelations(tick int, events []*structs.Event) err
 		newChildren[p.BirthFamilyID] = append(kids, p)
 	}
 
-	mkey := func(a, b string) string {
-		if a > b {
-			return fmt.Sprintf("%s-%s", a, b)
-		}
-		return fmt.Sprintf("%s-%s", b, a)
-	}
-
 	// lookup people who share a family
 	pf := db.Q(db.F(db.BirthFamilyID, db.In, families.ToSlice()))
 	var (
@@ -56,7 +49,6 @@ func (s *Base) applyBirthSiblingRelations(tick int, events []*structs.Event) err
 		}
 
 		mp := simutil.NewMetaPeople()
-		seen := map[string]bool{}
 		for _, p := range people {
 			kids, ok := newChildren[p.BirthFamilyID]
 			if !ok {
@@ -66,12 +58,6 @@ func (s *Base) applyBirthSiblingRelations(tick int, events []*structs.Event) err
 				if p.ID == kid.ID {
 					continue
 				}
-				k := mkey(p.ID, kid.ID)
-				_, ok := seen[k]
-				if ok {
-					continue
-				}
-				seen[k] = true
 				if !s.dice.IsValidDemographic(p.Race, p.Culture) {
 					return fmt.Errorf("invalid demographic not found: [race] %s, [culture] %s", p.Race, p.Culture)
 				}

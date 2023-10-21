@@ -52,6 +52,10 @@ type Person struct {
 	NaturalDeathTick int `db:"natural_death_tick"`
 }
 
+func (p *Person) ObjectID() string {
+	return p.ID
+}
+
 // SetBirthTick updates the birthtick, and moves the natural death tick and adulthood tick
 // accordingly.
 func (p *Person) SetBirthTick(t int) {

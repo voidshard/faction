@@ -73,6 +73,10 @@ type Family struct {
 	Random int `db:"random"` // random number used for blind randomisation
 }
 
+func (f *Family) ObjectID() string {
+	return f.ID
+}
+
 // relationshipGender returns if
 // - the relationship is gendered
 // - if the relationshipGender isMale

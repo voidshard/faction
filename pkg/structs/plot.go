@@ -27,6 +27,10 @@ type Plot struct {
 	Crop
 }
 
+func (p *Plot) ObjectID() string {
+	return p.ID
+}
+
 // Crop holds extra data about the land & it's usage
 type Crop struct {
 	// Commodity that can be harvested from this land (if any)

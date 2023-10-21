@@ -61,3 +61,7 @@ type Job struct {
 
 	State JobState `db:"state"` // current state of the job
 }
+
+func (j *Job) ObjectID() string {
+	return j.ID
+}

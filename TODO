@@ -1,2 +1,1 @@
-- Fix local queue (or port to something else)
-- Test on_faction_created 
+- Re-consider transactions; at the moment we require them for writes, it's a bit much & isn't really needed in many cases

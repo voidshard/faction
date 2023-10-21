@@ -11,10 +11,10 @@ import (
 )
 
 const (
-	countAreas       = 1
-	countPopulace    = 100
-	countGovernments = 1
-	countFactions    = 10
+	countAreas       = 10
+	countPopulace    = 30000
+	countGovernments = 3
+	countFactions    = 50
 )
 
 var (
