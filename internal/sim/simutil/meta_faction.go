@@ -35,47 +35,33 @@ func NewMetaFaction() *MetaFaction {
 }
 
 func WriteMetaFaction(conn *db.FactionDB, f *MetaFaction) error {
-	// de-dupe stuff before we enter a transaction.
-	// By definition anything we "Set" overwrites any existing data so we only need to apply
-	// the last object in the slice for each ID.
-	// Technically the DB could resolve this (depending on the engine) but this is busy work
-	// we can do out-of-transaction
-	f.ActionWeights = unique(f.ActionWeights)
-	f.Plots = unique(f.Plots)
-	f.ProfWeights = unique(f.ProfWeights)
-	f.ResearchWeights = unique(f.ResearchWeights)
-	f.Imports = unique(f.Imports)
-	f.Exports = unique(f.Exports)
-	f.Events = unique(f.Events)
-	return conn.InTransaction(func(tx db.ReaderWriter) error {
-		err := tx.SetFactions(f.Faction)
-		if err != nil {
-			return err
-		}
-		err = tx.SetPlots(f.Plots...)
-		if err != nil {
-			return err
-		}
-		err = tx.SetEvents(f.Events...)
-		if err != nil {
-			return err
-		}
-		err = tx.SetTuples(db.RelationFactionCommodityImport, f.Imports...)
-		if err != nil {
-			return err
-		}
-		err = tx.SetTuples(db.RelationFactionCommodityExport, f.Exports...)
-		if err != nil {
-			return err
-		}
-		err = tx.SetTuples(db.RelationFactionTopicResearchWeight, f.ResearchWeights...)
-		if err != nil {
-			return err
-		}
-		err = tx.SetTuples(db.RelationFactionActionTypeWeight, f.ActionWeights...)
-		if err != nil {
-			return err
-		}
-		return tx.SetTuples(db.RelationFactionProfessionWeight, f.ProfWeights...)
-	})
+	err := conn.SetFactions(f.Faction)
+	if err != nil {
+		return err
+	}
+	err = conn.SetPlots(unique(f.Plots)...)
+	if err != nil {
+		return err
+	}
+	err = conn.SetEvents(unique(f.Events)...)
+	if err != nil {
+		return err
+	}
+	err = conn.SetTuples(db.RelationFactionCommodityImport, unique(f.Imports)...)
+	if err != nil {
+		return err
+	}
+	err = conn.SetTuples(db.RelationFactionCommodityExport, unique(f.Exports)...)
+	if err != nil {
+		return err
+	}
+	err = conn.SetTuples(db.RelationFactionTopicResearchWeight, unique(f.ResearchWeights)...)
+	if err != nil {
+		return err
+	}
+	err = conn.SetTuples(db.RelationFactionActionTypeWeight, unique(f.ActionWeights)...)
+	if err != nil {
+		return err
+	}
+	return conn.SetTuples(db.RelationFactionProfessionWeight, unique(f.ProfWeights)...)
 }

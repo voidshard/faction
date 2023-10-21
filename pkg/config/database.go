@@ -1,5 +1,10 @@
 package config
 
+import (
+	"os"
+	"path/filepath"
+)
+
 // DatabaseDriver denotes what kind of data store we'll use
 type DatabaseDriver string
 
@@ -26,14 +31,14 @@ type Database struct {
 }
 
 func DefaultDatabase() *Database {
+	return &Database{
+		Driver:   DatabaseSQLite3,
+		Location: filepath.Join(os.TempDir(), "faction.sqlite"),
+	}
 	/*
 		return &Database{
-			Driver:   DatabaseSQLite3,
-			Location: filepath.Join(os.TempDir(), "faction.sqlite"),
+			Driver:   DatabasePostgres,
+			Location: "postgres://factionreadwrite:readwrite@localhost:5432/faction?sslmode=disable",
 		}
 	*/
-	return &Database{
-		Driver:   DatabasePostgres,
-		Location: "postgres://factionreadwrite:readwrite@localhost:5432/faction?sslmode=disable",
-	}
 }

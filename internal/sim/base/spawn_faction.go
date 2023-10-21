@@ -64,9 +64,7 @@ func (s *Base) SpawnFaction(cfg *config.Faction, areas ...string) (*structs.Fact
 		for _, govt := range govsToWrite {
 			govs = append(govs, govt)
 		}
-		err = s.dbconn.InTransaction(func(tx db.ReaderWriter) error {
-			return tx.SetGovernments(govs...)
-		})
+		err = s.dbconn.SetGovernments(govs...)
 	}
 
 	return f.Faction, err

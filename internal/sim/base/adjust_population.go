@@ -105,9 +105,10 @@ func (s *Base) deathCheck(tick int, area string) error {
 			}
 		}
 
-		err = s.dbconn.InTransaction(func(tx db.ReaderWriter) error {
-			return tx.SetPeople(died...)
-		})
+		err = s.dbconn.SetPeople(died...)
+		if err != nil {
+			return err
+		}
 
 		if token == "" {
 			break

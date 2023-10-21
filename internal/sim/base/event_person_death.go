@@ -72,13 +72,14 @@ func (s *Base) applyDeathFamilyEffect(tick int, events []*structs.Event) error {
 			update = append(update, f)
 		}
 
-		s.dbconn.InTransaction(func(tx db.ReaderWriter) error {
-			err = tx.SetFamilies(update...)
-			if err != nil {
-				return err
-			}
-			return tx.SetTuples(db.RelationPersonPersonRelationship, rels...)
-		})
+		err = s.dbconn.SetFamilies(update...)
+		if err != nil {
+			return err
+		}
+		err = s.dbconn.SetTuples(db.RelationPersonPersonRelationship, rels...)
+		if err != nil {
+			return err
+		}
 
 		if token == "" {
 			break

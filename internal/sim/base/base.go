@@ -139,9 +139,7 @@ func (s *Base) SetAreas(in ...*structs.Area) error {
 			a.Random = rnggen.Intn(structs.AreaRandomMax)
 		}
 	}
-	return s.dbconn.InTransaction(func(tx db.ReaderWriter) error {
-		return tx.SetAreas(in...)
-	})
+	return s.dbconn.SetAreas(in...)
 }
 
 func (s *Base) SetPlots(in ...*structs.Plot) error {
@@ -151,21 +149,15 @@ func (s *Base) SetPlots(in ...*structs.Plot) error {
 			p.Value = simutil.PlotValuation(p, s.eco, 0)
 		}
 	}
-	return s.dbconn.InTransaction(func(tx db.ReaderWriter) error {
-		return tx.SetPlots(in...)
-	})
+	return s.dbconn.SetPlots(in...)
 }
 
 func (s *Base) SetGovernments(in ...*structs.Government) error {
-	return s.dbconn.InTransaction(func(tx db.ReaderWriter) error {
-		return tx.SetGovernments(in...)
-	})
+	return s.dbconn.SetGovernments(in...)
 }
 
 func (s *Base) SetFactions(in ...*structs.Faction) error {
-	return s.dbconn.InTransaction(func(tx db.ReaderWriter) error {
-		return tx.SetFactions(in...)
-	})
+	return s.dbconn.SetFactions(in...)
 }
 
 func (s *Base) SetAreaGovernment(governmentID string, areas ...string) error {

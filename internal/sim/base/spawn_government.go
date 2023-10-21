@@ -9,7 +9,6 @@ import (
 	"math/rand"
 	"time"
 
-	"github.com/voidshard/faction/internal/db"
 	stats "github.com/voidshard/faction/internal/random/rng"
 	"github.com/voidshard/faction/pkg/config"
 	"github.com/voidshard/faction/pkg/structs"
@@ -60,9 +59,5 @@ func (s *Base) SpawnGovernment(g *config.Government) (*structs.Government, error
 		}
 	}
 
-	err := s.dbconn.InTransaction(func(tx db.ReaderWriter) error {
-		return tx.SetGovernments(govt)
-	})
-
-	return govt, err
+	return govt, s.dbconn.SetGovernments(govt)
 }

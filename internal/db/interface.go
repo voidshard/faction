@@ -72,6 +72,7 @@ type ReaderWriter interface {
 // Database is something the simulation uses to record data.
 // We don't expect users to supply their own implementations (if so, they can add one to internal/),
 type Database interface {
+	Writer
 	Reader
 
 	Transaction() (Transaction, error)

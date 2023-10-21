@@ -634,9 +634,7 @@ func (f *FactionDB) SetAreaGovernment(govID string, areaIDs []string) error {
 			a.GovernmentID = govID
 		}
 
-		err = f.InTransaction(func(tx ReaderWriter) error {
-			return tx.SetAreas(areas...)
-		})
+		err = f.SetAreas(areas...)
 		if err != nil {
 			return err
 		}

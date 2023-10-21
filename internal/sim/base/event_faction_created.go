@@ -104,9 +104,8 @@ func (s *Base) applyFactionCreated(tick int, events []*structs.Event) error {
 		}
 
 		// write out our trust relationships
-		err = s.dbconn.InTransaction(func(tx db.ReaderWriter) error {
-			return tx.SetTuples(db.RelationFactionFactionTrust, trust...)
-		})
+
+		err = s.dbconn.SetTuples(db.RelationFactionFactionTrust, trust...)
 		if err != nil {
 			return err
 		}

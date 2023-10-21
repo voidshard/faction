@@ -1,1 +1,1 @@
-- Re-consider transactions; at the moment we require them for writes, it's a bit much & isn't really needed in many cases
+- Test now that transactions are no longer compulsory

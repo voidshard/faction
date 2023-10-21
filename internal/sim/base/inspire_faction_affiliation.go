@@ -8,6 +8,7 @@ import (
 
 	"github.com/voidshard/faction/internal/db"
 	"github.com/voidshard/faction/internal/dbutils"
+	"github.com/voidshard/faction/internal/log"
 	stats "github.com/voidshard/faction/internal/random/rng"
 	"github.com/voidshard/faction/internal/sim/simutil"
 	"github.com/voidshard/faction/pkg/config"
@@ -80,6 +81,7 @@ func (s *Base) InspireFactionAffiliation(cfg *config.Affiliation, factionID stri
 			if err == nil {
 				continue
 			}
+			log.Error().Err(err).Msg()("error in inspire faction affiliation")
 			stopIterPeople = true // we have an error -> tell iter people to stop
 			if ferr == nil {
 				ferr = err
@@ -171,33 +173,13 @@ func (s *Base) InspireFactionAffiliation(cfg *config.Affiliation, factionID stri
 				}
 			}
 
-			errors <- s.dbconn.InTransaction(func(tx db.ReaderWriter) error {
-				err = tx.SetPeople(peopleUpdated...)
-				if err != nil {
-					return err
-				}
-				err = tx.SetTuples(db.RelationPersonReligionFaith, faith...)
-				if err != nil {
-					return err
-				}
-				err = tx.SetTuples(db.RelationPersonPersonTrust, trust...)
-				if err != nil {
-					return err
-				}
-				err = tx.SetTuples(db.RelationPersonPersonRelationship, rels...)
-				if err != nil {
-					return err
-				}
-				err = tx.SetTuples(db.RelationPersonFactionAffiliation, affils...)
-				if err != nil {
-					return err
-				}
-				err = tx.SetTuples(db.RelationPersonFactionRank, ranks...)
-				if err != nil {
-					return err
-				}
-				return tx.SetEvents(events...)
-			})
+			errors <- s.dbconn.SetPeople(peopleUpdated...)
+			errors <- s.dbconn.SetTuples(db.RelationPersonReligionFaith, faith...)
+			errors <- s.dbconn.SetTuples(db.RelationPersonPersonTrust, trust...)
+			errors <- s.dbconn.SetTuples(db.RelationPersonPersonRelationship, rels...)
+			errors <- s.dbconn.SetTuples(db.RelationPersonFactionAffiliation, affils...)
+			errors <- s.dbconn.SetTuples(db.RelationPersonFactionRank, ranks...)
+			errors <- s.dbconn.SetEvents(events...)
 		}
 
 		if done == 0 {
@@ -205,9 +187,7 @@ func (s *Base) InspireFactionAffiliation(cfg *config.Affiliation, factionID stri
 		}
 
 		ctx.Summary.Faction.Members += done // the faction has grown :)
-		s.dbconn.InTransaction(func(tx db.ReaderWriter) error {
-			return tx.SetFactions(&ctx.Summary.Faction)
-		})
+		errors <- s.dbconn.SetFactions(&ctx.Summary.Faction)
 	}()
 
 	go func() {

@@ -125,6 +125,90 @@ func (s *sqlDB) ModifiersSum(table Relation, token string, f *Query) ([]*structs
 	return modifiersSum(s.conn, table, token, f)
 }
 
+func (s *sqlDB) SetPlots(in ...*structs.Plot) error {
+	return chunkWrite(setPlots, s.conn, in)
+}
+
+func (s *sqlDB) SetPeople(in ...*structs.Person) error {
+	return chunkWrite(setPeople, s.conn, in)
+}
+
+func (s *sqlDB) SetEvents(in ...*structs.Event) error {
+	return chunkWrite(setEvents, s.conn, in)
+}
+
+func (s *sqlDB) SetJobs(in ...*structs.Job) error {
+	return chunkWrite(setJobs, s.conn, in)
+}
+
+func (s *sqlDB) SetGovernments(in ...*structs.Government) error {
+	return chunkWrite(setGovernments, s.conn, in)
+}
+
+func (s *sqlDB) SetFamilies(in ...*structs.Family) error {
+	return chunkWrite(setFamilies, s.conn, in)
+}
+
+func (s *sqlDB) SetFactions(in ...*structs.Faction) error {
+	return chunkWrite(setFactions, s.conn, in)
+}
+
+func (s *sqlDB) SetAreas(in ...*structs.Area) error {
+	return chunkWrite(setAreas, s.conn, in)
+}
+
+func (s *sqlDB) SetTuples(r Relation, in ...*structs.Tuple) error {
+	for i := 0; i < len(in); i += chunksPerWrite {
+		j := i + chunksPerWrite
+		if j > len(in) {
+			return setTuples(s.conn, r, in[i:])
+		}
+		err := setTuples(s.conn, r, in[i:j])
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (s *sqlDB) SetModifiers(r Relation, in ...*structs.Modifier) error {
+	for i := 0; i < len(in); i += chunksPerWrite {
+		j := i + chunksPerWrite
+		if j > len(in) {
+			return setModifiers(s.conn, r, in[i:])
+		}
+		err := setModifiers(s.conn, r, in[i:j])
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (s *sqlDB) IncrTuples(r Relation, v int, f *Query) error {
+	return incrTuples(s.conn, r, v, f)
+}
+
+func (s *sqlDB) IncrModifiers(r Relation, v int, f *Query) error {
+	return incrModifiers(s.conn, r, v, f)
+}
+
+func (s *sqlDB) DeleteModifiers(r Relation, expires_before_tick int) error {
+	return deleteModifiers(s.conn, r, expires_before_tick)
+}
+
+// SetMeta sets some metadata within a transaction
+func (s *sqlDB) SetMeta(id, strv string, intv int) error {
+	return setMeta(s.conn, id, strv, intv)
+}
+
+func (s *sqlDB) SetTick(tick int) error {
+	if tick <= 1 {
+		return nil
+	}
+	return s.SetMeta(metaClock, "", tick)
+}
+
 // Close connection to DB
 func (s *sqlDB) Close() error {
 	return s.conn.Close()

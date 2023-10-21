@@ -144,19 +144,15 @@ func (s *Base) PlanFactionJobs(factionID string) ([]*structs.Job, error) {
 	}
 
 	// push everything into the DB
-	err = s.dbconn.InTransaction(func(tx db.ReaderWriter) error {
-		err := tx.SetFactions(ctx.Summary.ToFaction()) // updated Wealth & Members values
-		if err != nil {
-			return err
-		}
-		err = tx.SetJobs(jobs...)
-		if err != nil {
-			return err
-		}
-		return tx.SetEvents(events...)
-	})
-
-	return jobs, err
+	err = s.dbconn.SetFactions(ctx.Summary.ToFaction()) // updated Wealth & Members values
+	if err != nil {
+		return jobs, err
+	}
+	err = s.dbconn.SetJobs(jobs...)
+	if err != nil {
+		return jobs, err
+	}
+	return jobs, s.dbconn.SetEvents(events...)
 }
 
 func (s *Base) prepFactionData(factionID string) (*simutil.FactionContext, []*structs.Faction, int, error) {
