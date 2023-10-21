@@ -43,20 +43,20 @@ var (
 
 // Event is something we want to report to the caller
 type Event struct {
-	ID   string    `db:"id",json:"id"`
-	Type EventType `db:"type",json:"ty"`
-	Tick int       `db:"tick",json:"ti"`
+	ID   string    `db:"id"`
+	Type EventType `db:"type"`
+	Tick int       `db:"tick"`
 
 	// what the event is talking about
-	SubjectMetaKey MetaKey `db:"subject_meta_key",json:"sk"`
-	SubjectMetaVal string  `db:"subject_meta_val",json:"sv"`
+	SubjectMetaKey MetaKey `db:"subject_meta_key"`
+	SubjectMetaVal string  `db:"subject_meta_val"`
 
 	// if we know the cause
-	CauseMetaKey MetaKey `db:"cause_meta_key",json:"cy,omitempty"`
-	CauseMetaVal string  `db:"cause_meta_val",json:"cl,omitempty"`
+	CauseMetaKey MetaKey `db:"cause_meta_key"`
+	CauseMetaVal string  `db:"cause_meta_val"`
 
 	// Human readable message
-	Message string `db:"message",json:"m,omitempty"`
+	Message string `db:"message"`
 }
 
 func (e *Event) MarshalJson() ([]byte, error) {

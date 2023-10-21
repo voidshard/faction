@@ -271,7 +271,7 @@ func (s *Base) SpawnPopulace(desiredTotal int, race, culture string, areas ...st
 		return err
 	}
 
-	log.Info().Str("race", race).Str("culture", culture).Int("desired", desiredTotal).Msg("spawning populace")
+	log.Info().Str("race", race).Str("culture", culture).Int("desired", desiredTotal).Msg()("spawning populace")
 
 	desiredArea := desiredTotal / len(areas)
 

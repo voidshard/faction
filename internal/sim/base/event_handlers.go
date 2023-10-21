@@ -1,6 +1,7 @@
 package base
 
 import (
+	"bytes"
 	"fmt"
 
 	"github.com/voidshard/faction/internal/log"
@@ -8,6 +9,10 @@ import (
 	"github.com/voidshard/faction/pkg/structs"
 
 	mapset "github.com/deckarep/golang-set/v2"
+)
+
+var (
+	keyEventType = "event_type"
 )
 
 func eventTask(e structs.EventType) string {
@@ -35,7 +40,8 @@ func (s *Base) toEvents(in []*queue.Job) ([]*structs.Event, error) {
 	out := make([]*structs.Event, len(in))
 	for i, j := range in {
 		evt := &structs.Event{}
-		if err := evt.UnmarshalJson(j.Args); err != nil {
+		if err := evt.UnmarshalJson(bytes.TrimSpace(j.Args)); err != nil {
+			log.Debug().Str("payload", string(j.Args)).Err(err).Msg()("failed to unmarshal event")
 			return nil, err
 		}
 		out[i] = evt
@@ -46,14 +52,16 @@ func (s *Base) toEvents(in []*queue.Job) ([]*structs.Event, error) {
 func eventSubjects(in []*structs.Event) []string {
 	out := mapset.NewSet[string]()
 	for _, e := range in {
-		out.Add(string(e.SubjectMetaVal))
+		if e.SubjectMetaKey != "" {
+			out.Add(string(e.SubjectMetaVal))
+		}
 	}
 	return out.ToSlice()
 }
 
 func (s *Base) handlerOnEventFamilyMarriage(in ...*queue.Job) error {
 	events, err := s.toEvents(in)
-	log.Debug().Str(log.KeyComponent, log.ComponentEvent).Str(log.KeyEventType, string(structs.EventFamilyMarriage)).Err(err).Int("events", len(in)).Msg("handling event")
+	log.Debug().Str(keyEventType, string(structs.EventFamilyMarriage)).Err(err).Int("events", len(in)).Msg()("handling event")
 	if err != nil {
 		return err
 	}
@@ -70,7 +78,7 @@ func (s *Base) handlerOnEventFamilyMarriage(in ...*queue.Job) error {
 
 func (s *Base) handlerOnEventFactionCreated(in ...*queue.Job) error {
 	events, err := s.toEvents(in)
-	log.Debug().Str(log.KeyComponent, log.ComponentEvent).Str(log.KeyEventType, string(structs.EventFactionCreated)).Err(err).Int("events", len(in)).Msg("handling event")
+	log.Debug().Str(keyEventType, string(structs.EventFactionCreated)).Err(err).Int("events", len(in)).Msg()("handling event")
 	if err != nil {
 		return err
 	}
@@ -88,7 +96,7 @@ func (s *Base) handlerOnEventFactionCreated(in ...*queue.Job) error {
 
 func (s *Base) handlerOnEventPersonBirth(in ...*queue.Job) error {
 	events, err := s.toEvents(in)
-	log.Debug().Str(log.KeyComponent, log.ComponentEvent).Str(log.KeyEventType, string(structs.EventPersonBirth)).Err(err).Int("events", len(in)).Msg("handling event")
+	log.Debug().Str(keyEventType, string(structs.EventPersonBirth)).Err(err).Int("events", len(in)).Msg()("handling event")
 	if err != nil {
 		return err
 	}
@@ -106,7 +114,7 @@ func (s *Base) handlerOnEventPersonBirth(in ...*queue.Job) error {
 
 func (s *Base) handlerOnEventPersonDeath(in ...*queue.Job) error {
 	events, err := s.toEvents(in)
-	log.Debug().Str(log.KeyComponent, log.ComponentEvent).Str(log.KeyEventType, string(structs.EventPersonDeath)).Err(err).Int("events", len(in)).Msg("handling event")
+	log.Debug().Str(keyEventType, string(structs.EventPersonDeath)).Err(err).Int("events", len(in)).Msg()("handling event")
 	if err != nil {
 		return err
 	}

@@ -6,6 +6,7 @@ import (
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
 
+	"github.com/voidshard/faction/internal/log"
 	"github.com/voidshard/faction/pkg/config"
 )
 
@@ -21,8 +22,10 @@ func NewPostgres(cfg *config.Database) (*Postgres, error) {
 	var db *sqlx.DB
 	var err error
 	for i := 1; i < retryFailConnect+1; i++ {
+		log.Debug().Str("location", cfg.Location).Int("attempt", i).Msg()("connecting to postgres")
 		db, err = sqlx.Connect("postgres", cfg.Location)
 		if err != nil {
+			log.Warn().Str("location", cfg.Location).Int("attempt", i).Err(err).Msg()("connection failed")
 			time.Sleep(time.Duration(i*i) * time.Second)
 			continue
 		}

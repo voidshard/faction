@@ -26,19 +26,11 @@ services:
       - "5432:5432"
     environment:
       - POSTGRES_PASSWORD=test
-  pgadmin:
-    image: "dpage/pgadmin4:latest"
-    ports:
-      - "8081:8081"
-    environment:
-      - PGADMIN_LISTEN_PORT=8081
-      - PGADMIN_DEFAULT_EMAIL=test@test.com
-      - PGADMIN_DEFAULT_PASSWORD=test
-        #  opensearch:
-        # image: "opensearchproject/opensearch:latest"
-        #ports:
-        #- "9200:9200"
-        #dashboards:
-        #image: "opensearchproject/opensearch-dashboards:latest"
-        #ports:
-        #- "5601:8082"
+#  opensearch:
+#    image: "opensearchproject/opensearch:latest"
+#    ports:
+#      - "9200:9200"
+#  dashboards:
+#    image: "opensearchproject/opensearch-dashboards:latest"
+#    ports:
+#      - "5601:8082"

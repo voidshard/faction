@@ -6,6 +6,7 @@ import (
 	mapset "github.com/deckarep/golang-set/v2"
 
 	"github.com/voidshard/faction/internal/dbutils"
+	"github.com/voidshard/faction/internal/log"
 	"github.com/voidshard/faction/pkg/structs"
 )
 
@@ -86,6 +87,7 @@ func (f *FactionDB) TuplesSumModsBySubject(r Relation, subject string, objects .
 
 	for {
 		tuples, token, err = f.Tuples(r, token, q)
+		log.Debug().Err(err).Msg()("fetching tuples from database")
 		if err != nil {
 			return nil, err
 		}
@@ -105,6 +107,7 @@ func (f *FactionDB) TuplesSumModsBySubject(r Relation, subject string, objects .
 
 	for {
 		tuples, token, err = f.ModifiersSum(r, token, q)
+		log.Debug().Err(err).Msg()("fetching modifiers from database")
 		if err != nil {
 			return nil, err
 		}
@@ -144,6 +147,7 @@ func (f *FactionDB) LandSummary(areas, factions []string) (*structs.LandSummary,
 	)
 	for {
 		plots, token, err = f.Plots(token, q)
+		log.Debug().Err(err).Msg()("fetching plots from database")
 		if err != nil {
 			return nil, err
 		}
@@ -197,6 +201,7 @@ func (f *FactionDB) FactionSummary(rels []Relation, in ...string) ([]*structs.Fa
 
 	for {
 		factions, token, err = f.Factions(token, ff)
+		log.Debug().Err(err).Msg()("fetching factions from database")
 		if err != nil {
 			return nil, err
 		}
@@ -218,6 +223,7 @@ func (f *FactionDB) FactionSummary(rels []Relation, in ...string) ([]*structs.Fa
 
 		for {
 			tuples, token, err = f.Tuples(r, token, tf)
+			log.Debug().Err(err).Msg()("fetching tuples from database")
 			if err != nil {
 				return nil, err
 			}
@@ -264,6 +270,7 @@ func (f *FactionDB) FactionSummary(rels []Relation, in ...string) ([]*structs.Fa
 
 		for {
 			tuples, token, err = f.ModifiersSum(r, token, mf)
+			log.Debug().Err(err).Msg()("fetching modifier summation from database")
 			if err != nil {
 				return nil, err
 			}
@@ -371,6 +378,7 @@ func (f *FactionDB) Demographics(in *DemographicQuery) (*structs.Demographics, e
 
 	for {
 		people, ptoken, err = f.People(ptoken, pf)
+		log.Debug().Err(err).Msg()("fetching people from database")
 		if err != nil {
 			return ret, err
 		}
@@ -385,6 +393,7 @@ func (f *FactionDB) Demographics(in *DemographicQuery) (*structs.Demographics, e
 		for _, r := range demoRelations {
 			for {
 				tuples, ttoken, err = f.Tuples(r, ttoken, tf)
+				log.Debug().Err(err).Msg()("fetching tuples from database")
 				if err != nil {
 					return ret, err
 				}
@@ -441,6 +450,7 @@ func (f *FactionDB) AreaFactions(areaIDs ...string) (map[string]map[string]bool,
 
 	for {
 		plots, token, err = f.Plots(token, pfilters)
+		log.Debug().Err(err).Msg()("fetching plots from database")
 		if err != nil {
 			return nil, err
 		}
@@ -482,6 +492,7 @@ func (f *FactionDB) FactionAreas(includeAreas bool, factionIDs ...string) (map[s
 
 	for {
 		plots, token, err = f.Plots(token, pfilters)
+		log.Debug().Err(err).Msg()("fetching plots from database")
 		if err != nil {
 			return nil, err
 		}
@@ -538,6 +549,7 @@ func (f *FactionDB) AreaGovernments(in ...string) (map[string]*structs.Governmen
 	)
 	for {
 		areas, token, err = f.Areas(token, af)
+		log.Debug().Err(err).Msg()("fetching areas from database")
 		if err != nil {
 			return nil, err
 		}
@@ -555,6 +567,10 @@ func (f *FactionDB) AreaGovernments(in ...string) (map[string]*structs.Governmen
 		}
 	}
 
+	if len(govIDs) == 0 {
+		return map[string]*structs.Government{}, nil
+	}
+
 	// collect governments
 	gids := []string{}
 	for id := range govIDs {
@@ -566,6 +582,7 @@ func (f *FactionDB) AreaGovernments(in ...string) (map[string]*structs.Governmen
 	govById := map[string]*structs.Government{}
 	for {
 		govs, token, err = f.Governments(token, gf)
+		log.Debug().Err(err).Msg()("fetching governments from database")
 		if err != nil {
 			return nil, err
 		}
@@ -608,6 +625,7 @@ func (f *FactionDB) SetAreaGovernment(govID string, areaIDs []string) error {
 
 	for {
 		areas, token, err = f.Areas(token, af)
+		log.Debug().Err(err).Msg()("fetching areas from database")
 		if err != nil {
 			return err
 		}

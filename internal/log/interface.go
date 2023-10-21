@@ -1,14 +1,6 @@
 package log
 
 const (
-	// Keys are various keys that can be used in log messages
-	KeyComponent = "component"
-	KeyEventType = "event_type"
-
-	// Components are the various components that can log, just to help narrow things down
-	ComponentQueue = "queue"
-	ComponentEvent = "event"
-
 	// Env var to control debug
 	EnvDebug = "ENABLE_DEBUG"
 )
@@ -35,7 +27,7 @@ type LogLine interface {
 	Err(err error) LogLine
 
 	// Msg logs a message with the key/value pairs previously set. It must be called.
-	Msg(msg string, args ...interface{})
+	Msg() func(msg string)
 }
 
 func Info() LogLine {

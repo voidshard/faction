@@ -14,6 +14,7 @@ import (
 // applyBirthSiblingRelations will find all people born in the same family and
 // create a sibling relationship between them.
 func (s *Base) applyBirthSiblingRelations(tick int, events []*structs.Event) error {
+	// look up all the people mentioned in our events
 	query := db.Q(
 		db.F(db.ID, db.In, eventSubjects(events)),
 	).DisableSort()
@@ -22,6 +23,7 @@ func (s *Base) applyBirthSiblingRelations(tick int, events []*structs.Event) err
 		return err
 	}
 
+	// arrange into families (by BirthFamilyID)
 	newChildren := map[string][]*structs.Person{} // familyID -> []Person
 	families := mapset.NewSet[string]()
 	for _, p := range in {
@@ -34,6 +36,14 @@ func (s *Base) applyBirthSiblingRelations(tick int, events []*structs.Event) err
 		newChildren[p.BirthFamilyID] = append(kids, p)
 	}
 
+	mkey := func(a, b string) string {
+		if a > b {
+			return fmt.Sprintf("%s-%s", a, b)
+		}
+		return fmt.Sprintf("%s-%s", b, a)
+	}
+
+	// lookup people who share a family
 	pf := db.Q(db.F(db.BirthFamilyID, db.In, families.ToSlice()))
 	var (
 		people []*structs.Person
@@ -46,23 +56,27 @@ func (s *Base) applyBirthSiblingRelations(tick int, events []*structs.Event) err
 		}
 
 		mp := simutil.NewMetaPeople()
+		seen := map[string]bool{}
 		for _, p := range people {
 			kids, ok := newChildren[p.BirthFamilyID]
 			if !ok {
 				continue
 			}
-
 			for _, kid := range kids {
 				if p.ID == kid.ID {
 					continue
 				}
+				k := mkey(p.ID, kid.ID)
+				_, ok := seen[k]
+				if ok {
+					continue
+				}
+				seen[k] = true
 				if !s.dice.IsValidDemographic(p.Race, p.Culture) {
 					return fmt.Errorf("invalid demographic not found: [race] %s, [culture] %s", p.Race, p.Culture)
 				}
 				demo := s.dice.MustDemographic(p.Race, p.Culture)
 				simutil.SiblingRelationship(demo, mp, p, kid)
-				mp.Children = append(mp.Children, p)
-
 			}
 		}
 

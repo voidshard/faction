@@ -367,8 +367,7 @@ func isListID(v interface{}) bool {
 		return false
 	}
 	for _, i := range ls {
-		valid := dbutils.IsValidID(i)
-		if !valid {
+		if !(i == "" || dbutils.IsValidID(i)) {
 			return false
 		}
 	}

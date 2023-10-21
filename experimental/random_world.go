@@ -109,7 +109,7 @@ func main() {
 
 	// step 4. create some people spread fairly evenly (this is easier here, realisitically distribution should be uneven)
 	fmt.Println("spawning populace")
-	err = simulator.SpawnPopulace(30000, "human", "human", areaIDs...)
+	err = simulator.SpawnPopulace(countPopulace, "human", "human", areaIDs...)
 	if err != nil {
 		panic(err)
 	}

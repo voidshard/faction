@@ -10,7 +10,6 @@ Technically we add an allocation here, so it's now onelog not zerolog .. but .. 
 package log
 
 import (
-	"fmt"
 	"os"
 	"strings"
 	"sync"
@@ -30,11 +29,13 @@ func putLine(l *logLine) {
 func getLine(e *zerolog.Event) *logLine {
 	l := linePool.Get().(*logLine)
 	l.e = e
+	l.msg = e.Msg
 	return l
 }
 
 type logLine struct {
-	e *zerolog.Event
+	e   *zerolog.Event
+	msg func(string)
 }
 
 func (l *logLine) Str(key string, val string) LogLine {
@@ -57,9 +58,10 @@ func (l *logLine) Float64(key string, val float64) LogLine {
 	return l
 }
 
-func (l *logLine) Msg(msg string, args ...interface{}) {
-	l.e.Msg(fmt.Sprintf(msg, args...))
-	putLine(l)
+func (l *logLine) Msg() func(msg string) {
+	// Ensures we call "Msg" where the log is written (for tracing)
+	defer putLine(l)
+	return l.msg
 }
 
 type zLogger struct{}
@@ -86,6 +88,8 @@ func (z *zLogger) Debug() LogLine {
 
 func newZeroLog() *zLogger {
 	zerolog.TimeFieldFormat = zerolog.TimeFormatUnix
+	log.Logger = log.With().Caller().Logger() // enable logs to include line numbers & file names
+
 	debug := strings.ToLower(strings.TrimSpace(os.Getenv(EnvDebug)))
 	if debug == "true" || debug == "1" || debug == "on" || debug == "yes" {
 		zerolog.SetGlobalLevel(zerolog.DebugLevel)
