@@ -7,6 +7,7 @@ services:
       - FACTION_DB_LOCATION=postgres://factionreadwrite:readwrite@postgres:5432/faction?sslmode=disable
       - FACTION_REDIS_LOCATION=redis:6379
       - ENABLE_DEBUG=true
+      - ENABLE_LOCAL_MODE=false
     depends_on:
       - postgres
       - redis

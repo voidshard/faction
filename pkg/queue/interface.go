@@ -2,6 +2,8 @@ package queue
 
 import (
 	"fmt"
+
+	"github.com/voidshard/faction/pkg/config"
 )
 
 var (
@@ -50,4 +52,15 @@ type JobMeta struct {
 	Result []byte `json:"result,omitempty"`
 	Msg    string `json:"msg,omitempty"`
 	Job    *Job
+}
+
+func New(cfg *config.Queue) (Queue, error) {
+	switch cfg.Driver {
+	case config.QueueInMemory:
+		return NewInMemoryQueue(), nil
+	case config.QueueAsynq:
+		return NewAsynqQueue(cfg)
+	default:
+		return nil, fmt.Errorf("unknown queue driver: %s", cfg.Driver)
+	}
 }

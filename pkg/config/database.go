@@ -3,6 +3,7 @@ package config
 import (
 	"os"
 	"path/filepath"
+	"strings"
 )
 
 // DatabaseDriver denotes what kind of data store we'll use
@@ -31,14 +32,20 @@ type Database struct {
 }
 
 func DefaultDatabase() *Database {
-	return &Database{
-		Driver:   DatabaseSQLite3,
-		Location: filepath.Join(os.TempDir(), "faction.sqlite"),
-	}
-	/*
+	if isLocalMode() {
+		// This is useful for debugging without needing to edit code.
 		return &Database{
-			Driver:   DatabasePostgres,
-			Location: "postgres://factionreadwrite:readwrite@localhost:5432/faction?sslmode=disable",
+			Driver:   DatabaseSQLite3,
+			Location: filepath.Join(os.TempDir(), "faction.sqlite"),
 		}
-	*/
+	}
+	return &Database{
+		Driver:   DatabasePostgres,
+		Location: "postgres://factionreadwrite:readwrite@localhost:5432/faction?sslmode=disable",
+	}
+}
+
+func isLocalMode() bool {
+	localmode := strings.ToLower(os.Getenv("ENABLE_LOCAL_MODE"))
+	return localmode == "true" || localmode == "1" || localmode == "yes" || localmode == "on"
 }

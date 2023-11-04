@@ -23,7 +23,16 @@ const (
 	metaClock = "tick"
 
 	// chunks (rows) we write a time
+	// In general we want to write as many rows as possible as batching should be more efficient.
+	// But pratically we have SQL variable limits and some of our tables have a large number of columns.
 	chunksPerWrite = 1200
+
+	// chunks of tuples & modifiers to write at a time.
+	// We tend to mass insert these so the limit is a bit lower than other tables to avoid
+	// deadlocks with long inserts (ie. 1200 rows ~3600 variables with (Subject, Object) unique constraints
+	// from multiple processes who all want to jam in lots and lots of tuples (ie. when a population is spawned
+	// and we're adding a huge number of inter-relations with all guns blazing).
+	chunksPerWriteTuples = 600
 )
 
 type Row interface {
@@ -158,8 +167,8 @@ func (s *sqlDB) SetAreas(in ...*structs.Area) error {
 }
 
 func (s *sqlDB) SetTuples(r Relation, in ...*structs.Tuple) error {
-	for i := 0; i < len(in); i += chunksPerWrite {
-		j := i + chunksPerWrite
+	for i := 0; i < len(in); i += chunksPerWriteTuples {
+		j := i + chunksPerWriteTuples
 		if j > len(in) {
 			return setTuples(s.conn, r, in[i:])
 		}
@@ -172,8 +181,8 @@ func (s *sqlDB) SetTuples(r Relation, in ...*structs.Tuple) error {
 }
 
 func (s *sqlDB) SetModifiers(r Relation, in ...*structs.Modifier) error {
-	for i := 0; i < len(in); i += chunksPerWrite {
-		j := i + chunksPerWrite
+	for i := 0; i < len(in); i += chunksPerWriteTuples {
+		j := i + chunksPerWriteTuples
 		if j > len(in) {
 			return setModifiers(s.conn, r, in[i:])
 		}
@@ -374,8 +383,8 @@ func (t *sqlTx) SetAreas(in ...*structs.Area) error {
 }
 
 func (t *sqlTx) SetTuples(r Relation, in ...*structs.Tuple) error {
-	for i := 0; i < len(in); i += chunksPerWrite {
-		j := i + chunksPerWrite
+	for i := 0; i < len(in); i += chunksPerWriteTuples {
+		j := i + chunksPerWriteTuples
 		if j > len(in) {
 			return setTuples(t.tx, r, in[i:])
 		}
@@ -388,8 +397,8 @@ func (t *sqlTx) SetTuples(r Relation, in ...*structs.Tuple) error {
 }
 
 func (t *sqlTx) SetModifiers(r Relation, in ...*structs.Modifier) error {
-	for i := 0; i < len(in); i += chunksPerWrite {
-		j := i + chunksPerWrite
+	for i := 0; i < len(in); i += chunksPerWriteTuples {
+		j := i + chunksPerWriteTuples
 		if j > len(in) {
 			return setModifiers(t.tx, r, in[i:])
 		}

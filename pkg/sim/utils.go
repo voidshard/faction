@@ -5,6 +5,7 @@ import (
 
 	"gopkg.in/yaml.v3"
 
+	"github.com/voidshard/faction/internal/log"
 	base "github.com/voidshard/faction/internal/sim/base"
 	"github.com/voidshard/faction/pkg/config"
 	fantasy "github.com/voidshard/faction/pkg/premade/fantasy"
@@ -96,6 +97,12 @@ func New(cfg *config.Simulation, opts ...simOption) (Simulation, error) {
 			return nil, err
 		}
 	}
+
+	log.Debug().Str("driver", string(cfg.Database.Driver)).Msg()("sim configured with database")
+	log.Debug().Str("driver", string(cfg.Queue.Driver)).Msg()("sim configured with queue")
+	log.Debug().Int("count", len(cfg.Actions)).Msg()("loaded actions")
+	log.Debug().Int("count", len(cfg.Races)).Msg()("loaded races")
+	log.Debug().Int("count", len(cfg.Cultures)).Msg()("loaded cultures")
 
 	return me, nil
 }

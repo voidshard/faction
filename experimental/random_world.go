@@ -11,10 +11,10 @@ import (
 )
 
 const (
-	countAreas       = 1
-	countPopulace    = 1000
-	countGovernments = 1
-	countFactions    = 10
+	countAreas       = 10
+	countPopulace    = 30000
+	countGovernments = 3
+	countFactions    = 50
 )
 
 var (
@@ -162,7 +162,6 @@ func main() {
 	}
 
 	// step 7. fire events (handles all the post processing for all the changes we enacted)
-	// -- IMPLIES ANOTHER PROCESS IS PROCESSING EVENTS
 	fmt.Println("firing events")
 	err = simulator.FireEvents()
 	if err != nil {

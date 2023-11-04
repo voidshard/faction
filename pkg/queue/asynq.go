@@ -64,7 +64,7 @@ func (a *Asynq) buildServer() {
 }
 
 func noOpHandler(jobs ...*Job) error {
-	log.Debug().Int("jobs", len(jobs)).Msg()("there is no handler defined for this task")
+	log.Debug().Int("jobs", len(jobs)).Str("task", jobs[0].Task).Msg()("no handler defined for task")
 	return nil
 }
 
@@ -110,7 +110,11 @@ func (a *Asynq) Enqueue(task string, args []byte) (string, error) {
 	}
 	qtask := asynq.NewTask(task, args)
 	info, err := a.clt.Enqueue(qtask, asynq.Queue(asyncWorkQueue), asynq.Group(aggregatedTask(task)))
-	log.Debug().Err(err).Str("task", task).Str("id", info.ID).Msg()("enqueued task")
+	taskID := ""
+	if info != nil {
+		taskID = info.ID
+	}
+	log.Debug().Err(err).Str("task", task).Str("id", taskID).Msg()("enqueued task")
 	return info.ID, err
 }
 
