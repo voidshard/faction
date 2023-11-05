@@ -47,13 +47,6 @@ type Guild struct {
 // This way we can form unusual factions; eg. a Temple of Thieves
 type Focus struct {
 	// Actions included in this focus
-	//
-	// :Warning:
-	// Keep in mind GovernmentOnly / ReligionOnly actions noted in
-	// pkg/structs/action.go
-	// Such actions can in theory appear here, but will do nothing if the faction cannot
-	// actually perform them (ie. a non-religion faction cannot Excommunicate).
-	// Probably it's best to avoid adding such actions here .. since it wont achieve anything.
 	Actions []structs.ActionType
 
 	// Probability that this focus is chosen

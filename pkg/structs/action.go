@@ -23,15 +23,6 @@ type ActionType string
 // - attack / defense (espionage and/or military)
 // - affiliation (of people)
 // - research
-//
-// Government Only Actions (faction.IsGovernment must be true)
-// - revoke land
-//
-// Religion Only Actions (faction.IsReligion must be true):
-// - crusade, excommunicate
-//
-// Legal (non covert) non-Government factions:
-// - requestland
 const (
 	// Friendly actions (some of these target another faction)
 	ActionTypeTrade       ActionType = "trade"       // trade goods with another faction, everyone wins
@@ -96,19 +87,6 @@ var (
 		ActionTypeResearch:        MetaKeyResearch, // research some tech
 		ActionTypeHireMercenaries: MetaKeyJob,      // create a job (MetaTarget) for some other faction, to attack *another* faction (TargetFactionID)
 		ActionTypeHireSpies:       MetaKeyJob,      // create a job (MetaTarget) for some other faction, to spy on *another* faction (TargetFactionID)
-	}
-
-	// Actions that may be performed by mercenaries (eg. HireMercenaries action)
-	ActionsForMercenaries = []ActionType{
-		ActionTypeRaid,
-		ActionTypePillage,
-	}
-
-	// Actions that may be performed by spies (eg. HireSpies action)
-	ActionsForSpies = []ActionType{
-		ActionTypeFrame,
-		ActionTypeAssassinate,
-		ActionTypeBlackmail,
 	}
 
 	// All actions known to us

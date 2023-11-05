@@ -7,11 +7,6 @@ import (
 	"github.com/voidshard/faction/pkg/structs"
 )
 
-var (
-	// restrictedActions must be explicitly enabled (see SetIsReligion() and SetIsGovernment())
-	restrictedActions = map[structs.ActionType]bool{}
-)
-
 // ActionWeights is a helper for weighting actions, since we apply a lot of weights and calculations to them.
 type ActionWeights struct {
 	prob map[structs.ActionType]float64
@@ -29,10 +24,6 @@ func NewActionWeights(actions map[structs.ActionType]*config.Action) *ActionWeig
 	for atype, act := range actions {
 		// build a map of action types to probabilities
 		p := act.Probability
-		_, ok := restrictedActions[atype]
-		if ok {
-			p = 0.0 // restricted actions are 0 unless SetIsReligion() or SetIsGovernment() is called
-		}
 		prob[atype] = p
 
 		// build a map of goals to actions
@@ -162,17 +153,5 @@ func (w *ActionWeights) WeightByIllegal(mult float64, govs ...*structs.Governmen
 	}
 	for a := range banned {
 		w.prob[a] *= mult
-	}
-}
-
-func init() {
-	for _, a := range structs.ActionsReligionOnly {
-		restrictedActions[a] = true
-	}
-	for _, a := range structs.ActionsGovernmentOnly {
-		restrictedActions[a] = true
-	}
-	for _, a := range structs.ActionsLegalFactionOnly {
-		restrictedActions[a] = true
 	}
 }

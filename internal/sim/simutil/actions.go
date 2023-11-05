@@ -51,14 +51,17 @@ func SourceMeetsActionConditions(f *structs.FactionSummary, conditions [][]confi
 
 // ServicesForHire returns a map of services that can be hired, and the faction(s) that offer the
 // service within the given areas.
-func ServicesForHire(dbconn *db.FactionDB, areas []string) (map[structs.ActionType][]string, error) {
+func ServicesForHire(actions map[structs.ActionType]*config.Action, dbconn *db.FactionDB, areas []string) (map[structs.ActionType][]string, error) {
 	// all the actions that can be paid for
 	actionsForHire := []string{}
-	for actionType, _ := range structs.ActionsForMercenaries {
-		actionsForHire = append(actionsForHire, string(actionType))
-	}
-	for actionType, _ := range structs.ActionsForSpies {
-		actionsForHire = append(actionsForHire, string(actionType))
+	for actionType, cfg := range actions {
+		if actionType == structs.ActionTypeHireMercenaries || actionType == structs.ActionTypeHireSpies {
+			// disallow hiring mercenaries or spies as a mercenary action :P
+			continue
+		}
+		if cfg.ValidServiceMercenary || cfg.ValidServiceSpy {
+			actionsForHire = append(actionsForHire, string(actionType))
+		}
 	}
 
 	// all factions within the given areas

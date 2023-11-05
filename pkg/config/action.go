@@ -80,4 +80,8 @@ type Action struct {
 	// current goal(s). What we mean here is what immediate goal does this action help with?
 	// Ie. a faction low on money might look to "Wealth"
 	Goals []structs.Goal
+
+	// Controls if this action can be chosen by HireMercenaries and HireSpies respectively
+	ValidServiceMercenary bool
+	ValidServiceSpy       bool
 }

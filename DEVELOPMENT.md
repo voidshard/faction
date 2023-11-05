@@ -20,8 +20,7 @@ Reseting infra (drops everything)
 docker compose rm
 ```
 
-Switch to using a sqlitedb by default with
+Switch to using a sqlitedb & local 'queue' by default with
 ```
-export FACTION_DEFAULT_DB_DRIVER=sqlite3
+export ENABLE_LOCAL_MODE=true
 ```
-This works fine unless your tests need to use the async queue (there isn't current a  local only mode for this) 

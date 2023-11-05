@@ -579,10 +579,11 @@ func Actions() map[structs.ActionType]*config.Action {
 		},
 
 		structs.ActionTypeAssassinate: {
-			MinPeople:   1,
-			MaxPeople:   21,
-			Probability: 0.02,
-			Ethos:       structs.Ethos{Ambition: modest, Tradition: -1 * minor, Altruism: -1 * modest, Pacifism: -1 * minor},
+			MinPeople:       1,
+			MaxPeople:       21,
+			Probability:     0.02,
+			ValidServiceSpy: true,
+			Ethos:           structs.Ethos{Ambition: modest, Tradition: -1 * minor, Altruism: -1 * modest, Pacifism: -1 * minor},
 			Cost: config.Distribution{
 				Min:       50000000,  // 5000gp
 				Max:       200000000, // 20000gp
@@ -615,10 +616,11 @@ func Actions() map[structs.ActionType]*config.Action {
 			TargetMaxTrust: structs.MinEthos / 4,
 		},
 		structs.ActionTypeFrame: {
-			MinPeople:   1,
-			MaxPeople:   15,
-			Probability: 0.15,
-			Ethos:       structs.Ethos{Ambition: modest, Tradition: -1 * minor, Pacifism: minor},
+			MinPeople:       1,
+			MaxPeople:       15,
+			Probability:     0.15,
+			ValidServiceSpy: true,
+			Ethos:           structs.Ethos{Ambition: modest, Tradition: -1 * minor, Pacifism: minor},
 			Cost: config.Distribution{
 				Min:       10000000, // 1000gp
 				Max:       25000000, // 2500gp
@@ -643,10 +645,11 @@ func Actions() map[structs.ActionType]*config.Action {
 			TargetMaxTrust: structs.MaxEthos / 20,
 		},
 		structs.ActionTypeRaid: {
-			MinPeople:   14,
-			MaxPeople:   120,
-			Probability: 0.05,
-			Ethos:       structs.Ethos{Ambition: 2 * minor, Pacifism: -1 * modest, Caution: -1 * modest},
+			MinPeople:             14,
+			MaxPeople:             120,
+			Probability:           0.05,
+			Ethos:                 structs.Ethos{Ambition: 2 * minor, Pacifism: -1 * modest, Caution: -1 * modest},
+			ValidServiceMercenary: true,
 			Cost: config.Distribution{
 				Min:       10000000, // 1000gp
 				Max:       50000000, // 5000gp
@@ -747,10 +750,11 @@ func Actions() map[structs.ActionType]*config.Action {
 			TargetMaxTrust: structs.MinEthos / 5,
 		},
 		structs.ActionTypePillage: {
-			MinPeople:   14,
-			MaxPeople:   120,
-			Probability: 0.04,
-			Ethos:       structs.Ethos{Ambition: 2 * minor, Pacifism: -1 * modest, Caution: -1 * modest},
+			MinPeople:             14,
+			MaxPeople:             120,
+			Probability:           0.04,
+			ValidServiceMercenary: true,
+			Ethos:                 structs.Ethos{Ambition: 2 * minor, Pacifism: -1 * modest, Caution: -1 * modest},
 			Cost: config.Distribution{
 				Min:       10000000, // 1000gp
 				Max:       50000000, // 5000gp
@@ -785,10 +789,11 @@ func Actions() map[structs.ActionType]*config.Action {
 			TargetMaxTrust:  (structs.MinEthos * 2) / 3,
 		},
 		structs.ActionTypeBlackmail: {
-			MinPeople:   1,
-			MaxPeople:   7,
-			Probability: 0.10,
-			Ethos:       structs.Ethos{Ambition: modest, Caution: 2 * minor, Altruism: -1 * minor},
+			MinPeople:       1,
+			MaxPeople:       7,
+			Probability:     0.10,
+			ValidServiceSpy: true,
+			Ethos:           structs.Ethos{Ambition: modest, Caution: 2 * minor, Altruism: -1 * minor},
 			TimeToPrepare: config.Distribution{
 				Min:       1 * DEFAULT_TICKS_PER_DAY,
 				Max:       7 * DEFAULT_TICKS_PER_DAY,

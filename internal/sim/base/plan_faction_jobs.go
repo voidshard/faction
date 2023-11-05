@@ -265,7 +265,7 @@ func (s *Base) planFactionJobsPeacetime(tick int, ctx *simutil.FactionContext, a
 		job.SourceFactionID = ctx.Summary.ID
 		job.SourceAreaID = ctx.RandomArea(act)
 		job.TargetFactionID = target
-		job.Conscription = simutil.JobCanConscript(ctx.Summary, act, cfg)
+		job.Conscription = simutil.SourceMeetsActionConditions(ctx.Summary, cfg.Conscription)
 		job.IsIllegal = ctx.Summary.IsCovert || simutil.IsIllegalAction(act, ctx.AllGovernments()...)
 		if job.IsIllegal {
 			job.Secrecy = int(float64(rnggen.Intn(structs.MaxTuple)+ctx.Summary.EspionageDefense) * cfg.SecrecyWeight)
@@ -273,7 +273,7 @@ func (s *Base) planFactionJobsPeacetime(tick int, ctx *simutil.FactionContext, a
 
 		if job.Action == structs.ActionTypeHireMercenaries || job.Action == structs.ActionTypeHireSpies {
 			if services == nil { // services cached at this level so we don't re-fetch data
-				services, err = simutil.ServicesForHire(s.dbconn, ctx.AreaIDs())
+				services, err = simutil.ServicesForHire(s.cfg.Actions, s.dbconn, ctx.AreaIDs())
 				if err != nil {
 					return nil, err
 				}
@@ -365,13 +365,10 @@ func (s *Base) buildMercenaryJob(services map[structs.ActionType][]string, job *
 	var vendorAction structs.ActionType
 	var vendorID string
 
-	choices := structs.ActionsForMercenaries
-	if job.Action == structs.ActionTypeHireSpies {
-		choices = structs.ActionsForSpies
-	}
-	for _, act := range choices {
-		_, ok := s.cfg.Actions[act] // check it's a valid action
-		if !ok {
+	for act, actcfg := range s.cfg.Actions {
+		if job.Action == structs.ActionTypeHireMercenaries && !actcfg.ValidServiceMercenary {
+			continue
+		} else if job.Action == structs.ActionTypeHireSpies && !actcfg.ValidServiceSpy {
 			continue
 		}
 
@@ -869,15 +866,8 @@ func (s *Base) actionWeightsForFaction(ctx *simutil.FactionContext, peopleAvail 
 	survivalConcerns := false
 	weights := simutil.NewActionWeights(s.cfg.Actions)
 
-	// allow actions we otherwise can't use if applicable
-	if ctx.Summary.IsReligion {
-		weights.SetIsReligion()
-	}
-	if ctx.Summary.IsGovernment {
-		weights.SetIsGovernment()
-	} else if !ctx.Summary.IsCovert {
-		weights.SetIsLegalFaction()
-	}
+	// forbid actions our faction isn't allowed to consider
+	weights.ApplyActionConditions(ctx.Summary)
 
 	// we have nothing to harvest :(
 	if len(ctx.Land.Commodities) == 0 {
