@@ -7,6 +7,7 @@ import (
 func NewJobPendingEvent(j *structs.Job) *structs.Event {
 	return &structs.Event{
 		ID:             structs.NewID(),
+		Type:           structs.EventJobPending,
 		Tick:           j.TickCreated,
 		SubjectMetaKey: structs.MetaKeyJob,
 		SubjectMetaVal: j.ID,

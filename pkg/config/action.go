@@ -14,6 +14,29 @@ type Action struct {
 	MinPeople int // min: 1
 	MaxPeople int // numbers <= 0 are ignored (considered "no max")
 
+	// JobPriority is used when it comes to assigning jobs to people.
+	// Higher priority Jobs are assigned first.
+	// Nb. there are other weights at play
+	// - people prefer to work for their faction (rather than an overlord)
+	// - people prefer to work in their home area
+	JobPriority int
+
+	// Restricts the kinds of faction(s) that are allowed to perform this action.
+	//
+	// If this is set, this action cannot be performed unless the faction meets all
+	// conditions in at least one of the slices.
+	//
+	// Ie. [][][]Condition{
+	//    {ConditionA, ConditionB},
+	//    {ConditionC},
+	// }
+	// Means a faction must meet (ConditionA && ConditionB) || (ConditionC)
+	Restricted [][]Condition
+
+	// Under what circumstances the user of this action can force people to take part (if any).
+	// Probably should be used sparingly but it makes sense for some actions.
+	Conscription [][]Condition
+
 	// Weight given to performing this Action
 	Probability float64
 

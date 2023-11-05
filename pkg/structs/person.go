@@ -1,9 +1,5 @@
 package structs
 
-const (
-	PersonRandomMax = 1000000
-)
-
 // Person roughly outlines someone that can belong to / work for a faction.
 type Person struct {
 	Ethos // rough outlook
@@ -34,12 +30,7 @@ type Person struct {
 	PreferredProfession string `db:"preferred_profession"` // ie. what they want to do for a living
 	PreferredFactionID  string `db:"preferred_faction_id"` // ie. who they want to work for
 
-	// used for blind randomisation without needing to read a record from the DB.
-	// ie. if a disease kills 1 in 10000 people we can just roll a random
-	// number and set the death cause with a single update without needing to read any records.
-	//
-	// A number 0 -> 1000000
-	// This number never changes.
+	// Used for blind randomisation
 	Random int `db:"random"`
 
 	// NaturalDeathTick is the tick someone is slated to die of old age.

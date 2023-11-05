@@ -103,38 +103,19 @@ func (w *ActionWeights) WeightByCost(mult, maxPrice float64) {
 	}
 }
 
-// SetIsReligion sets the probability of all religion-only actions to their starting values.
-// If not set, the probability of these actions is 0.0
-func (w *ActionWeights) SetIsReligion() {
-	w.normal = nil
-	for _, a := range structs.ActionsReligionOnly {
-		act, ok := w.defn[a]
-		if ok {
-			w.prob[a] = act.Probability
+// ApplyActionConditions applies conditions (see config/conditions.go) to the given faction.
+//
+// Ie. we rule out some actions based on the faction's settings.
+//
+// We use this to restrict say Crusades to religious factions, or only allow the government to
+// do some actions.
+func (w *ActionWeights) ApplyActionConditions(f *structs.FactionSummary) {
+	for a, act := range w.defn {
+		if act.Restricted == nil || len(act.Restricted) == 0 {
+			continue // no restrictions
 		}
-	}
-}
-
-// SetIsGovernment sets the probability of all government-only actions to their starting values.
-// If not set, the probability of these actions is 0.0
-func (w *ActionWeights) SetIsGovernment() {
-	w.normal = nil
-	for _, a := range structs.ActionsGovernmentOnly {
-		act, ok := w.defn[a]
-		if ok {
-			w.prob[a] = act.Probability
-		}
-	}
-}
-
-// SetIsLegalFaction sets the probability of all legal-faction-only actions to their starting values.
-// If not set, the probability of these actions is 0.0
-func (w *ActionWeights) SetIsLegalFaction() {
-	w.normal = nil
-	for _, a := range structs.ActionsLegalFactionOnly {
-		act, ok := w.defn[a]
-		if ok {
-			w.prob[a] = act.Probability
+		if !SourceMeetsActionConditions(f, act.Restricted) {
+			w.prob[a] = 0.0
 		}
 	}
 }

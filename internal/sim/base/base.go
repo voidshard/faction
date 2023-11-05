@@ -158,11 +158,6 @@ func (s *Base) FactionSummaries(in ...string) ([]*structs.FactionSummary, error)
 }
 
 func (s *Base) SetAreas(in ...*structs.Area) error {
-	for _, a := range in {
-		if a.Random == 0 {
-			a.Random = rnggen.Intn(structs.AreaRandomMax)
-		}
-	}
 	err := s.dbconn.SetAreas(in...)
 	log.Debug().Int("in", len(in)).Err(err).Msg()(fmt.Sprintf("set areas"))
 	return err

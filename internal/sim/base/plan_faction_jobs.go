@@ -265,6 +265,7 @@ func (s *Base) planFactionJobsPeacetime(tick int, ctx *simutil.FactionContext, a
 		job.SourceFactionID = ctx.Summary.ID
 		job.SourceAreaID = ctx.RandomArea(act)
 		job.TargetFactionID = target
+		job.Conscription = simutil.JobCanConscript(ctx.Summary, act, cfg)
 		job.IsIllegal = ctx.Summary.IsCovert || simutil.IsIllegalAction(act, ctx.AllGovernments()...)
 		if job.IsIllegal {
 			job.Secrecy = int(float64(rnggen.Intn(structs.MaxTuple)+ctx.Summary.EspionageDefense) * cfg.SecrecyWeight)

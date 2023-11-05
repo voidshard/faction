@@ -1,9 +1,5 @@
 package structs
 
-const (
-	AreaRandomMax = 1000000
-)
-
 // Area represents a logical area of land .. since our simulation cares about people
 // and factions, it should probably represent somewhere people can live.
 //

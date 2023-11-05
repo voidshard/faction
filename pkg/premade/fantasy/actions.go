@@ -114,11 +114,46 @@ func Actions() map[structs.ActionType]*config.Action {
 			},
 			Goals: []structs.Goal{structs.GoalPiety, structs.GoalDiplomacy},
 		},
+		structs.ActionTypeRitual: {
+			MinPeople: 15,
+			MaxPeople: -1,
+			Ethos:     structs.Ethos{Tradition: modest, Piety: major},
+			Restricted: [][]config.Condition{
+				{config.ConditionSrcFactionIsReligion},
+			},
+			Cost: config.Distribution{
+				Min:       100000,   // 10gp
+				Max:       10000000, // 1000gp
+				Mean:      250000,   // 500gp
+				Deviation: 2000000,  // 200gp
+			},
+			TimeToPrepare: config.Distribution{
+				Min:       3 * DEFAULT_TICKS_PER_DAY,
+				Max:       5 * DEFAULT_TICKS_PER_DAY,
+				Mean:      4 * DEFAULT_TICKS_PER_DAY,
+				Deviation: 1 * DEFAULT_TICKS_PER_DAY,
+			},
+			TimeToExecute: config.Distribution{
+				Min:       1 * DEFAULT_TICKS_PER_DAY,
+				Max:       7 * DEFAULT_TICKS_PER_DAY,
+				Mean:      2 * DEFAULT_TICKS_PER_DAY,
+				Deviation: 3 * DEFAULT_TICKS_PER_DAY,
+			},
+			PersonWeight: 1,
+			ProfessionWeights: map[string]float64{
+				PRIEST: 5,
+				CLERK:  2,
+			},
+			Goals: []structs.Goal{structs.GoalPiety},
+		},
 		structs.ActionTypeRequestLand: {
 			MinPeople:   1,
 			MaxPeople:   12,
 			Probability: 0.1,
 			Ethos:       structs.Ethos{Altruism: minor, Tradition: 2 * minor, Ambition: minor},
+			Restricted: [][]config.Condition{
+				{config.ConditionSrcFactionIsNotGovernment, config.ConditionSrcFactionIsNotCovert},
+			},
 			TimeToPrepare: config.Distribution{
 				Min:       15 * DEFAULT_TICKS_PER_DAY,
 				Max:       30 * DEFAULT_TICKS_PER_DAY,
@@ -364,10 +399,13 @@ func Actions() map[structs.ActionType]*config.Action {
 			Goals:         []structs.Goal{structs.GoalResearch},
 		},
 		structs.ActionTypeExcommunicate: {
-			MinPeople:    1,
-			MaxPeople:    100,
-			Probability:  0.1,
-			Ethos:        structs.Ethos{Piety: major, Caution: -1 * minor},
+			MinPeople:   1,
+			MaxPeople:   100,
+			Probability: 0.1,
+			Ethos:       structs.Ethos{Piety: major, Caution: -1 * minor},
+			Restricted: [][]config.Condition{
+				{config.ConditionSrcFactionIsReligion},
+			},
 			PersonWeight: 1,
 			ProfessionWeights: map[string]float64{
 				PRIEST: 5,
@@ -456,6 +494,9 @@ func Actions() map[structs.ActionType]*config.Action {
 			MinPeople: 1,
 			MaxPeople: 15,
 			Ethos:     structs.Ethos{Tradition: 2 * minor, Caution: -1 * minor, Altruism: -1 * modest},
+			Restricted: [][]config.Condition{
+				{config.ConditionSrcFactionIsGovernment},
+			},
 			TimeToPrepare: config.Distribution{
 				Min:       15 * DEFAULT_TICKS_PER_DAY,
 				Max:       30 * DEFAULT_TICKS_PER_DAY,
@@ -850,6 +891,9 @@ func Actions() map[structs.ActionType]*config.Action {
 			MaxPeople:   -1,
 			Probability: 0.10,
 			Ethos:       structs.Ethos{Ambition: major, Piety: major, Caution: -1 * major, Pacifism: -1 * major},
+			Restricted: [][]config.Condition{
+				{config.ConditionSrcFactionIsReligion},
+			},
 			Cost: config.Distribution{
 				Min:       500000000,  // 50000gp
 				Max:       2500000000, // 250000gp

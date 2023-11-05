@@ -4,8 +4,50 @@ import (
 	mapset "github.com/deckarep/golang-set/v2"
 
 	"github.com/voidshard/faction/internal/db"
+	"github.com/voidshard/faction/pkg/config"
 	"github.com/voidshard/faction/pkg/structs"
 )
+
+func SourceMeetsActionConditions(f *structs.FactionSummary, conditions [][]config.Condition) bool {
+	if conditions == nil {
+		return false
+	}
+	for _, check := range conditions {
+		allow := true
+		for _, condition := range check {
+			switch condition {
+			case config.ConditionAlways:
+				// pass
+			case config.ConditionSrcFactionIsCovert:
+				allow = allow && f.IsCovert
+			case config.ConditionSrcFactionIsNotCovert:
+				allow = allow && !f.IsCovert
+			case config.ConditionSrcFactionIsGovernment:
+				allow = allow && f.IsGovernment
+			case config.ConditionSrcFactionIsNotGovernment:
+				allow = allow && !f.IsGovernment
+			case config.ConditionSrcFactionIsReligion:
+				allow = allow && f.IsReligion
+			case config.ConditionSrcFactionHasReligion:
+				allow = allow && f.ReligionID != ""
+			case config.ConditionSrcFactionStructurePyramid:
+				allow = allow && f.Structure == structs.LeaderStructurePyramid
+			case config.ConditionSrcFactionStructureLoose:
+				allow = allow && f.Structure == structs.LeaderStructureLoose
+			case config.ConditionSrcFactionStructureCell:
+				allow = allow && f.Structure == structs.LeaderStructureCell
+			}
+			if !allow {
+				// break out of inner loop early
+				break
+			}
+		}
+		if allow {
+			return true
+		}
+	}
+	return false
+}
 
 // ServicesForHire returns a map of services that can be hired, and the faction(s) that offer the
 // service within the given areas.

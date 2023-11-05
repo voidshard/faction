@@ -34,6 +34,7 @@ func (s *Base) registerTasksWithQueue() error {
 		s.queue.Register(eventTask(structs.EventFactionCreated), s.handlerOnEventFactionCreated),
 		s.queue.Register(eventTask(structs.EventFactionPromotion), nil),
 		s.queue.Register(eventTask(structs.EventFactionDemo), nil),
+		s.queue.Register(eventTask(structs.EventJobPending), nil),
 	}
 	for _, err := range errs {
 		if err != nil {
@@ -66,6 +67,24 @@ func eventSubjects(in []*structs.Event) []string {
 		}
 	}
 	return out.ToSlice()
+}
+
+func (s *Base) handlerOnEventJobPending(in ...*queue.Job) error {
+	events, err := s.toEvents(in)
+	log.Debug().Str(keyEventType, string(structs.EventJobPending)).Err(err).Int("events", len(in)).Msg()("handling event")
+	if err != nil {
+		return err
+	}
+	if len(events) == 0 {
+		return nil
+	}
+
+	tick, err := s.dbconn.Tick()
+	if err != nil {
+		return err
+	}
+
+	return s.applyJobPending(tick, events)
 }
 
 func (s *Base) handlerOnEventFamilyMarriage(in ...*queue.Job) error {

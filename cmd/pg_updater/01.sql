@@ -42,6 +42,7 @@ CREATE TABLE IF NOT EXISTS jobs (
 	    source_faction_id VARCHAR(36) NOT NULL,
 	    source_area_id VARCHAR(36) NOT NULL,
 	    action VARCHAR(255) NOT NULL,
+	    conscription BOOLEAN NOT NULL DEFAULT FALSE,
 	    target_area_id VARCHAR(36) NOT NULL,
 	    target_faction_id VARCHAR(36) DEFAULT '',
 	    target_meta_key VARCHAR(20) DEFAULT '',

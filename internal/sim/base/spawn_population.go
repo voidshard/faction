@@ -67,7 +67,6 @@ func (s *Base) spawnFamily(tick int, areaID, race, culture string) *simutil.Meta
 		FemaleID:            mum.ID,
 		MaxChildBearingTick: eldest + demo.MaxParentingAge(), // the last tick the couple can have children
 		MarriageTick:        tick,
-		Random:              int(s.dice.Float64() * structs.FamilyRandomMax),
 	}
 	mp.Families = append(mp.Families, family)
 	mp.Events = append(mp.Events, simutil.NewMarriageEvent(family, tick-demo.RandomChildbearingTerm()))

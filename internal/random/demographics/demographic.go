@@ -159,7 +159,6 @@ func (d *Demographic) RandomPerson(areaID string) *structs.Person {
 		AdulthoodTick:    int(d.race.ChildbearingAgeMin) + birth,
 		NaturalDeathTick: d.RandomLifespan() + birth,
 		IsMale:           d.RandomIsMale(),
-		Random:           int(d.rng.Float64() * structs.PersonRandomMax),
 	}
 }
 

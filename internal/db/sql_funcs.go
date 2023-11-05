@@ -2,7 +2,9 @@ package db
 
 import (
 	"math"
+	"math/rand"
 	"strings"
+	"time"
 
 	"github.com/voidshard/faction/internal/dbutils"
 	"github.com/voidshard/faction/pkg/structs"
@@ -11,6 +13,10 @@ import (
 	"fmt"
 
 	_ "github.com/lib/pq"
+)
+
+var (
+	rng = rand.New(rand.NewSource(time.Now().UnixNano()))
 )
 
 // sqlOperator is something that can perform an sql operation read/write
@@ -457,6 +463,9 @@ func setPeople(op sqlOperator, in []*structs.Person) error {
 			return fmt.Errorf("person id %s culture required", f.ID)
 		}
 		f.Clamp()
+		if f.Random == 0 {
+			f.Random = rng.Intn(structs.RandomMax)
+		}
 	}
 
 	_, err := op.NamedExec(sqlInsertPeople, in)
@@ -772,6 +781,9 @@ func setFamilies(op sqlOperator, in []*structs.Family) error {
 		if f.Culture == "" {
 			return fmt.Errorf("family %s culture is requred", f.ID)
 		}
+		if f.Random == 0 {
+			f.Random = rng.Intn(structs.RandomMax)
+		}
 	}
 
 	_, err := op.NamedExec(sqlInsertFamilies, in)
@@ -912,6 +924,9 @@ func setAreas(op sqlOperator, in []*structs.Area) error {
 	for _, a := range in {
 		if !dbutils.IsValidID(a.ID) {
 			return fmt.Errorf("area id %s is invalid", a.ID)
+		}
+		if a.Random == 0 {
+			a.Random = rng.Intn(structs.RandomMax)
 		}
 	}
 

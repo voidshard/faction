@@ -74,15 +74,6 @@ const (
 )
 
 var (
-	// Factions with a IsReligion & ReligionID may perform these actions
-	ActionsReligionOnly = []ActionType{}
-
-	// Factions with a IsGovernment & GovernmentID may perform these actions
-	ActionsGovernmentOnly = []ActionType{}
-
-	// Factions that are not Governments nor convert may perform these actions
-	ActionsLegalFactionOnly = []ActionType{}
-
 	// TargetType, if not given default to no target (ie. "self" or "we don't need to choose a target")
 	// nb. Jobs always include a Faction and Area target, so we only do more work in picking a target if it's something else.
 	//     That is we do not include MetaKeyFaction or MetaKeyTarget here, since it's always required, this is for actions
@@ -113,7 +104,7 @@ var (
 		ActionTypePillage,
 	}
 
-	//
+	// Actions that may be performed by spies (eg. HireSpies action)
 	ActionsForSpies = []ActionType{
 		ActionTypeFrame,
 		ActionTypeAssassinate,
@@ -155,14 +146,3 @@ var (
 		ActionTypeWar,
 	}
 )
-
-func init() {
-	// Factions with a IsReligion & ReligionID may perform these actions
-	ActionsReligionOnly = []ActionType{ActionTypeCrusade, ActionTypeExcommunicate, ActionTypeRitual}
-
-	// Factions with a IsGovernment & GovernmentID may perform these actions
-	ActionsGovernmentOnly = []ActionType{ActionTypeRevokeLand}
-
-	// Factions that are not Governments nor convert may perform these actions
-	ActionsLegalFactionOnly = []ActionType{ActionTypeRequestLand}
-}

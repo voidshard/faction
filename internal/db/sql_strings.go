@@ -217,7 +217,7 @@ var (
 	sqlInsertJobs = fmt.Sprintf(`INSERT INTO %s (
 	    id, parent_job_id,
 	    source_faction_id, source_area_id,
-	    action,
+	    action, conscription,
 	    target_faction_id, target_area_id, target_meta_key, target_meta_val,
 	    people_min, people_max,
 	    tick_created, tick_starts, tick_ends,
@@ -227,7 +227,7 @@ var (
 	) VALUES (
 	    :id, :parent_job_id,
 	    :source_faction_id, :source_area_id,
-	    :action,
+	    :action, :conscription,
 	    :target_faction_id, :target_area_id, :target_meta_key, :target_meta_val,
 	    :people_min, :people_max,
 	    :tick_created, :tick_starts, :tick_ends,

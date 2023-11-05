@@ -39,6 +39,8 @@ type Job struct {
 
 	Action ActionType `db:"action"` // action that is due to take place
 
+	Conscription bool `db:"conscription"` // if job is allowed to force people take part
+
 	TargetFactionID string `db:"target_faction_id"` // ID of the faction the action is aimed at
 	TargetAreaID    string `db:"target_area_id"`    // where the action will take place
 

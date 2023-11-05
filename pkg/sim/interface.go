@@ -11,10 +11,14 @@ import (
 // Simulation is our raison d'être and provides a single interface for any action a
 // user might want to perform.
 type Simulation interface {
+	// -- Config functions --
+
 	// Options to set extention interfaces.
 	SetTechnology(tech technology.Technology) error
 	SetEconomy(eco economy.Economy) error
 	SetQueue(q queue.Queue) error
+
+	// -- Crud functions --
 
 	// SetGovernments upserts government(s).
 	//
@@ -38,6 +42,27 @@ type Simulation interface {
 	// or a combination of the above.
 	SetPlots(p ...*structs.Plot) error
 
+	// SetAreaGovernment sets the government ID for the given area(s)
+	//
+	// That is, these lands are marked as under the sway of the given government.
+	//
+	// This probably follows SpawnGovernment, but could also represent a change in leadership
+	// if an area is conquered or similar.
+	SetAreaGovernment(governmentID string, areas ...string) error
+
+	// -- Info functions --
+
+	// FactionSummaries returns a summary of the given faction(s).
+	//
+	// These can contain a lot of data, so it's probably best to limit the number of factions
+	// you pass in here.
+	FactionSummaries(factionIDs ...string) ([]*structs.FactionSummary, error)
+
+	// Demographics for the given area(s).
+	Demographics(areas ...string) (*structs.Demographics, error)
+
+	// -- Simulation functions --
+
 	// SpawnGovernment creates a new government.
 	//
 	// This does not create a faction nor grant the government any area(s).
@@ -46,14 +71,6 @@ type Simulation interface {
 	// Probably this should be followed by SetAreaGovernment to assign this government area(s) of
 	// influence.
 	SpawnGovernment(g *config.Government) (*structs.Government, error)
-
-	// SetAreaGovernment sets the government ID for the given area(s)
-	//
-	// That is, these lands are marked as under the sway of the given government.
-	//
-	// This probably follows SpawnGovernment, but could also represent a change in leadership
-	// if an area is conquered or similar.
-	SetAreaGovernment(governmentID string, areas ...string) error
 
 	// SpawnFaction creates a faction within the given area(s).
 	//
@@ -67,12 +84,6 @@ type Simulation interface {
 	// Note that none of these factions will be marked as the Government itself, so you'll
 	// want to explicitly pick one to set that, or spawn a new faction for that reason.
 	SpawnFaction(f *config.Faction, areas ...string) (*structs.Faction, error)
-
-	// FactionSummaries returns a summary of the given faction(s).
-	//
-	// These can contain a lot of data, so it's probably best to limit the number of factions
-	// you pass in here.
-	FactionSummaries(factionIDs ...string) ([]*structs.FactionSummary, error)
 
 	// SpawnPopulace adds people to area(s) based on a general 'Demographics' outline.
 	//
@@ -89,9 +100,6 @@ type Simulation interface {
 	// in order to simulate some past family tragedy or something.
 	// - The number created is approximate
 	SpawnPopulace(people int, race, culture string, areas ...string) error
-
-	// Demographics for the given area(s).
-	Demographics(areas ...string) (*structs.Demographics, error)
 
 	// InspireFactionAffiliation will assign faction affliation & rank(s) to people with
 	// some probability.
@@ -123,6 +131,9 @@ type Simulation interface {
 
 	// AdjustPopulation accounts for natural deaths, births etc in an area
 	AdjustPopulation(areaID string) error
+
+	// AssignJobs tries to find people to fill any unfilled Jobs belonging to the given faction.
+	AssignJobs(factionID string) error
 
 	// -- Event / Async handling --
 
