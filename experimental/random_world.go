@@ -161,10 +161,26 @@ func main() {
 		}
 	}
 
-	// step 7. fire events (handles all the post processing for all the changes we enacted)
-	fmt.Println("firing events")
-	err = simulator.FireEvents()
-	if err != nil {
-		panic(err)
+	for _, f := range factions {
+		fmt.Println("\tplanning jobs for", f.ID)
+		jobs, err := simulator.PlanFactionJobs(f.ID)
+		if err != nil {
+			panic(err)
+		}
+		for _, j := range jobs {
+			fmt.Println(
+				"\t\t",
+				j.ID, j.Action, "job for", j.SourceFactionID,
+				"targeting", j.TargetFactionID, "in", j.TargetAreaID,
+				"(", j.TargetMetaKey, j.TargetMetaVal, ")",
+			)
+		}
 	}
+
+	// step 7. fire events (handles all the post processing for all the changes we enacted)
+	//fmt.Println("firing events")
+	//err = simulator.FireEvents()
+	//if err != nil {
+	//		panic(err)
+	//	}
 }

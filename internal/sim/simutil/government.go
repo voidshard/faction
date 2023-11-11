@@ -4,9 +4,9 @@ import (
 	"github.com/voidshard/faction/pkg/structs"
 )
 
-func IsIllegalAction(act structs.ActionType, govs ...*structs.Government) bool {
+func IsIllegalAction(action string, govs ...*structs.Government) bool {
 	for _, g := range govs {
-		_, ok := g.Outlawed.Actions[act]
+		_, ok := g.Outlawed.Actions[action]
 		if ok {
 			return true
 		}

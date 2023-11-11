@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/voidshard/faction/internal/db"
+	"github.com/voidshard/faction/pkg/config"
 	"github.com/voidshard/faction/pkg/structs"
 
 	mapset "github.com/deckarep/golang-set/v2"
@@ -92,12 +93,12 @@ func (s *Base) applyFactionCreated(tick int, events []*structs.Event) error {
 				&structs.Tuple{
 					Subject: me.ID,
 					Object:  other.ID,
-					Value:   determineBaseTrust(me, other),
+					Value:   s.determineBaseTrust(me, other),
 				},
 				&structs.Tuple{
 					Subject: other.ID,
 					Object:  me.ID,
-					Value:   determineBaseTrust(other, me),
+					Value:   s.determineBaseTrust(other, me),
 				},
 			)
 			doneRelation[relationKey(me.ID, other.ID)] = true
@@ -114,7 +115,7 @@ func (s *Base) applyFactionCreated(tick int, events []*structs.Event) error {
 	return nil
 }
 
-func determineBaseTrust(f1, f2 *structs.FactionSummary) int {
+func (s *Base) determineBaseTrust(f1, f2 *structs.FactionSummary) int {
 	// In general we give larger negatives than positives. Trust is much harder to build than suspicion.
 
 	// base value starts from Ethos distance
@@ -163,47 +164,24 @@ func determineBaseTrust(f1, f2 *structs.FactionSummary) int {
 	}
 
 	// favoured actions
-	actions := map[structs.ActionType]bool{}
 	for act := range f2.Actions { // their actions
-		actions[act] = true
-		switch act {
-		case structs.ActionTypeFestival, structs.ActionTypeCharity:
-			base += structs.MaxEthos / 20 // they're nice / charitable
-		case structs.ActionTypeWar, structs.ActionTypeCrusade, structs.ActionTypeShadowWar:
-			base -= structs.MaxEthos / 5 // they're warlike
-		case structs.ActionTypeRaid, structs.ActionTypePillage, structs.ActionTypeEnslave:
-			base -= structs.MaxEthos / 10 // they're raiders
+		_, iHave := f1.Actions[act]
+		if iHave { // this action doesn't weight my feelings towards them as I do it too
+			continue
 		}
-	}
-	for act := range f1.Actions { // my actions
-		switch act {
-		case structs.ActionTypeTrade, structs.ActionTypeCraft, structs.ActionTypeHarvest:
-			_, ok := actions[structs.ActionTypeSteal]
-			if ok {
-				base -= structs.MaxEthos / 10 // dirty theif!
-			}
-		case structs.ActionTypeSteal, structs.ActionTypeRaid, structs.ActionTypePillage, structs.ActionTypeEnslave:
-			_, trade := actions[structs.ActionTypeTrade]
-			_, craft := actions[structs.ActionTypeCraft]
-			_, harvest := actions[structs.ActionTypeHarvest]
-			if trade || craft || harvest {
-				base -= structs.MaxEthos / 5 // looks like a tempting target ;)
-			}
-		case structs.ActionTypeConcealSecrets:
-			_, investigate := actions[structs.ActionTypeGatherSecrets]
-			_, spy := actions[structs.ActionTypeHireSpies]
-			if investigate || spy {
-				base -= structs.MaxEthos / 5 // we don't like people who snoop on us
-			}
-		case structs.ActionTypeConsolidate, structs.ActionTypePropoganda:
-			_, frame := actions[structs.ActionTypeFrame]
-			_, blackmail := actions[structs.ActionTypeBlackmail]
-			_, propoganda := actions[structs.ActionTypePropoganda]
-			if frame || blackmail || propoganda {
-				base -= structs.MaxEthos / 5 // we don't like people who talk about us
-			}
-		}
-	}
 
+		cfg, ok := s.cfg.Actions[act]
+		if !ok {
+			continue
+		}
+		switch cfg.Category {
+		case config.ActionCategoryHostile:
+			base -= structs.MaxEthos / 5
+		case config.ActionCategoryFriendly:
+			base += structs.MaxEthos / 20
+		case config.ActionCategoryUnfriendly:
+			base -= structs.MaxEthos / 10
+		}
+	}
 	return base
 }

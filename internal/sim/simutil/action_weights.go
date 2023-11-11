@@ -9,18 +9,18 @@ import (
 
 // ActionWeights is a helper for weighting actions, since we apply a lot of weights and calculations to them.
 type ActionWeights struct {
-	prob map[structs.ActionType]float64
-	defn map[structs.ActionType]*config.Action
-	goal map[structs.Goal][]structs.ActionType
+	prob map[string]float64
+	defn map[string]*config.Action
+	goal map[structs.Goal][]string
 
 	normal  rng.Normalised
-	choices []structs.ActionType
+	choices []string
 }
 
 // NewActionWeights creates a new ActionWeights helper.
-func NewActionWeights(actions map[structs.ActionType]*config.Action) *ActionWeights {
-	prob := map[structs.ActionType]float64{}
-	goal := map[structs.Goal][]structs.ActionType{}
+func NewActionWeights(actions map[string]*config.Action) *ActionWeights {
+	prob := map[string]float64{}
+	goal := map[structs.Goal][]string{}
 	for atype, act := range actions {
 		// build a map of action types to probabilities
 		p := act.Probability
@@ -30,7 +30,7 @@ func NewActionWeights(actions map[structs.ActionType]*config.Action) *ActionWeig
 		for _, g := range act.Goals {
 			cur, ok := goal[g]
 			if !ok {
-				cur = []structs.ActionType{}
+				cur = []string{}
 			}
 			goal[g] = append(cur, atype)
 		}
@@ -43,14 +43,28 @@ func NewActionWeights(actions map[structs.ActionType]*config.Action) *ActionWeig
 }
 
 // Choose returns a random action type based on the current weights.
-func (w *ActionWeights) Choose() structs.ActionType {
+func (w *ActionWeights) Choose() string {
 	return w.choices[w.normal.Int()]
+}
+
+// HighestProbAction returns the action type with the highest probability of the given choices.
+func (w *ActionWeights) HighestProbAction(options []string) string {
+	prob := -1.0
+	action := ""
+	for _, a := range options {
+		probA, _ := w.prob[a]
+		if probA > prob {
+			prob = probA
+			action = a
+		}
+	}
+	return action
 }
 
 // normalise builds a normalised list of probabilities and a list of action types.
 // Returns the number of choices (> 0 probability), this should be checked
 func (w *ActionWeights) Normalise() int {
-	choices := []structs.ActionType{}
+	choices := []string{}
 	probs := []float64{}
 	for t, p := range w.prob {
 		if p <= 0.0 {
@@ -67,7 +81,7 @@ func (w *ActionWeights) Normalise() int {
 }
 
 // WeightAction multiplies the probability of the given action by the given multiplier.
-func (w *ActionWeights) WeightAction(mult float64, act structs.ActionType) {
+func (w *ActionWeights) WeightAction(mult float64, act string) {
 	p, _ := w.prob[act]
 	w.prob[act] = mult * p
 	w.normal = nil
@@ -100,7 +114,7 @@ func (w *ActionWeights) WeightByCost(mult, maxPrice float64) {
 //
 // We use this to restrict say Crusades to religious factions, or only allow the government to
 // do some actions.
-func (w *ActionWeights) ApplyActionConditions(f *structs.FactionSummary) {
+func (w *ActionWeights) ApplyActionConditions(f *FactionContext) {
 	for a, act := range w.defn {
 		if act.Restricted == nil || len(act.Restricted) == 0 {
 			continue // no restrictions
@@ -131,7 +145,7 @@ func (w *ActionWeights) WeightByEthos(e *structs.Ethos) {
 
 // WeightByTypes applies a given weight (MinTuple -> MaxTuple) to the probability of all actions of the given type.
 // Nb. this is how we apply Faction Focus weights (see Focus struct, pkg/config/faction.go).
-func (w *ActionWeights) WeightByTypes(weights map[structs.ActionType]int) {
+func (w *ActionWeights) WeightByTypes(weights map[string]int) {
 	w.normal = nil
 	for atype, value := range weights {
 		_, ok := w.prob[atype]
@@ -145,7 +159,7 @@ func (w *ActionWeights) WeightByTypes(weights map[structs.ActionType]int) {
 // Nb. If the Action is illegal in multiple governments, the multiplier is applied only once.
 func (w *ActionWeights) WeightByIllegal(mult float64, govs ...*structs.Government) {
 	w.normal = nil
-	banned := map[structs.ActionType]bool{}
+	banned := map[string]bool{}
 	for _, g := range govs {
 		for a := range g.Outlawed.Actions {
 			banned[a] = true

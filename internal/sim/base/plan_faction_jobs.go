@@ -8,6 +8,7 @@ import (
 
 	mapset "github.com/deckarep/golang-set/v2"
 	"github.com/voidshard/faction/internal/db"
+	"github.com/voidshard/faction/internal/log"
 	"github.com/voidshard/faction/internal/sim/simutil"
 	"github.com/voidshard/faction/pkg/config"
 	"github.com/voidshard/faction/pkg/structs"
@@ -109,15 +110,34 @@ func (s *Base) PlanFactionJobs(factionID string) ([]*structs.Job, error) {
 		return nil, err
 	}
 
+	// how likely we are to do various actions
+	weights, survivalConcerns, err := s.actionWeightsForFaction(ctx, availablePeople)
+	if err != nil {
+		return nil, err
+	}
+	if len(attacking)+len(defending) > 0 {
+		for act, cfg := range s.cfg.Actions {
+			if cfg.Category == config.ActionCategoryHostile {
+				// we're at war; deperate times call for desperate measures
+				weights.WeightAction(100.0, act)
+			}
+		}
+	} else if !survivalConcerns {
+		// we'll only apply higher level goals if imminent death isn't a concern
+		goals := determineFactionGoals(ctx)
+		weights.WeightByGoal(s.cfg.Settings.GoalWeight, goals...)
+	}
+
 	var plans []*structs.Job
 	if len(attacking) > 0 || len(defending) > 0 {
 		// if we're at war, not dying consumes most of our concerns
-		plans, err = s.planFactionJobsWartime(tick, ctx, attacking, defending, availablePeople)
+		plans, err = s.planFactionJobsWartime(tick, ctx, weights, attacking, defending, availablePeople)
 	} else {
 		// if we're at peace, we have lots of competing concerns
-		plans, err = s.planFactionJobsPeacetime(tick, ctx, availablePeople)
+		plans, err = s.planFactionJobsPeacetime(tick, ctx, weights, availablePeople)
 	}
 	if err != nil || plans == nil || len(plans) == 0 {
+		log.Info().Err(err).Str("faction", factionID).Int("availablePeople", availablePeople).Msg()("no actions planned")
 		// whatever happened, we're done
 		return nil, err
 	}
@@ -132,8 +152,8 @@ func (s *Base) PlanFactionJobs(factionID string) ([]*structs.Job, error) {
 			continue
 		}
 
-		extraTarget, ok := structs.ActionTarget[j.Action]
-		if ok && j.TargetMetaKey != extraTarget {
+		if cfg.Target != "" && (j.TargetMetaKey != cfg.Target || j.TargetMetaVal == "") {
+			log.Info().Str("faction", factionID).Str("action", j.Action).Str("meta-target", string(cfg.Target)).Msg()("job target not set")
 			// we need extra target info, but it's not set (probably we couldn't find a target)
 			continue
 		}
@@ -186,7 +206,7 @@ func (s *Base) prepFactionData(factionID string) (*simutil.FactionContext, []*st
 	return ctx, children, people, nil
 }
 
-func (s *Base) planFactionJobsPeacetime(tick int, ctx *simutil.FactionContext, availablePeople int) ([]*structs.Job, error) {
+func (s *Base) planFactionJobsPeacetime(tick int, ctx *simutil.FactionContext, weights *simutil.ActionWeights, availablePeople int) ([]*structs.Job, error) {
 	availableWealth := float64(ctx.Summary.Wealth)
 
 	// Get all jobs for this faction that are active & wont finish next tick
@@ -211,20 +231,8 @@ func (s *Base) planFactionJobsPeacetime(tick int, ctx *simutil.FactionContext, a
 		inflight[jobKey(j.TargetFactionID, j.Action)] = true
 	}
 
-	// how likely we are to do various actions
-	weights, survivalConcerns, err := s.actionWeightsForFaction(ctx, availablePeople)
-	if err != nil {
-		return nil, err
-	}
-
-	if !survivalConcerns {
-		// we'll only apply higher level goals if imminent death isn't a concern
-		goals := determineFactionGoals(ctx)
-		weights.WeightByGoal(s.cfg.Settings.GoalWeight, goals...)
-	}
-
 	// hirable services in our area(s) (we'll fill out if we need)
-	services := map[structs.ActionType][]string{}
+	services := map[string][]string{}
 
 	// decide which actions we should do
 	if weights.Normalise() <= 0 {
@@ -265,13 +273,13 @@ func (s *Base) planFactionJobsPeacetime(tick int, ctx *simutil.FactionContext, a
 		job.SourceFactionID = ctx.Summary.ID
 		job.SourceAreaID = ctx.RandomArea(act)
 		job.TargetFactionID = target
-		job.Conscription = simutil.SourceMeetsActionConditions(ctx.Summary, cfg.Conscription)
+		job.Conscription = simutil.SourceMeetsActionConditions(ctx, cfg.Conscription)
 		job.IsIllegal = ctx.Summary.IsCovert || simutil.IsIllegalAction(act, ctx.AllGovernments()...)
 		if job.IsIllegal {
 			job.Secrecy = int(float64(rnggen.Intn(structs.MaxTuple)+ctx.Summary.EspionageDefense) * cfg.SecrecyWeight)
 		}
 
-		if job.Action == structs.ActionTypeHireMercenaries || job.Action == structs.ActionTypeHireSpies {
+		if cfg.MercenaryActions != nil && len(cfg.MercenaryActions) > 0 {
 			if services == nil { // services cached at this level so we don't re-fetch data
 				services, err = simutil.ServicesForHire(s.cfg.Actions, s.dbconn, ctx.AreaIDs())
 				if err != nil {
@@ -360,18 +368,20 @@ func (s *Base) setSpecificJobTargetsPerson(jobs []*structs.Job) error {
 	return nil
 }
 
-func (s *Base) buildMercenaryJob(services map[structs.ActionType][]string, job *structs.Job) (*structs.Job, error) {
+func (s *Base) buildMercenaryJob(services map[string][]string, job *structs.Job) (*structs.Job, error) {
 	// choose who we will hire and for what action
-	var vendorAction structs.ActionType
+	var vendorAction string
 	var vendorID string
 
-	for act, actcfg := range s.cfg.Actions {
-		if job.Action == structs.ActionTypeHireMercenaries && !actcfg.ValidServiceMercenary {
-			continue
-		} else if job.Action == structs.ActionTypeHireSpies && !actcfg.ValidServiceSpy {
-			continue
-		}
+	cfg, ok := s.cfg.Actions[job.Action]
+	if !ok {
+		return nil, fmt.Errorf("no config for action %s", job.Action)
+	}
+	if cfg.MercenaryActions == nil {
+		return nil, fmt.Errorf("action %s is not a mercenary action", job.Action)
+	}
 
+	for _, act := range cfg.MercenaryActions {
 		factionsThatOfferService, ok := services[act]
 		if !ok {
 			continue
@@ -392,7 +402,7 @@ func (s *Base) buildMercenaryJob(services map[structs.ActionType][]string, job *
 	}
 
 	// build a new child job
-	cfg, _ := s.cfg.Actions[vendorAction] // we checked this is valid above
+	cfg, _ = s.cfg.Actions[vendorAction] // we checked this is valid above
 	hirejob := simutil.NewJob(job.TickCreated, vendorAction, cfg)
 	hirejob.ParentJobID = job.ID
 	hirejob.SourceFactionID = vendorID
@@ -476,15 +486,6 @@ func (s *Base) setSpecificJobTargetsArea(ctx *simutil.FactionContext, jobs []*st
 	for _, j := range jobs {
 		if j.SourceFactionID == j.TargetFactionID {
 			j.TargetAreaID = ctx.RandomArea(j.Action)
-			if j.Action == structs.ActionTypeHarvest {
-				// Pick some area in which we can harvest resources.
-				for areaID, summary := range ctx.Land.Areas { // because order of iteration of maps is undefined
-					if len(summary.Commodities) > 0 {
-						j.TargetAreaID = areaID
-						break
-					}
-				}
-			}
 		} else {
 			fareas, ok := factionToArea[j.TargetFactionID]
 			if !ok {
@@ -504,31 +505,32 @@ func (s *Base) setSpecificJobTargets(ctx *simutil.FactionContext, plans []*struc
 	// bucket jobs based on what kind of target they need
 	needed := map[structs.MetaKey][]*structs.Job{}
 	for _, j := range plans {
-		// a few actions need special handling
-		if j.Action == structs.ActionTypeResearch {
-			j.TargetAreaID = ctx.RandomArea(j.Action)
-			j.TargetMetaKey = structs.MetaKeyResearch
-			j.TargetMetaVal = ctx.RandomResearch()
+		cfg, ok := s.cfg.Actions[j.Action]
+		if !ok {
 			continue
 		}
 
-		metakey, ok := structs.ActionTarget[j.Action]
-		if !ok {
+		log.Debug().Str("faction", ctx.Summary.ID).Str("action", j.Action).Str("meta-target", string(cfg.Target)).Msg()("setting target")
+
+		// a few actions need special handling
+		if cfg.Target == structs.MetaKeyResearch {
+			j.TargetAreaID = ctx.RandomArea(j.Action)
+			j.TargetMetaKey = structs.MetaKeyResearch
+			j.TargetMetaVal = ctx.RandomResearch()
+		} else if cfg.Target == "" {
 			// Area -> everything needs this if nothing else
-			metakey = structs.MetaKeyArea
 			if j.SourceFactionID == j.TargetFactionID {
 				j.SourceAreaID = ctx.RandomArea(j.Action)
 				j.TargetAreaID = j.SourceAreaID
-				continue
 			}
+		} else {
+			sofar, ok := needed[cfg.Target]
+			if !ok {
+				sofar = []*structs.Job{}
+			}
+			sofar = append(sofar, j)
+			needed[cfg.Target] = sofar
 		}
-
-		sofar, ok := needed[metakey]
-		if !ok {
-			sofar = []*structs.Job{}
-		}
-		sofar = append(sofar, j)
-		needed[metakey] = sofar
 	}
 
 	// for each target type, select targets (ie. batched by ActionType)
@@ -559,8 +561,8 @@ func (s *Base) setSpecificJobTargets(ctx *simutil.FactionContext, plans []*struc
 	return nil
 }
 
-func jobKey(targetID string, t structs.ActionType) string {
-	return fmt.Sprintf("%s:%s", targetID, string(t))
+func jobKey(targetID string, action string) string {
+	return fmt.Sprintf("%s:%s", targetID, action)
 }
 
 func actionCategory(cfg *config.Action) actionTypeCategory {
@@ -576,7 +578,7 @@ func actionCategory(cfg *config.Action) actionTypeCategory {
 }
 
 // chooseJobTargetFaction picks a target for a job.
-func (s *Base) chooseJobTargetFaction(ctx *simutil.FactionContext, inflight map[string]bool, act structs.ActionType, cfg *config.Action) (string, error) {
+func (s *Base) chooseJobTargetFaction(ctx *simutil.FactionContext, inflight map[string]bool, act string, cfg *config.Action) (string, error) {
 	relations := ctx.Relations()
 
 	if cfg.TargetMinTrust == 0 && cfg.TargetMaxTrust == 0 {
@@ -601,7 +603,7 @@ func (s *Base) chooseJobTargetFaction(ctx *simutil.FactionContext, inflight map[
 	}
 
 	// before starting a war we have extra things to consider
-	if act == structs.ActionTypeWar || act == structs.ActionTypeCrusade || act == structs.ActionTypeShadowWar {
+	if cfg.Category == config.ActionCategoryHostile {
 		factions, _, err := s.dbconn.Factions("", db.Q(db.F(db.ID, db.In, choices)).DisableSort())
 		if err != nil {
 			return "", err
@@ -650,7 +652,59 @@ func (s *Base) chooseJobTargetFaction(ctx *simutil.FactionContext, inflight map[
 	return "", nil
 }
 
-func (s *Base) planFactionJobsWartime(tick int, ctx *simutil.FactionContext, attacking, defending []*structs.Job, people int) ([]*structs.Job, error) {
+func (s *Base) determineFactionAtWar(tick int, factionID string) ([]*structs.Job, []*structs.Job, error) {
+	hostile := []string{}
+	hostileLoud := []string{}
+	for act, cfg := range s.cfg.Actions {
+		if cfg.Category == config.ActionCategoryHostile {
+			hostile = append(hostile, act)
+			if cfg.SecrecyWeight < 0.5 {
+				hostileLoud = append(hostileLoud, act)
+			}
+		}
+	}
+
+	q := db.Q(
+		// people attacking us
+		db.F(db.TargetFactionID, db.Equal, factionID),
+		db.F(db.JobState, db.Equal, structs.JobStateActive),
+		db.F(db.ActionType, db.In, hostile),
+		db.F(db.TickEnds, db.Greater, tick),
+	).Or(
+		// people planning to attack us
+		db.F(db.TargetFactionID, db.Equal, factionID),
+		db.F(db.JobState, db.In, []string{
+			string(structs.JobStatePending),
+			string(structs.JobStateReady),
+		}),
+		db.F(db.ActionType, db.In, hostileLoud),
+		db.F(db.TickEnds, db.Greater, tick),
+	).Or(
+		// people we're attacking
+		db.F(db.SourceFactionID, db.Equal, factionID),
+		db.F(db.ActionType, db.In, hostile),
+		db.F(db.TickEnds, db.Greater, tick),
+	).DisableSort()
+
+	jobs, _, err := s.dbconn.Jobs("", q)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	attacking := []*structs.Job{}
+	defending := []*structs.Job{}
+	for _, j := range jobs {
+		if j.SourceFactionID == factionID {
+			attacking = append(attacking, j)
+		} else {
+			defending = append(defending, j)
+		}
+	}
+
+	return attacking, defending, nil
+}
+
+func (s *Base) planFactionJobsWartime(tick int, ctx *simutil.FactionContext, weights *simutil.ActionWeights, attacking, defending []*structs.Job, people int) ([]*structs.Job, error) {
 	// get factions we're at war with
 	atkSet := mapset.NewSet[string]()
 	defSet := mapset.NewSet[string]()
@@ -670,13 +724,18 @@ func (s *Base) planFactionJobsWartime(tick int, ctx *simutil.FactionContext, att
 		return nil, nil
 	}
 
+	hostileActs := []string{}
+	for act, cfg := range s.cfg.Actions {
+		if cfg.Category == config.ActionCategoryHostile {
+			hostileActs = append(hostileActs, act)
+		}
+	}
+
 	counterAtk := defSet.Difference(atkSet).ToSlice() // people we're defending against that we're not attacking
 	if len(counterAtk) > 0 && len(defending) > 0 {
-		act := structs.ActionTypeWar
-		if ctx.Summary.IsCovert {
-			act = structs.ActionTypeShadowWar
-		} else if ctx.Summary.IsReligion {
-			act = structs.ActionTypeCrusade
+		act := weights.HighestProbAction(hostileActs)
+		if act == "" { // we don't have any hostile actions?
+			return s.planFactionJobsPeacetime(tick, ctx, weights, people)
 		}
 
 		cfg, ok := s.cfg.Actions[act]
@@ -714,64 +773,11 @@ func (s *Base) planFactionJobsWartime(tick int, ctx *simutil.FactionContext, att
 	// high caution yields closer to 50%, low caution closer to 30% (the base)
 	arrogance := warArroganceFactor + (toProbability(ctx.Summary.Caution) * 0.2)
 	if enemyScale <= arrogance*float64(ctx.Summary.Members+ctx.Summary.Vassals) {
-		return s.planFactionJobsPeacetime(tick, ctx, people) // HA IS THAT ALL YOU GOT
+		return s.planFactionJobsPeacetime(tick, ctx, weights, people) // HA IS THAT ALL YOU GOT
 	}
 
 	// nb. we hope in doing this that more people join the fight, alternatively, we hope to save money for the war
 	return nil, nil
-}
-
-func (s *Base) determineFactionAtWar(tick int, factionID string) ([]*structs.Job, []*structs.Job, error) {
-	q := db.Q(
-		// people attacking us
-		db.F(db.TargetFactionID, db.Equal, factionID),
-		db.F(db.JobState, db.Equal, structs.JobStateActive),
-		db.F(db.ActionType, db.In, []string{
-			string(structs.ActionTypeWar),
-			string(structs.ActionTypeCrusade),
-			string(structs.ActionTypeShadowWar),
-		}),
-		db.F(db.TickEnds, db.Greater, tick),
-	).Or(
-		// people planning to attack us
-		db.F(db.TargetFactionID, db.Equal, factionID),
-		db.F(db.JobState, db.In, []string{
-			string(structs.JobStatePending),
-			string(structs.JobStateReady),
-		}),
-		db.F(db.ActionType, db.In, []string{
-			string(structs.ActionTypeWar),
-			string(structs.ActionTypeCrusade),
-			// nb. shadow wars are covert, we don't know about them until they start
-		}),
-		db.F(db.TickEnds, db.Greater, tick),
-	).Or(
-		// people we're attacking
-		db.F(db.SourceFactionID, db.Equal, factionID),
-		db.F(db.ActionType, db.In, []string{
-			string(structs.ActionTypeWar),
-			string(structs.ActionTypeCrusade),
-			string(structs.ActionTypeShadowWar),
-		}),
-		db.F(db.TickEnds, db.Greater, tick),
-	).DisableSort()
-
-	jobs, _, err := s.dbconn.Jobs("", q)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	attacking := []*structs.Job{}
-	defending := []*structs.Job{}
-	for _, j := range jobs {
-		if j.SourceFactionID == factionID {
-			attacking = append(attacking, j)
-		} else {
-			defending = append(defending, j)
-		}
-	}
-
-	return attacking, defending, nil
 }
 
 func determineFactionGoals(ctx *simutil.FactionContext) []structs.Goal {
@@ -867,12 +873,7 @@ func (s *Base) actionWeightsForFaction(ctx *simutil.FactionContext, peopleAvail 
 	weights := simutil.NewActionWeights(s.cfg.Actions)
 
 	// forbid actions our faction isn't allowed to consider
-	weights.ApplyActionConditions(ctx.Summary)
-
-	// we have nothing to harvest :(
-	if len(ctx.Land.Commodities) == 0 {
-		weights.WeightAction(0.0, structs.ActionTypeHarvest)
-	}
+	weights.ApplyActionConditions(ctx)
 
 	// nullify actions we can't afford
 	wealth := float64(ctx.Summary.Wealth)

@@ -39,7 +39,7 @@ func (f *FactionContext) RelationWeight() int {
 	return (f.Summary.Ethos.Caution / 50) + (f.Summary.Ethos.Altruism / 20) - (f.Summary.Ethos.Ambition / 20) + (f.Summary.Ethos.Pacifism / 50)
 }
 
-func (f *FactionContext) RandomArea(purpose structs.ActionType) string {
+func (f *FactionContext) RandomArea(purpose string) string {
 	if len(f.areaIDs) == 0 {
 		return f.Summary.HomeAreaID
 	}
@@ -113,6 +113,9 @@ func NewFactionContext(dbconn *db.FactionDB, factionID string) (*FactionContext,
 	summaries, err := dbconn.FactionSummary([]db.Relation{
 		db.RelationFactionProfessionWeight,
 		db.RelationPersonFactionRank,
+		db.RelationFactionTopicResearch,
+		db.RelationFactionTopicResearchWeight,
+		db.RelationFactionFactionTrust,
 	}, factionID)
 	if err != nil {
 		return nil, err

@@ -247,7 +247,7 @@ func (f *FactionDB) FactionSummary(rels []Relation, in ...string) ([]*structs.Fa
 				case RelationFactionProfessionWeight:
 					f.Professions[t.Object] += t.Value
 				case RelationFactionActionTypeWeight:
-					f.Actions[structs.ActionType(t.Object)] += t.Value
+					f.Actions[t.Object] += t.Value
 				case RelationFactionTopicResearch:
 					f.ResearchProgress[t.Object] += t.Value
 				case RelationFactionTopicResearchWeight:
@@ -284,7 +284,7 @@ func (f *FactionDB) FactionSummary(rels []Relation, in ...string) ([]*structs.Fa
 				case RelationFactionProfessionWeight:
 					f.Professions[t.Object] += t.Value
 				case RelationFactionActionTypeWeight:
-					f.Actions[structs.ActionType(t.Object)] += t.Value
+					f.Actions[t.Object] += t.Value
 				case RelationFactionTopicResearch:
 					f.Research[t.Object] += t.Value
 				case RelationFactionFactionTrust:

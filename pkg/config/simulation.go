@@ -1,9 +1,5 @@
 package config
 
-import (
-	"github.com/voidshard/faction/pkg/structs"
-)
-
 // Simulation Configuration to instantiate a Simulation object.
 //
 // Our main concern here are things like;
@@ -19,7 +15,7 @@ type Simulation struct {
 	Queue *Queue
 
 	// Actions that do not appear in this are not permitted.
-	Actions map[structs.ActionType]*Action
+	Actions map[string]*Action
 
 	// Race name -> Race
 	Races map[string]*Race

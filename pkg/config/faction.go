@@ -34,6 +34,9 @@ type Guild struct {
 
 	// Desired export(s) (Commoidity names)
 	Exports []string
+
+	// Actions that this guild prefers to perform
+	Actions []string
 }
 
 // Focus represents a set of actions that a faction prefers to perform.
@@ -47,7 +50,7 @@ type Guild struct {
 // This way we can form unusual factions; eg. a Temple of Thieves
 type Focus struct {
 	// Actions included in this focus
-	Actions []structs.ActionType
+	Actions []string
 
 	// Probability that this focus is chosen
 	Probability float64

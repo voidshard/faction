@@ -37,13 +37,13 @@ func main() {
 	fmt.Println("wrote tuple", db.RelationPersonFactionAffiliation, aff)
 
 	fmt.Println(subject, object)
-	fs := []*db.Filter{db.F(db.Subject, db.Equal, subject), db.F(db.Object, db.Equal, object)}
+	q := db.Q(db.F(db.Subject, db.Equal, subject), db.F(db.Object, db.Equal, object))
 
-	err = tx.IncrTuples(db.RelationPersonFactionAffiliation, 10, fs...)
+	err = tx.IncrTuples(db.RelationPersonFactionAffiliation, 10, q)
 	errRollback(err)
 	fmt.Println("incremented tuple", db.RelationPersonFactionAffiliation, aff, "by 10")
 
-	err = tx.IncrTuples(db.RelationPersonFactionAffiliation, -100, fs...)
+	err = tx.IncrTuples(db.RelationPersonFactionAffiliation, -100, q)
 	errRollback(err)
 	fmt.Println("incremented tuple", db.RelationPersonFactionAffiliation, aff, "by -100")
 

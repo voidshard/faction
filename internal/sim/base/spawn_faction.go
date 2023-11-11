@@ -198,8 +198,8 @@ func (s *Base) randFaction(fr *factionRand) (*simutil.MetaFaction, error) {
 
 	// consider action focuses
 	professions := map[string]int{}
-	actions := map[structs.ActionType]int{}
-	actionWeights := map[structs.ActionType]int{}
+	actions := map[string]int{}
+	actionWeights := map[string]int{}
 	seen := map[int]bool{}
 	actionsEthos := []*structs.Ethos{&mf.Faction.Ethos}
 	researchCount := 0
@@ -226,7 +226,7 @@ func (s *Base) randFaction(fr *factionRand) (*simutil.MetaFaction, error) {
 				continue
 			}
 
-			if act == structs.ActionTypeResearch {
+			if actionCfg.Target == structs.MetaKeyResearch {
 				researchCount++
 				if focus.ResearchTopics != nil && len(focus.ResearchTopics) > 0 {
 					researchTopics = append(researchTopics, focus.ResearchTopics...)
@@ -324,19 +324,9 @@ func (s *Base) randFaction(fr *factionRand) (*simutil.MetaFaction, error) {
 			}
 			for _, c := range guild.Exports {
 				exports[c]++
-				if s.eco.IsCraftable(c) {
-					// presumably we're planning on crafting this thing we export
-					actions[structs.ActionTypeCraft]++
-				}
 			}
-
-			// update action counts
-			if len(guild.Imports) > 0 || len(guild.Exports) > 0 {
-				actions[structs.ActionTypeTrade]++
-			}
-
-			if s.eco.IsHarvestable(commodity) { // I mean, this .. should be true, right? .. RIGHT?
-				actions[structs.ActionTypeHarvest]++
+			for _, act := range guild.Actions {
+				actions[act]++
 			}
 		}
 	}

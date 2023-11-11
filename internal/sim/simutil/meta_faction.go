@@ -8,7 +8,7 @@ import (
 // metaFaction is a working data set for operations on factions + associated data
 type MetaFaction struct {
 	Faction         *structs.Faction
-	Actions         []structs.ActionType
+	Actions         []string
 	ActionWeights   []*structs.Tuple
 	Plots           []*structs.Plot
 	ProfWeights     []*structs.Tuple
@@ -22,7 +22,7 @@ type MetaFaction struct {
 func NewMetaFaction() *MetaFaction {
 	return &MetaFaction{
 		Faction:         &structs.Faction{},
-		Actions:         []structs.ActionType{},
+		Actions:         []string{},
 		ActionWeights:   []*structs.Tuple{},
 		Plots:           []*structs.Plot{},
 		ProfWeights:     []*structs.Tuple{},

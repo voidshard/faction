@@ -56,7 +56,7 @@ type Laws struct {
 
 	// IllegalActions are actions that are illegal to perform. Any job with such an action
 	// is illegal, if within the jurisdiction of the government.
-	Actions map[ActionType]bool `db:"-"`
+	Actions map[string]bool `db:"-"`
 
 	// IllegalCommodities are commodities that are illegal to trade, harvest or produce
 	// if within the jurisdiction of the government.
@@ -74,7 +74,7 @@ type Laws struct {
 func NewLaws() *Laws {
 	return &Laws{
 		Factions:    map[string]bool{},
-		Actions:     map[ActionType]bool{},
+		Actions:     map[string]bool{},
 		Commodities: map[string]bool{},
 		Research:    map[string]bool{},
 	}

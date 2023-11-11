@@ -60,7 +60,7 @@ type FactionSummary struct {
 
 	// weights
 	Professions map[string]int
-	Actions     map[ActionType]int
+	Actions     map[string]int
 	Research    map[string]int
 	Trust       map[string]int
 
@@ -77,7 +77,7 @@ func NewFactionSummary(f *Faction) *FactionSummary {
 		Faction:          *f,
 		ResearchProgress: map[string]int{},
 		Professions:      map[string]int{},
-		Actions:          map[ActionType]int{},
+		Actions:          map[string]int{},
 		Research:         map[string]int{},
 		Trust:            map[string]int{},
 		Ranks:            &DemographicRankSpread{},

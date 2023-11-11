@@ -18,7 +18,7 @@ func main() {
 		//Ambition: structs.MinEthos / 2,
 	}
 
-	act, _ := actions[structs.ActionTypeWar]
+	act, _ := actions[fantasy.War]
 
 	fmt.Println(&act.Ethos, f)
 	dist := structs.EthosDistance(f, &act.Ethos)

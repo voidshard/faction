@@ -13,9 +13,9 @@ import (
 
 var (
 	fieldTypes = map[Op][]isValid{
-		Equal:    {isInt, isString, isBool, isJobState, isActionType, isMetaKey, isEventType, isFactionRelation},
-		NotEqual: {isInt, isString, isBool, isJobState, isActionType, isMetaKey, isEventType, isFactionRelation},
-		In:       {isListID, isListString, isListJobState, isListActionType, isListMetaKey, isListEventType},
+		Equal:    {isInt, isString, isBool, isJobState, isMetaKey, isEventType, isFactionRelation},
+		NotEqual: {isInt, isString, isBool, isJobState, isMetaKey, isEventType, isFactionRelation},
+		In:       {isListID, isListString, isListJobState, isListMetaKey, isListEventType},
 		Greater:  {isInt, isFactionRelation},
 		Less:     {isInt, isFactionRelation},
 	}
@@ -23,7 +23,7 @@ var (
 		ID:                    {isID, isListID},
 		ParentFactionID:       {isID, isListID},
 		ParentFactionRelation: {isFactionRelation},
-		ActionType:            {isActionType, isListActionType},
+		ActionType:            {isString, isListString},
 		JobID:                 {isID, isListID},
 		AreaID:                {isID, isListID},
 		GovernmentID:          {isID, isListID},
@@ -52,7 +52,6 @@ var (
 	metaKeys    = map[string]bool{}
 	eventTypes  = map[string]bool{}
 	jobStates   = map[string]bool{}
-	actionTypes = map[string]bool{}
 	fnRelations = map[int]bool{}
 )
 
@@ -69,9 +68,6 @@ func init() {
 		jobStates[string(s)] = true
 	}
 
-	for _, a := range structs.AllActions {
-		actionTypes[string(a)] = true
-	}
 	for _, r := range structs.AllFactionRelations {
 		fnRelations[int(r)] = true
 	}
@@ -255,39 +251,6 @@ func isListEventType(v interface{}) bool {
 	}
 	for _, j := range i {
 		_, ok = eventTypes[j]
-		if !ok {
-			return false
-		}
-	}
-	return true
-}
-
-func isActionType(v interface{}) bool {
-	_, ok := v.(structs.ActionType)
-	if ok {
-		return true
-	}
-
-	i, ok := v.(string)
-	if !ok {
-		return false
-	}
-	_, ok = actionTypes[i]
-	return ok
-}
-
-func isListActionType(v interface{}) bool {
-	_, ok := v.([]structs.ActionType)
-	if ok {
-		return true
-	}
-
-	i, ok := v.([]string)
-	if !ok {
-		return false
-	}
-	for _, j := range i {
-		_, ok = actionTypes[j]
 		if !ok {
 			return false
 		}

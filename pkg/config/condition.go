@@ -14,6 +14,9 @@ const (
 	ConditionSrcFactionIsCovert        Condition = "src_faction_is_covert"
 	ConditionSrcFactionIsNotCovert     Condition = "src_faction_not_covert"
 
+	// requires the user to have Plot(s) with some commodit(y/ies)
+	ConditionSrcFactionHasHarvestablePlot Condition = "src_faction_has_harvestable_plot"
+
 	// assertions about the organisation of the source faction
 	ConditionSrcFactionStructurePyramid Condition = "src_faction_structure_pyramid"
 	ConditionSrcFactionStructureLoose   Condition = "src_faction_structure_loose"

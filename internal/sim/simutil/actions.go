@@ -8,7 +8,7 @@ import (
 	"github.com/voidshard/faction/pkg/structs"
 )
 
-func SourceMeetsActionConditions(f *structs.FactionSummary, conditions [][]config.Condition) bool {
+func SourceMeetsActionConditions(f *FactionContext, conditions [][]config.Condition) bool {
 	if conditions == nil {
 		return false
 	}
@@ -19,23 +19,25 @@ func SourceMeetsActionConditions(f *structs.FactionSummary, conditions [][]confi
 			case config.ConditionAlways:
 				// pass
 			case config.ConditionSrcFactionIsCovert:
-				allow = allow && f.IsCovert
+				allow = allow && f.Summary.IsCovert
 			case config.ConditionSrcFactionIsNotCovert:
-				allow = allow && !f.IsCovert
+				allow = allow && !f.Summary.IsCovert
 			case config.ConditionSrcFactionIsGovernment:
-				allow = allow && f.IsGovernment
+				allow = allow && f.Summary.IsGovernment
 			case config.ConditionSrcFactionIsNotGovernment:
-				allow = allow && !f.IsGovernment
+				allow = allow && !f.Summary.IsGovernment
 			case config.ConditionSrcFactionIsReligion:
-				allow = allow && f.IsReligion
+				allow = allow && f.Summary.IsReligion
 			case config.ConditionSrcFactionHasReligion:
-				allow = allow && f.ReligionID != ""
+				allow = allow && f.Summary.ReligionID != ""
 			case config.ConditionSrcFactionStructurePyramid:
-				allow = allow && f.Structure == structs.LeaderStructurePyramid
+				allow = allow && f.Summary.Structure == structs.LeaderStructurePyramid
 			case config.ConditionSrcFactionStructureLoose:
-				allow = allow && f.Structure == structs.LeaderStructureLoose
+				allow = allow && f.Summary.Structure == structs.LeaderStructureLoose
 			case config.ConditionSrcFactionStructureCell:
-				allow = allow && f.Structure == structs.LeaderStructureCell
+				allow = allow && f.Summary.Structure == structs.LeaderStructureCell
+			case config.ConditionSrcFactionHasHarvestablePlot:
+				allow = allow && len(f.Land.Commodities) > 0
 			}
 			if !allow {
 				// break out of inner loop early
@@ -51,16 +53,12 @@ func SourceMeetsActionConditions(f *structs.FactionSummary, conditions [][]confi
 
 // ServicesForHire returns a map of services that can be hired, and the faction(s) that offer the
 // service within the given areas.
-func ServicesForHire(actions map[structs.ActionType]*config.Action, dbconn *db.FactionDB, areas []string) (map[structs.ActionType][]string, error) {
+func ServicesForHire(actions map[string]*config.Action, dbconn *db.FactionDB, areas []string) (map[string][]string, error) {
 	// all the actions that can be paid for
 	actionsForHire := []string{}
-	for actionType, cfg := range actions {
-		if actionType == structs.ActionTypeHireMercenaries || actionType == structs.ActionTypeHireSpies {
-			// disallow hiring mercenaries or spies as a mercenary action :P
-			continue
-		}
-		if cfg.ValidServiceMercenary || cfg.ValidServiceSpy {
-			actionsForHire = append(actionsForHire, string(actionType))
+	for _, cfg := range actions {
+		if cfg.MercenaryActions != nil {
+			actionsForHire = append(actionsForHire, cfg.MercenaryActions...)
 		}
 	}
 
@@ -84,7 +82,7 @@ func ServicesForHire(actions map[structs.ActionType]*config.Action, dbconn *db.F
 		token  string
 	)
 
-	inprogress := map[structs.ActionType]mapset.Set[string]{}
+	inprogress := map[string]mapset.Set[string]{}
 	for {
 		tuples, token, err = dbconn.Tuples(db.RelationFactionActionTypeWeight, token, q)
 		if err != nil {
@@ -95,13 +93,12 @@ func ServicesForHire(actions map[structs.ActionType]*config.Action, dbconn *db.F
 			if tuple.Value <= 0 {
 				continue
 			}
-			act := structs.ActionType(tuple.Object)
-			who, ok := inprogress[act]
+			who, ok := inprogress[tuple.Object]
 			if !ok {
 				who = mapset.NewSet[string]()
 			}
 			who.Add(tuple.Subject)
-			inprogress[act] = who
+			inprogress[tuple.Object] = who
 		}
 
 		if token == "" {
@@ -110,7 +107,7 @@ func ServicesForHire(actions map[structs.ActionType]*config.Action, dbconn *db.F
 	}
 
 	// annnd finally shove our answer into a nice map
-	done := map[structs.ActionType][]string{}
+	done := map[string][]string{}
 	for act, who := range inprogress {
 		done[act] = who.ToSlice()
 	}

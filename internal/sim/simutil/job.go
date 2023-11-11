@@ -7,7 +7,7 @@ import (
 	"github.com/voidshard/faction/pkg/structs"
 )
 
-func NewJob(tick int, t structs.ActionType, cfg *config.Action) *structs.Job {
+func NewJob(tick int, action string, cfg *config.Action) *structs.Job {
 	preptime := rng.NewRand(
 		cfg.TimeToPrepare.Min,
 		cfg.TimeToPrepare.Max,
@@ -25,7 +25,7 @@ func NewJob(tick int, t structs.ActionType, cfg *config.Action) *structs.Job {
 		// 		ParentJobID: "",
 		// 		SourceFactionID: "",
 		// 		SourceAreaID:    "",
-		Action: t,
+		Action: action,
 		// 		TargetFactionID: "",
 		// 		TargetAreaID:    "",
 		// 		TargetMetaKey:   "",

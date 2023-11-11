@@ -4,11 +4,27 @@ import (
 	"github.com/voidshard/faction/pkg/structs"
 )
 
+type ActionCategory string
+
+const (
+	ActionCategoryHostile    ActionCategory = "hostile"
+	ActionCategoryUnfriendly ActionCategory = "unfriendly"
+	ActionCategoryNeutral    ActionCategory = "" // left blank as it's the default if not specified
+	ActionCategoryFriendly   ActionCategory = "friendly"
+)
+
 // Action is configuration for a single ActionType (see pkg/structs/action.go)
 type Action struct {
 	// Ethos that matches this action; factions with matching ethos'
 	// are more likely to perform it
 	Ethos structs.Ethos
+
+	// If the engine should pick a more specific target (above Faction & Area).
+	// Eg. this needs to target a specific plot for Raid.
+	Target structs.MetaKey
+
+	// Category of action gives us some hint as to how the action should be is perceived.
+	Category ActionCategory
 
 	// Min / Max number of people.
 	MinPeople int // min: 1
@@ -81,7 +97,11 @@ type Action struct {
 	// Ie. a faction low on money might look to "Wealth"
 	Goals []structs.Goal
 
-	// Controls if this action can be chosen by HireMercenaries and HireSpies respectively
-	ValidServiceMercenary bool
-	ValidServiceSpy       bool
+	// MercenaryActions controls if this job is a mercenary job.
+	// For this action to succeed there must be a Faction B in the area who is willing to perform the action.
+	// Ie. this job is performed by Faction A, who finds a Faction B to that can perform one of these actions
+	// on a target of their choosing.
+	// Eg. If MercenaryActions = []string{"Assassinate"} then Faction A can hire Faction B to assassinate
+	// someone of their choosing from Faction C.
+	MercenaryActions []string
 }

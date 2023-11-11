@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/voidshard/faction/pkg/config"
+	"github.com/voidshard/faction/pkg/premade/fantasy"
 	"github.com/voidshard/faction/pkg/structs"
 
 	"github.com/voidshard/faction/internal/db"
@@ -20,7 +21,7 @@ func main() {
 
 	govt1 := &structs.Government{ID: structs.NewID(), Outlawed: &structs.Laws{
 		Commodities: map[string]bool{"apples": true, "fur": false},
-		Actions:     map[structs.ActionType]bool{structs.ActionTypeWar: true, structs.ActionTypeHarvest: false},
+		Actions:     map[string]bool{fantasy.War: true, fantasy.Harvest: false},
 	}}
 
 	area1 := &structs.Area{ID: structs.NewID(), GovernmentID: govt1.ID}
@@ -135,7 +136,7 @@ func main() {
 		ID:              structs.NewID(),
 		SourceFactionID: faction1.ID,
 		SourceAreaID:    area1.ID,
-		Action:          structs.ActionTypeFestival,
+		Action:          stringFestival,
 		TargetAreaID:    area1.ID,
 		TargetFactionID: faction1.ID,
 		TargetMetaKey:   structs.MetaKeyFamily,

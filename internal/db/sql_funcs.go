@@ -623,7 +623,7 @@ func readLaws(op sqlOperator, in []string) (map[string]*structs.Laws, error) {
 		case structs.MetaKeyCommodity:
 			law.Commodities[l.MetaVal] = l.Illegal
 		case structs.MetaKeyAction:
-			law.Actions[structs.ActionType(l.MetaVal)] = l.Illegal
+			law.Actions[l.MetaVal] = l.Illegal
 		case structs.MetaKeyResearch:
 			law.Research[l.MetaVal] = l.Illegal
 		case structs.MetaKeyReligion:

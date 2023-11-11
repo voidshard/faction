@@ -68,8 +68,8 @@ func Faction() *config.Faction {
 		PropertyProbability: []float64{0.40, 0.3, 0.25, 0.10, 0.05},
 		Focuses: []config.Focus{
 			config.Focus{
-				Actions: []structs.ActionType{ // hedonists
-					structs.ActionTypeFestival,
+				Actions: []string{ // hedonists
+					Festival,
 				},
 				Probability: 0.05,
 				Weight: config.Distribution{
@@ -84,13 +84,13 @@ func Faction() *config.Faction {
 				MilitaryDefenseBonus:  0.0,
 			},
 			config.Focus{
-				Actions: []structs.ActionType{ // warfare
-					structs.ActionTypePillage,
-					structs.ActionTypeWar,
-					structs.ActionTypeBribe,
-					structs.ActionTypeRaid,
-					structs.ActionTypeEnslave,
-					structs.ActionTypeHireSpies,
+				Actions: []string{ // warfare
+					Pillage,
+					War,
+					Bribe,
+					Raid,
+					Enslave,
+					HireSpies,
 				},
 				Probability: 0.02,
 				Weight: config.Distribution{
@@ -105,10 +105,10 @@ func Faction() *config.Faction {
 				MilitaryDefenseBonus:  0.5,
 			},
 			config.Focus{
-				Actions: []structs.ActionType{ // pirates
-					structs.ActionTypeRaid,
-					structs.ActionTypeBribe,
-					structs.ActionTypeKidnap,
+				Actions: []string{ // pirates
+					Raid,
+					Bribe,
+					Kidnap,
 				},
 				Probability: 0.01,
 				Weight: config.Distribution{
@@ -123,11 +123,11 @@ func Faction() *config.Faction {
 				MilitaryDefenseBonus:  0.25,
 			},
 			config.Focus{
-				Actions: []structs.ActionType{ // removing people (directly or reputation)
-					structs.ActionTypeAssassinate,
-					structs.ActionTypeFrame,
-					structs.ActionTypeSpreadRumors,
-					structs.ActionTypeHireMercenaries,
+				Actions: []string{ // removing people (directly or reputation)
+					Assassinate,
+					Frame,
+					SpreadRumors,
+					HireMercenaries,
 				},
 				Probability: 0.02,
 				Weight: config.Distribution{
@@ -142,9 +142,9 @@ func Faction() *config.Faction {
 				MilitaryDefenseBonus:  -0.50,
 			},
 			config.Focus{
-				Actions: []structs.ActionType{ // secrets
-					structs.ActionTypeGatherSecrets,
-					structs.ActionTypeConcealSecrets,
+				Actions: []string{ // secrets
+					GatherSecrets,
+					ConcealSecrets,
 				},
 				Probability: 0.05,
 				Weight: config.Distribution{
@@ -159,9 +159,9 @@ func Faction() *config.Faction {
 				MilitaryDefenseBonus:  -0.25,
 			},
 			config.Focus{
-				Actions: []structs.ActionType{ // research institution
-					structs.ActionTypeResearch,
-					structs.ActionTypeResearch,
+				Actions: []string{ // research institution
+					Research,
+					Research,
 				},
 				ResearchTopics: []string{MAGIC_ARCANA}, // ie. MAGIC_ARCANA + another research topic
 				Probability:    0.10,
@@ -177,10 +177,10 @@ func Faction() *config.Faction {
 				MilitaryDefenseBonus:  0.0,
 			},
 			config.Focus{
-				Actions: []structs.ActionType{ // standard fantasy temple / healing institution
-					structs.ActionTypeResearch,
-					structs.ActionTypeResearch,
-					structs.ActionTypeCharity,
+				Actions: []string{ // standard fantasy temple / healing institution
+					Research,
+					Research,
+					Charity,
 				},
 				ResearchTopics: []string{MEDICINE, THEOLOGY},
 				Probability:    0.08,
@@ -196,12 +196,12 @@ func Faction() *config.Faction {
 				MilitaryDefenseBonus:  -0.25,
 			},
 			config.Focus{
-				Actions: []structs.ActionType{ // knightly order
-					structs.ActionTypeResearch,
-					structs.ActionTypeResearch,
-					structs.ActionTypeRaid,
-					structs.ActionTypePillage,
-					structs.ActionTypeRecruit,
+				Actions: []string{ // knightly order
+					Research,
+					Research,
+					Raid,
+					Pillage,
+					Recruit,
 				},
 				ResearchTopics: []string{WARFARE, THEOLOGY},
 				Probability:    0.05,
@@ -217,11 +217,11 @@ func Faction() *config.Faction {
 				MilitaryDefenseBonus:  0.5,
 			},
 			config.Focus{
-				Actions: []structs.ActionType{ // cult
-					structs.ActionTypeKidnap,
-					structs.ActionTypeResearch,
-					structs.ActionTypeConcealSecrets,
-					structs.ActionTypeGatherSecrets,
+				Actions: []string{ // cult
+					Kidnap,
+					Research,
+					ConcealSecrets,
+					GatherSecrets,
 				},
 				ResearchTopics: []string{MAGIC_OCCULT},
 				Probability:    0.02,
@@ -237,11 +237,11 @@ func Faction() *config.Faction {
 				MilitaryDefenseBonus:  0.0,
 			},
 			config.Focus{
-				Actions: []structs.ActionType{ // theft
-					structs.ActionTypeBlackmail,
-					structs.ActionTypeSteal,
-					structs.ActionTypeKidnap,
-					structs.ActionTypeConcealSecrets,
+				Actions: []string{ // theft
+					Blackmail,
+					Steal,
+					Kidnap,
+					ConcealSecrets,
 				},
 				Probability: 0.06,
 				Weight: config.Distribution{
@@ -256,10 +256,10 @@ func Faction() *config.Faction {
 				MilitaryDefenseBonus:  -0.2,
 			},
 			config.Focus{ // corporate corruption
-				Actions: []structs.ActionType{
-					structs.ActionTypeBribe,
-					structs.ActionTypeBlackmail,
-					structs.ActionTypeHireSpies,
+				Actions: []string{
+					Bribe,
+					Blackmail,
+					HireSpies,
 				},
 				Probability: 0.1,
 				Weight: config.Distribution{
@@ -274,10 +274,10 @@ func Faction() *config.Faction {
 				MilitaryDefenseBonus:  0.0,
 			},
 			config.Focus{ // information corruption
-				Actions: []structs.ActionType{
-					structs.ActionTypeSpreadRumors,
-					structs.ActionTypePropoganda,
-					structs.ActionTypeFrame,
+				Actions: []string{
+					SpreadRumors,
+					Propoganda,
+					Frame,
 				},
 				Probability: 0.15,
 				Weight: config.Distribution{
@@ -292,9 +292,9 @@ func Faction() *config.Faction {
 				MilitaryDefenseBonus:  0.0,
 			},
 			config.Focus{ // expansion
-				Actions: []structs.ActionType{
-					structs.ActionTypeRecruit,
-					structs.ActionTypeExpand,
+				Actions: []string{
+					Recruit,
+					Expand,
 				},
 				Probability: 0.3,
 				Weight: config.Distribution{
@@ -309,12 +309,12 @@ func Faction() *config.Faction {
 				MilitaryDefenseBonus:  0.1,
 			},
 			config.Focus{ // expansion, unfriendly style
-				Actions: []structs.ActionType{
-					structs.ActionTypeRecruit,
-					structs.ActionTypeExpand,
-					structs.ActionTypeEnslave,
-					structs.ActionTypeHireMercenaries,
-					structs.ActionTypeHireSpies,
+				Actions: []string{
+					Recruit,
+					Expand,
+					Enslave,
+					HireMercenaries,
+					HireSpies,
 				},
 				Probability: 0.2,
 				Weight: config.Distribution{
@@ -329,9 +329,9 @@ func Faction() *config.Faction {
 				MilitaryDefenseBonus:  0.1,
 			},
 			config.Focus{ // trade
-				Actions: []structs.ActionType{
-					structs.ActionTypeTrade,
-					structs.ActionTypeHireSpies,
+				Actions: []string{
+					Trade,
+					HireSpies,
 				},
 				Probability: 0.30,
 				Weight: config.Distribution{
@@ -359,6 +359,7 @@ func Faction() *config.Faction {
 					TIMBER:   500,
 				},
 				Exports: []string{IRON_TOOLS, STEEL_ARMOUR, STEEL_WEAPON, STEEL_TOOLS},
+				Actions: []string{Craft, Harvest, Trade},
 			},
 			config.Guild{ // a more classic "metal smith" guild
 				// this sweeping vertical integration is probably exclusively state run / appointed
@@ -367,6 +368,7 @@ func Faction() *config.Faction {
 				LandMinCommodityYield: map[string]int{},
 				Imports:               []string{IRON_INGOT, STEEL_INGOT, TIMBER},
 				Exports:               []string{IRON_TOOLS, STEEL_ARMOUR, STEEL_WEAPON, STEEL_TOOLS},
+				Actions:               []string{Craft, Trade},
 			},
 			config.Guild{ // textile production (flax -> linen)
 				Professions: []string{FARMER, CLOTHIER, WEAVER, MERCHANT, CLERK},
@@ -375,6 +377,7 @@ func Faction() *config.Faction {
 					FLAX: 400,
 				},
 				Exports: []string{LINEN}, // pre-made clothing was not so common
+				Actions: []string{Craft, Harvest, Trade},
 			},
 			config.Guild{
 				Professions: []string{TANNER, LEATHERWORKER},
@@ -384,6 +387,7 @@ func Faction() *config.Faction {
 					FODDER:    200,
 				},
 				Exports: []string{LEATHER, MEAT},
+				Actions: []string{Craft, Harvest, Trade},
 			},
 			config.Guild{ // wood working
 				Professions: []string{CARPENTER, FORESTER},
@@ -392,6 +396,7 @@ func Faction() *config.Faction {
 					TIMBER: 400,
 				},
 				Exports: []string{WOODEN_FURNITURE, WOODEN_TOOLS},
+				Actions: []string{Craft, Harvest, Trade},
 			},
 			config.Guild{ // farming, with a side focus on high value crops
 				Professions: []string{FARMER, THIEF},
@@ -401,6 +406,7 @@ func Faction() *config.Faction {
 					WHEAT: 500,
 				},
 				Exports: []string{OPIUM, WHEAT},
+				Actions: []string{Harvest, Trade},
 			},
 			config.Guild{ // farming (rare, selling food stuffs long distance was expensive & awkward)
 				Professions: []string{FARMER, SAILOR, MERCHANT},
@@ -409,6 +415,7 @@ func Faction() *config.Faction {
 					WHEAT: 1000,
 				},
 				Exports: []string{WHEAT},
+				Actions: []string{Harvest, Trade},
 			},
 		},
 		GuildProbability: []float64{0.15, 0.65, 0.15},
