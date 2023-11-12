@@ -37,7 +37,8 @@ type Job struct {
 	SourceFactionID string `db:"source_faction_id"` // ID of the faction posting the job
 	SourceAreaID    string `db:"source_area_id"`    // where people will be recruited from
 
-	Action string `db:"action"` // action that is due to take place
+	Action   string `db:"action"`   // action that is due to take place
+	Priority int    `db:"priority"` // priority of this job
 
 	Conscription bool `db:"conscription"` // if job is allowed to force people take part
 

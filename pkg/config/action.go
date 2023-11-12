@@ -51,6 +51,9 @@ type Action struct {
 
 	// Under what circumstances the user of this action can force people to take part (if any).
 	// Probably should be used sparingly but it makes sense for some actions.
+	//
+	// A Job with Conscription will force people to take part if they're within faction controlled
+	// area(s).
 	Conscription [][]Condition
 
 	// Weight given to performing this Action

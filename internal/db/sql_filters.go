@@ -16,8 +16,8 @@ var (
 		Equal:    {isInt, isString, isBool, isJobState, isMetaKey, isEventType, isFactionRelation},
 		NotEqual: {isInt, isString, isBool, isJobState, isMetaKey, isEventType, isFactionRelation},
 		In:       {isListID, isListString, isListJobState, isListMetaKey, isListEventType},
-		Greater:  {isInt, isFactionRelation},
-		Less:     {isInt, isFactionRelation},
+		Greater:  {isInt, isFactionRelation, isField},
+		Less:     {isInt, isFactionRelation, isField},
 	}
 	colChecks = map[Field][]isValid{
 		ID:                    {isID, isListID},
@@ -46,8 +46,12 @@ var (
 		Secrecy:               {isInt},
 		AdulthoodTick:         {isInt},
 		Type:                  {isEventType, isListEventType},
-		Tick:                  {isInt},
-		TickEnds:              {isInt},
+		Tick:                  {isInt, isField},
+		TickEnds:              {isInt, isField},
+		Conscription:          {isBool},
+		PeopleMax:             {isInt, isField},
+		PeopleNow:             {isInt, isField},
+		PeopleMin:             {isInt, isField},
 	}
 	metaKeys    = map[string]bool{}
 	eventTypes  = map[string]bool{}
@@ -186,6 +190,11 @@ func (f *Filter) sqlQuery(offset int) (string, []interface{}, error) {
 func (f *Filter) sqlColumn() string {
 	// since Field restricts user input to valid columns anyways
 	return string(f.Field)
+}
+
+func isField(v interface{}) bool {
+	_, ok := v.(Field)
+	return ok
 }
 
 func isBool(v interface{}) bool {

@@ -559,6 +559,39 @@ func setJobs(op sqlOperator, in []*structs.Job) error {
 	return err
 }
 
+func assignJob(op sqlOperator, jobID string, peopleIDs []string) (int, error) {
+	if len(peopleIDs) == 0 || jobID == "" {
+		return 0, nil
+	}
+	if !dbutils.IsValidID(jobID) {
+		return 0, fmt.Errorf("job id %s is invalid", jobID)
+	}
+	for _, id := range peopleIDs {
+		if !dbutils.IsValidID(id) {
+			return 0, fmt.Errorf("person id %s is invalid", id)
+		}
+	}
+
+	bindvar, args := sqlIn(peopleIDs)
+
+	// note we specifiy here job_id = '' to ensure we can't clash with other inprogress job assignments
+	peopleUpdate := fmt.Sprintf(`UPDATE %s SET job_id = $1 WHERE job_id = '' AND id IN (%s);`, tablePeople, bindvar)
+	result, err := op.Exec(peopleUpdate, args...)
+	if err != nil {
+		return 0, err
+	}
+
+	// only update the job by how many rows we actually altered
+	affected, err := result.RowsAffected()
+	if err != nil {
+		return 0, err
+	}
+
+	jobUpdate := fmt.Sprintf(`UPDATE %s SET people_now = people_now + %d WHERE id = $1;`, tableJobs, affected)
+	_, err = op.Exec(jobUpdate, jobID)
+	return int(affected), err
+}
+
 func governments(op sqlOperator, token string, in *Query) ([]*structs.Government, string, error) {
 	if in == nil {
 		in = Q()

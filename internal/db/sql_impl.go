@@ -150,6 +150,10 @@ func (s *sqlDB) SetJobs(in ...*structs.Job) error {
 	return chunkWrite(setJobs, s.conn, in)
 }
 
+func (s *sqlDB) AssignJob(jobID string, peopleIDs []string) (int, error) {
+	return assignJob(s.conn, jobID, peopleIDs)
+}
+
 func (s *sqlDB) SetGovernments(in ...*structs.Government) error {
 	return chunkWrite(setGovernments, s.conn, in)
 }
@@ -364,6 +368,10 @@ func (t *sqlTx) SetEvents(in ...*structs.Event) error {
 
 func (t *sqlTx) SetJobs(in ...*structs.Job) error {
 	return chunkWrite(setJobs, t.tx, in)
+}
+
+func (t *sqlTx) AssignJob(jobID string, peopleIDs []string) (int, error) {
+	return assignJob(t.tx, jobID, peopleIDs)
 }
 
 func (t *sqlTx) SetGovernments(in ...*structs.Government) error {

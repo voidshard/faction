@@ -88,6 +88,10 @@ const (
 	JobState        Field = "state"
 	TickEnds        Field = "tick_ends"
 	ActionType      Field = "action"
+	Conscription    Field = "conscription"
+	PeopleNow       Field = "people_now"
+	PeopleMax       Field = "people_max"
+	PeopleMin       Field = "people_min"
 
 	// tuple, modifiers
 	Subject Field = "subject"

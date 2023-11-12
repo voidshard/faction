@@ -48,6 +48,7 @@ type Reader interface {
 }
 
 type Writer interface {
+	// bulk set functions
 	SetTick(i int) error
 	SetAreas(in ...*structs.Area) error
 	SetFactions(in ...*structs.Faction) error
@@ -58,10 +59,13 @@ type Writer interface {
 	SetPlots(in ...*structs.Plot) error
 	SetTuples(table Relation, in ...*structs.Tuple) error
 	SetModifiers(table Relation, in ...*structs.Modifier) error
-	DeleteModifiers(table Relation, expires_before_tick int) error
 	SetMeta(id, str_val string, int_val int) error
-	IncrTuples(table Relation, v int, q *Query) error
 	SetEvents(in ...*structs.Event) error
+
+	// special funcs
+	DeleteModifiers(table Relation, expires_before_tick int) error
+	IncrTuples(table Relation, v int, q *Query) error
+	AssignJob(jobID string, peopleIDs []string) (int, error)
 }
 
 type ReaderWriter interface {
