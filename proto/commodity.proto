@@ -1,0 +1,38 @@
+syntax = "proto3";
+option go_package = "pkg/structs";
+
+// Commodity is something of value in the economy.
+//
+// Raw materials are defined as those with no inputs.
+// Everything else is a worked good (a "craft") that has one or more input(s) and
+// returns one or more output(s).
+//
+// Every commodity has a name, a profession and an applicable skill.
+//
+// Professions are generally the focus of a Faction `ProfessionFocus`
+// ie. a guild of farmers might have a focus on professions Farming, Weaving, Tanning
+// and produce commodities wheat, textiles, leather.
+//
+// The simulator doesn't actually need to understand what these professions mean
+// it's simply a way of linking commodities -> professions -> factions.
+message Commodity {
+    string Name = 1; // eg. wheat, iron, iron ingots, silk
+    string Profession = 2; // eg. farmer, miner; who makes this commodity
+    repeated Recipe Recipes = 3; // what commodities & quantities can be used to make this
+}
+
+// Recipe lists required inputs to craft one unit of a commodity.
+message Recipe {
+    // Required input Commodity (names) + their amounts (if any) to `Craft` 1 unit of
+    // this commodity.
+    //
+    // Nb. this only makes sense for stuff that isn't harvested or mined directly.
+    // Ie. harvesting wheat doesn't have a requirement, but producing flour requires
+    // some units of wheat on hand.
+    //
+    // Commodities can be created from different recipies, ie.
+    // we can collect meat from wild_game or domestic livestock.
+    //
+    // Each "recipe" is a different way of producing the same commodity.
+    map<string, double> Inputs = 1;
+}

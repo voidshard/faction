@@ -1,0 +1,15 @@
+syntax = "proto3";
+option go_package = "pkg/structs";
+
+enum Goal {
+    Wealth     = 0;// all the glitters is gold
+    Growth     = 1; // expand the population
+    Territory  = 2; // expand the empire
+    Power      = 3; // destroy rivals
+    Piety      = 4; // spread the faith
+    Research   = 5; // research
+    Military   = 6; // build an army
+    Diplomacy  = 7; // make friends
+    Espionage  = 8; // spy on rivals
+    Stability  = 9; // keep the peace
+}

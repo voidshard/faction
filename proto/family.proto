@@ -1,0 +1,71 @@
+syntax = "proto3";
+option go_package = "pkg/structs";
+
+import "ethos.proto";
+
+message Family {
+    Ethos Ethos = 1;
+
+    string ID = 2;
+
+    // Race demographic assigned to children
+    string Race = 3;
+
+    // Culture demographic assigned to children
+    string Culture = 4;
+
+    // Area where the family is based (where children will be placed)
+    string AreaID = 5;
+
+    // social class of the family
+    string SocialClass = 6;
+
+    // Faction ID (if any) if this family is simulated as a major player.
+    //
+    // This implies the family is fairly wealthy and/or influential, probably 95% of families
+    // will not have this set; which is probably a good thing and saves us lots of calculations
+    // for families which don't really have the resources to act on the national / international
+    // stage.
+    string FactionID = 7;
+
+    // True while;
+    // - both people are capable of bearing children
+    // - both people are married or lovers (ie. willing to bear children)
+    bool IsChildBearing = 8;
+
+    // Represents the tick when one of the two potential parents becomes too old to bear children.
+    int64 MaxChildBearingTick = 9;
+
+    // If mother is pregnant then this is the tick when she will give birth.
+    // Nb.
+    // - we always set a Family to *not* child bearing if either partner dies
+    //   (as in, it cannot produce more children)
+    // - we set PregnancyEnd to 0 when the child is born or the mother dies
+    //   (this means the child can be born if the father is dead)
+    // This saves us having to query the parents when doing calculations
+    int64 PregnancyEnd = 10;
+
+    // A family consists of a male & female and can bear children.
+    // Nb. this does not imply that the couple are married ..
+    string MaleID = 11;
+    string FemaleID = 12;
+
+    // Save us looking up families (the info doesn't change anyways)
+    string MaGrandmaID = 13;
+    string MaGrandpaID = 14;
+    string PaGrandmaID = 15;
+    string PaGrandpaID = 16;
+
+    // Number of children this family has had
+    int64 NumberofChildren = 17;
+
+    // The tick when the couple got married, divorced or widowed
+    int64 MarriageTick = 18;
+    int64 DivorceTick = 19;
+    int64 WidowedTick = 20;
+
+    // Random number used for blind selection
+    int64 Random = 21;
+}
+
+

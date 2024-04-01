@@ -1,0 +1,57 @@
+syntax = "proto3";
+option go_package = "pkg/structs";
+
+import "meta.proto";
+
+// JobState is the state of a job
+// - pending on first creation, awaiting people to signup
+// - active when enough people have signed up
+// - done when the action has been attempted
+// - failed when the action could not be attempted / was cancelled
+enum JobState {
+    Pending = 0; // waiting to start
+    Ready = 1; // ready to start
+    Active = 2; // in progress 
+    Done = 3; // completed successfully
+    Failed = 4; // failed or failed to start
+}
+
+// Job is what a faction creates when it wishes to perform an Action.
+//
+// People sympathetic to the faction who don't already have work sign on to 'work'
+// jobs. If enough people signon by the time the job is registered to start then
+// it goes ahead (ie. the action is attempted).
+message Job {
+	string ID = 1;
+	string ParentJobID = 2; // if this job is a sub-job, this is the parent job ID
+
+	string SourceFactionID = 3; // ID of the faction posting the job
+	string SourceAreaID = 4; // where people will be recruited from
+
+	string Action = 5; // action that is due to take place
+	int64 Priority = 6; // priority of this job
+
+	bool Conscription = 7;// if job is allowed to force people take part
+
+	string TargetFactionID = 8; // ID of the faction the action is aimed at
+	string TargetAreaID = 9; // where the action will take place
+
+	// key/val pair to hold adv. target metadata (ie. key:PERSON val:PERSON_ID)
+	// We only set this if TargetFactionID and TargetAreaID (always set) are not enough
+	// ie. we target a specfic person, or a specific building etc within some area & faction
+	Meta TargetMetaKey = 10;
+	string TargetMetaVal = 11;
+
+	int64 PeopleMin = 12; // required min number of people (else job fails to kick off)
+	int64 PeopleMax = 13; // max number of people that can work this (if any)
+	int64 PeopleNow = 14; // people signed up to work this
+
+	int64 TickCreated = 15; // when the job was created
+	int64 TickStarts = 16; // when the job is due to start
+	int64 TickEnds = 17; // when the job will end
+
+	int64 Secrecy = 18; // the result of an espionage defence roll (if covert)
+	bool IsIllegal = 19; // action has been outlawed
+
+	JobState State = 20; // current state of the job
+}

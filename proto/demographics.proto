@@ -1,0 +1,36 @@
+syntax = "proto3";
+option go_package = "pkg/structs";
+
+message Demographics {
+    map<string, DemographicStatSpread> Faith = 1;
+    map<string, DemographicStatSpread> Profession = 2;
+    map<string, DemographicStatSpread> Affiliation = 3;
+    map<string, DemographicRankSpread> Rank = 4;
+}
+
+message DemographicStatSpread {
+    int64 Exemplary = 1;
+    int64 Excellent = 2;
+    int64 Good = 3;
+    int64 Fine = 4;
+    int64 Average = 5;
+    int64 Poor = 6;
+    int64 Awful = 7;
+    int64 Terrible = 8;
+    int64 Abysmal = 9;
+    int64 Total = 10;
+}
+
+message DemographicRankSpread {
+    int64 Ruler = 1;
+    int64 Elder = 2;
+    int64 GrandMaster = 3;
+    int64 Master = 4;
+    int64 Expert = 5;
+    int64 Adept = 6;
+    int64 Journeyman = 7;
+    int64 Novice = 8;
+    int64 Apprentice = 9;
+    int64 Associate = 10;
+    int64 Total = 11;
+}

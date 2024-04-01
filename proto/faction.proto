@@ -1,0 +1,72 @@
+syntax = "proto3";
+option go_package = "pkg/structs";
+
+import "ethos.proto";
+import "demographics.proto";
+import "faction_leadership.proto";
+import "faction_structure.proto";
+import "faction_relation.proto";
+
+// Faction represents some group we would like to simulate.
+// Nb. we don't assume these are the *only* factions, just that they're the
+// most notable / influential / interesting.
+message Faction {
+    Ethos Ethos = 1;
+
+    string ID = 2;
+    string Name = 3;
+
+    string HomeAreaID = 4; // where the faction is based
+    string HQPlotID = 5; // faction headquarters
+
+    int64 ActionFrequencyTicks = 6; // faction offers new jobs every X ticks
+    
+    FactionLeadership Leadership = 7; // how faction is run
+    FactionStructure Structure = 8; // how faction is organized
+
+    int64 Wealth = 9; // money / liquid wealth available to spend
+    int64 Cohesion = 10; // how well the faction sticks together
+    int64 Corruption = 11; // corruption internal to the faction
+
+    bool IsCovert = 12; // is this faction a secret society?
+
+    string GovernmentID = 13; // government this faction is under
+    bool IsGovernment = 14; // is this faction a government?
+
+    string ReligionID = 15; // religion this faction is under
+    bool IsReligion = 16; // is this faction a religion?
+
+    bool IsMemberByBirth = 17; // if you have a parent(s) in the faction, are you a member?
+
+    int64 EspionageOffense = 18; // how good is this faction at spying
+    int64 EspionageDefense = 19; // how good is this faction at not being spied on
+    int64 MilitaryOffense = 20; // how good is this faction at offensive military actions
+    int64 MilitaryDefense = 21; // how good is this faction at defensive military actions
+
+    string ParentFactionID = 22; // ID of parent faction if any
+    FactionRelation ParentFactionRelation = 23; // relation to parent faction
+
+    // Numbers are best-effort estimates of the size of the faction.
+    int64 Members = 24; // number of members
+    int64 Vassals = 25; // number of vassals (rough guess)
+    int64 Plots = 26; // number of plots owned by the faction
+    int64 Areas = 27; // number of areas the faction is active in
+}
+
+// FactionSummary is a high level overview of a faction, including related tuples
+// (weights), information on current faction leadership (Ranks) and any research (ResearchProgress).
+message FactionSummary {
+    Faction Faction = 1;
+
+    // Amassed research
+    map<string, int64> ResearchProgress = 2;
+
+    // weights
+    map<string, int64> Professions = 3;
+    map<string, int64> Actions = 4;
+    map<string, int64> Research = 5;
+    map<string, int64> Trust = 6;
+
+    // counts of people of each rank
+    DemographicRankSpread Ranks = 7;
+}

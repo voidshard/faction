@@ -1,0 +1,21 @@
+syntax = "proto3";
+option go_package = "pkg/structs";
+
+import "meta.proto";
+
+message Tuple {
+    string Subject = 1;
+    string Object = 2;
+    string Value = 3;
+}
+
+message Modifier {
+    string Subject = 1;
+    string Object = 2;
+    string Value = 3;
+
+    int64 TickExpires = 4;
+    Meta MetaKey = 5;
+    string MetaVal = 6;
+    string MetaReason = 7;
+}

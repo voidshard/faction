@@ -2,7 +2,7 @@ services:
   worker:
     build:
       context: .
-      dockerfile: Dockerfile.local
+      dockerfile: Dockerfile
     environment:
       - FACTION_DB_LOCATION=postgres://factionreadwrite:readwrite@postgres:5432/faction?sslmode=disable
       - FACTION_REDIS_LOCATION=redis:6379

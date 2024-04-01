@@ -1,0 +1,9 @@
+syntax = "proto3";
+option go_package = "pkg/structs";
+
+message Area {
+    string ID = 1;
+    string GovernmentID = 2;
+    string Biome = 3;
+    int64 Random = 4;
+}

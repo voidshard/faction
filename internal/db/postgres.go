@@ -19,6 +19,7 @@ type Postgres struct {
 }
 
 func NewPostgres(cfg *config.Database) (*Postgres, error) {
+	// replace env vars in location
 	var db *sqlx.DB
 	var err error
 	for i := 1; i < retryFailConnect+1; i++ {

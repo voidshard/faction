@@ -1,0 +1,19 @@
+syntax = "proto3";
+option go_package = "pkg/structs";
+
+import "ethos.proto";
+
+// ResearchTopic is something a faction can research
+message ResearchTopic {
+    // Name of the topic, must be unique amongst all topics
+    string Name = 1;
+
+    // Probability that the topic will be researched
+    double Probability = 2;
+
+    // Profession connected to researching this topic
+    string Profession = 3;
+
+    // Ethos that this topic is connected to
+    Ethos Ethos = 4;
+}

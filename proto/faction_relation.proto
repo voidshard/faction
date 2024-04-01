@@ -1,0 +1,9 @@
+syntax = "proto3";
+option go_package = "pkg/structs";
+
+enum FactionRelation {
+    Tributary = 0; // pays tax to super faction, but does it's own thing
+    Puppet = 1; // strictly subordinate, very little self rule
+    Vassal = 2; // strictly subordinate, but with regin over it's own affairs
+    Member = 3; // equal member of a super faction (ie. members of the EU)
+}

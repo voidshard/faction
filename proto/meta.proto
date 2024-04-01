@@ -1,0 +1,18 @@
+syntax = "proto3";
+option go_package = "pkg/structs";
+
+enum Meta {
+    KeyPerson = 0; // targets specific person Val: PERSON_ID
+    KeyPlot = 1; // targets specific plot Val: PLOT_ID
+    KeyResearch = 2; // targets specific research Val: RESEARCH_TOPIC
+    KeyFaction = 3; // targets specific faction Val: FACTION_ID
+    KeyReligion = 4; // targets specific religion Val: RELIGION_ID
+    KeyGovernment = 5; // targets specific government Val: GOVERNMENT_ID
+    KeyFamily = 6; // targets specific family Val: FAMILY_ID
+    KeyCommodity = 7; // targets specific commodity Val: COMMODITY_NAME
+    KeyAction = 8; // targets specific action Val: ACTION_TYPE
+    KeyJob = 9; // targets specific job Val: JOB_ID
+    KeyArea = 10; // targets specific area Val: AREA_ID
+    KeyEvent = 11; // targets specific event Val: EVENT_ID
+    KeyGoal = 12; // targets specific goal Val: GOAL_NAME
+}

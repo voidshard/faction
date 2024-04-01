@@ -44,7 +44,9 @@ func (l *logLine) Str(key string, val string) LogLine {
 }
 
 func (l *logLine) Err(err error) LogLine {
-	l.e.Err(err)
+	if err != nil {
+		l.e.Err(err)
+	}
 	return l
 }
 

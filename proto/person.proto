@@ -1,0 +1,48 @@
+syntax = "proto3";
+option go_package = "pkg/structs";
+
+import "ethos.proto";
+import "meta.proto";
+
+// Person roughly outlines someone that can belong to / work for a faction.
+message Person {
+	Ethos Ethos = 1; // rough outlook
+
+	string FirstName = 2;
+	string LastName = 3;
+
+	string ID = 4;
+	string BirthFamilyID = 5; // family person was born into
+
+	string Race = 6;
+	string Culture = 7;
+
+	string AreaID = 8; // area person lives in
+	string JobID = 9; // ie. current job id (if any)
+
+	int64 BirthTick = 10;
+	int64 DeathTick = 11;
+
+	bool IsMale = 12;
+
+	int64 AdulthoodTick = 13; // tick person becomes an adult
+
+	string DeathMetaReason = 14;
+	Meta DeathMetaKey = 15;
+	string DeathMetaVal = 16;
+
+	string PreferredProfession = 17; // ie. what they want to do for a living
+	string PreferredFactionID = 18; // ie. who they want to work for
+
+	// Used for blind randomisation
+	int64 Random = 19;
+
+	// NaturalDeathTick is the tick someone is slated to die of old age.
+	//
+	// Set on birth. (Let's call it .. "fated death"?)
+	//
+	// Computationally it's easier to store the tick someone is slated to die on
+	// of "old age" than to randomly roll for each person down the line each tick to
+	// see if they die.
+	int64 NaturalDeathTick = 20;
+}
