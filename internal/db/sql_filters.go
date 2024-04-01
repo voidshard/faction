@@ -60,19 +60,19 @@ var (
 )
 
 func init() {
-	for _, m := range structs.AllMetaKeys {
+	for _, m := range structs.AllMetaKeys() {
 		metaKeys[string(m)] = true
 	}
 
-	for _, e := range structs.AllEventTypes {
+	for _, e := range structs.AllEventTypes() {
 		eventTypes[string(e)] = true
 	}
 
-	for _, s := range structs.AllJobStates {
+	for _, s := range structs.AllJobStates() {
 		jobStates[string(s)] = true
 	}
 
-	for _, r := range structs.AllFactionRelations {
+	for _, r := range structs.AllFactionRelations() {
 		fnRelations[int(r)] = true
 	}
 }
@@ -268,7 +268,7 @@ func isListEventType(v interface{}) bool {
 }
 
 func isMetaKey(v interface{}) bool {
-	_, ok := v.(structs.MetaKey)
+	_, ok := v.(structs.Meta)
 	if ok {
 		return true
 	}
@@ -282,7 +282,7 @@ func isMetaKey(v interface{}) bool {
 }
 
 func isListMetaKey(v interface{}) bool {
-	_, ok := v.([]structs.MetaKey)
+	_, ok := v.([]structs.Meta)
 	if ok {
 		return true
 	}

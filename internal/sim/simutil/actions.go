@@ -19,23 +19,23 @@ func SourceMeetsActionConditions(f *FactionContext, conditions [][]config.Condit
 			case config.ConditionAlways:
 				// pass
 			case config.ConditionSrcFactionIsCovert:
-				allow = allow && f.Summary.IsCovert
+				allow = allow && f.Summary.Faction.IsCovert
 			case config.ConditionSrcFactionIsNotCovert:
-				allow = allow && !f.Summary.IsCovert
+				allow = allow && !f.Summary.Faction.IsCovert
 			case config.ConditionSrcFactionIsGovernment:
-				allow = allow && f.Summary.IsGovernment
+				allow = allow && f.Summary.Faction.IsGovernment
 			case config.ConditionSrcFactionIsNotGovernment:
-				allow = allow && !f.Summary.IsGovernment
+				allow = allow && !f.Summary.Faction.IsGovernment
 			case config.ConditionSrcFactionIsReligion:
-				allow = allow && f.Summary.IsReligion
+				allow = allow && f.Summary.Faction.IsReligion
 			case config.ConditionSrcFactionHasReligion:
-				allow = allow && f.Summary.ReligionID != ""
+				allow = allow && f.Summary.Faction.ReligionID != ""
 			case config.ConditionSrcFactionStructurePyramid:
-				allow = allow && f.Summary.Structure == structs.LeaderStructurePyramid
+				allow = allow && f.Summary.Faction.Structure == structs.FactionStructure_Pyramid
 			case config.ConditionSrcFactionStructureLoose:
-				allow = allow && f.Summary.Structure == structs.LeaderStructureLoose
+				allow = allow && f.Summary.Faction.Structure == structs.FactionStructure_Loose
 			case config.ConditionSrcFactionStructureCell:
-				allow = allow && f.Summary.Structure == structs.LeaderStructureCell
+				allow = allow && f.Summary.Faction.Structure == structs.FactionStructure_Cell
 			case config.ConditionSrcFactionHasHarvestablePlot:
 				allow = allow && len(f.Land.Commodities) > 0
 			}

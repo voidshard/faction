@@ -91,7 +91,7 @@ func (w *ActionWeights) WeightAction(mult float64, act string) {
 func (w *ActionWeights) WeightByMinPeople(mult float64, i int) {
 	w.normal = nil
 	for atype, act := range w.defn {
-		if act.MinPeople > i {
+		if act.MinPeople > int64(i) {
 			w.prob[atype] *= mult
 		}
 	}

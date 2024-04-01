@@ -190,7 +190,7 @@ func (x *Person) GetDeathMetaKey() Meta {
 	if x != nil {
 		return x.DeathMetaKey
 	}
-	return Meta_KeyPerson
+	return Meta_None
 }
 
 func (x *Person) GetDeathMetaVal() string {

@@ -7,19 +7,19 @@ import (
 	"github.com/voidshard/faction/pkg/structs"
 )
 
-func NewJob(tick int, action string, cfg *config.Action) *structs.Job {
+func NewJob(tick int64, action string, cfg *config.Action) *structs.Job {
 	preptime := rng.NewRand(
 		cfg.TimeToPrepare.Min,
 		cfg.TimeToPrepare.Max,
 		cfg.TimeToPrepare.Mean,
 		cfg.TimeToPrepare.Deviation,
-	).Int()
+	).Int64()
 	exetime := rng.NewRand(
 		cfg.TimeToExecute.Min,
 		cfg.TimeToExecute.Max,
 		cfg.TimeToExecute.Mean,
 		cfg.TimeToExecute.Deviation,
-	).Int()
+	).Int64()
 	return &structs.Job{
 		ID: dbutils.RandomID(),
 		// 		ParentJobID: "",
@@ -39,6 +39,6 @@ func NewJob(tick int, action string, cfg *config.Action) *structs.Job {
 		TickEnds:    tick + preptime + exetime,
 		//		Secrecy:     0,
 		//		IsIllegal:   false,
-		State: structs.JobStatePending,
+		State: structs.JobState_Pending,
 	}
 }

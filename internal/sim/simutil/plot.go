@@ -6,9 +6,12 @@ import (
 )
 
 func PlotValuation(p *structs.Plot, eco economy.Economy, tickOffset int) float64 {
-	land := float64(p.Size) * eco.LandValue(p.AreaID, tickOffset)
-	if p.Commodity == "" {
+	if p.Crop == nil {
+		return 0
+	}
+	land := float64(p.Crop.Size) * eco.LandValue(p.AreaID, tickOffset)
+	if p.Crop.Commodity == "" {
 		return land
 	}
-	return land + float64(p.Yield)*eco.CommodityValue(p.Commodity, p.AreaID, tickOffset)
+	return land + float64(p.Crop.Yield)*eco.CommodityValue(p.Crop.Commodity, p.AreaID, tickOffset)
 }

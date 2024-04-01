@@ -48,7 +48,7 @@ func New(simCfg *config.Simulation) *Dice {
 func calcEthosWeightsForProfessions(cfg *config.Simulation) map[string]*structs.Ethos {
 	w := map[string][]*structs.Ethos{}
 
-	ethicw := structs.MaxEthos / 100
+	ethicw := float64(structs.MaxEthos / 100)
 
 	for _, act := range cfg.Actions {
 		if act.ProfessionWeights == nil {
@@ -59,7 +59,7 @@ func calcEthosWeightsForProfessions(cfg *config.Simulation) map[string]*structs.
 			if !ok {
 				cur = []*structs.Ethos{}
 			}
-			cur = append(cur, act.Ethos.Add(int(weight)*ethicw))
+			cur = append(cur, act.Ethos.Add(int64(weight*ethicw)))
 			w[prof] = cur
 		}
 	}

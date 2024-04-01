@@ -30,7 +30,7 @@ func (e *Economy) Commodities(area string) []*structs.Commodity {
 
 func (e *Economy) IsHarvestable(commodity string) bool {
 	comm := e.Commodity(commodity)
-	return comm.Requires == nil || len(comm.Requires) == 0
+	return comm.Recipes == nil || len(comm.Recipes) == 0
 }
 
 func (e *Economy) IsCraftable(commodity string) bool {
@@ -94,12 +94,12 @@ func NewEconomy() *Economy {
 			LINEN: &structs.Commodity{
 				Name:       LINEN,
 				Profession: WEAVER,
-				Requires:   []map[string]float64{{FLAX: 5.0}},
+				Recipes:    []*structs.Recipe{&structs.Recipe{Inputs: map[string]float64{FLAX: 5.0}}},
 			},
 			LINEN_CLOTHING: &structs.Commodity{
 				Name:       LINEN_CLOTHING,
 				Profession: CLOTHIER,
-				Requires:   []map[string]float64{{LINEN: 1.0}},
+				Recipes:    []*structs.Recipe{&structs.Recipe{Inputs: map[string]float64{LINEN: 1.0}}},
 			},
 			FODDER: &structs.Commodity{
 				Name:       FODDER,
@@ -112,17 +112,17 @@ func NewEconomy() *Economy {
 			HIDE: &structs.Commodity{
 				Name:       HIDE,
 				Profession: HUNTER,
-				Requires:   []map[string]float64{{WILD_GAME: 1.0}},
+				Recipes:    []*structs.Recipe{&structs.Recipe{Inputs: map[string]float64{WILD_GAME: 1.0}}},
 			},
 			MEAT: &structs.Commodity{
 				Name:       MEAT,
 				Profession: HUNTER,
-				Requires:   []map[string]float64{{WILD_GAME: 1.0}},
+				Recipes:    []*structs.Recipe{&structs.Recipe{Inputs: map[string]float64{WILD_GAME: 1.0}}},
 			},
 			LEATHER: &structs.Commodity{
 				Name:       LEATHER,
 				Profession: TANNER,
-				Requires:   []map[string]float64{{HIDE: 1.0}},
+				Recipes:    []*structs.Recipe{&structs.Recipe{Inputs: map[string]float64{HIDE: 1.0}}},
 			},
 			WHEAT: &structs.Commodity{
 				// www.theartofdoingstuff.com/im-growing-wheat-this-year-and-you-can-too/
@@ -134,7 +134,7 @@ func NewEconomy() *Economy {
 				// For every 0.5 units of wheat, we produce 1 unit of flour.
 				Name:       FLOUR_WHEAT,
 				Profession: FARMER,
-				Requires:   []map[string]float64{{WHEAT: 0.5}},
+				Recipes:    []*structs.Recipe{&structs.Recipe{Inputs: map[string]float64{WHEAT: 0.5}}},
 			},
 			IRON_ORE: &structs.Commodity{
 				Name:       IRON_ORE,
@@ -143,17 +143,17 @@ func NewEconomy() *Economy {
 			IRON_INGOT: &structs.Commodity{
 				Name:       IRON_INGOT,
 				Profession: SMELTER,
-				Requires:   []map[string]float64{{IRON_ORE: 10.0}},
+				Recipes:    []*structs.Recipe{&structs.Recipe{Inputs: map[string]float64{IRON_ORE: 10.0}}},
 			},
 			IRON_TOOLS: &structs.Commodity{
 				Name:       IRON_TOOLS,
 				Profession: SMITH,
-				Requires:   []map[string]float64{{IRON_INGOT: 1.0, TIMBER: 1.0}},
+				Recipes:    []*structs.Recipe{&structs.Recipe{Inputs: map[string]float64{IRON_INGOT: 1.0, TIMBER: 1.0}}},
 			},
 			STEEL_INGOT: &structs.Commodity{
 				Name:       STEEL_INGOT,
 				Profession: SMELTER,
-				Requires:   []map[string]float64{{IRON_INGOT: 2.0}},
+				Recipes:    []*structs.Recipe{&structs.Recipe{Inputs: map[string]float64{IRON_INGOT: 2.0}}},
 			},
 			TIMBER: &structs.Commodity{
 				Name:       TIMBER,
@@ -162,27 +162,27 @@ func NewEconomy() *Economy {
 			STEEL_WEAPON: &structs.Commodity{
 				Name:       STEEL_WEAPON,
 				Profession: SMITH,
-				Requires:   []map[string]float64{{STEEL_INGOT: 2.0, LEATHER: 1.0}},
+				Recipes:    []*structs.Recipe{&structs.Recipe{Inputs: map[string]float64{STEEL_INGOT: 2.0, LEATHER: 1.0}}},
 			},
 			STEEL_ARMOUR: &structs.Commodity{
 				Name:       STEEL_ARMOUR,
 				Profession: SMITH,
-				Requires:   []map[string]float64{{STEEL_INGOT: 5.0, LEATHER: 2.0}},
+				Recipes:    []*structs.Recipe{&structs.Recipe{Inputs: map[string]float64{STEEL_INGOT: 5.0, LEATHER: 2.0}}},
 			},
 			STEEL_TOOLS: &structs.Commodity{
 				Name:       STEEL_TOOLS,
 				Profession: SMITH,
-				Requires:   []map[string]float64{{STEEL_INGOT: 1.0, TIMBER: 1.0}},
+				Recipes:    []*structs.Recipe{&structs.Recipe{Inputs: map[string]float64{STEEL_INGOT: 1.0, TIMBER: 1.0}}},
 			},
 			WOODEN_TOOLS: &structs.Commodity{
 				Name:       WOODEN_TOOLS,
 				Profession: CARPENTER,
-				Requires:   []map[string]float64{{TIMBER: 1.0}},
+				Recipes:    []*structs.Recipe{&structs.Recipe{Inputs: map[string]float64{TIMBER: 1.0}}},
 			},
 			WOODEN_FURNITURE: &structs.Commodity{
 				Name:       WOODEN_FURNITURE,
 				Profession: CARPENTER,
-				Requires:   []map[string]float64{{TIMBER: 4.0}},
+				Recipes:    []*structs.Recipe{&structs.Recipe{Inputs: map[string]float64{TIMBER: 4.0}}},
 			},
 		},
 		baseValues: map[string]float64{ // base value per unit (in copper pieces)

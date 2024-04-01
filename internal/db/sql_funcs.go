@@ -36,16 +36,16 @@ type sqlOperator interface {
 type mstruct struct {
 	ID  string `db:"id"`
 	Str string `db:"str"`
-	Int int    `db:"int"`
+	Int int64  `db:"int"`
 }
 
 // lawStruct holds a law row. We don't provide these as a first class object,
 // but internally laws are written as individual rows.
 type lawStruct struct {
-	SourceID string          `db:"source_id"`
-	MetaKey  structs.MetaKey `db:"meta_key"`
-	MetaVal  string          `db:"meta_val"`
-	Illegal  bool            `db:"illegal"`
+	SourceID string       `db:"source_id"`
+	MetaKey  structs.Meta `db:"meta_key"`
+	MetaVal  string       `db:"meta_val"`
+	Illegal  bool         `db:"illegal"`
 }
 
 // rankedPlot holds a Plot along side a rank setting (for windowed queries)
@@ -328,7 +328,7 @@ func setTuples(op sqlOperator, r Relation, in []*structs.Tuple) error {
 	return err
 }
 
-func clampInt(v, min, max int) int {
+func clampInt(v, min, max int64) int64 {
 	if v < min {
 		return min
 	}
@@ -399,14 +399,16 @@ func setPlots(op sqlOperator, in []*structs.Plot) error {
 		if f.FactionID != "" && !dbutils.IsValidID(f.FactionID) {
 			return fmt.Errorf("plot faction id %s is invalid", f.FactionID)
 		}
-		if f.Commodity == "" {
-			f.Yield = 0
-		}
-		if f.Yield < 0 {
-			f.Yield = 0
-		}
-		if f.Size < 1 {
-			f.Size = 1
+		if f.Crop != nil {
+			if f.Crop.Commodity == "" {
+				f.Crop.Yield = 0
+			}
+			if f.Crop.Yield < 0 {
+				f.Crop.Yield = 0
+			}
+			if f.Crop.Size < 1 {
+				f.Crop.Size = 1
+			}
 		}
 	}
 
@@ -462,9 +464,9 @@ func setPeople(op sqlOperator, in []*structs.Person) error {
 		if f.Culture == "" {
 			return fmt.Errorf("person id %s culture required", f.ID)
 		}
-		f.Clamp()
+		f.Ethos.Clamp()
 		if f.Random == 0 {
-			f.Random = rng.Intn(structs.RandomMax)
+			f.Random = int64(rng.Intn(structs.RandomMax))
 		}
 	}
 
@@ -651,15 +653,15 @@ func readLaws(op sqlOperator, in []string) (map[string]*structs.Laws, error) {
 		}
 
 		switch l.MetaKey {
-		case structs.MetaKeyFaction:
+		case structs.Meta_KeyFaction:
 			law.Factions[l.MetaVal] = l.Illegal
-		case structs.MetaKeyCommodity:
+		case structs.Meta_KeyCommodity:
 			law.Commodities[l.MetaVal] = l.Illegal
-		case structs.MetaKeyAction:
+		case structs.Meta_KeyAction:
 			law.Actions[l.MetaVal] = l.Illegal
-		case structs.MetaKeyResearch:
+		case structs.Meta_KeyResearch:
 			law.Research[l.MetaVal] = l.Illegal
-		case structs.MetaKeyReligion:
+		case structs.Meta_KeyReligion:
 			law.Religions[l.MetaVal] = l.Illegal
 		}
 	}
@@ -677,7 +679,7 @@ func toLawRows(id string, laws *structs.Laws) []*lawStruct {
 			if !v {
 				continue
 			}
-			rows = append(rows, &lawStruct{SourceID: id, MetaKey: structs.MetaKeyFaction, MetaVal: k, Illegal: v})
+			rows = append(rows, &lawStruct{SourceID: id, MetaKey: structs.Meta_KeyFaction, MetaVal: k, Illegal: v})
 		}
 	}
 	if laws.Commodities != nil {
@@ -685,7 +687,7 @@ func toLawRows(id string, laws *structs.Laws) []*lawStruct {
 			if !v {
 				continue
 			}
-			rows = append(rows, &lawStruct{SourceID: id, MetaKey: structs.MetaKeyCommodity, MetaVal: k, Illegal: v})
+			rows = append(rows, &lawStruct{SourceID: id, MetaKey: structs.Meta_KeyCommodity, MetaVal: k, Illegal: v})
 		}
 	}
 	if laws.Actions != nil {
@@ -693,7 +695,7 @@ func toLawRows(id string, laws *structs.Laws) []*lawStruct {
 			if !v {
 				continue
 			}
-			rows = append(rows, &lawStruct{SourceID: id, MetaKey: structs.MetaKeyAction, MetaVal: string(k), Illegal: v})
+			rows = append(rows, &lawStruct{SourceID: id, MetaKey: structs.Meta_KeyAction, MetaVal: string(k), Illegal: v})
 		}
 	}
 	if laws.Research != nil {
@@ -701,7 +703,7 @@ func toLawRows(id string, laws *structs.Laws) []*lawStruct {
 			if !v {
 				continue
 			}
-			rows = append(rows, &lawStruct{SourceID: id, MetaKey: structs.MetaKeyResearch, MetaVal: k, Illegal: v})
+			rows = append(rows, &lawStruct{SourceID: id, MetaKey: structs.Meta_KeyResearch, MetaVal: k, Illegal: v})
 		}
 	}
 	if laws.Religions != nil {
@@ -709,7 +711,7 @@ func toLawRows(id string, laws *structs.Laws) []*lawStruct {
 			if !v {
 				continue
 			}
-			rows = append(rows, &lawStruct{SourceID: id, MetaKey: structs.MetaKeyReligion, MetaVal: k, Illegal: v})
+			rows = append(rows, &lawStruct{SourceID: id, MetaKey: structs.Meta_KeyReligion, MetaVal: k, Illegal: v})
 		}
 	}
 	return rows
@@ -815,7 +817,7 @@ func setFamilies(op sqlOperator, in []*structs.Family) error {
 			return fmt.Errorf("family %s culture is requred", f.ID)
 		}
 		if f.Random == 0 {
-			f.Random = rng.Intn(structs.RandomMax)
+			f.Random = int64(rng.Intn(structs.RandomMax))
 		}
 	}
 
@@ -828,7 +830,7 @@ func factionChildren(op sqlOperator, id string, rs []structs.FactionRelation) ([
 		return nil, fmt.Errorf("faction id %s is invalid", id)
 	}
 	if rs == nil || len(rs) == 0 {
-		rs = structs.AllFactionRelations
+		rs = structs.AllFactionRelations()
 	}
 
 	// TODO we could make this smarter with GreaterThan / LessThan but we have 4 relation types right now,
@@ -850,7 +852,7 @@ func factionParents(op sqlOperator, id string, rs []structs.FactionRelation) ([]
 		return nil, fmt.Errorf("faction id %s is invalid", id)
 	}
 	if rs == nil || len(rs) == 0 {
-		rs = structs.AllFactionRelations
+		rs = structs.AllFactionRelations()
 	}
 
 	// TODO we could make this smarter with GreaterThan / LessThan but we have 4 relation types right now,
@@ -908,7 +910,7 @@ func setFactions(op sqlOperator, in []*structs.Faction) error {
 		if (f.IsReligion || f.ReligionID != "") && !dbutils.IsValidID(f.ReligionID) {
 			return fmt.Errorf("faction religion id %s is invalid", f.ReligionID)
 		}
-		f.Clamp() // for ethos
+		f.Ethos.Clamp()
 		f.Cohesion = clampInt(f.Cohesion, 0, structs.MaxTuple)
 		f.Corruption = clampInt(f.Corruption, 0, structs.MaxTuple)
 		f.Wealth = clampInt(f.Wealth, 0, math.MaxInt64)
@@ -959,7 +961,7 @@ func setAreas(op sqlOperator, in []*structs.Area) error {
 			return fmt.Errorf("area id %s is invalid", a.ID)
 		}
 		if a.Random == 0 {
-			a.Random = rng.Intn(structs.RandomMax)
+			a.Random = int64(rng.Intn(structs.RandomMax))
 		}
 	}
 
@@ -968,7 +970,7 @@ func setAreas(op sqlOperator, in []*structs.Area) error {
 }
 
 // meta returns some metadata, if set
-func meta(op sqlOperator, id string) (string, int, error) {
+func meta(op sqlOperator, id string) (string, int64, error) {
 	if !dbutils.IsValidName(id) {
 		return "", 0, fmt.Errorf("metadata key %s is invalid", id)
 	}
@@ -988,7 +990,7 @@ func meta(op sqlOperator, id string) (string, int, error) {
 }
 
 // setMeta sets some data in our meta table
-func setMeta(op sqlOperator, id, strv string, intv int) error {
+func setMeta(op sqlOperator, id, strv string, intv int64) error {
 	if !dbutils.IsValidName(id) {
 		return fmt.Errorf("metadata key %s is invalid", id)
 	}

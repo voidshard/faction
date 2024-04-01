@@ -40,72 +40,72 @@ func NewTechnology() *Technology {
 			AGRICULTURE: &structs.ResearchTopic{
 				Name:       AGRICULTURE,
 				Profession: SCHOLAR,
-				Ethos:      structs.Ethos{},
+				Ethos:      &structs.Ethos{},
 			},
 			ASTRONOMY: &structs.ResearchTopic{
 				Name:       ASTRONOMY,
 				Profession: SCHOLAR,
-				Ethos:      structs.Ethos{Piety: structs.MaxEthos / 2},
+				Ethos:      &structs.Ethos{Piety: structs.MaxEthos / 2},
 			},
 			WARFARE: &structs.ResearchTopic{
 				Name:       WARFARE,
 				Profession: SOLDIER,
-				Ethos:      structs.Ethos{Pacifism: structs.MinEthos / 2},
+				Ethos:      &structs.Ethos{Pacifism: structs.MinEthos / 2},
 			},
 			METALLURGY: &structs.ResearchTopic{
 				Name:       METALLURGY,
 				Profession: SMITH,
-				Ethos:      structs.Ethos{},
+				Ethos:      &structs.Ethos{},
 			},
 			PHILOSOPHY: &structs.ResearchTopic{
 				Name:       PHILOSOPHY,
 				Profession: SCHOLAR,
-				Ethos:      structs.Ethos{Tradition: structs.MaxEthos / 2},
+				Ethos:      &structs.Ethos{Tradition: structs.MaxEthos / 2},
 			},
 			MEDICINE: &structs.ResearchTopic{
 				Name:       MEDICINE,
 				Profession: PRIEST, // early temples doubled as healing springs (eg Asclepius)
-				Ethos:      structs.Ethos{Altruism: structs.MaxEthos / 2},
+				Ethos:      &structs.Ethos{Altruism: structs.MaxEthos / 2},
 			},
 			MATHEMATICS: &structs.ResearchTopic{
 				Name:       MATHEMATICS,
 				Profession: SCHOLAR,
-				Ethos:      structs.Ethos{},
+				Ethos:      &structs.Ethos{},
 			},
 			LITERATURE: &structs.ResearchTopic{
 				Name:       LITERATURE,
 				Profession: SCHOLAR,
-				Ethos:      structs.Ethos{Tradition: structs.MaxEthos / 2},
+				Ethos:      &structs.Ethos{Tradition: structs.MaxEthos / 2},
 			},
 			LAW: &structs.ResearchTopic{
 				Name:       LAW,
 				Profession: SCHOLAR, // training in law / policy / speaking wasn't uncommon
-				Ethos:      structs.Ethos{Tradition: structs.MaxEthos / 4, Ambition: structs.MaxEthos / 4},
+				Ethos:      &structs.Ethos{Tradition: structs.MaxEthos / 4, Ambition: structs.MaxEthos / 4},
 			},
 			ARCHITECTURE: &structs.ResearchTopic{
 				Name:       ARCHITECTURE,
 				Profession: SCHOLAR, // we know of ancient schools of architecture so .. why not?
-				Ethos:      structs.Ethos{Tradition: structs.MaxEthos / 4, Piety: structs.MaxEthos / 4},
+				Ethos:      &structs.Ethos{Tradition: structs.MaxEthos / 4, Piety: structs.MaxEthos / 4},
 			},
 			THEOLOGY: &structs.ResearchTopic{
 				Name:       THEOLOGY,
 				Profession: PRIEST,
-				Ethos:      structs.Ethos{Piety: structs.MaxEthos / 2},
+				Ethos:      &structs.Ethos{Piety: structs.MaxEthos / 2},
 			},
 			MAGIC_ARCANA: &structs.ResearchTopic{
 				Name:       MAGIC_ARCANA,
 				Profession: MAGE,
-				Ethos:      structs.Ethos{Tradition: structs.MaxEthos / 4, Ambition: structs.MaxEthos / 2},
+				Ethos:      &structs.Ethos{Tradition: structs.MaxEthos / 4, Ambition: structs.MaxEthos / 2},
 			},
 			MAGIC_OCCULT: &structs.ResearchTopic{
 				Name:       MAGIC_OCCULT,
 				Profession: MAGE, // mage / priest
-				Ethos:      structs.Ethos{Piety: structs.MinEthos / 4, Ambition: structs.MaxEthos / 2},
+				Ethos:      &structs.Ethos{Piety: structs.MinEthos / 4, Ambition: structs.MaxEthos / 2},
 			},
 			ALCHEMY: &structs.ResearchTopic{
 				Name:       ALCHEMY,
 				Profession: ALCHEMIST, // early practiioners were into medicine & creating gold
-				Ethos:      structs.Ethos{Tradition: structs.MaxEthos / 4, Altruism: structs.MaxEthos / 4},
+				Ethos:      &structs.Ethos{Tradition: structs.MaxEthos / 4, Altruism: structs.MaxEthos / 4},
 			},
 		},
 	}

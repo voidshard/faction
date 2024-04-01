@@ -30,9 +30,9 @@ type factionRand struct {
 	ethosPiety     *rng.Rand
 	ethosCaution   *rng.Rand
 	leaderOccur    rng.Normalised
-	leaderList     []structs.LeaderType
+	leaderList     []structs.FactionLeadership
 	structOccur    rng.Normalised
-	structList     []structs.LeaderStructure
+	structList     []structs.FactionStructure
 	wealth         *rng.Rand
 	cohesion       *rng.Rand
 	corruption     *rng.Rand
@@ -75,7 +75,7 @@ func (fr *factionRand) randResearch(f *simutil.MetaFaction, count int, requiredT
 		weights = append(weights, &structs.Tuple{
 			Subject: f.Faction.ID,
 			Object:  topic,
-			Value:   weight.Int(),
+			Value:   weight.Int64(),
 		})
 	}
 	if len(weights) >= count {
@@ -155,7 +155,7 @@ func (fr *factionRand) randResearch(f *simutil.MetaFaction, count int, requiredT
 		weights = append(weights, &structs.Tuple{
 			Subject: f.Faction.ID,
 			Object:  topic.Name,
-			Value:   weight.Int(),
+			Value:   weight.Int64(),
 		})
 	}
 
@@ -173,14 +173,14 @@ func newFactionRand(f *config.Faction, tech technology.Technology, areas []strin
 	}
 
 	leaderProb := []float64{}
-	llist := []structs.LeaderType{}
+	llist := []structs.FactionLeadership{}
 	for leader, prob := range f.LeadershipProbability {
 		leaderProb = append(leaderProb, prob)
 		llist = append(llist, leader)
 	}
 
 	structureProb := []float64{}
-	slist := []structs.LeaderStructure{}
+	slist := []structs.FactionStructure{}
 	for structure, prob := range f.LeadershipStructureProbability {
 		structureProb = append(structureProb, prob)
 		slist = append(slist, structure)

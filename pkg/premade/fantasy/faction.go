@@ -10,17 +10,17 @@ func Faction() *config.Faction {
 	return &config.Faction{
 		EthosMean:      structs.Ethos{},
 		EthosDeviation: *dev.Add(structs.MaxEthos / 4), // ethos is further weighted by favoured actions
-		LeadershipProbability: map[structs.LeaderType]float64{
-			structs.LeaderTypeSingle:  0.4,
-			structs.LeaderTypeCouncil: 0.3,
-			structs.LeaderTypeDual:    0.15,
-			structs.LeaderTypeTriad:   0.1,
-			structs.LeaderTypeAll:     0.05,
+		LeadershipProbability: map[structs.FactionLeadership]float64{
+			structs.FactionLeadership_Single:  0.4,
+			structs.FactionLeadership_Council: 0.3,
+			structs.FactionLeadership_Dual:    0.15,
+			structs.FactionLeadership_Triad:   0.1,
+			structs.FactionLeadership_All:     0.05,
 		},
-		LeadershipStructureProbability: map[structs.LeaderStructure]float64{
-			structs.LeaderStructurePyramid: 0.60,
-			structs.LeaderStructureLoose:   0.35,
-			structs.LeaderStructureCell:    0.05,
+		LeadershipStructureProbability: map[structs.FactionStructure]float64{
+			structs.FactionStructure_Pyramid: 0.60,
+			structs.FactionStructure_Loose:   0.35,
+			structs.FactionStructure_Cell:    0.05,
 		},
 		Wealth: config.Distribution{
 			// min here is around the base land value

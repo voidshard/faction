@@ -27,15 +27,15 @@ type Action struct {
 	Category ActionCategory
 
 	// Min / Max number of people.
-	MinPeople int // min: 1
-	MaxPeople int // numbers <= 0 are ignored (considered "no max")
+	MinPeople int64 // min: 1
+	MaxPeople int64 // numbers <= 0 are ignored (considered "no max")
 
 	// JobPriority is used when it comes to assigning jobs to people.
 	// Higher priority Jobs are assigned first.
 	// Nb. there are other weights at play
 	// - people prefer to work for their faction (rather than an overlord)
 	// - people prefer to work in their home area
-	JobPriority int
+	JobPriority int64
 
 	// Restricts the kinds of faction(s) that are allowed to perform this action.
 	//
@@ -61,8 +61,8 @@ type Action struct {
 
 	// Target denotes that this action requires a target (faction) and the targets min/max trust
 	// Ie. we only trade with factions we trust, and only make war on factions we don't.
-	TargetMinTrust int
-	TargetMaxTrust int
+	TargetMinTrust int64
+	TargetMaxTrust int64
 
 	// Cost in whatever units the economy is using.
 	// Additional explicit cost to performing the action.

@@ -30,8 +30,8 @@ message Event {
     int64 Tick = 3;
 
     // what the event is about
-    Meta MetaKey = 4;
-    string MetaVal = 5;
+    Meta SubjectMetaKey = 4;
+    string SubjectMetaVal = 5;
 
     // if we know the cause of the event, we can store it here
     Meta CauseMetaKey = 6;

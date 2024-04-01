@@ -58,11 +58,11 @@ type sqlTx struct {
 }
 
 // Meta returns saved metadata, outside of a transaction
-func (s *sqlDB) Meta(id string) (string, int, error) {
+func (s *sqlDB) Meta(id string) (string, int64, error) {
 	return meta(s.conn, id)
 }
 
-func (s *sqlDB) Tick() (int, error) {
+func (s *sqlDB) Tick() (int64, error) {
 	_, t, err := s.Meta(metaClock)
 	if t < 1 {
 		t = 1
@@ -211,11 +211,11 @@ func (s *sqlDB) DeleteModifiers(r Relation, expires_before_tick int) error {
 }
 
 // SetMeta sets some metadata within a transaction
-func (s *sqlDB) SetMeta(id, strv string, intv int) error {
+func (s *sqlDB) SetMeta(id, strv string, intv int64) error {
 	return setMeta(s.conn, id, strv, intv)
 }
 
-func (s *sqlDB) SetTick(tick int) error {
+func (s *sqlDB) SetTick(tick int64) error {
 	if tick <= 1 {
 		return nil
 	}
@@ -250,12 +250,12 @@ func (t *sqlTx) Rollback() error {
 }
 
 // Meta returns saved metadata
-func (t *sqlTx) Meta(id string) (string, int, error) {
+func (t *sqlTx) Meta(id string) (string, int64, error) {
 	return meta(t.tx, id)
 }
 
 // SetMeta sets some metadata within a transaction
-func (t *sqlTx) SetMeta(id, strv string, intv int) error {
+func (t *sqlTx) SetMeta(id, strv string, intv int64) error {
 	return setMeta(t.tx, id, strv, intv)
 }
 
@@ -275,7 +275,7 @@ func (t *sqlTx) FactionPlots(limit int, ids ...string) (map[string][]*structs.Pl
 	return factionPlots(t.tx, limit, ids...)
 }
 
-func (t *sqlTx) Tick() (int, error) {
+func (t *sqlTx) Tick() (int64, error) {
 	_, tick, err := t.Meta(metaClock)
 	if tick < 1 {
 		tick = 1
@@ -283,7 +283,7 @@ func (t *sqlTx) Tick() (int, error) {
 	return tick, err
 }
 
-func (t *sqlTx) SetTick(tick int) error {
+func (t *sqlTx) SetTick(tick int64) error {
 	if tick <= 1 {
 		return nil
 	}

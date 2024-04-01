@@ -87,25 +87,25 @@ func (l *FactionLeadership) Add(rank structs.FactionRank, p *structs.Person) {
 	l.People[p.ID] = p
 	l.Total++
 	switch rank {
-	case structs.FactionRankRuler:
+	case structs.FactionRank_Ruler:
 		l.Ruler = append(l.Ruler, p.ID)
-	case structs.FactionRankElder:
+	case structs.FactionRank_Elder:
 		l.Elder = append(l.Elder, p.ID)
-	case structs.FactionRankGrandMaster:
+	case structs.FactionRank_GrandMaster:
 		l.GrandMaster = append(l.GrandMaster, p.ID)
-	case structs.FactionRankMaster:
+	case structs.FactionRank_Master:
 		l.Master = append(l.Master, p.ID)
-	case structs.FactionRankExpert:
+	case structs.FactionRank_Expert:
 		l.Expert = append(l.Expert, p.ID)
-	case structs.FactionRankAdept:
+	case structs.FactionRank_Adept:
 		l.Adept = append(l.Adept, p.ID)
-	case structs.FactionRankJourneyman:
+	case structs.FactionRank_Journeyman:
 		l.Journeyman = append(l.Journeyman, p.ID)
-	case structs.FactionRankNovice:
+	case structs.FactionRank_Novice:
 		l.Novice = append(l.Novice, p.ID)
-	case structs.FactionRankApprentice:
+	case structs.FactionRank_Apprentice:
 		l.Apprentice = append(l.Apprentice, p.ID)
-	case structs.FactionRankAssociate:
+	case structs.FactionRank_Associate:
 		l.Apprentice = append(l.Apprentice, p.ID)
 	}
 }

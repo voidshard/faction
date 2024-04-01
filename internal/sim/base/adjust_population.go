@@ -41,11 +41,11 @@ func (s *Base) AdjustPopulation(area string) error {
 	return s.lifeEvents(tick, area)
 }
 
-func (s *Base) lifeEvents(tick int, area string) error {
+func (s *Base) lifeEvents(tick int64, area string) error {
 	return nil
 }
 
-func (s *Base) deathCheck(tick int, area string) error {
+func (s *Base) deathCheck(tick int64, area string) error {
 	// We want to loop once over a given area for all races.
 	//
 	// So compile the most extreme death values - we'll select slightly more people
@@ -89,8 +89,8 @@ func (s *Base) deathCheck(tick int, area string) error {
 			dice := s.dice.MustDemographic(p.Race, p.Culture)
 
 			// death range for this demographic
-			demoDeathRange := int(dice.AdultMortalityProbability() * randomValueMax)
-			if p.NaturalDeathTick > tick && p.Random > demoDeathRange+deathStart {
+			demoDeathRange := int64(dice.AdultMortalityProbability() * randomValueMax)
+			if p.NaturalDeathTick > tick && p.Random > demoDeathRange+int64(deathStart) {
 				continue
 			}
 
@@ -122,7 +122,7 @@ func (s *Base) deathCheck(tick int, area string) error {
 //
 // This isn't needed for deaths via childbirth, since we set families in that function (since we
 
-func (s *Base) birthChildren(tick int, area string) error {
+func (s *Base) birthChildren(tick int64, area string) error {
 	token := (&dbutils.IterToken{Limit: 1000, Offset: 0}).String()
 	ff := db.Q( // all childbearing families in the area expecting a birth
 		db.F(db.AreaID, db.Equal, area),
@@ -162,7 +162,7 @@ func (s *Base) birthChildren(tick int, area string) error {
 			if dice.RandomDeathInfantMortality() {
 				child.DeathMetaReason = diedInChildbirth
 				child.DeathTick = tick
-				child.DeathMetaKey = structs.MetaKeyPerson
+				child.DeathMetaKey = structs.Meta_KeyPerson
 				child.DeathMetaVal = f.FemaleID
 				mp.Events = append(mp.Events, simutil.NewDeathEvent(child))
 			}
@@ -171,14 +171,14 @@ func (s *Base) birthChildren(tick int, area string) error {
 				mp.Events = append(mp.Events, simutil.NewDeathEventWithCause(
 					tick,
 					f.FemaleID,
-					structs.MetaKeyPerson,
+					structs.Meta_KeyPerson,
 					child.ID,
 				))
 				f.IsChildBearing = false
 				f.WidowedTick = tick
 				mp.Relations = append(mp.Relations,
-					&structs.Tuple{Subject: f.MaleID, Object: f.FemaleID, Value: int(structs.PersonalRelationExWife)},
-					&structs.Tuple{Subject: f.FemaleID, Object: f.MaleID, Value: int(structs.PersonalRelationExHusband)},
+					&structs.Tuple{Subject: f.MaleID, Object: f.FemaleID, Value: int64(structs.PersonalRelation_ExWife)},
+					&structs.Tuple{Subject: f.FemaleID, Object: f.MaleID, Value: int64(structs.PersonalRelation_ExHusband)},
 				)
 			}
 
@@ -199,7 +199,7 @@ func (s *Base) birthChildren(tick int, area string) error {
 	return nil
 }
 
-func (s *Base) conceiveChildren(tick int, area string) error {
+func (s *Base) conceiveChildren(tick int64, area string) error {
 	token := (&dbutils.IterToken{Limit: 1000, Offset: 0}).String()
 	ff := db.Q( // all childbearing families in the area not expecting a birth
 		db.F(db.AreaID, db.Equal, area),

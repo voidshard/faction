@@ -111,7 +111,7 @@ type Simulation interface {
 	InspireFactionAffiliation(cfg *config.Affiliation, factionID string) error
 
 	// Tick updates internal time by one tick, returns the current tick.
-	Tick() (int, error)
+	Tick() (int64, error)
 
 	// PlanFactionJobs tries to figure out given the current context / climate around the
 	// faction what Jobs they wish to enact.

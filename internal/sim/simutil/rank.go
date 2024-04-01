@@ -8,15 +8,15 @@ import (
 // We iterate over all slots (eventually) defaulting upwards.
 // If nothing is available, we return Associate.
 func ClosestRank(d *structs.DemographicRankSpread, desired structs.FactionRank) (structs.FactionRank, bool) {
-	if desired == structs.FactionRankAssociate { // there's always a slot for Associate
+	if desired == structs.FactionRank_Associate { // there's always a slot for Associate
 		return desired, true
 	}
 	if d.Count(desired) > 0 { // there is a slot at the given rank -> yay!
 		return desired, true
 	}
 
-	min := int(structs.FactionRankAssociate)
-	max := int(structs.FactionRankRuler)
+	min := int(structs.FactionRank_Associate)
+	max := int(structs.FactionRank_Ruler)
 
 	for i := 1; i <= max; i++ {
 		j := int(desired) + i
@@ -30,22 +30,22 @@ func ClosestRank(d *structs.DemographicRankSpread, desired structs.FactionRank) 
 		}
 	}
 
-	return structs.FactionRankAssociate, false
+	return structs.FactionRank_Associate, false
 }
 
 func RankFromAffiliation(a int) structs.FactionRank {
-	space := structs.MaxTuple / int(structs.FactionRankRuler)
-	for i := 1; i < int(structs.FactionRankRuler); i++ {
+	space := structs.MaxTuple / int(structs.FactionRank_Ruler)
+	for i := 1; i < int(structs.FactionRank_Ruler); i++ {
 		if a < i*space {
 			return structs.FactionRank(i - 1)
 		}
 	}
-	return structs.FactionRankRuler
+	return structs.FactionRank_Ruler
 }
 
 // AvailablePositions returns open positions given the current positions taken, leadership type & faction structure.
-func AvailablePositions(d *structs.DemographicRankSpread, ltype structs.LeaderType, structure structs.LeaderStructure) *structs.DemographicRankSpread {
-	minZero := func(i int) int {
+func AvailablePositions(d *structs.DemographicRankSpread, ltype structs.FactionLeadership, structure structs.FactionStructure) *structs.DemographicRankSpread {
+	minZero := func(i int64) int64 {
 		if i < 0 {
 			return 0
 		}
@@ -58,7 +58,7 @@ func AvailablePositions(d *structs.DemographicRankSpread, ltype structs.LeaderTy
 	var ds *structs.DemographicRankSpread
 
 	switch structure {
-	case structs.LeaderStructurePyramid:
+	case structs.FactionStructure_Pyramid:
 		// ie. the number of positions available for a rank is always
 		// {people in lower rank / 3} - {people in this rank}
 		//
@@ -77,7 +77,7 @@ func AvailablePositions(d *structs.DemographicRankSpread, ltype structs.LeaderTy
 			Apprentice:  minZero(d.Associate/3 - d.Apprentice),
 			Associate:   1, // there is always a spot for a new recruit
 		}
-	case structs.LeaderStructureCell:
+	case structs.FactionStructure_Cell:
 		ds = &structs.DemographicRankSpread{
 			Ruler:       rulerSlots,
 			Elder:       minZero(rulers - d.Elder),           // each ruler slot has a single second in command
@@ -89,7 +89,7 @@ func AvailablePositions(d *structs.DemographicRankSpread, ltype structs.LeaderTy
 			Apprentice:  1,
 			Associate:   1,
 		}
-	case structs.LeaderStructureLoose:
+	case structs.FactionStructure_Loose:
 		// no one cares, there's always an open slot if you've got the skills
 		ds = &structs.DemographicRankSpread{
 			Ruler:       rulerSlots,

@@ -57,7 +57,7 @@ message Family {
     string PaGrandpaID = 16;
 
     // Number of children this family has had
-    int64 NumberofChildren = 17;
+    int64 NumberOfChildren = 17;
 
     // The tick when the couple got married, divorced or widowed
     int64 MarriageTick = 18;

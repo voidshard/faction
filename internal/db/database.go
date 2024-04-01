@@ -72,7 +72,7 @@ func (f *FactionDB) InTransaction(do func(tx ReaderWriter) error) error {
 //
 // If a relation doesn't support modifiers, this is simply tuples with the given subject & object(s).
 // If it does support modifiers we add on to these tuples the sum of modifiers for the given subject & object(s) too.
-func (f *FactionDB) TuplesSumModsBySubject(r Relation, subject string, objects ...string) (map[string]int, error) {
+func (f *FactionDB) TuplesSumModsBySubject(r Relation, subject string, objects ...string) (map[string]int64, error) {
 	q := Q(F(Object, In, objects), F(Subject, Equal, subject))
 	if len(objects) == 0 {
 		q = Q(F(Subject, Equal, subject))
@@ -82,7 +82,7 @@ func (f *FactionDB) TuplesSumModsBySubject(r Relation, subject string, objects .
 		tuples []*structs.Tuple
 		token  string
 		err    error
-		result = map[string]int{}
+		result = map[string]int64{}
 	)
 
 	for {

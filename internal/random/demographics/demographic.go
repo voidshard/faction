@@ -60,8 +60,8 @@ func mult(in []float64) float64 {
 }
 
 // MaxFamilySize returns the max children families tend to have.
-func (d *Demographic) MaxFamilySize() int {
-	return int(d.culture.FamilySize.Max)
+func (d *Demographic) MaxFamilySize() int64 {
+	return int64(d.culture.FamilySize.Max)
 }
 
 // AdultMortalityProbability returns the probability that an adult will die of "natural" causes.
@@ -70,8 +70,8 @@ func (d *Demographic) AdultMortalityProbability(in ...float64) float64 {
 }
 
 // RandomChildbearingTerm returns a random childbearing term (ticks) for a person.
-func (d *Demographic) RandomChildbearingTerm() int {
-	return d.childbearingTerm.Int()
+func (d *Demographic) RandomChildbearingTerm() int64 {
+	return d.childbearingTerm.Int64()
 }
 
 // RandomBecomesPregrant rolls to see if someone becomes pregnant.
@@ -97,13 +97,13 @@ func (d *Demographic) RandomDeathInfantMortality(in ...float64) bool {
 }
 
 // RandomFamilySize returns a random family size (number of children) for a couple.
-func (d *Demographic) RandomFamilySize() int {
-	return d.familySize.Int()
+func (d *Demographic) RandomFamilySize() int64 {
+	return d.familySize.Int64()
 }
 
 // RandomTrust returns a random trust value for a person.
-func (d *Demographic) RandomTrust() int {
-	return d.relationTrust.Int()
+func (d *Demographic) RandomTrust() int64 {
+	return d.relationTrust.Int64()
 }
 
 // RandomIsHavingAffair returns if a person is having an affair on this tick
@@ -122,23 +122,23 @@ func (d *Demographic) RandomIsDivorced(in ...float64) bool {
 }
 
 // MinParentingAge returns the minimum age at which a person can have children.
-func (d *Demographic) MinParentingAge() int {
-	return int(d.race.ChildbearingAgeMin + d.race.ChildbearingTerm.Min)
+func (d *Demographic) MinParentingAge() int64 {
+	return int64(d.race.ChildbearingAgeMin + d.race.ChildbearingTerm.Min)
 }
 
 // MaxParentingAge returns the maximum age at which a person can have children.
-func (d *Demographic) MaxParentingAge() int {
-	return int(d.race.ChildbearingAgeMax)
+func (d *Demographic) MaxParentingAge() int64 {
+	return int64(d.race.ChildbearingAgeMax)
 }
 
 // RandomParentingAge returns a random age within expected child-bearing ticks.
-func (d *Demographic) RandomParentingAge() int {
-	return d.childbearingAge.Int() + d.childbearingTerm.Int()
+func (d *Demographic) RandomParentingAge() int64 {
+	return d.childbearingAge.Int64() + d.childbearingTerm.Int64()
 }
 
 // RandomLifespan returns how long a person will live for.
-func (d *Demographic) RandomLifespan() int {
-	return int(d.lifespan.Int())
+func (d *Demographic) RandomLifespan() int64 {
+	return d.lifespan.Int64()
 }
 
 // RandomIsMale returns if a person is male or not based on the Race demographic.
@@ -148,7 +148,7 @@ func (d *Demographic) RandomIsMale() bool {
 
 // RandomPerson returns a random person for this demographic.
 func (d *Demographic) RandomPerson(areaID string) *structs.Person {
-	birth := -1 * int(d.MinParentingAge())
+	birth := -1 * d.RandomParentingAge()
 	return &structs.Person{
 		ID:               structs.NewID(),
 		Race:             d.raceID,
@@ -156,8 +156,8 @@ func (d *Demographic) RandomPerson(areaID string) *structs.Person {
 		AreaID:           areaID,
 		Ethos:            d.RandomEthos(),
 		BirthTick:        birth,
-		AdulthoodTick:    int(d.race.ChildbearingAgeMin) + birth,
-		NaturalDeathTick: d.RandomLifespan() + birth,
+		AdulthoodTick:    int64(d.race.ChildbearingAgeMin) + birth,
+		NaturalDeathTick: d.RandomLifespan(),
 		IsMale:           d.RandomIsMale(),
 	}
 }
@@ -181,7 +181,7 @@ func (d *Demographic) RandomFaith(subject string) []*structs.Tuple {
 		}
 		seen[faith.ReligionID] = true
 		faithDice := d.faithLevel[faith.ReligionID]
-		data = append(data, &structs.Tuple{Subject: subject, Object: faith.ReligionID, Value: faithDice.Int()})
+		data = append(data, &structs.Tuple{Subject: subject, Object: faith.ReligionID, Value: faithDice.Int64()})
 		if faith.IsMonotheistic { // we can't add any more faiths
 			break
 		}
@@ -190,23 +190,23 @@ func (d *Demographic) RandomFaith(subject string) []*structs.Tuple {
 }
 
 // RandomEthos returns a random ethos for a person.
-func (d *Demographic) RandomEthos() structs.Ethos {
-	e := structs.Ethos{
+func (d *Demographic) RandomEthos() *structs.Ethos {
+	e := &structs.Ethos{
 		// values within cultural norms
-		Altruism:  d.ethosAltruism.Int(),
-		Ambition:  d.ethosAmbition.Int(),
-		Tradition: d.ethosTradition.Int(),
-		Pacifism:  d.ethosPacifism.Int(),
-		Piety:     d.ethosPiety.Int(),
-		Caution:   d.ethosCaution.Int(),
+		Altruism:  d.ethosAltruism.Int64(),
+		Ambition:  d.ethosAmbition.Int64(),
+		Tradition: d.ethosTradition.Int64(),
+		Pacifism:  d.ethosPacifism.Int64(),
+		Piety:     d.ethosPiety.Int64(),
+		Caution:   d.ethosCaution.Int64(),
 	}
 	if d.rng.Float64() <= d.culture.EthosBlackSheepProbability {
 		tenth := structs.MaxTuple / 10
 
 		// randomly flip some values to extremes
-		v := structs.MinTuple + d.rng.Intn(tenth) // very low
+		v := int64(structs.MinTuple + d.rng.Intn(tenth)) // very low
 		if d.rng.Float64() < 0.5 {
-			v = structs.MaxTuple - d.rng.Intn(tenth) // very high
+			v = int64(structs.MaxTuple - d.rng.Intn(tenth)) // very high
 		}
 		switch d.rng.Intn(6) {
 		case 0:
@@ -258,7 +258,7 @@ func (d *Demographic) RandomProfession(subject string) []*structs.Tuple {
 		hasPrimaryProfession = hasPrimaryProfession || prof.ValidSideProfession
 
 		profDice := d.professionLevel[prof.Name]
-		last := &structs.Tuple{Subject: subject, Object: prof.Name, Value: profDice.Int()}
+		last := &structs.Tuple{Subject: subject, Object: prof.Name, Value: profDice.Int64()}
 		chosen[prof.Name] = prof
 
 		data = append(data, last)
@@ -301,25 +301,25 @@ func (d *Demographic) RandomRelationship(personA, personB string) ([]*structs.Tu
 		return []*structs.Tuple{}, []*structs.Tuple{}
 	}
 	trust := 1
-	rel := structs.PersonalRelationCloseFriend
+	rel := structs.PersonalRelation_CloseFriend
 	switch d.friendshipsProb.Int() {
 	case 0: // default set above
 		break
 	case 1:
-		rel = structs.PersonalRelationFriend
+		rel = structs.PersonalRelation_Friend
 	case 2:
 		trust = -1
-		rel = structs.PersonalRelationEnemy
+		rel = structs.PersonalRelation_Enemy
 	case 3:
 		trust = -1
-		rel = structs.PersonalRelationHatedEnemy
+		rel = structs.PersonalRelation_HatedEnemy
 	}
 	return []*structs.Tuple{
-			&structs.Tuple{Subject: personA, Object: personB, Value: int(rel)},
-			&structs.Tuple{Subject: personB, Object: personA, Value: int(rel)},
+			&structs.Tuple{Subject: personA, Object: personB, Value: int64(rel)},
+			&structs.Tuple{Subject: personB, Object: personA, Value: int64(rel)},
 		}, []*structs.Tuple{
-			&structs.Tuple{Subject: personA, Object: personB, Value: trust * d.relationTrust.Int()},
-			&structs.Tuple{Subject: personB, Object: personA, Value: trust * d.relationTrust.Int()},
+			&structs.Tuple{Subject: personA, Object: personB, Value: int64(trust * d.relationTrust.Int())},
+			&structs.Tuple{Subject: personB, Object: personA, Value: int64(trust * d.relationTrust.Int())},
 		}
 }
 

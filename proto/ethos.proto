@@ -8,36 +8,36 @@ message Ethos {
     //
     // High altruism implies selflessness, self sacrifice etc.
     // Low altruism implies selfishness, the complete lack of concern for others.
-    int64 Altruism = 1;
+    sint64 Altruism = 1;
 
     // Ambition is the desire to get ahead in society, to obtain riches, honors, power etc.
     //
     // High ambition implies the willingness to go the extra mile, to work hard, to strive upwards.
     // Low ambition implies the lack of desire to improve ones station.
-    int64 Ambition = 2;
+    sint64 Ambition = 2;
 
     // Tradition is a measure of ones desire to stay within the laws and traditions of one's society, culture, laws etc.
     //
     // High tradition implies a (generally) law abiding outlook, great value placed on shared culture & values.
     // Low tradition implies a more chaotic, devil-may-care outlook, considering tradition(s) too confining and
     // (possibly even) laws too restrictive.
-    int64 Tradition = 3;
+    sint64 Tradition = 3;
 
     // Pacifism is dedication to peace, eschewing violence & conflict.
     //
     // High pacifism implies one takes great pains avoid harming others, possibly even preferring death.
     // Low pacifism implies a strong propensity to violence.
-    int64 Pacifism = 4;
+    sint64 Pacifism = 4;
 
     // Piety is faith in the divine, religious devotion.
     //
     // High piety implies strict adherence to ones faith & it's tenants.
     // Low piety implies no adherence to a faith.
-    int64 Piety = 5;
+    sint64 Piety = 5;
 
     // Caution is the propensity is calculate carefully & weigh up risks before acting.
     //
     // High caution implies very deliberate, well thought out choices, multiple safeguards and counter strategies.
     // Low caution implies recklessness, the propensity to act without thinking; "there is no plan"
-    int64 Caution = 6;
+    sint64 Caution = 6;
 }

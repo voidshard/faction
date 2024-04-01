@@ -36,21 +36,21 @@ func NewDemographics() *Demographics {
 	}
 }
 
-func (d *Demographics) AddFaith(in string, val int) {
+func (d *Demographics) AddFaith(in string, val int64) {
 	if _, ok := d.Faith[in]; !ok {
 		d.Faith[in] = &DemographicStatSpread{}
 	}
 	d.Faith[in].Add(val)
 }
 
-func (d *Demographics) AddProfession(in string, val int) {
+func (d *Demographics) AddProfession(in string, val int64) {
 	if _, ok := d.Profession[in]; !ok {
 		d.Profession[in] = &DemographicStatSpread{}
 	}
 	d.Profession[in].Add(val)
 }
 
-func (d *Demographics) AddAffiliation(in string, val int) {
+func (d *Demographics) AddAffiliation(in string, val int64) {
 	if _, ok := d.Affiliation[in]; !ok {
 		d.Affiliation[in] = &DemographicStatSpread{}
 	}
@@ -90,7 +90,7 @@ func (d *DemographicRankSpread) Add(val FactionRank, i int64) {
 	}
 }
 
-func (d *DemographicStatSpread) Add(in int) {
+func (d *DemographicStatSpread) Add(in int64) {
 	v := float64(in)
 	switch {
 	case v >= float64(MaxTuple)*0.95:

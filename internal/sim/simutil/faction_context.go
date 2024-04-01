@@ -35,13 +35,13 @@ type FactionContext struct {
 // RelationWeight returns a number representing how much this faction prefers peace / caution over ambition / war.
 // Applied to Trust to generally make more aggressive / unfriendly factions more likely to throw the first punch,
 // and more peaceful factions more likely to try to avoid conflict.
-func (f *FactionContext) RelationWeight() int {
-	return (f.Summary.Ethos.Caution / 50) + (f.Summary.Ethos.Altruism / 20) - (f.Summary.Ethos.Ambition / 20) + (f.Summary.Ethos.Pacifism / 50)
+func (f *FactionContext) RelationWeight() int64 {
+	return (f.Summary.Faction.Ethos.Caution / 50) + (f.Summary.Faction.Ethos.Altruism / 20) - (f.Summary.Faction.Ethos.Ambition / 20) + (f.Summary.Faction.Ethos.Pacifism / 50)
 }
 
 func (f *FactionContext) RandomArea(purpose string) string {
 	if len(f.areaIDs) == 0 {
-		return f.Summary.HomeAreaID
+		return f.Summary.Faction.HomeAreaID
 	}
 	return f.areaIDs[rnggen.Intn(len(f.areaIDs))]
 }
@@ -89,12 +89,12 @@ func (f *FactionContext) AllGovernments() []*structs.Government {
 
 func (f *FactionContext) ClosestOpenRank(desired structs.FactionRank) structs.FactionRank {
 	if f.openRanks == nil {
-		f.openRanks = AvailablePositions(f.Summary.Ranks, f.Summary.Leadership, f.Summary.Structure)
+		f.openRanks = AvailablePositions(f.Summary.Ranks, f.Summary.Faction.Leadership, f.Summary.Faction.Structure)
 	}
 
 	nearest, ok := ClosestRank(f.openRanks, desired)
 	if !ok {
-		f.openRanks = AvailablePositions(f.Summary.Ranks, f.Summary.Leadership, f.Summary.Structure)
+		f.openRanks = AvailablePositions(f.Summary.Ranks, f.Summary.Faction.Leadership, f.Summary.Faction.Structure)
 		nearest, _ = ClosestRank(f.openRanks, desired)
 	}
 
@@ -147,7 +147,7 @@ func NewFactionContext(dbconn *db.FactionDB, factionID string) (*FactionContext,
 		return nil, err
 	}
 
-	gov, _ := areaGovs[summaries[0].HomeAreaID] // can be nil
+	gov, _ := areaGovs[summaries[0].Faction.HomeAreaID] // can be nil
 
 	// research
 	researchTopics := []string{}

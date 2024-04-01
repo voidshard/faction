@@ -37,7 +37,7 @@ type TrustRelations struct {
 	Nemesis []string // -9k -> -10k
 
 	// trust is a map of ID to trust value
-	trust map[string]int
+	trust map[string]int64
 }
 
 func NewTrustRelations() *TrustRelations {
@@ -51,11 +51,11 @@ func NewTrustRelations() *TrustRelations {
 		Rival:       []string{},
 		Hostile:     []string{},
 		Nemesis:     []string{},
-		trust:       map[string]int{},
+		trust:       map[string]int64{},
 	}
 }
 
-func (r *TrustRelations) TrustBetween(a, b int, reverseSort bool) []string {
+func (r *TrustRelations) TrustBetween(a, b int64, reverseSort bool) []string {
 	results := []string{}
 	for k, v := range r.trust {
 		if v >= a && v <= b {
@@ -74,7 +74,7 @@ func (r *TrustRelations) TrustBetween(a, b int, reverseSort bool) []string {
 	return results
 }
 
-func (r *TrustRelations) Add(id string, w int) {
+func (r *TrustRelations) Add(id string, w int64) {
 	r.trust[id] = w
 	if w < structs.MaxTuple/10 && w > structs.MinTuple/10 {
 		r.Neutral = append(r.Neutral, id)

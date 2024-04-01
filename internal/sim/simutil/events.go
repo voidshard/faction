@@ -7,63 +7,63 @@ import (
 func NewJobPendingEvent(j *structs.Job) *structs.Event {
 	return &structs.Event{
 		ID:             structs.NewID(),
-		Type:           structs.EventJobPending,
+		Type:           structs.EventType_JobPending,
 		Tick:           j.TickCreated,
-		SubjectMetaKey: structs.MetaKeyJob,
+		SubjectMetaKey: structs.Meta_KeyJob,
 		SubjectMetaVal: j.ID,
 	}
 }
 
-func NewFactionCreatedEvent(f *structs.Faction, tick int) *structs.Event {
+func NewFactionCreatedEvent(f *structs.Faction, tick int64) *structs.Event {
 	return &structs.Event{
 		ID:             structs.NewID(),
-		Type:           structs.EventFactionCreated,
+		Type:           structs.EventType_FactionCreated,
 		Tick:           tick,
-		SubjectMetaKey: structs.MetaKeyFaction,
+		SubjectMetaKey: structs.Meta_KeyFaction,
 		SubjectMetaVal: f.ID,
 	}
 }
 
-func NewFactionPromotionEvent(p *structs.Person, tick int, factionID string) *structs.Event {
+func NewFactionPromotionEvent(p *structs.Person, tick int64, factionID string) *structs.Event {
 	return &structs.Event{
 		ID:             structs.NewID(),
-		Type:           structs.EventFactionPromotion,
+		Type:           structs.EventType_FactionPromotion,
 		Tick:           tick,
-		SubjectMetaKey: structs.MetaKeyPerson,
+		SubjectMetaKey: structs.Meta_KeyPerson,
 		SubjectMetaVal: p.ID,
-		CauseMetaKey:   structs.MetaKeyFaction,
+		CauseMetaKey:   structs.Meta_KeyFaction,
 		CauseMetaVal:   factionID,
 	}
 }
 
-func NewFactionChangeEvent(p *structs.Person, tick int, previousPreferredFaction string) *structs.Event {
+func NewFactionChangeEvent(p *structs.Person, tick int64, previousPreferredFaction string) *structs.Event {
 	return &structs.Event{
 		ID:             structs.NewID(),
-		Type:           structs.EventPersonChangeFaction,
+		Type:           structs.EventType_PersonChangeFaction,
 		Tick:           tick,
-		SubjectMetaKey: structs.MetaKeyPerson,
+		SubjectMetaKey: structs.Meta_KeyPerson,
 		SubjectMetaVal: p.ID,
-		CauseMetaKey:   structs.MetaKeyFaction,
+		CauseMetaKey:   structs.Meta_KeyFaction,
 		CauseMetaVal:   previousPreferredFaction,
 	}
 }
 
-func NewMarriageEvent(f *structs.Family, tick int) *structs.Event {
+func NewMarriageEvent(f *structs.Family, tick int64) *structs.Event {
 	return &structs.Event{
 		ID:             structs.NewID(),
-		Type:           structs.EventFamilyMarriage,
+		Type:           structs.EventType_FamilyMarriage,
 		Tick:           tick,
-		SubjectMetaKey: structs.MetaKeyFamily,
+		SubjectMetaKey: structs.Meta_KeyFamily,
 		SubjectMetaVal: f.ID,
 	}
 }
 
-func NewDivorceEvent(f *structs.Family, tick int) *structs.Event {
+func NewDivorceEvent(f *structs.Family, tick int64) *structs.Event {
 	return &structs.Event{
 		ID:             structs.NewID(),
-		Type:           structs.EventFamilyDivorce,
+		Type:           structs.EventType_FamilyDivorce,
 		Tick:           tick,
-		SubjectMetaKey: structs.MetaKeyFamily,
+		SubjectMetaKey: structs.Meta_KeyFamily,
 		SubjectMetaVal: f.ID,
 	}
 }
@@ -71,11 +71,11 @@ func NewDivorceEvent(f *structs.Family, tick int) *structs.Event {
 func NewBirthEvent(p *structs.Person, familiyID string) *structs.Event {
 	return &structs.Event{
 		ID:             structs.NewID(),
-		Type:           structs.EventPersonBirth,
+		Type:           structs.EventType_PersonBirth,
 		Tick:           p.BirthTick,
-		SubjectMetaKey: structs.MetaKeyPerson,
+		SubjectMetaKey: structs.Meta_KeyPerson,
 		SubjectMetaVal: p.ID,
-		CauseMetaKey:   structs.MetaKeyFamily,
+		CauseMetaKey:   structs.Meta_KeyFamily,
 		CauseMetaVal:   familiyID,
 	}
 }
@@ -83,21 +83,21 @@ func NewBirthEvent(p *structs.Person, familiyID string) *structs.Event {
 func NewDeathEvent(p *structs.Person) *structs.Event {
 	return &structs.Event{
 		ID:             structs.NewID(),
-		Type:           structs.EventPersonDeath,
+		Type:           structs.EventType_PersonDeath,
 		Tick:           p.DeathTick,
-		SubjectMetaKey: structs.MetaKeyPerson,
+		SubjectMetaKey: structs.Meta_KeyPerson,
 		SubjectMetaVal: p.ID,
 		CauseMetaKey:   p.DeathMetaKey,
 		CauseMetaVal:   p.DeathMetaVal,
 	}
 }
 
-func NewDeathEventWithCause(tick int, subject string, causek structs.MetaKey, causev string) *structs.Event {
+func NewDeathEventWithCause(tick int64, subject string, causek structs.Meta, causev string) *structs.Event {
 	return &structs.Event{
 		ID:             structs.NewID(),
-		Type:           structs.EventPersonDeath,
+		Type:           structs.EventType_PersonDeath,
 		Tick:           tick,
-		SubjectMetaKey: structs.MetaKeyPerson,
+		SubjectMetaKey: structs.Meta_KeyPerson,
 		SubjectMetaVal: subject,
 		CauseMetaKey:   causek,
 		CauseMetaVal:   causev,

@@ -214,7 +214,7 @@ func (x *Job) GetTargetMetaKey() Meta {
 	if x != nil {
 		return x.TargetMetaKey
 	}
-	return Meta_KeyPerson
+	return Meta_None
 }
 
 func (x *Job) GetTargetMetaVal() string {

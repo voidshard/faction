@@ -31,19 +31,19 @@ const (
 
 var (
 	ranksHigh = []structs.FactionRank{
-		structs.FactionRankRuler,
-		structs.FactionRankElder,
-		structs.FactionRankGrandMaster,
-		structs.FactionRankMaster,
+		structs.FactionRank_Ruler,
+		structs.FactionRank_Elder,
+		structs.FactionRank_GrandMaster,
+		structs.FactionRank_Master,
 	}
 	ranksMed = []structs.FactionRank{
-		structs.FactionRankExpert,
-		structs.FactionRankAdept,
+		structs.FactionRank_Expert,
+		structs.FactionRank_Adept,
 	}
 	ranksLow = []structs.FactionRank{
-		structs.FactionRankJourneyman,
-		structs.FactionRankNovice,
-		structs.FactionRankApprentice,
+		structs.FactionRank_Journeyman,
+		structs.FactionRank_Novice,
+		structs.FactionRank_Apprentice,
 	}
 
 	rnggen = rand.New(rand.NewSource(time.Now().UnixNano()))
@@ -152,19 +152,19 @@ func (s *Base) PlanFactionJobs(factionID string) ([]*structs.Job, error) {
 			continue
 		}
 
-		if cfg.Target != "" && (j.TargetMetaKey != cfg.Target || j.TargetMetaVal == "") {
+		if cfg.Target != structs.Meta_None && (j.TargetMetaKey != cfg.Target || j.TargetMetaVal == "") {
 			log.Info().Str("faction", factionID).Str("action", j.Action).Str("meta-target", string(cfg.Target)).Msg()("job target not set")
 			// we need extra target info, but it's not set (probably we couldn't find a target)
 			continue
 		}
 
-		ctx.Summary.Wealth -= int(cfg.Cost.Min)
+		ctx.Summary.Faction.Wealth -= int64(cfg.Cost.Min)
 		events = append(events, simutil.NewJobPendingEvent(j))
 		jobs = append(jobs, j)
 	}
 
 	// push everything into the DB
-	err = s.dbconn.SetFactions(ctx.Summary.ToFaction()) // updated Wealth & Members values
+	err = s.dbconn.SetFactions(ctx.Summary.Faction) // updated Wealth & Members values
 	if err != nil {
 		return jobs, err
 	}
@@ -187,7 +187,7 @@ func (s *Base) prepFactionData(factionID string) (*simutil.FactionContext, []*st
 		"",
 		db.Q(
 			db.F(db.ParentFactionID, db.Equal, factionID),
-			db.F(db.ParentFactionRelation, db.Greater, structs.FactionRelationPuppet),
+			db.F(db.ParentFactionRelation, db.Greater, structs.FactionRelation_Puppet),
 		),
 	)
 	if err != nil {
@@ -198,24 +198,24 @@ func (s *Base) prepFactionData(factionID string) (*simutil.FactionContext, []*st
 	vassals := estimateVassalPeople(factionID, children)
 	people := estimateAvailablePeople(ctx.Summary.Ranks) + vassals/2
 
-	ctx.Summary.Members = ctx.Summary.Ranks.Total // nb. this is people with ranks, not available people for work
-	ctx.Summary.Vassals = vassals                 // estimation of the number of people from child factions we could use
-	ctx.Summary.Plots = ctx.Land.Count
-	ctx.Summary.Areas = len(ctx.Areas)
+	ctx.Summary.Faction.Members = ctx.Summary.Ranks.Total // nb. this is people with ranks, not available people for work
+	ctx.Summary.Faction.Vassals = int64(vassals)          // estimation of the number of people from child factions we could use
+	ctx.Summary.Faction.Plots = ctx.Land.Count
+	ctx.Summary.Faction.Areas = int64(len(ctx.Areas))
 
 	return ctx, children, people, nil
 }
 
-func (s *Base) planFactionJobsPeacetime(tick int, ctx *simutil.FactionContext, weights *simutil.ActionWeights, availablePeople int) ([]*structs.Job, error) {
-	availableWealth := float64(ctx.Summary.Wealth)
+func (s *Base) planFactionJobsPeacetime(tick int, ctx *simutil.FactionContext, weights *simutil.ActionWeights, availablePeople int64) ([]*structs.Job, error) {
+	availableWealth := float64(ctx.Summary.Faction.Wealth)
 
 	// Get all jobs for this faction that are active & wont finish next tick
 	q := db.Q(
-		db.F(db.SourceFactionID, db.Equal, ctx.Summary.ID),
+		db.F(db.SourceFactionID, db.Equal, ctx.Summary.Faction.ID),
 		db.F(db.JobState, db.In, []string{
-			string(structs.JobStatePending),
-			string(structs.JobStateReady),
-			string(structs.JobStateActive),
+			string(structs.JobState_Pending),
+			string(structs.JobState_Ready),
+			string(structs.JobState_Active),
 		}),
 		db.F(db.TickEnds, db.Greater, tick),
 	).DisableSort()
@@ -225,7 +225,7 @@ func (s *Base) planFactionJobsPeacetime(tick int, ctx *simutil.FactionContext, w
 	}
 	inflight := map[string]bool{}
 	for _, j := range jobs {
-		if j.State == structs.JobStateActive {
+		if j.State == structs.JobState_Active {
 			availablePeople -= j.PeopleNow
 		}
 		inflight[jobKey(j.TargetFactionID, j.Action)] = true

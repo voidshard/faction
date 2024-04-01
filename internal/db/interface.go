@@ -23,7 +23,7 @@ type Reader interface {
 	// Although this token is fairly obvious (currently) this isn't meant to
 	// be parsed by the end user(s), and it's design & encoding may change.
 
-	Tick() (int, error)
+	Tick() (int64, error)
 
 	Areas(token string, q *Query) ([]*structs.Area, string, error)
 	Factions(token string, q *Query) ([]*structs.Faction, string, error)
@@ -33,7 +33,7 @@ type Reader interface {
 	People(token string, q *Query) ([]*structs.Person, string, error)
 	Plots(token string, q *Query) ([]*structs.Plot, string, error)
 	Tuples(table Relation, token string, q *Query) ([]*structs.Tuple, string, error)
-	Meta(id string) (string, int, error)
+	Meta(id string) (string, int64, error)
 	Modifiers(table Relation, token string, q *Query) ([]*structs.Modifier, string, error)
 	ModifiersSum(table Relation, token string, q *Query) ([]*structs.Tuple, string, error)
 	Events(token string, q *Query) ([]*structs.Event, string, error)
@@ -49,7 +49,7 @@ type Reader interface {
 
 type Writer interface {
 	// bulk set functions
-	SetTick(i int) error
+	SetTick(i int64) error
 	SetAreas(in ...*structs.Area) error
 	SetFactions(in ...*structs.Faction) error
 	SetFamilies(in ...*structs.Family) error
@@ -59,7 +59,7 @@ type Writer interface {
 	SetPlots(in ...*structs.Plot) error
 	SetTuples(table Relation, in ...*structs.Tuple) error
 	SetModifiers(table Relation, in ...*structs.Modifier) error
-	SetMeta(id, str_val string, int_val int) error
+	SetMeta(id, str_val string, int_val int64) error
 	SetEvents(in ...*structs.Event) error
 
 	// special funcs

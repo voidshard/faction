@@ -33,6 +33,10 @@ func (r *Rand) Int() int {
 	return int(r.value())
 }
 
+func (r *Rand) Int64() int64 {
+	return int64(r.value())
+}
+
 // value returns a new random value
 func (r *Rand) value() float64 {
 	if r.max <= r.min {
