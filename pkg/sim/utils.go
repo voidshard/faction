@@ -12,9 +12,7 @@ import (
 )
 
 const (
-	envDBLocation    = "FACTION_DB_LOCATION"
-	envRedisLocation = "FACTION_REDIS_LOCATION"
-	envCfgLocation   = "FACTION_SIMULATION_CFG_FILE"
+	envCfgLocation = "FACTION_SIMULATION_CFG_FILE"
 )
 
 func LoadConfig(cfgpath string) (*config.Simulation, error) {
@@ -37,15 +35,9 @@ func SetDefaults(cfg *config.Simulation) {
 	if cfg.Database == nil {
 		cfg.Database = config.DefaultDatabase()
 	}
-	if dbLocation := os.Getenv(envDBLocation); dbLocation != "" { // if set, override
-		cfg.Database.Location = dbLocation
-	}
 
 	if cfg.Queue == nil {
 		cfg.Queue = config.DefaultQueue()
-	}
-	if redisLocation := os.Getenv(envRedisLocation); redisLocation != "" { // if set, override
-		cfg.Queue.Location = redisLocation
 	}
 
 	// if not told otherwise, we'll assume human demographics
@@ -67,24 +59,49 @@ func SetDefaults(cfg *config.Simulation) {
 	}
 }
 
+func merge(a, b *config.Simulation) {
+	if a.Database == nil {
+		a.Database = b.Database
+	}
+	if a.Queue == nil {
+		a.Queue = b.Queue
+	}
+	if a.Races == nil {
+		a.Races = b.Races
+	}
+	if a.Cultures == nil {
+		a.Cultures = b.Cultures
+	}
+	if a.Actions == nil {
+		a.Actions = b.Actions
+	}
+	if a.Settings == nil {
+		a.Settings = b.Settings
+	}
+}
+
 func New(cfg *config.Simulation, opts ...simOption) (Simulation, error) {
-	// apply default settings
 	if cfg == nil {
-		if cfgpath := os.Getenv(envCfgLocation); cfgpath != "" {
-			// if we have a config file, try load it
-			var err error
-			cfg, err = LoadConfig(cfgpath)
-			if err != nil {
-				return nil, err
-			}
-		} else {
-			// otherwise, set us a blank
-			cfg = &config.Simulation{}
-		}
+		cfg = &config.Simulation{}
 	}
 
-	SetDefaults(cfg)
+	// read config file from disk, this will form our "defaults" for
+	// anything not set in our given cfg
+	diskcfg := &config.Simulation{}
+	if cfgpath := os.Getenv(envCfgLocation); cfgpath != "" {
+		// if we have a config file, try load it
+		var err error
+		diskcfg, err = LoadConfig(cfgpath)
+		if err != nil {
+			return nil, err
+		}
+	}
+	SetDefaults(diskcfg)
 
+	// merge defaults with given cfg where required
+	merge(cfg, diskcfg)
+
+	// build a sim struct
 	me, err := base.New(cfg)
 	if err != nil {
 		return nil, err

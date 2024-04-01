@@ -1,0 +1,15 @@
+syntax = "proto3";
+option go_package = "pkg/structs";
+
+enum FactionRank {
+    Associate = 0;
+    Apprentice = 1;
+    Novice = 2;
+    Journeyman = 3;
+    Adept = 4;
+    Expert = 5;
+    Master = 6;
+    GrandMaster = 7;
+    Elder = 8;
+    Ruler = 9;
+}

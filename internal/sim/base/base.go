@@ -1,7 +1,6 @@
 package base
 
 import (
-	"errors"
 	"fmt"
 
 	"github.com/voidshard/faction/internal/db"
@@ -83,13 +82,25 @@ func (s *Base) FireEvents() error {
 		return err
 	}
 
+	// holds tasks we want to run to do calculations after something happened before we move on
+	// ie. someone died, this should affect processing for the next tick
+	postProcessEvents := "post_processing_events"
+
+	job, err := s.queue.NewWorkflow(
+		fmt.Sprintf("faction_events_%d", tick),
+		[]string{postProcessEvents},
+	)
+	if err != nil {
+		log.Error().Err(err).Msg()("error creating workflow")
+		return err
+	}
+
 	q := db.Q(db.F(db.Tick, db.Equal, tick))
 	var (
 		events []*structs.Event
 		token  string
 	)
 
-	count := 0
 	for {
 		events, token, err = s.dbconn.Events(token, q)
 		if err != nil {
@@ -97,30 +108,29 @@ func (s *Base) FireEvents() error {
 			return err
 		}
 
-		// TODO: Perhaps we could batch launch
 		for _, e := range events {
 			data, err := e.MarshalJson()
 			if err != nil {
-				log.Error().Err(err).Str("event", fmt.Sprintf("%v", e)).Msg()("error marshalling event")
+				log.Error().Err(err).Str("id", fmt.Sprintf("%v", e.ID)).Msg()("error marshalling event")
 				return err
 			}
-			count += 1
-
-			_, err = s.queue.Enqueue(eventTask(e.Type), data)
-			if errors.Is(err, queue.ErrNoHandler) {
-				// no post processing is needed for this event type
-				continue
-			} else if err != nil {
-				log.Error().Err(err).Str("event", fmt.Sprintf("%v", e)).Msg()("error enqueuing event")
+			err = job.Task(postProcessEvents, fmt.Sprintf("%s_%s", e.Type, e.ID), data)
+			if err != nil {
+				log.Error().Err(err).Str("id", e.ID).Msg()("error adding task to workflow")
 				return err
 			}
+		}
+		if err != nil {
+			log.Error().Err(err).Msg()("error adding tasks to workflow")
+			return err
 		}
 
 		if token == "" {
 			break
 		}
 	}
-	return nil
+
+	return job.Unpause()
 }
 
 func (s *Base) SetTechnology(tech technology.Technology) error {

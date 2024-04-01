@@ -1,71 +1,26 @@
 package structs
 
-// Demographics includes information about various stats
-// in some areas.
-// eg. Faith, Professions etc
-type Demographics struct {
-	Faith       map[string]*DemographicStatSpread
-	Profession  map[string]*DemographicStatSpread
-	Affiliation map[string]*DemographicStatSpread
-	Rank        map[string]*DemographicRankSpread
-}
-
-// DemographicStatSpread holds counts of some stats that appear in
-// some population.
-type DemographicStatSpread struct {
-	// See: MaxTuple, MinTuple in tuple.go
-	Exemplary int // 9500 -> 10000
-	Excellent int // 7500 -> 9500
-	Good      int // 5000 -> 7500
-	Fine      int // 2500 -> 5000
-	Average   int // 0 -> 2500
-	Poor      int // 0 -> -2500
-	Awful     int // -2500 -> -5000
-	Terrible  int // -5000 -> -7500
-	Abysmal   int // -7500 -> -10000
-
-	Total int
-}
-
-// DemographicRankSpread holds counts of faction ranks among a population
-// in a given faction.
-type DemographicRankSpread struct {
-	// See: FactionRank in faction_relations.go
-	Ruler       int
-	Elder       int
-	GrandMaster int
-	Master      int
-	Expert      int
-	Adept       int
-	Journeyman  int
-	Novice      int
-	Apprentice  int
-	Associate   int
-
-	Total int
-}
-
 // Count returns the number of people of a given rank.
-func (d *DemographicRankSpread) Count(r FactionRank) int {
+func (d *DemographicRankSpread) Count(r FactionRank) int64 {
 	// TODO: I'm sure there's a smarter way
 	switch r {
-	case FactionRankRuler:
+	case FactionRank_Ruler:
 		return d.Ruler
-	case FactionRankElder:
+	case FactionRank_Elder:
 		return d.Elder
-	case FactionRankGrandMaster:
+	case FactionRank_GrandMaster:
 		return d.GrandMaster
-	case FactionRankMaster:
+	case FactionRank_Master:
 		return d.Master
-	case FactionRankExpert:
+	case FactionRank_Expert:
 		return d.Expert
-	case FactionRankAdept:
+	case FactionRank_Adept:
 		return d.Adept
-	case FactionRankJourneyman:
+	case FactionRank_Journeyman:
 		return d.Journeyman
-	case FactionRankNovice:
+	case FactionRank_Novice:
 		return d.Novice
-	case FactionRankApprentice:
+	case FactionRank_Apprentice:
 		return d.Apprentice
 	}
 	return d.Associate
@@ -109,28 +64,28 @@ func (d *Demographics) AddRank(in string, val FactionRank) {
 	d.Rank[in].Add(val, 1)
 }
 
-func (d *DemographicRankSpread) Add(val FactionRank, i int) {
+func (d *DemographicRankSpread) Add(val FactionRank, i int64) {
 	d.Total += i
 	switch val {
-	case FactionRankRuler:
+	case FactionRank_Ruler:
 		d.Ruler += i
-	case FactionRankElder:
+	case FactionRank_Elder:
 		d.Elder += i
-	case FactionRankGrandMaster:
+	case FactionRank_GrandMaster:
 		d.GrandMaster += i
-	case FactionRankMaster:
+	case FactionRank_Master:
 		d.Master += i
-	case FactionRankExpert:
+	case FactionRank_Expert:
 		d.Expert += i
-	case FactionRankAdept:
+	case FactionRank_Adept:
 		d.Adept += i
-	case FactionRankJourneyman:
+	case FactionRank_Journeyman:
 		d.Journeyman += i
-	case FactionRankNovice:
+	case FactionRank_Novice:
 		d.Novice += i
-	case FactionRankApprentice:
+	case FactionRank_Apprentice:
 		d.Apprentice += i
-	case FactionRankAssociate:
+	case FactionRank_Associate:
 		d.Associate += i
 	}
 }

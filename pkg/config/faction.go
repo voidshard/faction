@@ -77,10 +77,10 @@ type Faction struct {
 	EthosDeviation structs.Ethos
 
 	// Probabilities to associate with each type of leadership
-	LeadershipProbability map[structs.LeaderType]float64
+	LeadershipProbability map[structs.FactionLeadership]float64
 
 	// Probabilities to associate with each type of structure
-	LeadershipStructureProbability map[structs.LeaderStructure]float64
+	LeadershipStructureProbability map[structs.FactionStructure]float64
 
 	// starting values for wealth / cohesion / corruption.
 	Wealth     Distribution

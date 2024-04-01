@@ -21,7 +21,7 @@ type Action struct {
 
 	// If the engine should pick a more specific target (above Faction & Area).
 	// Eg. this needs to target a specific plot for Raid.
-	Target structs.MetaKey
+	Target structs.Meta
 
 	// Category of action gives us some hint as to how the action should be is perceived.
 	Category ActionCategory

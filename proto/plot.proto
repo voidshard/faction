@@ -1,0 +1,64 @@
+syntax = "proto3";
+option go_package = "pkg/structs";
+
+// Plot is some package of land, buildings and attachments that a faction
+// can buy, sell or use as a place of work / trade / whatever.
+//
+// Plots may yield some resource (eg. a Commodity) or simply be a plot of
+// land / building(s) that can be used for some purpose.
+//
+// It might be a farm + land, a castle complete with moat, a high rise building,
+// a small sea-side house + jetty .. for the purposes of the simulation all that
+// matters is that it can be used as a place of work, for whatever work means
+// for that faction.
+message Plot {
+	string ID = 1;
+
+	string AreaID = 2;
+	string FactionID = 3;
+
+	// secrecy value if it isn't widely known who owns this plot
+	int64 Hidden = 4;
+
+	// average value for this plot (to the owner)
+	// - size * land value + commodity value * yield
+	// Nb. rough estimation at last write given current market values
+	double Value = 5;
+
+	Crop Crop = 6;
+}
+
+// Crop holds extra data about the land & it's usage
+message Crop {
+	// Commodity that can be harvested from this land (if any)
+	string Commodity = 1;
+
+	// Size in land units squared
+	int64 Size = 2;
+
+	// Yield of the resource, ie how many "units" of `resource` are produced
+	// (or expected to be produced) from this per unit squared of land.
+	//
+	// This is an average, the actual value is dictated by the Economy interface
+	// for the given tick(s) when needed.
+	//
+	// (If Commodity is set, otherwise this is 0).
+	//
+	// Nb. this land could be a small but super productive area, or a
+	// massive expanse. It doesn't really matter .. all we mean here is that
+	// this land is productive for a given purpose, and can be owned & run
+	// by a faction.
+	int64 Yield = 3;
+}
+
+// LandSummary gives metrics of some areas of land (plots, commodities, etc)
+message LandSummary {
+	// commodity -> crop
+        map<string, Crop> Commodities = 1;
+
+	// area -> LandSummary
+        map<string, LandSummary> Areas = 2;
+
+        int64 TotalSize = 3;
+        int64 Count = 4;
+}

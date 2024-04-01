@@ -1,6 +1,3 @@
-\c faction
-SET search_path TO faction;
-
 --- Create tables
 CREATE TABLE IF NOT EXISTS meta (
 	    id VARCHAR(255) PRIMARY KEY,
@@ -307,9 +304,3 @@ CREATE INDEX IF NOT EXISTS subject_modifiers_weight_faction_to_action_type ON mo
 CREATE INDEX IF NOT EXISTS subject_tuples_weight_faction_to_profession ON tuples_weight_faction_to_profession (subject);
 CREATE INDEX IF NOT EXISTS subject_tuples_rank_person_to_faction ON tuples_rank_person_to_faction (subject);
 CREATE INDEX IF NOT EXISTS subject_tuples_intelligence_faction_to_faction ON tuples_intelligence_faction_to_faction (subject);
-
---- Hand out permissions
-GRANT SELECT ON ALL TABLES IN SCHEMA faction TO factionreadonly;
-GRANT SELECT ON ALL SEQUENCES IN SCHEMA faction TO factionreadonly;
-GRANT ALL ON ALL TABLES IN SCHEMA faction TO factionreadwrite;
-GRANT ALL ON ALL SEQUENCES IN SCHEMA faction TO factionreadwrite;

@@ -1,0 +1,10 @@
+syntax = "proto3";
+option go_package = "pkg/structs";
+
+enum FactionLeadership {
+    Single = 0;
+    Dual = 1;
+    Triad = 2;
+    Council = 3;
+    All = 4;
+}

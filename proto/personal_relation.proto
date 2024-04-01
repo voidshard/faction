@@ -1,0 +1,35 @@
+syntax = "proto3";
+option go_package = "pkg/structs";
+
+// PersonalRelation represents how two people know each other.
+//
+// In general a person is linked with the strongest relevant link.
+// Ie.
+// - if a person is a lover and a friend, they are considered a lover.
+// - if a person is a lover and a wife, they are considered a wife.
+// Nb. these are in order, where the lower number(s) trump higher ones.
+enum PersonalRelation {
+    ExWife = 0;
+    ExHusband = 1;
+    Wife = 2;
+    Husband = 3;
+    Mother = 4;
+    Father = 5;
+    Daughter = 6;
+    Son = 7;
+    Sister = 8;
+    Brother = 9;
+    Grandmother = 10;
+    Grandfather = 11;
+    Granddaughter = 12;
+    Grandson = 13;
+    ExtendedFamily = 14;
+    Fiancee = 15;
+    Lover = 16;
+    HatedEnemy = 17;
+    Enemy = 18;
+    CloseFriend = 19;
+    Friend = 20;
+    Mentor = 21;
+    Colleague = 22;
+}
