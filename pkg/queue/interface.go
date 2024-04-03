@@ -10,19 +10,9 @@ var (
 	ErrNoHandler = fmt.Errorf("no handler for task")
 )
 
-type State string
-
-const (
-	StateQueued   State = "queued"
-	StateRunning  State = "running"
-	StateComplete State = "complete"
-	StateFailed   State = "failed"
-)
-
 type Handler func(in ...*Job) error
 
 type Queue interface {
-	// -- server functions
 	// Register a task to be handled by the queue
 	Register(task string, handler Handler) error
 
@@ -32,13 +22,25 @@ type Queue interface {
 	// Stop stops tasks processing
 	Stop() error
 
-	// -- client functions
-	// Enqueue adds a task to the queue
-	Enqueue(task string, args []byte) (string, error)
+	// NewWorkflow creates a new workflow with the given name and layers.
+	// Layers are a list of tasks to be run in parallel, each set of layers is run in sequence.
+	//
+	// ie.
+	// > NewWorkflow("test", []string{"a", "b"}, []string{"c", "d"})
+	// would run a and b in parallel, then c and d in parallel.
+	//
+	// A workflow is created paused, and Unpause() is called to actually begin processing
+	// queued tasks.
+	NewWorkflow(name string, layers ...[]string) (Workflow, error)
+}
 
-	// -- misc functions
-	// Status returns the status of a task
-	Status(id string) (*JobMeta, error)
+type Workflow interface {
+	// Task queues task to be run in the given layer of the workflow
+	Task(layer, task string, args []byte) error
+
+	// Unpause allows the given layer(s) to run. If no layers are given, all layers are permitted to unpause.
+	// (Layer order is still respected).
+	Unpause(layers ...string) error
 }
 
 type Job struct {
@@ -46,20 +48,12 @@ type Job struct {
 	Args []byte `json:"args,omitempty"`
 }
 
-type JobMeta struct {
-	ID     string `json:"id"`
-	State  State  `json:"state"`
-	Result []byte `json:"result,omitempty"`
-	Msg    string `json:"msg,omitempty"`
-	Job    *Job
-}
-
 func New(cfg *config.Queue) (Queue, error) {
 	switch cfg.Driver {
 	case config.QueueInMemory:
 		return NewInMemoryQueue(), nil
-	case config.QueueAsynq:
-		return NewAsynqQueue(cfg)
+	case config.QueueIgor:
+		return NewIgorQueue(cfg)
 	default:
 		return nil, fmt.Errorf("unknown queue driver: %s", cfg.Driver)
 	}

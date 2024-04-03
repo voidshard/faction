@@ -8,22 +8,36 @@ const (
 	// This is is only intended for testing / debugging / development.
 	QueueInMemory QueueDriver = "inmemory"
 
-	// QueueAsynq uses asynq to process tasks.
-	QueueAsynq QueueDriver = "asynq"
+	// QueueIgor uses Igor to process tasks.
+	QueueIgor QueueDriver = "igor"
 )
 
 const (
-	defaultAsynqQueueURL = "localhost:6379" // redis
+	defaultIgorQueueDB  = "postgres://igor:igor@localhost:5432/igor?sslmode=disable"
+	defaultIgorQueueURL = "igor-redis:6379"
 )
 
 type Queue struct {
-	Driver   QueueDriver
-	Location string
+	Driver QueueDriver
+
+	// Location of queue
+	// [inmemory]: ignored
+	// [igor]: URL of igor redis
+	Queue string
+
+	// Location of queue database
+	// [inmemory]: ignored
+	// [igor]: igor postgres connection string
+	Database string
 }
 
 func DefaultQueue() *Queue {
 	if isLocalMode() {
 		return &Queue{Driver: QueueInMemory}
 	}
-	return &Queue{Driver: QueueAsynq, Location: defaultAsynqQueueURL}
+	return &Queue{
+		Driver:   QueueIgor,
+		Queue:    defaultIgorQueueURL,
+		Database: defaultIgorQueueDB,
+	}
 }
