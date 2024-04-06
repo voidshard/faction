@@ -3,9 +3,12 @@ package main
 import (
 	"errors"
 	"fmt"
+	"log"
+	"strings"
 	"time"
 
 	"database/sql"
+	"net/url"
 
 	_ "github.com/lib/pq"
 
@@ -63,7 +66,14 @@ type cmdMigrateWait struct {
 	Timeout time.Duration `long:"timeout" env:"MIGRATIONS_WAIT_TIMEOUT" description:"Time to wait before erroring (optional)"`
 }
 
+type cmdMigrateSetup struct {
+	optsGeneral
+	optsDatabase
+}
+
 type optsMigrate struct {
+	Setup cmdMigrateSetup `command:"setup" hidden:"true" description:"Setup the database, should only be used in testing"`
+
 	Up cmdMigrateUp `command:"up" description:"Up version the database"`
 
 	Down cmdMigrateDown `command:"down" description:"Down version the database"`
@@ -71,6 +81,26 @@ type optsMigrate struct {
 	Version cmdMigrateVersion `command:"version" description:"Get or force-set the current version of the database"`
 
 	Wait cmdMigrateWait `command:"wait" description:"Wait (block) for the database to be at least the given version"`
+}
+
+func (c *cmdMigrateSetup) Execute(args []string) error {
+	// Used to setup the database for testing, not intended for use outside of testing
+	u, err := url.Parse(c.DatabaseURL)
+	if err != nil {
+		return err
+	}
+	database := strings.Trim(u.Path, "/")
+	u.Path = ""
+
+	// connect to postgres without the DB
+	db, err := sql.Open("postgres", u.String())
+	if err != nil {
+		return err
+	}
+	defer db.Close()
+	_, err = db.Exec(fmt.Sprintf("CREATE DATABASE %s;", database))
+	log.Println("Create database:", database, err)
+	return err
 }
 
 func (c *cmdMigrateForce) Execute(args []string) error {

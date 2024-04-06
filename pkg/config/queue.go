@@ -13,8 +13,8 @@ const (
 )
 
 const (
-	defaultIgorQueueDB  = "postgres://igor:igor@localhost:5432/igor?sslmode=disable"
-	defaultIgorQueueURL = "igor-redis:6379"
+	defaultIgorQueueDB  = "postgres://postgres:test@localhost:5432/igor?sslmode=disable"
+	defaultIgorQueueURL = "localhost:6379"
 )
 
 type Queue struct {

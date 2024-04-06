@@ -1,4 +1,4 @@
-FROM golang:1.20
+FROM golang:1.22
 
 ARG USERNAME=app
 ARG USER_UID=1000
@@ -17,9 +17,7 @@ RUN go mod download
 
 # go-sqlite3 requires cgo, but if we're running in a container we're not using sqlite3 so ... disable
 # If for some reason you do want to use sqlite3 from a container (?) then you'll need to set CGO_ENABLED=1
-RUN CGO_ENABLED=0 GOOS=linux go build -o /app ./cmd/event_processor && chown -R $USER_UID:$USER_GID /app
+RUN CGO_ENABLED=0 GOOS=linux go build -o /faction ./cmd/faction && chown -R $USER_UID:$USER_GID /faction
 
 USER $USERNAME
-CMD ["/app"]
-
-
+ENTRYPOINT ["/faction"]

@@ -8,8 +8,13 @@ Initial spin up
 # Stand up infra
 docker compose up postgres
 
-# In another terminal, setup DB
-./cmd/pg_updater/run.sh
+# Create Faction DB & run migrations
+go run cmd/faction/*.go migrate setup
+go run cmd/faction/*.go migrate up
+
+# Create Igor DB & run migrations (https://github.com/voidshard/igor)
+docker run --rm --network=host uristmcdwarf/igor:0.0.5 migrate setup
+docker run --rm --network=host uristmcdwarf/igor:0.0.5 migrate up
 
 # Now we can spin up everything
 docker compose up
@@ -20,7 +25,3 @@ Reseting infra (drops everything)
 docker compose rm
 ```
 
-Switch to using a sqlitedb & local 'queue' by default with
-```
-export ENABLE_LOCAL_MODE=true
-```

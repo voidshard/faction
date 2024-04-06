@@ -136,7 +136,7 @@ func main() {
 		ID:              structs.NewID(),
 		SourceFactionID: faction1.ID,
 		SourceAreaID:    area1.ID,
-		Action:          stringFestival,
+		Action:          fantasy.Festival,
 		TargetAreaID:    area1.ID,
 		TargetFactionID: faction1.ID,
 		TargetMetaKey:   structs.MetaKeyFamily,

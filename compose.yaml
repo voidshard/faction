@@ -1,11 +1,17 @@
 services:
+  # Faction worker process(es)
   worker:
     build:
       context: .
-      dockerfile: Dockerfile.local
+      dockerfile: Dockerfile
+    command: ["worker"]
     environment:
-      - FACTION_DB_LOCATION=postgres://factionreadwrite:readwrite@postgres:5432/faction?sslmode=disable
-      - FACTION_REDIS_LOCATION=redis:6379
+      - POSTGRES_PASSWORD=test
+      - DATABASE_DRIVER=postgres
+      - DATABASE_URL=postgres://postgres:test@postgres:5432/faction?sslmode=disable
+      - QUEUE_DRIVER=igor
+      - QUEUE_URL=redis:6379
+      - QUEUE_DATABASE_URL=postgres://postgres:test@postgres:5432/igor?sslmode=disable
       - ENABLE_DEBUG=true
       - ENABLE_LOCAL_MODE=false
     depends_on:
@@ -14,7 +20,40 @@ services:
     deploy:
       mode: replicated
       replicas: 3
-  redis:
+
+  # SERVICES
+  igor-api:  # igor's API Server
+    image: "uristmcdwarf/igor:0.0.5"
+    command: ["api"]
+    ports:
+      - "8100:8100"
+    environment:
+      - DATABASE_URL=postgres://postgres:test@postgres:5432/igor?sslmode=disable
+      - QUEUE_URL=redis:6379
+      - ADDR=0.0.0.0:8100
+      - DEBUG=true
+    depends_on:
+      - postgres
+      - redis
+    deploy:
+      mode: replicated
+      replicas: 1
+  igor-internal: # igor's internal management process
+    image: "uristmcdwarf/igor:0.0.5"
+    command: ["worker"]
+    environment:
+      - DATABASE_URL=postgres://postgres:test@postgres:5432/igor?sslmode=disable
+      - QUEUE_URL=redis:6379
+      - DEBUG=true
+    depends_on:
+      - postgres
+      - redis
+    deploy:
+      mode: replicated
+      replicas: 1
+
+  # INFRASTRUCTURE
+  redis: # infrastructure: redis
     image: "redis:alpine"
     ports:
       - "6379:6379"
@@ -24,7 +63,7 @@ services:
       - "8080:8080"
     environment:
       - REDIS_ADDR=redis:6379
-  postgres:
+  postgres: # infrastructure: postgres
     image: "postgres:16"
     ports:
       - "5432:5432"

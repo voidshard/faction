@@ -41,7 +41,7 @@ func DefaultDatabase() *Database {
 	}
 	return &Database{
 		Driver:   DatabasePostgres,
-		Location: "postgres://factionreadwrite:readwrite@localhost:5432/faction?sslmode=disable",
+		Location: "postgres://postgres:test@localhost:5432/faction?sslmode=disable",
 	}
 }
 
