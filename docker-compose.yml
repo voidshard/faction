@@ -1,0 +1,60 @@
+services:
+  api:
+    build: .
+    depends_on:
+      - mongo
+      - rabbit
+    environment:
+      DEBUG: true
+      DB_HOST: mongo
+      DB_USERNAME: admin
+      DB_PASSWORD: admin
+      DB_DATABASE: faction
+      Q_HOST: rabbit
+      Q_USERNAME: admin
+      Q_PASSWORD: admin
+    command: api --port 5000
+    ports:
+      - 5000:5000
+      
+  rabbit: # rabbit, but with the management UI
+    image: "rabbitmq:management"
+    restart: on-failure
+    container_name: "rabbit"
+    environment:
+      RABBITMQ_DEFAULT_USER: "admin"
+      RABBITMQ_DEFAULT_PASS: "admin"
+    ports:
+      - "5672:5672"
+      # docker exec rabbit rabbitmq-plugins enable rabbitmq_management
+      - "15672:15672"
+
+  mongo: # ferretdb pretends to be mongo, but runs over postgres or sqlite
+    image: ghcr.io/ferretdb/ferretdb
+    restart: on-failure
+    container_name: "mongo"
+    environment:
+      FERRETDB_HANDLER: sqlite
+      FERRETDB_TEST_ENABLE_NEW_AUTH: true
+      FERRETDB_SETUP_USERNAME: admin
+      FERRETDB_SETUP_PASSWORD: admin
+      FERRETDB_SETUP_DATABASE: faction
+    ports:
+      - 27017:27017
+
+  mongo-express: # mongodb ui
+    image: mongo-express
+    restart: on-failure
+    container_name: "mongo-express"
+    depends_on:
+      - mongo
+    environment:
+      ME_CONFIG_MONGODB_SERVER: mongo
+      ME_CONFIG_MONGODB_PORT: 27017
+      ME_CONFIG_MONGODB_ADMINUSERNAME: admin
+      ME_CONFIG_MONGODB_ADMINPASSWORD: admin
+      ME_CONFIG_MONGODB_AUTH_DATABASE: faction
+      ME_CONFIG_BASICAUTH_USERNAME: admin
+      ME_CONFIG_BASICAUTH_PASSWORD: admin
+    ports:
+      - 8081:8081

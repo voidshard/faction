@@ -1,0 +1,21 @@
+syntax = "proto3";
+option go_package = "pkg/structs";
+
+import "metadata.proto";
+import "errors.proto";
+
+message Change {
+    string World = 1;
+    string Area = 2;
+    Metakey Key = 3;
+    string Id = 4;
+}
+
+message OnChangeRequest {
+    Change Data = 1;
+}
+
+message OnChangeResponse {
+    Change Data = 1;
+    optional Error Error = 2;
+}

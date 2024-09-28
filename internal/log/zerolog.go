@@ -1,98 +1,74 @@
-/*
-We mimic zerologs no-allocation approach to logging by using a sync.Pool here.
-https://github.com/rs/zerolog/blob/master/event.go#L13
-
-We're not adding any functionality at all (actually, we hiding a lot), the aim is only to
-remove library specific stuff from our logging interface.
-
-Technically we add an allocation here, so it's now onelog not zerolog .. but .. eh.
-*/
 package log
 
 import (
 	"os"
 	"strings"
-	"sync"
 
 	"github.com/rs/zerolog"
-	"github.com/rs/zerolog/log"
 )
 
-var linePool = &sync.Pool{
-	New: func() interface{} { return &logLine{} },
-}
+const (
+	// Env var to control debug
+	EnvDebug = "DEBUG"
+)
 
-func putLine(l *logLine) {
-	linePool.Put(l)
-}
+var (
+	// clogger "console logger" we know we can always write to
+	clogger zerolog.Logger
 
-func getLine(e *zerolog.Event) *logLine {
-	l := linePool.Get().(*logLine)
-	l.e = e
-	l.msg = e.Msg
-	return l
-}
+	// logger is the main logger, which can be multi level or just the console logger
+	logger zerolog.Logger
+)
 
-type logLine struct {
-	e   *zerolog.Event
-	msg func(string)
-}
+type Logger = zerolog.Logger
 
-func (l *logLine) Str(key string, val string) LogLine {
-	l.e.Str(key, val)
-	return l
-}
-
-func (l *logLine) Err(err error) LogLine {
-	l.e.Err(err)
-	return l
-}
-
-func (l *logLine) Int(key string, val int) LogLine {
-	l.e.Int(key, val)
-	return l
-}
-
-func (l *logLine) Float64(key string, val float64) LogLine {
-	l.e.Float64(key, val)
-	return l
-}
-
-func (l *logLine) Msg() func(msg string) {
-	// Ensures we call "Msg" where the log is written (for tracing)
-	defer putLine(l)
-	return l.msg
-}
-
-type zLogger struct{}
-
-func (z *zLogger) Info() LogLine {
-	return getLine(log.Info())
-}
-
-func (z *zLogger) Warn() LogLine {
-	return getLine(log.Warn())
-}
-
-func (z *zLogger) Error() LogLine {
-	return getLine(log.Error())
-}
-
-func (z *zLogger) Fatal() LogLine {
-	return getLine(log.Fatal())
-}
-
-func (z *zLogger) Debug() LogLine {
-	return getLine(log.Debug())
-}
-
-func newZeroLog() *zLogger {
+func init() {
 	zerolog.TimeFieldFormat = zerolog.TimeFormatUnix
-	log.Logger = log.With().Caller().Logger() // enable logs to include line numbers & file names
+	zerolog.SetGlobalLevel(zerolog.WarnLevel)
 
+	SetGlobalLevel()
+
+	console := zerolog.ConsoleWriter{Out: os.Stdout}
+	clogger = zerolog.New(zerolog.ConsoleWriter{Out: os.Stdout}).With().Caller().Logger()
+
+	logger = zerolog.New(zerolog.MultiLevelWriter(console)).With().Caller().Logger()
+}
+
+func SetGlobalLevel() {
 	debug := strings.ToLower(strings.TrimSpace(os.Getenv(EnvDebug)))
 	if debug == "true" || debug == "1" || debug == "on" || debug == "yes" {
 		zerolog.SetGlobalLevel(zerolog.DebugLevel)
 	}
-	return &zLogger{}
+}
+
+func Sublogger(name string, attrs ...map[string]string) zerolog.Logger {
+	logger := logger.With()
+	// first set any attrs
+	for _, attr := range attrs {
+		for k, v := range attr {
+			logger = logger.Str(k, v)
+		}
+	}
+	// make sure we set name and return the logger
+	return logger.Str("logger", name).Logger()
+}
+
+func Info() *zerolog.Event {
+	return logger.Info()
+}
+
+func Warn() *zerolog.Event {
+	return logger.Warn()
+}
+
+func Debug() *zerolog.Event {
+	return logger.Debug()
+}
+
+func Error() *zerolog.Event {
+	return logger.Error()
+}
+
+func Fatal() *zerolog.Event {
+	return logger.Fatal()
 }

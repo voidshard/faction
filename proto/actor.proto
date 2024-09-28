@@ -1,0 +1,85 @@
+syntax = "proto3";
+option go_package = "pkg/structs";
+
+import "metadata.proto";
+import "errors.proto";
+import "relationship.proto";
+
+message ActorStatus {
+}
+
+message Actor {
+    // standard values
+    string Id = 1;
+    string Etag = 2;
+    string World = 3;
+    map<string, string> Labels = 4;
+    map<string, int64> Attributes = 5;
+
+    // Guiding principals
+    map<string, double> Ethos = 6; // how much the person values each ethos
+    map<string, double> Goals = 7; // how much the person values each goal
+
+    // Learned skills
+    map<string, uint64> Skills = 8;
+
+    //
+    string Race = 9;
+    string Culture = 10;
+
+    repeated Relationship Allies = 11;
+    repeated Relationship Enemies = 12;
+
+    uint64 BirthTick = 13;
+    uint64 DeathTick = 14;
+
+    uint64 ExpectedDeathTick = 15; // expected death via natural causes
+    optional Metaref DeathCause = 16;
+
+    // roughly where the person lives & operates in the world
+    string Area = 17;
+
+    optional ActorStatus Status = 18;
+}
+
+message GetActorsRequest {
+    repeated string Ids = 1;
+    string World = 2;
+}
+
+message GetActorsResponse {
+    repeated Actor Data = 1;
+    optional Error Error = 2;
+}
+
+message SetActorsRequest {
+    repeated Actor Data = 1;
+    string World = 2;
+}
+
+message SetActorsResponse {
+    string Etag = 1;
+    optional Error Error = 2;
+}
+
+message DeleteActorRequest {
+    string Id = 1;
+    string World = 2;
+}
+
+message DeleteActorResponse {
+    optional Error Error = 2;
+}
+
+message ListActorsRequest {
+    optional uint32 Limit = 1;
+    optional uint32 Offset = 2;
+    map<string, string> Labels = 3;
+    string World = 4;
+}
+
+message ListActorsResponse {
+    repeated Actor Data = 1;
+    optional Error Error = 2;
+}
+

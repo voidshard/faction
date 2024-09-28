@@ -1,0 +1,38 @@
+syntax = "proto3";
+option go_package = "pkg/structs";
+
+// Enum that represents the different objects that can be referenced by Metaref
+enum Metakey {
+    // Metakey_KeyX is annoying, but protobuf wont allow us to use an already used name like "world" for 
+    // an enum value. So we have to use KeyWorld instead of World.
+    // Alternatively we could name this "Meta" so we get "Meta_KeyWorld" ?
+
+    KeyNone = 0;
+    KeyActor = 1; // targets specific actor Val: ACTOR_ID
+    KeyPlot = 2; // targets specific plot Val: PLOT_ID
+    KeyResearch = 3; // targets specific research Val: RESEARCH_TOPIC
+    KeyFaction = 4; // targets specific faction Val: FACTION_ID
+    KeyReligion = 5; // targets specific religion Val: RELIGION_ID
+    KeyGovernment = 6; // targets specific government Val: GOVERNMENT_ID
+    KeyFamily = 7; // targets specific family Val: FAMILY_ID
+    KeyCommodity = 8; // targets specific commodity Val: COMMODITY_NAME
+    KeyAction = 9; // targets specific action Val: ACTION_TYPE
+    KeyJob = 10; // targets specific job Val: JOB_ID
+    KeyArea = 11; // targets specific area Val: AREA_ID
+    KeyEvent = 12; // targets specific event Val: EVENT_ID
+    KeyGoal = 13; // targets specific goal Val: GOAL_NAME
+    KeyOpinion = 14; // targets specific opinion Val: ?
+    KeyTrust = 15; // targets specific trust Val: ?
+    KeyFear = 16; // targets specific fear Val: ?
+    KeyCulture = 17; // targets specific culture Val: CULTURE_ID
+    KeyRace = 18; // targets specific race Val: RACE
+    KeyTick = 19; // targets specific tick Val: TICK
+    KeyWorld = 20; // targets specific world Val: WORLD_ID
+}
+
+// Metaref is a reference to a specific object in the world. The value depends on the key.
+message Metaref {
+    Metakey Key = 1;
+    string Value = 2;
+    string Extra = 3;
+}

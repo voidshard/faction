@@ -1,11 +1,5 @@
+# Build the application
 FROM golang:1.22
-
-ARG USERNAME=app
-ARG USER_UID=1000
-ARG USER_GID=$USER_UID
-
-RUN groupadd --gid $USER_GID $USERNAME \
-    && useradd --uid $USER_UID --gid $USER_GID -m $USERNAME
 
 WORKDIR /go/src/github.com/voidshard/faction
 COPY go.mod ./
@@ -15,9 +9,30 @@ COPY pkg pkg
 COPY internal internal
 RUN go mod download
 
-# go-sqlite3 requires cgo, but if we're running in a container we're not using sqlite3 so ... disable
-# If for some reason you do want to use sqlite3 from a container (?) then you'll need to set CGO_ENABLED=1
-RUN CGO_ENABLED=0 GOOS=linux go build -o /faction ./cmd/faction && chown -R $USER_UID:$USER_GID /faction
+RUN CGO_ENABLED=0 GOOS=linux go build -o /faction ./cmd/faction/*.go
 
-USER $USERNAME
+# Create a minimal image
+FROM alpine
+
+ARG USER=app
+ARG GROUPNAME=$USER
+ARG UID=12345
+ARG GID=23456
+
+RUN addgroup \
+    --gid "$GID" \
+    "$GROUPNAME" \
+&&  adduser \
+    --disabled-password \
+    --gecos "" \
+    --home "$(pwd)" \
+    --ingroup "$GROUPNAME" \
+    --no-create-home \
+    --uid "$UID" \
+    $USER
+
+COPY --from=0 /faction /faction
+RUN chown -R $USER:$GROUPNAME /faction
+
+USER $USER
 ENTRYPOINT ["/faction"]

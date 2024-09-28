@@ -7,25 +7,16 @@ import (
 )
 
 type optsGeneral struct {
-	Debug bool `long:"debug" env:"DEBUG" description:"Enable debug mode"`
+	Debug bool `long:"debug" env:"DEBUG" description:"Enable debug logging"`
 }
 
-type optsDatabase struct {
-	DatabaseDriver string `long:"database-driver" env:"DATABASE_DRIVER" description:"Database driver" choice:"postgres" choice:"sqlite3" default:"postgres"`
-	DatabaseURL    string `long:"database-url" env:"DATABASE_URL" description:"Database connection string" default:"postgres://postgres:test@localhost:5432/faction?sslmode=disable"`
-}
-
-type optsQueue struct {
-	QueueDriver      string `long:"queue-driver" env:"QUEUE_DRIVER" description:"Queue driver" choice:"igor" choice:"inmemory" default:"igor"`
-	QueueURL         string `long:"queue-url" env:"QUEUE_URL" description:"Queue connection string" default:"redis:6379"`
-	QueueDatabaseURL string `long:"queue-database-url" env:"QUEUE_DATABASE_URL" description:"Queue database connection string" default:"postgres://postgres:test@localhost:5432/igor?sslmode=disable"`
-}
-
+var cmdAPI optsAPI
+var cmdCli optsCli
 var parser = flags.NewParser(nil, flags.Default)
 
 func init() {
-	parser.AddCommand("worker", "Run faction background worker", docWorker, &optsWorker{})
-	parser.AddCommand("migrate", "Postgres Migration Operations", docMigrate, &optsMigrate{})
+	parser.AddCommand("api", "Run API Server", docApi, &cmdAPI)
+	parser.AddCommand("cli", "Run the CLI", docCli, &cmdCli)
 }
 
 func main() {

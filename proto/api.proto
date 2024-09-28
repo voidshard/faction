@@ -1,0 +1,47 @@
+syntax = "proto3";
+option go_package = "pkg/structs";
+
+import "world.proto";
+import "actor.proto";
+import "faction.proto";
+//import "job.proto";
+import "on_change.proto";
+
+service API {
+    rpc Worlds(GetWorldsRequest) returns (GetWorldsResponse);
+    rpc SetWorld(SetWorldRequest) returns (SetWorldResponse);
+    rpc ListWorlds(ListWorldsRequest) returns (ListWorldsResponse);
+    rpc DeleteWorld(DeleteWorldRequest) returns (DeleteWorldResponse);
+
+    rpc Actors(GetActorsRequest) returns (GetActorsResponse);
+    rpc SetActors(SetActorsRequest) returns (SetActorsResponse);
+    rpc ListActors(ListActorsRequest) returns (ListActorsResponse);
+    rpc DeleteActor(DeleteActorRequest) returns (DeleteActorResponse);
+
+/*
+    rpc Races(GetRacesRequest) returns (GetRacesResponse);
+    rpc SetRace(SetRaceRequest) returns (SetRaceResponse);
+
+    rpc Cultures(GetCulturesRequest) returns (GetCulturesResponse);
+    rpc SetCulture(SetCultureRequest) returns (SetCultureResponse);
+
+*/
+    rpc Factions(GetFactionsRequest) returns (GetFactionsResponse);
+    rpc SetFaction(SetFactionsRequest) returns (SetFactionsResponse);
+    rpc ListFactions(ListFactionsRequest) returns (ListFactionsResponse);
+    rpc DeleteFaction(DeleteFactionRequest) returns (DeleteFactionResponse);
+
+// Found a faction from scratch with some founders
+//    rpc FoundFaction(FoundFactionRequest) returns (FoundFactionResponse);
+//
+// Split a faction into multiple child factions
+//    rpc SplitFaction(SplitFactionRequest) returns (SplitFactionResponse);
+//
+// Merge multiple factions into a single faction
+//    rpc MergeFaction(MergeFactionRequest) returns (MergeFactionResponse);
+
+//    rpc Jobs(GetJobsRequest) returns (GetJobsResponse);
+//    rpc SetJob(SetJobRequest) returns (SetJobResponse);
+
+//    rpc OnChange(OnChangeRequest) returns (stream OnChangeResponse);
+}

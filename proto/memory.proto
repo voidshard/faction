@@ -1,0 +1,21 @@
+syntax = "proto3";
+option go_package = "pkg/structs";
+
+import "metadata.proto";
+
+message Memory {
+    // What caused the memory
+    Metaref Source = 1;
+    Metaref Target = 2;
+
+    uint64 TickCreated = 3;
+
+    int64 Weight = 4;
+
+    // Human readable description of the event
+    string Description = 5;
+
+    // Category of the memory, we only allow one memory of each non-empty category
+    // in a set of memories. This category is arbitrary.
+    string Category = 6;
+}

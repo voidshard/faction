@@ -1,0 +1,98 @@
+syntax = "proto3";
+option go_package = "pkg/structs";
+
+import "metadata.proto";
+import "errors.proto";
+import "relationship.proto";
+
+// FactionSpec represents some group we would like to simulate.
+// Nb. we don't assume these are the *only* factions, just that they're the
+// most notable / influential / interesting.
+message Faction {
+    string Id = 1;
+    string Etag = 2;
+    string World = 3;
+    map<string, string> Labels = 4;
+    map<string, int64> Attributes = 5;
+
+    string Name = 6;
+    
+    // Guiding principals; high level "how the faction operates" information.
+    // Used to choose objectives & as weights across decision making.
+    map<string, double> Ethos = 7; // how much the faction values each ethos
+    map<string, double> Goals = 8; // how much the faction values each goal
+
+    // Objectives are the things the faction is trying to achieve, and the plans
+    // that are in progress to achieve them.
+   // repeated Objective Objectives = 4;
+    
+    // faction "health" metrics
+    uint32 Corruption = 9; // corruption internal to the faction
+    uint32 Wealth = 10; // money / liquid wealth available to spend
+    uint32 Cohesion = 11; // how well the faction sticks together
+
+    // faction "stats" metrics
+    uint32 EspionageOffense = 12; // how good is this faction at spying
+    uint32 EspionageDefense = 13; // how good is this faction at not being spied on
+    uint32 MilitaryOffense = 14; // how good is this faction at offensive military actions
+    uint32 MilitaryDefense = 15; // how good is this faction at defensive military actions
+
+    // faction "relations" metrics with other factions
+    // nb. we only keep the most important relationships, it's assumed that even 
+    // though this faction may have history with some other faction(s) for the purposeses of
+    // making friends & destorying enemies the faction interacts mostly with those in it's
+    // immediate vicinity in order of importance.
+    repeated Relationship Allies = 16;
+    repeated Relationship Enemies = 17;
+
+    // membership restrictions
+    // membership recruitment
+    // leadership structure (single ruler, council, etc.)
+    // leadership orginization (hereditary, elected, etc.)
+    
+    optional FactionStatus Status = 18;
+}
+
+message FactionStatus {
+}
+
+message GetFactionsRequest {
+    repeated string Ids = 1;
+    string World = 2;
+}
+
+message GetFactionsResponse {
+    repeated Faction Data = 1;
+    optional Error Error = 2;
+}
+
+message SetFactionsRequest {
+    repeated Faction Data = 1;
+    string World = 2;
+}
+
+message SetFactionsResponse {
+    string Etag = 1;
+    optional Error Error = 2;
+}
+
+message DeleteFactionRequest {
+    string Id = 1;
+    string World = 2;
+}
+
+message DeleteFactionResponse {
+    optional Error Error = 2;
+}
+
+message ListFactionsRequest {
+    optional uint32 Limit = 1;
+    optional uint32 Offset = 2;
+    map<string, string> Labels = 3;
+    string World = 4;
+}
+
+message ListFactionsResponse {
+    repeated Faction Data = 1;
+    optional Error Error = 2;
+}
