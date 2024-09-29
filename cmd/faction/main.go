@@ -6,7 +6,7 @@ import (
 	"github.com/jessevdk/go-flags"
 )
 
-type optsGeneral struct {
+type optGeneral struct {
 	Debug bool `long:"debug" env:"DEBUG" description:"Enable debug logging"`
 }
 

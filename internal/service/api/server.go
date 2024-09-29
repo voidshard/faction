@@ -65,7 +65,7 @@ func (s *Server) Factions(ctx context.Context, in *structs.GetFactionsRequest) (
 	return s.svc.Factions(ctx, in), nil
 }
 
-func (s *Server) SetFaction(ctx context.Context, in *structs.SetFactionsRequest) (*structs.SetFactionsResponse, error) {
+func (s *Server) SetFactions(ctx context.Context, in *structs.SetFactionsRequest) (*structs.SetFactionsResponse, error) {
 	return s.svc.SetFactions(ctx, in), nil
 }
 

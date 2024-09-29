@@ -9,6 +9,8 @@ import (
 
 type cliListCmd struct {
 	optCliConn
+	optGeneral
+	optCliGlobal
 
 	Object struct {
 		Name string `positional-arg-name:"object" description:"Object to list"`
@@ -26,6 +28,11 @@ func (c *cliListCmd) Execute(args []string) error {
 		return invalidObjectError()
 	}
 
+	_, isWorld := obj.(*structs.World)
+	if !isWorld && c.World == "" {
+		return fmt.Errorf("world must be set for %s", c.Object.Name)
+	}
+
 	conn, err := newClient(c.Host, c.Port, c.IdleTimeout, c.ConnTimeout)
 	if err != nil {
 		return err
@@ -36,10 +43,10 @@ func (c *cliListCmd) Execute(args []string) error {
 
 	switch obj.(type) {
 	case *structs.Actor:
-		resp, err := conn.ListActors(context.TODO(), &structs.ListActorsRequest{Limit: &lim, Offset: &off, Labels: c.Labels})
+		resp, err := conn.ListActors(context.TODO(), &structs.ListActorsRequest{World: c.World, Limit: &lim, Offset: &off, Labels: c.Labels})
 		return dumpTable(resp.Data, resp.Error, err)
 	case *structs.Faction:
-		resp, err := conn.ListFactions(context.TODO(), &structs.ListFactionsRequest{Limit: &lim, Offset: &off, Labels: c.Labels})
+		resp, err := conn.ListFactions(context.TODO(), &structs.ListFactionsRequest{World: c.World, Limit: &lim, Offset: &off, Labels: c.Labels})
 		return dumpTable(resp.Data, resp.Error, err)
 	case *structs.World:
 		resp, err := conn.ListWorlds(context.TODO(), &structs.ListWorldsRequest{Limit: &lim, Offset: &off, Labels: c.Labels})

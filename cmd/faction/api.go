@@ -16,7 +16,7 @@ const (
 	docApi = `Run the API server`
 )
 
-type optsDatabase struct {
+type optDatabase struct {
 	Db_Host     string `long:"db-host" env:"DB_HOST" description:"Database host" default:"localhost"`
 	Db_Port     int    `long:"db-port" env:"DB_PORT" description:"Database port" default:"27017"`
 	Db_Username string `long:"db-username" env:"DB_USERNAME" description:"Database user" default:"admin"`
@@ -24,7 +24,7 @@ type optsDatabase struct {
 	Db_Database string `long:"db-database" env:"DB_DATABASE" description:"Database name" default:"faction"`
 }
 
-type optsQueue struct {
+type optQueue struct {
 	Q_Host     string `long:"q-host" env:"Q_HOST" description:"Queue host" default:"localhost"`
 	Q_Port     int    `long:"q-port" env:"Q_PORT" description:"Queue port" default:"5672"`
 	Q_Username string `long:"q-username" env:"Q_USERNAME" description:"Queue user" default:"admin"`
@@ -32,9 +32,9 @@ type optsQueue struct {
 }
 
 type optsAPI struct {
-	optsGeneral
-	optsDatabase
-	optsQueue
+	optGeneral
+	optDatabase
+	optQueue
 
 	// MaxMessageAge is the maximum age of a message before it is considered stale
 	MaxMessageAge time.Duration `long:"max-message-age" description:"Maximum age of a message before it is considered stale" default:"10m"`

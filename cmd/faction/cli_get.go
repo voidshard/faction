@@ -12,6 +12,8 @@ import (
 
 type cliGetCmd struct {
 	optCliConn
+	optGeneral
+	optCliGlobal
 
 	Object struct {
 		Name string   `positional-arg-name:"object" description:"Object to get"`
@@ -25,6 +27,11 @@ func (c *cliGetCmd) Execute(args []string) error {
 		return invalidObjectError()
 	}
 
+	_, isWorld := obj.(*structs.World)
+	if !isWorld && c.World == "" {
+		return fmt.Errorf("world must be set for %s", c.Object.Name)
+	}
+
 	conn, err := newClient(c.Host, c.Port, c.IdleTimeout, c.ConnTimeout)
 	if err != nil {
 		return err
@@ -32,10 +39,10 @@ func (c *cliGetCmd) Execute(args []string) error {
 
 	switch obj.(type) {
 	case *structs.Faction:
-		resp, err := conn.Factions(context.TODO(), &structs.GetFactionsRequest{Ids: c.Object.Id})
+		resp, err := conn.Factions(context.TODO(), &structs.GetFactionsRequest{World: c.World, Ids: c.Object.Id})
 		return dumpYaml(resp.Data, resp.Error, err)
 	case *structs.Actor:
-		resp, err := conn.Actors(context.TODO(), &structs.GetActorsRequest{Ids: c.Object.Id})
+		resp, err := conn.Actors(context.TODO(), &structs.GetActorsRequest{World: c.World, Ids: c.Object.Id})
 		return dumpYaml(resp.Data, resp.Error, err)
 	case *structs.World:
 		resp, err := conn.Worlds(context.TODO(), &structs.GetWorldsRequest{Ids: c.Object.Id})

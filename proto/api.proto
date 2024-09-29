@@ -27,7 +27,7 @@ service API {
 
 */
     rpc Factions(GetFactionsRequest) returns (GetFactionsResponse);
-    rpc SetFaction(SetFactionsRequest) returns (SetFactionsResponse);
+    rpc SetFactions(SetFactionsRequest) returns (SetFactionsResponse);
     rpc ListFactions(ListFactionsRequest) returns (ListFactionsResponse);
     rpc DeleteFaction(DeleteFactionRequest) returns (DeleteFactionResponse);
 

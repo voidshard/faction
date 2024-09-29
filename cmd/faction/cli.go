@@ -17,10 +17,15 @@ const (
 )
 
 var (
-	objects = map[string]interface{}{ // map of objects we can interact with
+	objects = map[string]structs.Object{ // map of objects we can interact with
 		"world":   &structs.World{},
 		"actor":   &structs.Actor{},
 		"faction": &structs.Faction{},
+	}
+	help = map[string]string{ // help text for each object
+		"world":   "Worlds are the top level object in the system, every other object exists within a world.",
+		"actor":   "Actors are individual entities that can interact & form factions.",
+		"faction": "Factions are groups of actors that can work together, form common ground(s) or simply work against other factions.",
 	}
 	shortNames = map[string]string{ // allows short hand names because we're lazy
 		"wo": "world",
@@ -36,12 +41,15 @@ type optCliConn struct {
 	ConnTimeout time.Duration `long:"conn-timeout" description:"Connection timeout" default:"5s"`
 }
 
-type optsCli struct {
-	optsGeneral
+type optCliGlobal struct {
+	World string `long:"world" short:"w" env:"WORLD" description:"World to use"`
+}
 
+type optsCli struct {
 	Get    cliGetCmd    `command:"get" description:"Get objects"`
 	List   cliListCmd   `command:"list" description:"List objects"`
 	Create cliCreateCmd `command:"create" description:"Create objects"`
+	Delete cliDeleteCmd `command:"delete" description:"Delete objects"`
 
 	Help cliHelpCmd `command:"help" description:"Help about available objects"`
 }
@@ -67,6 +75,10 @@ func (c *cliHelpCmd) Execute(args []string) error {
 			abbr = fmt.Sprintf(" (abbreviations: %s)", strings.Join(abbreviations, ", "))
 		}
 		fmt.Printf("\t%s%s\n", k, abbr)
+		extra, ok := help[k]
+		if ok {
+			fmt.Printf("\t\t%s\n", extra)
+		}
 	}
 
 	return nil
@@ -88,7 +100,7 @@ func newClient(host string, port int, idle, conntimeout time.Duration) (structs.
 	return structs.NewAPIClient(conn), nil
 }
 
-func validObject(name string) interface{} {
+func validObject(name string) structs.Object {
 	name = strings.ToLower(name)
 
 	longname, ok := shortNames[name]
