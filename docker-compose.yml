@@ -13,6 +13,10 @@ services:
       Q_HOST: rabbit
       Q_USERNAME: admin
       Q_PASSWORD: admin
+      OTEL_EXPORTER_OTLP_ENDPOINT: grpc://otel-collector:4317
+      OTEL_RESOURCE_ATTRIBUTES: "service.name=faction-api,service.version=0.0.1"
+      OTEL_LOG_LEVEL: TRACE
+      OTEL_EXPORTER_OTLP_INSECURE: true
     command: api --port 5000
     ports:
       - 5000:5000
@@ -58,3 +62,29 @@ services:
       ME_CONFIG_BASICAUTH_PASSWORD: admin
     ports:
       - 8081:8081
+
+  # open telemetry: collector
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:latest
+    command: ["--config=/etc/otel-collector-config.yaml"]
+    volumes:
+      - ./otel-collector-config.yaml:/etc/otel-collector-config.yaml
+    ports:
+      - "4317:4317" # OTLP gRPC receiver
+      - "1777:1777" # pprof
+      - "13133:13133" # collector health listen port
+      - "55679:55679" # zpages
+
+  jaeger:
+    image: jaegertracing/all-in-one:latest
+    ports:
+      - "6831:6831/udp" # UDP port for Jaeger agent
+      - "16686:16686" # Web UI
+      - "14268:14268" # HTTP port for spans
+
+  prometheus:
+    image: prom/prometheus:latest
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+    ports:
+      - "9090:9090"

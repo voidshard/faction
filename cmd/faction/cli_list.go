@@ -25,13 +25,14 @@ type cliListCmd struct {
 func (c *cliListCmd) Execute(args []string) error {
 	obj := validObject(c.Object.Name)
 	if obj == nil {
-		return invalidObjectError()
+		return invalidObjectError(c.Object.Name)
 	}
 
 	_, isWorld := obj.(*structs.World)
 	if !isWorld && c.World == "" {
 		return fmt.Errorf("world must be set for %s", c.Object.Name)
 	}
+	c.World = determineWorld(c.World)
 
 	conn, err := newClient(c.Host, c.Port, c.IdleTimeout, c.ConnTimeout)
 	if err != nil {
@@ -44,12 +45,21 @@ func (c *cliListCmd) Execute(args []string) error {
 	switch obj.(type) {
 	case *structs.Actor:
 		resp, err := conn.ListActors(context.TODO(), &structs.ListActorsRequest{World: c.World, Limit: &lim, Offset: &off, Labels: c.Labels})
+		if resp == nil {
+			return err
+		}
 		return dumpTable(resp.Data, resp.Error, err)
 	case *structs.Faction:
 		resp, err := conn.ListFactions(context.TODO(), &structs.ListFactionsRequest{World: c.World, Limit: &lim, Offset: &off, Labels: c.Labels})
+		if resp == nil {
+			return err
+		}
 		return dumpTable(resp.Data, resp.Error, err)
 	case *structs.World:
 		resp, err := conn.ListWorlds(context.TODO(), &structs.ListWorldsRequest{Limit: &lim, Offset: &off, Labels: c.Labels})
+		if resp == nil {
+			return err
+		}
 		return dumpTable(resp.Data, resp.Error, err)
 	}
 

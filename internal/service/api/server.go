@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net"
 
+	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"google.golang.org/grpc"
 
 	"github.com/voidshard/faction/internal/db"
@@ -23,7 +24,7 @@ type Server struct {
 }
 
 func NewServer(svc *Service) *Server {
-	srv := grpc.NewServer()
+	srv := grpc.NewServer(grpc.StatsHandler(otelgrpc.NewServerHandler()))
 	me := &Server{svc: svc, srv: srv, log: log.Sublogger("api")}
 	structs.RegisterAPIServer(srv, me)
 	return me
@@ -36,6 +37,10 @@ func (s *Server) Serve(port int) error {
 		return err
 	}
 	s.log.Info().Msg("Serving...")
+	err = s.svc.start()
+	if err != nil {
+		return err
+	}
 	return s.srv.Serve(lis)
 }
 
@@ -46,50 +51,74 @@ func (s *Server) Stop() {
 }
 
 func (s *Server) Worlds(ctx context.Context, in *structs.GetWorldsRequest) (*structs.GetWorldsResponse, error) {
+	pan := log.NewSpan(ctx, "api.Worlds", map[string]interface{}{"id-count": len(in.Ids)})
+	defer pan.End()
 	return s.svc.Worlds(ctx, in), nil
 }
 
 func (s *Server) SetWorld(ctx context.Context, in *structs.SetWorldRequest) (*structs.SetWorldResponse, error) {
+	pan := log.NewSpan(ctx, "api.SetWorld", map[string]interface{}{"id": in.Data.Id})
+	defer pan.End()
 	return s.svc.SetWorld(ctx, in), nil
 }
 
 func (s *Server) DeleteWorld(ctx context.Context, in *structs.DeleteWorldRequest) (*structs.DeleteWorldResponse, error) {
+	pan := log.NewSpan(ctx, "api.DeleteWorld", map[string]interface{}{"id": in.Id})
+	defer pan.End()
 	return s.svc.DeleteWorld(ctx, in), nil
 }
 
 func (s *Server) ListWorlds(ctx context.Context, in *structs.ListWorldsRequest) (*structs.ListWorldsResponse, error) {
+	pan := log.NewSpan(ctx, "api.ListWorlds", map[string]interface{}{"limit": in.Limit, "offset": in.Offset})
+	defer pan.End()
 	return s.svc.ListWorlds(ctx, in), nil
 }
 
 func (s *Server) Factions(ctx context.Context, in *structs.GetFactionsRequest) (*structs.GetFactionsResponse, error) {
+	pan := log.NewSpan(ctx, "api.Factions", map[string]interface{}{"id-count": len(in.Ids)})
+	defer pan.End()
 	return s.svc.Factions(ctx, in), nil
 }
 
 func (s *Server) SetFactions(ctx context.Context, in *structs.SetFactionsRequest) (*structs.SetFactionsResponse, error) {
+	pan := log.NewSpan(ctx, "api.SetFactions", map[string]interface{}{"id-count": len(in.Data)})
+	defer pan.End()
 	return s.svc.SetFactions(ctx, in), nil
 }
 
 func (s *Server) DeleteFaction(ctx context.Context, in *structs.DeleteFactionRequest) (*structs.DeleteFactionResponse, error) {
+	pan := log.NewSpan(ctx, "api.DeleteFaction", map[string]interface{}{"id": in.Id})
+	defer pan.End()
 	return s.svc.DeleteFaction(ctx, in), nil
 }
 
 func (s *Server) ListFactions(ctx context.Context, in *structs.ListFactionsRequest) (*structs.ListFactionsResponse, error) {
+	pan := log.NewSpan(ctx, "api.ListFactions", map[string]interface{}{"limit": in.Limit, "offset": in.Offset})
+	defer pan.End()
 	return s.svc.ListFactions(ctx, in), nil
 }
 
 func (s *Server) Actors(ctx context.Context, in *structs.GetActorsRequest) (*structs.GetActorsResponse, error) {
+	pan := log.NewSpan(ctx, "api.Actors", map[string]interface{}{"id-count": len(in.Ids)})
+	defer pan.End()
 	return s.svc.Actors(ctx, in), nil
 }
 
 func (s *Server) SetActor(ctx context.Context, in *structs.SetActorsRequest) (*structs.SetActorsResponse, error) {
+	pan := log.NewSpan(ctx, "api.SetActor", map[string]interface{}{"id-count": len(in.Data)})
+	defer pan.End()
 	return s.svc.SetActors(ctx, in), nil
 }
 
 func (s *Server) DeleteActor(ctx context.Context, in *structs.DeleteActorRequest) (*structs.DeleteActorResponse, error) {
+	pan := log.NewSpan(ctx, "api.DeleteActor", map[string]interface{}{"id": in.Id})
+	defer pan.End()
 	return s.svc.DeleteActor(ctx, in), nil
 }
 
 func (s *Server) ListActors(ctx context.Context, in *structs.ListActorsRequest) (*structs.ListActorsResponse, error) {
+	pan := log.NewSpan(ctx, "api.ListActors", map[string]interface{}{"limit": in.Limit, "offset": in.Offset})
+	defer pan.End()
 	return s.svc.ListActors(ctx, in), nil
 }
 

@@ -1,6 +1,7 @@
 package queue
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"strings"
@@ -19,6 +20,8 @@ const (
 	mqStream = "change-stream"
 
 	mqReplyRoutines = 10
+
+	mqConnAttempts = 5
 )
 
 type RabbitQueue struct {
@@ -61,9 +64,18 @@ func NewRabbitQueue(cfg *RabbitConfig) *RabbitQueue {
 	}
 }
 
+// replyCleanRoutine cleans up old reply channels.
 func (q *RabbitQueue) replyCleanRoutine() {
 	// just so we can't have lots of queues sitting around in memory for messages that are
 	// never going to arrive
+
+	// our standard "time out" message; we can marshal it only once
+	rawData := []byte("timeout waiting for reply")
+	msgData, err := injectTraceData(context.Background(), []byte("timeout waiting for reply"))
+	if err != nil {
+		q.log.Warn().Err(err).Msg("failed to inject trace data")
+		msgData = rawData
+	}
 	for {
 		time.Sleep(60 * time.Second)
 
@@ -75,7 +87,8 @@ func (q *RabbitQueue) replyCleanRoutine() {
 
 			if time.Since(sub.created) > q.replyMaxTime {
 				q.log.Debug().Str("id", id).Msg("cleaning up old reply channel")
-				sub.out <- &rabbitMessage{msg: amqp.Delivery{Body: []byte("timeout waiting for reply")}}
+
+				sub.out <- &rabbitMessage{context: context.Background(), data: rawData, msg: amqp.Delivery{Body: msgData}}
 
 				q.replyLock.Lock()
 				delete(q.replyChans, id)
@@ -87,6 +100,10 @@ func (q *RabbitQueue) replyCleanRoutine() {
 	}
 }
 
+// replyRoutine listens for replies to API requests & forwards them to the correct channel.
+//
+// When we send an API request (PublishApiReq) we store the subscription channel in a map (correlation ID -> channel).
+// We listen for all replies to API requests here & forward them to the correct channel.
 func (q *RabbitQueue) replyRoutine() {
 	for msg := range q.replies {
 		q.replyLock.Lock()
@@ -122,19 +139,37 @@ func (q *RabbitQueue) Close() {
 
 func (q *RabbitQueue) channel(prefetch int) (*amqp.Connection, *amqp.Channel, error) {
 	q.log.Info().Str("username", q.cfg.Username).Str("host", q.cfg.Host).Int("port", q.cfg.Port).Int("prefetch", prefetch).Msg("connecting to rabbitmq")
+	for i := 0; i < mqConnAttempts; i++ {
+		if i > 0 {
+			q.log.Debug().Int("attempt", i).Msg("backing off connceting to rabbitmq")
+			time.Sleep(time.Duration(2*i*i) * time.Second)
+		}
 
-	url := fmt.Sprintf("amqp://%s:%s@%s:%d/", q.cfg.Username, q.cfg.Password, q.cfg.Host, q.cfg.Port)
-	conn, err := amqp.Dial(url)
-	if err != nil {
-		return nil, nil, err
+		url := fmt.Sprintf("amqp://%s:%s@%s:%d/", q.cfg.Username, q.cfg.Password, q.cfg.Host, q.cfg.Port)
+		conn, err := amqp.Dial(url)
+		if err != nil {
+			q.log.Error().Err(err).Msg("failed to connect to rabbitmq")
+			continue
+		}
+
+		ch, err := conn.Channel()
+		if err != nil {
+			q.log.Error().Err(err).Msg("failed to create channel")
+			conn.Close()
+			continue
+		}
+
+		err = ch.Qos(prefetch, 0, false)
+		if err != nil {
+			q.log.Error().Err(err).Msg("failed to set prefetch")
+			ch.Close()
+			conn.Close()
+			continue
+		}
+
+		return conn, ch, nil
 	}
-
-	ch, err := conn.Channel()
-	if err != nil {
-		return nil, nil, err
-	}
-
-	return conn, ch, ch.Qos(prefetch, 0, false)
+	return nil, nil, fmt.Errorf("failed to connect to rabbitmq")
 }
 
 // connectApi connects to the RabbitMQ API queue
@@ -233,7 +268,7 @@ func (q *RabbitQueue) newChangeStream() (*amqp.Connection, *amqp.Channel, error)
 	)
 }
 
-func (q *RabbitQueue) PublishApiReq(data []byte) (Subscription, error) {
+func (q *RabbitQueue) PublishApiReq(ctx context.Context, data []byte) (Subscription, error) {
 	err := q.connectApi() // default api queue
 	if err != nil {
 		return nil, err
@@ -243,9 +278,16 @@ func (q *RabbitQueue) PublishApiReq(data []byte) (Subscription, error) {
 	mid := uuid.NewID().String()
 	correlationID := uuid.NewID().String()
 
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-	defer q.log.Debug().Int("data-size", len(data)).Msg("published api request")
+	// log & trace
+	defer q.log.Debug().Str("MessageId", mid).Int("data-size", len(data)).Msg("published api request")
+
+	msgdata, err := injectTraceData(ctx, data)
+	if err != nil {
+		return nil, err
+	}
+
+	pan := log.NewSpan(ctx, "rabbit.PublishApiReq", map[string]interface{}{"mid": mid, "id": correlationID})
+	defer pan.End()
 
 	// store reply channel for our reply thread
 	q.replyLock.Lock()
@@ -263,7 +305,7 @@ func (q *RabbitQueue) PublishApiReq(data []byte) (Subscription, error) {
 			Timestamp:     time.Now(),
 			DeliveryMode:  amqp.Persistent,
 			ContentType:   "text/plain",
-			Body:          data,
+			Body:          msgdata,
 			MessageId:     mid,
 			CorrelationId: correlationID,
 			ReplyTo:       q.replyQueue.Name,
@@ -292,7 +334,8 @@ func (q *RabbitQueue) SubscribeApiReq() (Subscription, error) {
 	return newRabbitChannelSubscription(fmt.Sprintf("rabbit-sub-%s", q.apiQueue.Name), q.apiCh, messages), nil
 }
 
-func (q *RabbitQueue) PublishChange(ch *structs.Change) error {
+// PublishChange publishes a change to the change stream.
+func (q *RabbitQueue) PublishChange(ctx context.Context, ch *structs.Change) error {
 	subject, err := makeRabbitSubject(ch)
 	if err != nil {
 		return err
@@ -303,8 +346,11 @@ func (q *RabbitQueue) PublishChange(ch *structs.Change) error {
 		return err
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
+	msgdata, err := injectTraceData(ctx, []byte{})
+	if err != nil {
+		return err
+	}
+
 	return q.streamCh.PublishWithContext(ctx,
 		mqStream, // exchange
 		subject,  // routing key
@@ -315,11 +361,12 @@ func (q *RabbitQueue) PublishChange(ch *structs.Change) error {
 			MessageId:     uuid.NewID().String(),
 			CorrelationId: uuid.NewID().String(),
 			ContentType:   "text/plain",
-			Body:          []byte{},
+			Body:          msgdata,
 		},
 	)
 }
 
+// SubscribeChange subscribes to changes on the change stream.
 func (q *RabbitQueue) SubscribeChange(ch *structs.Change, queueName string) (Subscription, error) {
 	subject, err := makeRabbitSubject(ch)
 	if err != nil {
@@ -378,6 +425,29 @@ func (q *RabbitQueue) SubscribeChange(ch *structs.Change, queueName string) (Sub
 		conn,
 		channel,
 	), nil
+}
+
+// injectTraceData injects trace data, prepending it to the given data.
+func injectTraceData(ctx context.Context, data []byte) ([]byte, error) {
+	td, err := log.MarshalTrace(ctx)
+	if err != nil {
+		return nil, err
+	}
+	td = append(td, []byte("|")...)
+	return append(td, data...), nil
+}
+
+// extractTraceData extracts trace data from the given data
+func extractTraceData(data []byte) (context.Context, []byte, error) {
+	parts := bytes.SplitN(data, []byte("|"), 2)
+	ctx, err := log.UnmarshalTrace(parts[0])
+	if err != nil {
+		return nil, nil, err
+	}
+	if len(parts) > 1 {
+		return ctx, parts[1], nil
+	}
+	return ctx, []byte{}, nil
 }
 
 // makeRabbitSubject converts a Change into a RabbitMQ subject.

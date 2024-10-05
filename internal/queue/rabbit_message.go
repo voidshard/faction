@@ -14,14 +14,22 @@ import (
 type rabbitMessage struct {
 	msg     amqp.Delivery
 	channel *amqp.Channel
+
+	// parsed context
+	context context.Context
+
+	// remaining data
+	data []byte
 }
 
-func (m *rabbitMessage) Reply(data []byte) error {
+func (m *rabbitMessage) Reply(ctx context.Context, data []byte) error {
 	if m.channel == nil {
 		return fmt.Errorf("no channel to reply on, only supported on API Request message replies")
 	}
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
+	msgdata, err := injectTraceData(ctx, data)
+	if err != nil {
+		return err
+	}
 	return m.channel.PublishWithContext(ctx,
 		"",            // exchange
 		m.msg.ReplyTo, // routing key
@@ -32,7 +40,7 @@ func (m *rabbitMessage) Reply(data []byte) error {
 			Timestamp:     time.Now(),
 			CorrelationId: m.msg.CorrelationId,
 			ContentType:   "text/plain",
-			Body:          data,
+			Body:          msgdata,
 		},
 	)
 }
@@ -53,8 +61,12 @@ func (m *rabbitMessage) Subject() string {
 	return m.msg.RoutingKey
 }
 
+func (m *rabbitMessage) Context() context.Context {
+	return m.context
+}
+
 func (m *rabbitMessage) Data() []byte {
-	return m.msg.Body
+	return m.data
 }
 
 func (m *rabbitMessage) Ack() error {

@@ -1,6 +1,7 @@
 package queue
 
 import (
+	"context"
 	"time"
 
 	"github.com/voidshard/faction/pkg/structs"
@@ -8,13 +9,13 @@ import (
 
 type Queue interface {
 	// PublishApiReq publishes data to the API request stream.
-	PublishApiReq(data []byte) (Subscription, error)
+	PublishApiReq(c context.Context, data []byte) (Subscription, error)
 
 	// SubscribeApiReq subscribes to the API request stream.
 	SubscribeApiReq() (Subscription, error)
 
 	// PublishChange publishes a change to the change stream.
-	PublishChange(ch *structs.Change) error
+	PublishChange(c context.Context, ch *structs.Change) error
 
 	// SubscribeChange subscribes to changes on the change stream.
 	// queueName can be given to configure a durable queue. If not given
@@ -36,7 +37,7 @@ type Message interface {
 
 	// Reply sends a reply to the message.
 	// This is only supported on messages from the API request stream.
-	Reply([]byte) error
+	Reply(context.Context, []byte) error
 
 	// Change returns the change that triggered the message.
 	// This is only set on messages from a change subscription.
@@ -57,4 +58,7 @@ type Message interface {
 
 	// Timestamp returns the time the message was sent.
 	Timestamp() time.Time
+
+	// Context returns the context of the message.
+	Context() context.Context
 }

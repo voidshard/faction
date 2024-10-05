@@ -24,13 +24,14 @@ type cliGetCmd struct {
 func (c *cliGetCmd) Execute(args []string) error {
 	obj := validObject(c.Object.Name)
 	if obj == nil {
-		return invalidObjectError()
+		return invalidObjectError(c.Object.Name)
 	}
 
 	_, isWorld := obj.(*structs.World)
 	if !isWorld && c.World == "" {
 		return fmt.Errorf("world must be set for %s", c.Object.Name)
 	}
+	c.World = determineWorld(c.World)
 
 	conn, err := newClient(c.Host, c.Port, c.IdleTimeout, c.ConnTimeout)
 	if err != nil {
@@ -40,12 +41,21 @@ func (c *cliGetCmd) Execute(args []string) error {
 	switch obj.(type) {
 	case *structs.Faction:
 		resp, err := conn.Factions(context.TODO(), &structs.GetFactionsRequest{World: c.World, Ids: c.Object.Id})
+		if resp == nil {
+			return err
+		}
 		return dumpYaml(resp.Data, resp.Error, err)
 	case *structs.Actor:
 		resp, err := conn.Actors(context.TODO(), &structs.GetActorsRequest{World: c.World, Ids: c.Object.Id})
+		if resp == nil {
+			return err
+		}
 		return dumpYaml(resp.Data, resp.Error, err)
 	case *structs.World:
 		resp, err := conn.Worlds(context.TODO(), &structs.GetWorldsRequest{Ids: c.Object.Id})
+		if resp == nil {
+			return err
+		}
 		return dumpYaml(resp.Data, resp.Error, err)
 	}
 

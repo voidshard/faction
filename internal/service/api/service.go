@@ -32,7 +32,7 @@ type Service struct {
 
 	log log.Logger
 
-	kill []chan bool
+	workers []*worker
 }
 
 // marshalable is an interface for types that can be marshaled and unmarshaled to/from bytes.
@@ -56,7 +56,7 @@ func NewService(cfg *Config, db db.Database, qu queue.Queue) *Service {
 	if cfg == nil {
 		cfg = &Config{Routines: defaultRoutines}
 	}
-	if cfg.Routines < 0 {
+	if cfg.Routines <= 0 {
 		cfg.Routines = defaultRoutines
 	}
 	return &Service{cfg: cfg, db: db, qu: qu, log: log.Sublogger("api-service")}
@@ -128,7 +128,7 @@ func (s *Service) DeleteActor(c context.Context, in *structs.DeleteActorRequest)
 	return obj
 }
 
-func (s *Service) sendApiReply(m queue.Message, out marshalable, err error) error {
+func (s *Service) sendApiReply(c context.Context, m queue.Message, out marshalable, err error) error {
 	outdata, encodeErr := out.Marshal()
 	if encodeErr != nil {
 		s.log.Error().Str("MessageId", m.Id()).Err(encodeErr).Msg("Failed to marshal response")
@@ -136,7 +136,7 @@ func (s *Service) sendApiReply(m queue.Message, out marshalable, err error) erro
 		return encodeErr
 	}
 
-	sendErr := m.Reply(outdata)
+	sendErr := m.Reply(c, outdata)
 	if sendErr != nil {
 		s.log.Error().Str("MessageId", m.Id()).Err(sendErr).Msg("Failed to send reply")
 		s.log.Debug().Str("MessageId", m.Id()).Err(m.Reject(true)).Msg("Rejecting")
@@ -153,7 +153,7 @@ func (s *Service) setWorld(c context.Context, m queue.Message, data []byte) erro
 
 	reply := func(err error) error {
 		out := &structs.SetWorldResponse{Etag: m.Id(), Error: toError(err)}
-		return s.sendApiReply(m, out, err)
+		return s.sendApiReply(c, m, out, err)
 	}
 
 	// decode the request
@@ -182,7 +182,7 @@ func (s *Service) setWorld(c context.Context, m queue.Message, data []byte) erro
 	}
 
 	// publish changes
-	err = s.qu.PublishChange(&structs.Change{World: in.Data.Id, Key: structs.Metakey_KeyWorld, Id: in.Data.Id})
+	err = s.qu.PublishChange(c, &structs.Change{World: in.Data.Id, Key: structs.Metakey_KeyWorld, Id: in.Data.Id})
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to publish change")
 		log.Debug().Err(m.Reject(true)).Msg("Rejecting")
@@ -197,7 +197,7 @@ func (s *Service) deleteWorld(c context.Context, m queue.Message, data []byte) e
 
 	reply := func(err error) error {
 		out := &structs.DeleteWorldResponse{Error: toError(err)}
-		return s.sendApiReply(m, out, err)
+		return s.sendApiReply(c, m, out, err)
 	}
 
 	// decode the request
@@ -220,7 +220,7 @@ func (s *Service) deleteWorld(c context.Context, m queue.Message, data []byte) e
 	}
 
 	// publish changes
-	err = s.qu.PublishChange(&structs.Change{World: in.Id, Key: structs.Metakey_KeyWorld, Id: in.Id})
+	err = s.qu.PublishChange(c, &structs.Change{World: in.Id, Key: structs.Metakey_KeyWorld, Id: in.Id})
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to publish change")
 		log.Debug().Err(m.Reject(true)).Msg("Rejecting")
@@ -234,7 +234,7 @@ func (s *Service) setFactions(c context.Context, m queue.Message, data []byte) e
 
 	reply := func(err error) error {
 		out := &structs.SetFactionsResponse{Etag: m.Id(), Error: toError(err)}
-		return s.sendApiReply(m, out, err)
+		return s.sendApiReply(c, m, out, err)
 	}
 
 	// decode the request
@@ -271,7 +271,7 @@ func (s *Service) setFactions(c context.Context, m queue.Message, data []byte) e
 
 	// publish changes
 	for _, v := range in.Data {
-		err = s.qu.PublishChange(&structs.Change{World: in.World, Key: structs.Metakey_KeyFaction, Id: v.Id})
+		err = s.qu.PublishChange(c, &structs.Change{World: in.World, Key: structs.Metakey_KeyFaction, Id: v.Id})
 		if err != nil {
 			log.Error().Err(err).Str("Id", v.Id).Msg("Failed to publish change")
 			log.Debug().Err(m.Reject(true)).Str("Id", v.Id).Msg("Rejecting")
@@ -287,7 +287,7 @@ func (s *Service) deleteFaction(c context.Context, m queue.Message, data []byte)
 
 	reply := func(err error) error {
 		out := &structs.DeleteFactionResponse{Error: toError(err)}
-		return s.sendApiReply(m, out, err)
+		return s.sendApiReply(c, m, out, err)
 	}
 
 	// decode the request
@@ -310,7 +310,7 @@ func (s *Service) deleteFaction(c context.Context, m queue.Message, data []byte)
 	}
 
 	// publish changes
-	err = s.qu.PublishChange(&structs.Change{World: in.World, Key: structs.Metakey_KeyFaction, Id: in.Id})
+	err = s.qu.PublishChange(c, &structs.Change{World: in.World, Key: structs.Metakey_KeyFaction, Id: in.Id})
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to publish change")
 		log.Debug().Err(m.Reject(true)).Msg("Rejecting")
@@ -324,7 +324,7 @@ func (s *Service) setActors(c context.Context, m queue.Message, data []byte) err
 
 	reply := func(err error) error {
 		out := &structs.SetActorsResponse{Etag: m.Id(), Error: toError(err)}
-		return s.sendApiReply(m, out, err)
+		return s.sendApiReply(c, m, out, err)
 	}
 
 	// decode the request
@@ -358,7 +358,7 @@ func (s *Service) setActors(c context.Context, m queue.Message, data []byte) err
 
 	// publish changes
 	for _, v := range in.Data {
-		err = s.qu.PublishChange(&structs.Change{World: in.World, Key: structs.Metakey_KeyActor, Id: v.Id})
+		err = s.qu.PublishChange(c, &structs.Change{World: in.World, Key: structs.Metakey_KeyActor, Id: v.Id})
 		if err != nil {
 			log.Error().Err(err).Str("Id", v.Id).Msg("Failed to publish change")
 			log.Debug().Err(m.Reject(true)).Str("Id", v.Id).Msg("Rejecting")
@@ -374,7 +374,7 @@ func (s *Service) deleteActor(c context.Context, m queue.Message, data []byte) e
 
 	reply := func(err error) error {
 		out := &structs.DeleteActorResponse{Error: toError(err)}
-		return s.sendApiReply(m, out, err)
+		return s.sendApiReply(c, m, out, err)
 	}
 
 	// decode the request
@@ -396,7 +396,7 @@ func (s *Service) deleteActor(c context.Context, m queue.Message, data []byte) e
 	}
 
 	// publish changes
-	err = s.qu.PublishChange(&structs.Change{World: in.World, Key: structs.Metakey_KeyActor, Id: in.Id})
+	err = s.qu.PublishChange(c, &structs.Change{World: in.World, Key: structs.Metakey_KeyActor, Id: in.Id})
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to publish change")
 		log.Debug().Err(m.Reject(true)).Msg("Rejecting")
@@ -406,106 +406,79 @@ func (s *Service) deleteActor(c context.Context, m queue.Message, data []byte) e
 }
 
 func (s *Service) start() error {
-	if s.kill != nil {
+	if s.workers != nil {
 		s.stop()
 	}
 
-	s.kill = make([]chan bool, s.cfg.Routines)
+	s.workers = make([]*worker, s.cfg.Routines)
 
-	for i := range s.kill {
-		kchan := make(chan bool)
-		s.kill[i] = kchan
+	s.log.Debug().Int("Routines", s.cfg.Routines).Msg("Starting workers")
+	for i := 0; i < s.cfg.Routines; i++ {
+		log.Debug().Int("Worker", i).Msg("Starting worker")
 
 		qsub, err := s.qu.SubscribeApiReq()
 		if err != nil {
 			defer s.stop()
+			log.Error().Err(err).Msg("Failed to subscribe to queue")
 			return err
 		}
 
-		go func(sub queue.Subscription, kc chan bool) {
-			for {
-				select {
-				case <-kc:
-					return
-				case msg := <-sub.Channel():
-					if msg.Timestamp().Add(s.cfg.MaxMessageAge).Before(time.Now()) {
-						s.log.Debug().Str("MessageId", msg.Id()).Err(msg.Reject(false)).Msg("Message too old, rejecting")
-						continue
-					}
-					err := s.asyncAPIRequest(msg)
-					if err != nil {
-						s.log.Error().Err(err).Msg("Failed to process message")
-					}
-				}
-			}
-		}(qsub, kchan)
+		wrk := newWorker(fmt.Sprintf("api-worker-%d", i), s, qsub)
+		s.workers[i] = wrk
+
+		go func(w *worker) {
+			w.Run()
+		}(wrk)
 	}
 
 	return nil
 }
 
 func (s *Service) stop() {
-	if s.kill == nil {
+	if s.workers == nil {
 		return
 	}
-	for _, k := range s.kill {
-		k <- true
-		close(k)
+	for _, w := range s.workers {
+		w.Kill()
 	}
-	s.kill = nil
-}
-
-func (s *Service) asyncAPIRequest(msg queue.Message) error {
-	s.log.Debug().Str("MessageId", msg.Id()).Msg("Processing message")
-	defer s.log.Debug().Str("MessageId", msg.Id()).Msg("Finished processing message")
-
-	method, data, err := decodeRequest(msg.Data())
-	if err != nil {
-		return err
-	}
-
-	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
-	defer cancel()
-
-	switch method {
-	case "SetWorld":
-		return s.setWorld(ctx, msg, data)
-	case "DeleteWorld":
-		return s.deleteWorld(ctx, msg, data)
-	case "SetFactions":
-		return s.setFactions(ctx, msg, data)
-	case "DeleteFaction":
-		return s.deleteFaction(ctx, msg, data)
-	case "SetActors":
-		return s.setActors(ctx, msg, data)
-	case "DeleteActor":
-		return s.deleteActor(ctx, msg, data)
-	default:
-		return fmt.Errorf("unknown method")
-	}
+	s.workers = nil
 }
 
 func (s *Service) genericAsyncRequestResponse(c context.Context, in marshalable, out marshalableReply) {
+	pan := log.NewSpan(c, "api.genericAsyncRequestResponse")
+	defer pan.End()
+
 	data, err := encodeRequest(in)
 	if err != nil {
 		out.SetError(toError(err))
+		log.Error().Err(err).Msg("Failed to encode request")
 		return
 	}
-	rchan, err := s.qu.PublishApiReq(data)
+
+	// publish the request
+	rchan, err := s.qu.PublishApiReq(c, data)
 	if err != nil {
 		out.SetError(toError(err))
+		log.Error().Err(err).Msg("Failed to publish request")
 		return
 	}
 
 	reply := <-rchan.Channel()
 	if reply == nil {
 		out.SetError(&structs.Error{Message: "no data in reply", Code: 500})
+		log.Error().Msg("Nil reply received")
 		return
 	}
+	if reply.Data == nil || len(reply.Data()) == 0 {
+		return // no data in reply
+	}
+
+	log.Debug().Str("MessageId", reply.Id()).Str("DATA", string(reply.Data())).Msg("Received reply")
 
 	err = out.Unmarshal(reply.Data())
 	if err != nil {
 		out.SetError(toError(err))
+		log.Error().Err(err).Msg("Failed to unmarshal reply")
 		return
 	}
 }

@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/martinlindhe/base36"
+	"go.opentelemetry.io/contrib/instrumentation/go.mongodb.org/mongo-driver/mongo/otelmongo"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -39,10 +40,15 @@ type MongoConfig struct {
 func NewMongo(cfg *MongoConfig) (*Mongo, error) {
 	url := fmt.Sprintf("mongodb://%s:%s@%s:%d/%s", cfg.Username, cfg.Password, cfg.Host, cfg.Port, cfg.Database)
 
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	ctx, cancel := context.WithTimeout(context.TODO(), 10*time.Second)
 	defer cancel()
 
-	client, err := mongo.Connect(ctx, options.Client().ApplyURI(url))
+	opts := options.Client().ApplyURI(url)
+
+	// github.com/open-telemetry/opentelemetry-go-contrib/blob/main/instrumentation/go.mongodb.org/mongo-driver/mongo/otelmongo/example_test.go
+	opts.Monitor = otelmongo.NewMonitor()
+
+	client, err := mongo.Connect(ctx, opts)
 	if err != nil {
 		return nil, err
 	}
@@ -79,13 +85,22 @@ func (m *Mongo) ListWorlds(c context.Context, labels map[string]string, limit, o
 
 func (m *Mongo) SetWorld(c context.Context, etag string, in *structs.World) (string, error) {
 	m.log.Debug().Str("database", m.cfg.Database).Str("collection", colWorlds).Str("_id", in.Id).Str("etag", in.Etag).Msg("setWorld")
-
-	if in.Id == "" {
-		in.Id = uuid.NewID().String()
-	}
 	if in.Name == "" {
-		in.Name = in.Id
+		return "", fmt.Errorf("world name is required")
 	}
+
+	// if we don't have an ID we'll generate one
+	// if a name is set we'll use that for a deterministic ID
+	if in.Id == "" {
+		if in.Name == "" { // random ID
+			in.Id = uuid.NewID().String()
+		} else { // deterministic ID
+			in.Id = uuid.NewID(in.Name).String()
+		}
+	} else if !uuid.IsValidUUID(in.Id) {
+		return "", fmt.Errorf("invalid id: %s", in.Id)
+	}
+
 	filter := bson.D{{"_id", in.Id}, {"etag", bson.M{"$in": []string{in.Etag, etag}}}}
 	in.Etag = etag
 
@@ -120,7 +135,17 @@ func (m *Mongo) ListActors(c context.Context, world string, labels map[string]st
 }
 
 func (m *Mongo) SetActors(c context.Context, world, etag string, in []*structs.Actor) (*Result, error) {
-	models := prepareSet(world, etag, in)
+	found, err := m.Worlds(c, []string{world})
+	if err != nil {
+		return nil, err
+	}
+	if len(found) == 0 {
+		return nil, fmt.Errorf("world not found: %s", world)
+	}
+	models, err := prepareSet(world, etag, in)
+	if err != nil {
+		return nil, err
+	}
 	return m.setObjects(c, world_collection(world, colActors), models)
 }
 
@@ -139,7 +164,17 @@ func (m *Mongo) ListFactions(c context.Context, world string, labels map[string]
 }
 
 func (m *Mongo) SetFactions(c context.Context, world, etag string, in []*structs.Faction) (*Result, error) {
-	models := prepareSet(world, etag, in)
+	found, err := m.Worlds(c, []string{world})
+	if err != nil {
+		return nil, err
+	}
+	if len(found) == 0 {
+		return nil, fmt.Errorf("world not found: %s", world)
+	}
+	models, err := prepareSet(world, etag, in)
+	if err != nil {
+		return nil, err
+	}
 	return m.setObjects(c, world_collection(world, colFactions), models)
 }
 
@@ -209,7 +244,7 @@ func (m *Mongo) setObjects(c context.Context, collection string, models []mongo.
 }
 
 // prepareSet takes a list of objects and prepares them for insert or update
-func prepareSet[o structs.Object](world, newEtag string, in []o) []mongo.WriteModel {
+func prepareSet[o structs.Object](world, newEtag string, in []o) ([]mongo.WriteModel, error) {
 	models := []mongo.WriteModel{}
 	for _, v := range in {
 		var mod mongo.WriteModel
@@ -217,6 +252,9 @@ func prepareSet[o structs.Object](world, newEtag string, in []o) []mongo.WriteMo
 			v.SetId(uuid.NewID().String())
 			mod = mongo.NewInsertOneModel().SetDocument(v)
 		} else { // otherwise we're updating (well, replacing)
+			if !uuid.IsValidUUID(v.GetId()) {
+				return nil, fmt.Errorf("invalid id: %s", v.GetId())
+			}
 			// update if the ID and either the new or the old etag match
 			// (ie. if we did a partial update but the etag hasn't changed since our write operation).
 			// If we update with the same etag then nothing will change.
@@ -230,7 +268,7 @@ func prepareSet[o structs.Object](world, newEtag string, in []o) []mongo.WriteMo
 		v.SetWorld(world)
 		models = append(models, mod)
 	}
-	return models
+	return models, nil
 }
 
 // world_collection returns a name for a world, collection tuple.

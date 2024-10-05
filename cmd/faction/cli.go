@@ -5,8 +5,10 @@ import (
 	"strings"
 	"time"
 
+	"github.com/voidshard/faction/internal/uuid"
 	"github.com/voidshard/faction/pkg/structs"
 
+	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	grpc "google.golang.org/grpc"
 	"google.golang.org/grpc/backoff"
 	"google.golang.org/grpc/credentials/insecure"
@@ -93,6 +95,7 @@ func newClient(host string, port int, idle, conntimeout time.Duration) (structs.
 			MinConnectTimeout: conntimeout,
 			Backoff:           backoff.DefaultConfig,
 		}),
+		grpc.WithStatsHandler(otelgrpc.NewClientHandler()),
 	)
 	if err != nil {
 		return nil, err
@@ -112,10 +115,19 @@ func validObject(name string) structs.Object {
 	return obj
 }
 
-func invalidObjectError() error {
+func invalidObjectError(in string) error {
 	valid := []string{}
 	for k := range objects {
 		valid = append(valid, k)
 	}
-	return fmt.Errorf("Invalid object. Valid names: %s", strings.Join(valid, ", "))
+	return fmt.Errorf("Invalid object '%s'. Valid names: %s", in, strings.Join(valid, ", "))
+}
+
+// determineWorld returns the world ID to use. If a UUID is given we assume it's the world ID. Otherwise
+// we assume it's the name and craft it's deterministic UUID from the name.
+func determineWorld(w string) string {
+	if uuid.IsValidUUID(w) {
+		return w
+	}
+	return uuid.NewID(w).String()
 }

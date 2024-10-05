@@ -25,13 +25,14 @@ type cliCreateCmd struct {
 func (c *cliCreateCmd) Execute(args []string) error {
 	obj := validObject(c.Object.Name)
 	if obj == nil {
-		return invalidObjectError()
+		return invalidObjectError(c.Object.Name)
 	}
 
 	_, isWorld := obj.(*structs.World)
 	if !isWorld && c.World == "" {
 		return fmt.Errorf("world must be set for %s", c.Object.Name)
 	}
+	c.World = determineWorld(c.World)
 
 	toWrite, err := readObjectsFromFile(obj, c.Files)
 	if err != nil {
@@ -60,6 +61,9 @@ func (c *cliCreateCmd) Execute(args []string) error {
 			in[i] = v.(*structs.Actor)
 		}
 		resp, err := conn.SetActors(context.TODO(), &structs.SetActorsRequest{World: c.World, Data: in})
+		if resp == nil {
+			return err
+		}
 		return checkErr(err, resp.Error)
 	case *structs.Faction:
 		in := make([]*structs.Faction, len(toWrite))
@@ -67,6 +71,9 @@ func (c *cliCreateCmd) Execute(args []string) error {
 			in[i] = v.(*structs.Faction)
 		}
 		resp, err := conn.SetFactions(context.TODO(), &structs.SetFactionsRequest{World: c.World, Data: in})
+		if resp == nil {
+			return err
+		}
 		return checkErr(err, resp.Error)
 	case *structs.World:
 		for i, v := range toWrite {
