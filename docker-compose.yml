@@ -1,15 +1,20 @@
 services:
+  # ==== Faction ====
   api:
     build: .
     depends_on:
       - mongo
       - rabbit
+      - opensearch-node1
     environment:
       DEBUG: true
       DB_HOST: mongo
       DB_USERNAME: admin
       DB_PASSWORD: admin
       DB_DATABASE: faction
+      SB_ADDRESS: https://opensearch-node1:9200
+      SB_USERNAME: admin
+      SB_PASSWORD: Opensearch123!
       Q_HOST: rabbit
       Q_USERNAME: admin
       Q_PASSWORD: admin
@@ -21,6 +26,7 @@ services:
     ports:
       - 5000:5000
       
+  # ==== Queue ====
   rabbit: # rabbit, but with the management UI
     image: "rabbitmq:management"
     restart: on-failure
@@ -33,6 +39,7 @@ services:
       # docker exec rabbit rabbitmq-plugins enable rabbitmq_management
       - "15672:15672"
 
+  # ==== Database ====
   mongo: # ferretdb pretends to be mongo, but runs over postgres or sqlite
     image: ghcr.io/ferretdb/ferretdb
     restart: on-failure
@@ -63,7 +70,7 @@ services:
     ports:
       - 8081:8081
 
-  # open telemetry: collector
+  # ==== Open Telemetry ====
   otel-collector:
     image: otel/opentelemetry-collector-contrib:latest
     command: ["--config=/etc/otel-collector-config.yaml"]
@@ -75,16 +82,48 @@ services:
       - "13133:13133" # collector health listen port
       - "55679:55679" # zpages
 
-  jaeger:
+  jaeger:  # jaeger displays traces
     image: jaegertracing/all-in-one:latest
     ports:
       - "6831:6831/udp" # UDP port for Jaeger agent
       - "16686:16686" # Web UI
       - "14268:14268" # HTTP port for spans
 
-  prometheus:
+  prometheus:  # prometheus for metrics
     image: prom/prometheus:latest
     volumes:
       - ./prometheus.yml:/etc/prometheus/prometheus.yml
     ports:
       - "9090:9090"
+
+  # ==== Opensearch ====
+  opensearch-node1: # This is also the hostname of the container within the Docker network (i.e. https://opensearch-node1/)
+    image: opensearchproject/opensearch:latest # Specifying the latest available image - modify if you want a specific version
+    container_name: opensearch-node1
+    environment:
+      - cluster.name=opensearch-cluster # Name the cluster
+      - node.name=opensearch-node1 # Name the node that will run in this container
+      - cluster.initial_cluster_manager_nodes=opensearch-node1
+      - bootstrap.memory_lock=true # Disable JVM heap memory swapping
+      - "OPENSEARCH_JAVA_OPTS=-Xms512m -Xmx512m" # Set min and max JVM heap sizes to at least 50% of system RAM
+      - OPENSEARCH_INITIAL_ADMIN_PASSWORD=Opensearch123!  # seriously opensearch having enforced password policies for testing is annoying as fu*k
+    ulimits:
+      memlock:
+        soft: -1 # Set memlock to unlimited (no soft or hard limit)
+        hard: -1
+      nofile:
+        soft: 65536 # Maximum number of open files for the opensearch user - set to at least 65536
+        hard: 65536
+    ports:
+      - 9200:9200 # REST API
+      - 9600:9600 # Performance Analyzer
+
+  opensearch-dashboards:
+    image: opensearchproject/opensearch-dashboards:latest # Make sure the version of opensearch-dashboards matches the version of opensearch installed on other nodes
+    container_name: opensearch-dashboards
+    ports:
+      - 5601:5601 # Map host port 5601 to container port 5601
+    expose:
+      - "5601" # Expose port 5601 for web access to OpenSearch Dashboards
+    environment:
+      OPENSEARCH_HOSTS: '["https://opensearch-node1:9200"]' # Define the OpenSearch nodes that OpenSearch Dashboards will query

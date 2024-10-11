@@ -13,6 +13,7 @@ message Change {
 
 message OnChangeRequest {
     Change Data = 1;
+    string Queue = 2;
 }
 
 message OnChangeResponse {

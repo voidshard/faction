@@ -43,5 +43,5 @@ service API {
 //    rpc Jobs(GetJobsRequest) returns (GetJobsResponse);
 //    rpc SetJob(SetJobRequest) returns (SetJobResponse);
 
-//    rpc OnChange(OnChangeRequest) returns (stream OnChangeResponse);
+    rpc OnChange(OnChangeRequest) returns (stream OnChangeResponse);
 }

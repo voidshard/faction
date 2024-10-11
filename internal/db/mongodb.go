@@ -3,6 +3,7 @@ package db
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/martinlindhe/base36"
@@ -24,6 +25,7 @@ const (
 )
 
 type Mongo struct {
+	opts *options.ClientOptions
 	log  log.Logger
 	cfg  *MongoConfig
 	conn *mongo.Client
@@ -44,7 +46,6 @@ func NewMongo(cfg *MongoConfig) (*Mongo, error) {
 	defer cancel()
 
 	opts := options.Client().ApplyURI(url)
-
 	// github.com/open-telemetry/opentelemetry-go-contrib/blob/main/instrumentation/go.mongodb.org/mongo-driver/mongo/otelmongo/example_test.go
 	opts.Monitor = otelmongo.NewMonitor()
 
@@ -53,16 +54,8 @@ func NewMongo(cfg *MongoConfig) (*Mongo, error) {
 		return nil, err
 	}
 
-	go func() {
-		for {
-			// ping the server every minute to keep the connection alive
-			time.Sleep(60 * time.Second)
-			err := client.Ping(context.TODO(), nil)
-			log.Debug().Err(err).Msg("mongodb ping")
-		}
-	}()
-
-	return &Mongo{
+	me := &Mongo{
+		opts: opts,
 		log: log.Sublogger("mongodb", map[string]string{
 			"host":     cfg.Host,
 			"port":     fmt.Sprintf("%d", cfg.Port),
@@ -70,7 +63,48 @@ func NewMongo(cfg *MongoConfig) (*Mongo, error) {
 		}),
 		cfg:  cfg,
 		conn: client,
-	}, nil
+	}
+	go me.ping()
+	return me, nil
+}
+
+func (m *Mongo) connect() {
+	// if connection fails, try to reconnect
+	i := 0
+	for {
+		i += 1
+		if i > 1 {
+			time.Sleep(time.Second * time.Duration(i) * time.Duration(i))
+			m.log.Debug().Int("attempt", i).Msg("retrying connection to mongo")
+		}
+		c, err := mongo.Connect(context.Background(), m.opts)
+		if err != nil {
+			log.Error().Err(err).Msg("reconnect to mongo failed")
+			time.Sleep(time.Second * time.Duration(i) * time.Duration(i))
+			continue
+		}
+		m.conn = c
+		return
+	}
+
+}
+
+func (m *Mongo) ping() {
+	for {
+		// ping the server every minute to keep the connection alive
+		time.Sleep(60 * time.Second)
+		if m.conn == nil {
+			continue
+		}
+		err := m.conn.Ping(context.Background(), nil)
+		log.Debug().Err(err).Msg("mongodb ping")
+		if err == nil {
+			continue
+		}
+
+		// if we can't ping the server, try to reconnect
+		m.connect()
+	}
 }
 
 func (m *Mongo) Worlds(c context.Context, id []string) ([]*structs.World, error) {
@@ -86,7 +120,7 @@ func (m *Mongo) ListWorlds(c context.Context, labels map[string]string, limit, o
 func (m *Mongo) SetWorld(c context.Context, etag string, in *structs.World) (string, error) {
 	m.log.Debug().Str("database", m.cfg.Database).Str("collection", colWorlds).Str("_id", in.Id).Str("etag", in.Etag).Msg("setWorld")
 	if in.Name == "" {
-		return "", fmt.Errorf("world name is required")
+		return "", fmt.Errorf("%w world name required", ErrInvalid)
 	}
 
 	// if we don't have an ID we'll generate one
@@ -98,7 +132,7 @@ func (m *Mongo) SetWorld(c context.Context, etag string, in *structs.World) (str
 			in.Id = uuid.NewID(in.Name).String()
 		}
 	} else if !uuid.IsValidUUID(in.Id) {
-		return "", fmt.Errorf("invalid id: %s", in.Id)
+		return "", fmt.Errorf("%w invalid id: %s", ErrInvalid, in.Id)
 	}
 
 	filter := bson.D{{"_id", in.Id}, {"etag", bson.M{"$in": []string{in.Etag, etag}}}}
@@ -140,7 +174,7 @@ func (m *Mongo) SetActors(c context.Context, world, etag string, in []*structs.A
 		return nil, err
 	}
 	if len(found) == 0 {
-		return nil, fmt.Errorf("world not found: %s", world)
+		return nil, fmt.Errorf("%w world not found: %s", ErrNotFound, world)
 	}
 	models, err := prepareSet(world, etag, in)
 	if err != nil {
@@ -169,7 +203,7 @@ func (m *Mongo) SetFactions(c context.Context, world, etag string, in []*structs
 		return nil, err
 	}
 	if len(found) == 0 {
-		return nil, fmt.Errorf("world not found: %s", world)
+		return nil, fmt.Errorf("%w world not found: %s", ErrNotFound, world)
 	}
 	models, err := prepareSet(world, etag, in)
 	if err != nil {
@@ -253,7 +287,7 @@ func prepareSet[o structs.Object](world, newEtag string, in []o) ([]mongo.WriteM
 			mod = mongo.NewInsertOneModel().SetDocument(v)
 		} else { // otherwise we're updating (well, replacing)
 			if !uuid.IsValidUUID(v.GetId()) {
-				return nil, fmt.Errorf("invalid id: %s", v.GetId())
+				return nil, fmt.Errorf("%w invalid id: %s", ErrInvalid, v.GetId())
 			}
 			// update if the ID and either the new or the old etag match
 			// (ie. if we did a partial update but the etag hasn't changed since our write operation).
@@ -272,8 +306,8 @@ func prepareSet[o structs.Object](world, newEtag string, in []o) ([]mongo.WriteM
 }
 
 // world_collection returns a name for a world, collection tuple.
-// Ie. world1_actors, world2_actors
+// ie. actors_world1, actors_world2 etc.
 // This forcibly divides data from different worlds and simplifies data management.
 func world_collection(world, name string) string {
-	return fmt.Sprintf("%s_%s", base36.EncodeBytes([]byte(world)), name)
+	return fmt.Sprintf("%s_%s", name, strings.ToLower(base36.EncodeBytes([]byte(world))))
 }

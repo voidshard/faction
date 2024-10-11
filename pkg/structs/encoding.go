@@ -3,45 +3,87 @@ package structs
 
 import (
     "google.golang.org/protobuf/encoding/protojson"
+
+    "buf.build/go/protoyaml"
 )
 
-func (x *Affiliation) Marshal() ([]byte, error) {
+func (x *Affiliation) MarshalYAML() ([]byte, error) {
+    return protoyaml.Marshal(x)
+}
+
+func (x *Affiliation) UnmarshalYAML(data []byte) error {
+    return protoyaml.Unmarshal(data, x)
+}
+
+func (x *Affiliation) MarshalJSON() ([]byte, error) {
     return protojson.Marshal(x)
 }
 
-func (x *Affiliation) Unmarshal(data []byte) error {
+func (x *Affiliation) UnmarshalJSON(data []byte) error {
     return protojson.Unmarshal(data, x)
 }
 
-func (x *Faction) Marshal() ([]byte, error) {
+func (x *Faction) MarshalYAML() ([]byte, error) {
+    return protoyaml.Marshal(x)
+}
+
+func (x *Faction) UnmarshalYAML(data []byte) error {
+    return protoyaml.Unmarshal(data, x)
+}
+
+func (x *Faction) MarshalJSON() ([]byte, error) {
     return protojson.Marshal(x)
 }
 
-func (x *Faction) Unmarshal(data []byte) error {
+func (x *Faction) UnmarshalJSON(data []byte) error {
     return protojson.Unmarshal(data, x)
 }
 
-func (x *FactionStatus) Marshal() ([]byte, error) {
+func (x *FactionStatus) MarshalYAML() ([]byte, error) {
+    return protoyaml.Marshal(x)
+}
+
+func (x *FactionStatus) UnmarshalYAML(data []byte) error {
+    return protoyaml.Unmarshal(data, x)
+}
+
+func (x *FactionStatus) MarshalJSON() ([]byte, error) {
     return protojson.Marshal(x)
 }
 
-func (x *FactionStatus) Unmarshal(data []byte) error {
+func (x *FactionStatus) UnmarshalJSON(data []byte) error {
     return protojson.Unmarshal(data, x)
 }
 
-func (x *GetFactionsRequest) Marshal() ([]byte, error) {
+func (x *GetFactionsRequest) MarshalYAML() ([]byte, error) {
+    return protoyaml.Marshal(x)
+}
+
+func (x *GetFactionsRequest) UnmarshalYAML(data []byte) error {
+    return protoyaml.Unmarshal(data, x)
+}
+
+func (x *GetFactionsRequest) MarshalJSON() ([]byte, error) {
     return protojson.Marshal(x)
 }
 
-func (x *GetFactionsRequest) Unmarshal(data []byte) error {
+func (x *GetFactionsRequest) UnmarshalJSON(data []byte) error {
     return protojson.Unmarshal(data, x)
 }
 
-func (x *GetFactionsResponse) Marshal() ([]byte, error) {
+func (x *GetFactionsResponse) MarshalYAML() ([]byte, error) {
+    return protoyaml.Marshal(x)
+}
+
+func (x *GetFactionsResponse) UnmarshalYAML(data []byte) error {
+    return protoyaml.Unmarshal(data, x)
+}
+
+func (x *GetFactionsResponse) MarshalJSON() ([]byte, error) {
     return protojson.Marshal(x)
 }
 
-func (x *GetFactionsResponse) Unmarshal(data []byte) error {
+func (x *GetFactionsResponse) UnmarshalJSON(data []byte) error {
     return protojson.Unmarshal(data, x)
 }
 
@@ -49,19 +91,35 @@ func (x *GetFactionsResponse) SetError(err *Error) {
     x.Error = err
 }
 
-func (x *SetFactionsRequest) Marshal() ([]byte, error) {
+func (x *SetFactionsRequest) MarshalYAML() ([]byte, error) {
+    return protoyaml.Marshal(x)
+}
+
+func (x *SetFactionsRequest) UnmarshalYAML(data []byte) error {
+    return protoyaml.Unmarshal(data, x)
+}
+
+func (x *SetFactionsRequest) MarshalJSON() ([]byte, error) {
     return protojson.Marshal(x)
 }
 
-func (x *SetFactionsRequest) Unmarshal(data []byte) error {
+func (x *SetFactionsRequest) UnmarshalJSON(data []byte) error {
     return protojson.Unmarshal(data, x)
 }
 
-func (x *SetFactionsResponse) Marshal() ([]byte, error) {
+func (x *SetFactionsResponse) MarshalYAML() ([]byte, error) {
+    return protoyaml.Marshal(x)
+}
+
+func (x *SetFactionsResponse) UnmarshalYAML(data []byte) error {
+    return protoyaml.Unmarshal(data, x)
+}
+
+func (x *SetFactionsResponse) MarshalJSON() ([]byte, error) {
     return protojson.Marshal(x)
 }
 
-func (x *SetFactionsResponse) Unmarshal(data []byte) error {
+func (x *SetFactionsResponse) UnmarshalJSON(data []byte) error {
     return protojson.Unmarshal(data, x)
 }
 
@@ -69,19 +127,35 @@ func (x *SetFactionsResponse) SetError(err *Error) {
     x.Error = err
 }
 
-func (x *DeleteFactionRequest) Marshal() ([]byte, error) {
+func (x *DeleteFactionRequest) MarshalYAML() ([]byte, error) {
+    return protoyaml.Marshal(x)
+}
+
+func (x *DeleteFactionRequest) UnmarshalYAML(data []byte) error {
+    return protoyaml.Unmarshal(data, x)
+}
+
+func (x *DeleteFactionRequest) MarshalJSON() ([]byte, error) {
     return protojson.Marshal(x)
 }
 
-func (x *DeleteFactionRequest) Unmarshal(data []byte) error {
+func (x *DeleteFactionRequest) UnmarshalJSON(data []byte) error {
     return protojson.Unmarshal(data, x)
 }
 
-func (x *DeleteFactionResponse) Marshal() ([]byte, error) {
+func (x *DeleteFactionResponse) MarshalYAML() ([]byte, error) {
+    return protoyaml.Marshal(x)
+}
+
+func (x *DeleteFactionResponse) UnmarshalYAML(data []byte) error {
+    return protoyaml.Unmarshal(data, x)
+}
+
+func (x *DeleteFactionResponse) MarshalJSON() ([]byte, error) {
     return protojson.Marshal(x)
 }
 
-func (x *DeleteFactionResponse) Unmarshal(data []byte) error {
+func (x *DeleteFactionResponse) UnmarshalJSON(data []byte) error {
     return protojson.Unmarshal(data, x)
 }
 
@@ -89,19 +163,35 @@ func (x *DeleteFactionResponse) SetError(err *Error) {
     x.Error = err
 }
 
-func (x *ListFactionsRequest) Marshal() ([]byte, error) {
+func (x *ListFactionsRequest) MarshalYAML() ([]byte, error) {
+    return protoyaml.Marshal(x)
+}
+
+func (x *ListFactionsRequest) UnmarshalYAML(data []byte) error {
+    return protoyaml.Unmarshal(data, x)
+}
+
+func (x *ListFactionsRequest) MarshalJSON() ([]byte, error) {
     return protojson.Marshal(x)
 }
 
-func (x *ListFactionsRequest) Unmarshal(data []byte) error {
+func (x *ListFactionsRequest) UnmarshalJSON(data []byte) error {
     return protojson.Unmarshal(data, x)
 }
 
-func (x *ListFactionsResponse) Marshal() ([]byte, error) {
+func (x *ListFactionsResponse) MarshalYAML() ([]byte, error) {
+    return protoyaml.Marshal(x)
+}
+
+func (x *ListFactionsResponse) UnmarshalYAML(data []byte) error {
+    return protoyaml.Unmarshal(data, x)
+}
+
+func (x *ListFactionsResponse) MarshalJSON() ([]byte, error) {
     return protojson.Marshal(x)
 }
 
-func (x *ListFactionsResponse) Unmarshal(data []byte) error {
+func (x *ListFactionsResponse) UnmarshalJSON(data []byte) error {
     return protojson.Unmarshal(data, x)
 }
 
@@ -109,43 +199,83 @@ func (x *ListFactionsResponse) SetError(err *Error) {
     x.Error = err
 }
 
-func (x *Relationship) Marshal() ([]byte, error) {
+func (x *Relationship) MarshalYAML() ([]byte, error) {
+    return protoyaml.Marshal(x)
+}
+
+func (x *Relationship) UnmarshalYAML(data []byte) error {
+    return protoyaml.Unmarshal(data, x)
+}
+
+func (x *Relationship) MarshalJSON() ([]byte, error) {
     return protojson.Marshal(x)
 }
 
-func (x *Relationship) Unmarshal(data []byte) error {
+func (x *Relationship) UnmarshalJSON(data []byte) error {
     return protojson.Unmarshal(data, x)
 }
 
-func (x *WorldStatus) Marshal() ([]byte, error) {
+func (x *WorldStatus) MarshalYAML() ([]byte, error) {
+    return protoyaml.Marshal(x)
+}
+
+func (x *WorldStatus) UnmarshalYAML(data []byte) error {
+    return protoyaml.Unmarshal(data, x)
+}
+
+func (x *WorldStatus) MarshalJSON() ([]byte, error) {
     return protojson.Marshal(x)
 }
 
-func (x *WorldStatus) Unmarshal(data []byte) error {
+func (x *WorldStatus) UnmarshalJSON(data []byte) error {
     return protojson.Unmarshal(data, x)
 }
 
-func (x *World) Marshal() ([]byte, error) {
+func (x *World) MarshalYAML() ([]byte, error) {
+    return protoyaml.Marshal(x)
+}
+
+func (x *World) UnmarshalYAML(data []byte) error {
+    return protoyaml.Unmarshal(data, x)
+}
+
+func (x *World) MarshalJSON() ([]byte, error) {
     return protojson.Marshal(x)
 }
 
-func (x *World) Unmarshal(data []byte) error {
+func (x *World) UnmarshalJSON(data []byte) error {
     return protojson.Unmarshal(data, x)
 }
 
-func (x *GetWorldsRequest) Marshal() ([]byte, error) {
+func (x *GetWorldsRequest) MarshalYAML() ([]byte, error) {
+    return protoyaml.Marshal(x)
+}
+
+func (x *GetWorldsRequest) UnmarshalYAML(data []byte) error {
+    return protoyaml.Unmarshal(data, x)
+}
+
+func (x *GetWorldsRequest) MarshalJSON() ([]byte, error) {
     return protojson.Marshal(x)
 }
 
-func (x *GetWorldsRequest) Unmarshal(data []byte) error {
+func (x *GetWorldsRequest) UnmarshalJSON(data []byte) error {
     return protojson.Unmarshal(data, x)
 }
 
-func (x *GetWorldsResponse) Marshal() ([]byte, error) {
+func (x *GetWorldsResponse) MarshalYAML() ([]byte, error) {
+    return protoyaml.Marshal(x)
+}
+
+func (x *GetWorldsResponse) UnmarshalYAML(data []byte) error {
+    return protoyaml.Unmarshal(data, x)
+}
+
+func (x *GetWorldsResponse) MarshalJSON() ([]byte, error) {
     return protojson.Marshal(x)
 }
 
-func (x *GetWorldsResponse) Unmarshal(data []byte) error {
+func (x *GetWorldsResponse) UnmarshalJSON(data []byte) error {
     return protojson.Unmarshal(data, x)
 }
 
@@ -153,19 +283,35 @@ func (x *GetWorldsResponse) SetError(err *Error) {
     x.Error = err
 }
 
-func (x *SetWorldRequest) Marshal() ([]byte, error) {
+func (x *SetWorldRequest) MarshalYAML() ([]byte, error) {
+    return protoyaml.Marshal(x)
+}
+
+func (x *SetWorldRequest) UnmarshalYAML(data []byte) error {
+    return protoyaml.Unmarshal(data, x)
+}
+
+func (x *SetWorldRequest) MarshalJSON() ([]byte, error) {
     return protojson.Marshal(x)
 }
 
-func (x *SetWorldRequest) Unmarshal(data []byte) error {
+func (x *SetWorldRequest) UnmarshalJSON(data []byte) error {
     return protojson.Unmarshal(data, x)
 }
 
-func (x *SetWorldResponse) Marshal() ([]byte, error) {
+func (x *SetWorldResponse) MarshalYAML() ([]byte, error) {
+    return protoyaml.Marshal(x)
+}
+
+func (x *SetWorldResponse) UnmarshalYAML(data []byte) error {
+    return protoyaml.Unmarshal(data, x)
+}
+
+func (x *SetWorldResponse) MarshalJSON() ([]byte, error) {
     return protojson.Marshal(x)
 }
 
-func (x *SetWorldResponse) Unmarshal(data []byte) error {
+func (x *SetWorldResponse) UnmarshalJSON(data []byte) error {
     return protojson.Unmarshal(data, x)
 }
 
@@ -173,19 +319,35 @@ func (x *SetWorldResponse) SetError(err *Error) {
     x.Error = err
 }
 
-func (x *DeleteWorldRequest) Marshal() ([]byte, error) {
+func (x *DeleteWorldRequest) MarshalYAML() ([]byte, error) {
+    return protoyaml.Marshal(x)
+}
+
+func (x *DeleteWorldRequest) UnmarshalYAML(data []byte) error {
+    return protoyaml.Unmarshal(data, x)
+}
+
+func (x *DeleteWorldRequest) MarshalJSON() ([]byte, error) {
     return protojson.Marshal(x)
 }
 
-func (x *DeleteWorldRequest) Unmarshal(data []byte) error {
+func (x *DeleteWorldRequest) UnmarshalJSON(data []byte) error {
     return protojson.Unmarshal(data, x)
 }
 
-func (x *DeleteWorldResponse) Marshal() ([]byte, error) {
+func (x *DeleteWorldResponse) MarshalYAML() ([]byte, error) {
+    return protoyaml.Marshal(x)
+}
+
+func (x *DeleteWorldResponse) UnmarshalYAML(data []byte) error {
+    return protoyaml.Unmarshal(data, x)
+}
+
+func (x *DeleteWorldResponse) MarshalJSON() ([]byte, error) {
     return protojson.Marshal(x)
 }
 
-func (x *DeleteWorldResponse) Unmarshal(data []byte) error {
+func (x *DeleteWorldResponse) UnmarshalJSON(data []byte) error {
     return protojson.Unmarshal(data, x)
 }
 
@@ -193,19 +355,35 @@ func (x *DeleteWorldResponse) SetError(err *Error) {
     x.Error = err
 }
 
-func (x *ListWorldsRequest) Marshal() ([]byte, error) {
+func (x *ListWorldsRequest) MarshalYAML() ([]byte, error) {
+    return protoyaml.Marshal(x)
+}
+
+func (x *ListWorldsRequest) UnmarshalYAML(data []byte) error {
+    return protoyaml.Unmarshal(data, x)
+}
+
+func (x *ListWorldsRequest) MarshalJSON() ([]byte, error) {
     return protojson.Marshal(x)
 }
 
-func (x *ListWorldsRequest) Unmarshal(data []byte) error {
+func (x *ListWorldsRequest) UnmarshalJSON(data []byte) error {
     return protojson.Unmarshal(data, x)
 }
 
-func (x *ListWorldsResponse) Marshal() ([]byte, error) {
+func (x *ListWorldsResponse) MarshalYAML() ([]byte, error) {
+    return protoyaml.Marshal(x)
+}
+
+func (x *ListWorldsResponse) UnmarshalYAML(data []byte) error {
+    return protoyaml.Unmarshal(data, x)
+}
+
+func (x *ListWorldsResponse) MarshalJSON() ([]byte, error) {
     return protojson.Marshal(x)
 }
 
-func (x *ListWorldsResponse) Unmarshal(data []byte) error {
+func (x *ListWorldsResponse) UnmarshalJSON(data []byte) error {
     return protojson.Unmarshal(data, x)
 }
 
@@ -213,51 +391,99 @@ func (x *ListWorldsResponse) SetError(err *Error) {
     x.Error = err
 }
 
-func (x *Error) Marshal() ([]byte, error) {
+func (x *Error) MarshalYAML() ([]byte, error) {
+    return protoyaml.Marshal(x)
+}
+
+func (x *Error) UnmarshalYAML(data []byte) error {
+    return protoyaml.Unmarshal(data, x)
+}
+
+func (x *Error) MarshalJSON() ([]byte, error) {
     return protojson.Marshal(x)
 }
 
-func (x *Error) Unmarshal(data []byte) error {
+func (x *Error) UnmarshalJSON(data []byte) error {
     return protojson.Unmarshal(data, x)
 }
 
-func (x *Metaref) Marshal() ([]byte, error) {
+func (x *Metaref) MarshalYAML() ([]byte, error) {
+    return protoyaml.Marshal(x)
+}
+
+func (x *Metaref) UnmarshalYAML(data []byte) error {
+    return protoyaml.Unmarshal(data, x)
+}
+
+func (x *Metaref) MarshalJSON() ([]byte, error) {
     return protojson.Marshal(x)
 }
 
-func (x *Metaref) Unmarshal(data []byte) error {
+func (x *Metaref) UnmarshalJSON(data []byte) error {
     return protojson.Unmarshal(data, x)
 }
 
-func (x *Memory) Marshal() ([]byte, error) {
+func (x *Memory) MarshalYAML() ([]byte, error) {
+    return protoyaml.Marshal(x)
+}
+
+func (x *Memory) UnmarshalYAML(data []byte) error {
+    return protoyaml.Unmarshal(data, x)
+}
+
+func (x *Memory) MarshalJSON() ([]byte, error) {
     return protojson.Marshal(x)
 }
 
-func (x *Memory) Unmarshal(data []byte) error {
+func (x *Memory) UnmarshalJSON(data []byte) error {
     return protojson.Unmarshal(data, x)
 }
 
-func (x *Change) Marshal() ([]byte, error) {
+func (x *Change) MarshalYAML() ([]byte, error) {
+    return protoyaml.Marshal(x)
+}
+
+func (x *Change) UnmarshalYAML(data []byte) error {
+    return protoyaml.Unmarshal(data, x)
+}
+
+func (x *Change) MarshalJSON() ([]byte, error) {
     return protojson.Marshal(x)
 }
 
-func (x *Change) Unmarshal(data []byte) error {
+func (x *Change) UnmarshalJSON(data []byte) error {
     return protojson.Unmarshal(data, x)
 }
 
-func (x *OnChangeRequest) Marshal() ([]byte, error) {
+func (x *OnChangeRequest) MarshalYAML() ([]byte, error) {
+    return protoyaml.Marshal(x)
+}
+
+func (x *OnChangeRequest) UnmarshalYAML(data []byte) error {
+    return protoyaml.Unmarshal(data, x)
+}
+
+func (x *OnChangeRequest) MarshalJSON() ([]byte, error) {
     return protojson.Marshal(x)
 }
 
-func (x *OnChangeRequest) Unmarshal(data []byte) error {
+func (x *OnChangeRequest) UnmarshalJSON(data []byte) error {
     return protojson.Unmarshal(data, x)
 }
 
-func (x *OnChangeResponse) Marshal() ([]byte, error) {
+func (x *OnChangeResponse) MarshalYAML() ([]byte, error) {
+    return protoyaml.Marshal(x)
+}
+
+func (x *OnChangeResponse) UnmarshalYAML(data []byte) error {
+    return protoyaml.Unmarshal(data, x)
+}
+
+func (x *OnChangeResponse) MarshalJSON() ([]byte, error) {
     return protojson.Marshal(x)
 }
 
-func (x *OnChangeResponse) Unmarshal(data []byte) error {
+func (x *OnChangeResponse) UnmarshalJSON(data []byte) error {
     return protojson.Unmarshal(data, x)
 }
 
@@ -265,35 +491,67 @@ func (x *OnChangeResponse) SetError(err *Error) {
     x.Error = err
 }
 
-func (x *ActorStatus) Marshal() ([]byte, error) {
+func (x *ActorStatus) MarshalYAML() ([]byte, error) {
+    return protoyaml.Marshal(x)
+}
+
+func (x *ActorStatus) UnmarshalYAML(data []byte) error {
+    return protoyaml.Unmarshal(data, x)
+}
+
+func (x *ActorStatus) MarshalJSON() ([]byte, error) {
     return protojson.Marshal(x)
 }
 
-func (x *ActorStatus) Unmarshal(data []byte) error {
+func (x *ActorStatus) UnmarshalJSON(data []byte) error {
     return protojson.Unmarshal(data, x)
 }
 
-func (x *Actor) Marshal() ([]byte, error) {
+func (x *Actor) MarshalYAML() ([]byte, error) {
+    return protoyaml.Marshal(x)
+}
+
+func (x *Actor) UnmarshalYAML(data []byte) error {
+    return protoyaml.Unmarshal(data, x)
+}
+
+func (x *Actor) MarshalJSON() ([]byte, error) {
     return protojson.Marshal(x)
 }
 
-func (x *Actor) Unmarshal(data []byte) error {
+func (x *Actor) UnmarshalJSON(data []byte) error {
     return protojson.Unmarshal(data, x)
 }
 
-func (x *GetActorsRequest) Marshal() ([]byte, error) {
+func (x *GetActorsRequest) MarshalYAML() ([]byte, error) {
+    return protoyaml.Marshal(x)
+}
+
+func (x *GetActorsRequest) UnmarshalYAML(data []byte) error {
+    return protoyaml.Unmarshal(data, x)
+}
+
+func (x *GetActorsRequest) MarshalJSON() ([]byte, error) {
     return protojson.Marshal(x)
 }
 
-func (x *GetActorsRequest) Unmarshal(data []byte) error {
+func (x *GetActorsRequest) UnmarshalJSON(data []byte) error {
     return protojson.Unmarshal(data, x)
 }
 
-func (x *GetActorsResponse) Marshal() ([]byte, error) {
+func (x *GetActorsResponse) MarshalYAML() ([]byte, error) {
+    return protoyaml.Marshal(x)
+}
+
+func (x *GetActorsResponse) UnmarshalYAML(data []byte) error {
+    return protoyaml.Unmarshal(data, x)
+}
+
+func (x *GetActorsResponse) MarshalJSON() ([]byte, error) {
     return protojson.Marshal(x)
 }
 
-func (x *GetActorsResponse) Unmarshal(data []byte) error {
+func (x *GetActorsResponse) UnmarshalJSON(data []byte) error {
     return protojson.Unmarshal(data, x)
 }
 
@@ -301,19 +559,35 @@ func (x *GetActorsResponse) SetError(err *Error) {
     x.Error = err
 }
 
-func (x *SetActorsRequest) Marshal() ([]byte, error) {
+func (x *SetActorsRequest) MarshalYAML() ([]byte, error) {
+    return protoyaml.Marshal(x)
+}
+
+func (x *SetActorsRequest) UnmarshalYAML(data []byte) error {
+    return protoyaml.Unmarshal(data, x)
+}
+
+func (x *SetActorsRequest) MarshalJSON() ([]byte, error) {
     return protojson.Marshal(x)
 }
 
-func (x *SetActorsRequest) Unmarshal(data []byte) error {
+func (x *SetActorsRequest) UnmarshalJSON(data []byte) error {
     return protojson.Unmarshal(data, x)
 }
 
-func (x *SetActorsResponse) Marshal() ([]byte, error) {
+func (x *SetActorsResponse) MarshalYAML() ([]byte, error) {
+    return protoyaml.Marshal(x)
+}
+
+func (x *SetActorsResponse) UnmarshalYAML(data []byte) error {
+    return protoyaml.Unmarshal(data, x)
+}
+
+func (x *SetActorsResponse) MarshalJSON() ([]byte, error) {
     return protojson.Marshal(x)
 }
 
-func (x *SetActorsResponse) Unmarshal(data []byte) error {
+func (x *SetActorsResponse) UnmarshalJSON(data []byte) error {
     return protojson.Unmarshal(data, x)
 }
 
@@ -321,19 +595,35 @@ func (x *SetActorsResponse) SetError(err *Error) {
     x.Error = err
 }
 
-func (x *DeleteActorRequest) Marshal() ([]byte, error) {
+func (x *DeleteActorRequest) MarshalYAML() ([]byte, error) {
+    return protoyaml.Marshal(x)
+}
+
+func (x *DeleteActorRequest) UnmarshalYAML(data []byte) error {
+    return protoyaml.Unmarshal(data, x)
+}
+
+func (x *DeleteActorRequest) MarshalJSON() ([]byte, error) {
     return protojson.Marshal(x)
 }
 
-func (x *DeleteActorRequest) Unmarshal(data []byte) error {
+func (x *DeleteActorRequest) UnmarshalJSON(data []byte) error {
     return protojson.Unmarshal(data, x)
 }
 
-func (x *DeleteActorResponse) Marshal() ([]byte, error) {
+func (x *DeleteActorResponse) MarshalYAML() ([]byte, error) {
+    return protoyaml.Marshal(x)
+}
+
+func (x *DeleteActorResponse) UnmarshalYAML(data []byte) error {
+    return protoyaml.Unmarshal(data, x)
+}
+
+func (x *DeleteActorResponse) MarshalJSON() ([]byte, error) {
     return protojson.Marshal(x)
 }
 
-func (x *DeleteActorResponse) Unmarshal(data []byte) error {
+func (x *DeleteActorResponse) UnmarshalJSON(data []byte) error {
     return protojson.Unmarshal(data, x)
 }
 
@@ -341,19 +631,35 @@ func (x *DeleteActorResponse) SetError(err *Error) {
     x.Error = err
 }
 
-func (x *ListActorsRequest) Marshal() ([]byte, error) {
+func (x *ListActorsRequest) MarshalYAML() ([]byte, error) {
+    return protoyaml.Marshal(x)
+}
+
+func (x *ListActorsRequest) UnmarshalYAML(data []byte) error {
+    return protoyaml.Unmarshal(data, x)
+}
+
+func (x *ListActorsRequest) MarshalJSON() ([]byte, error) {
     return protojson.Marshal(x)
 }
 
-func (x *ListActorsRequest) Unmarshal(data []byte) error {
+func (x *ListActorsRequest) UnmarshalJSON(data []byte) error {
     return protojson.Unmarshal(data, x)
 }
 
-func (x *ListActorsResponse) Marshal() ([]byte, error) {
+func (x *ListActorsResponse) MarshalYAML() ([]byte, error) {
+    return protoyaml.Marshal(x)
+}
+
+func (x *ListActorsResponse) UnmarshalYAML(data []byte) error {
+    return protoyaml.Unmarshal(data, x)
+}
+
+func (x *ListActorsResponse) MarshalJSON() ([]byte, error) {
     return protojson.Marshal(x)
 }
 
-func (x *ListActorsResponse) Unmarshal(data []byte) error {
+func (x *ListActorsResponse) UnmarshalJSON(data []byte) error {
     return protojson.Unmarshal(data, x)
 }
 

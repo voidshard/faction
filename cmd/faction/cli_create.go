@@ -1,13 +1,11 @@
 package main
 
 import (
-	"bytes"
 	"context"
 	"fmt"
-	"os"
 
+	"github.com/voidshard/faction/internal/log"
 	"github.com/voidshard/faction/pkg/structs"
-	"gopkg.in/yaml.v3"
 )
 
 type cliCreateCmd struct {
@@ -28,15 +26,27 @@ func (c *cliCreateCmd) Execute(args []string) error {
 		return invalidObjectError(c.Object.Name)
 	}
 
-	_, isWorld := obj.(*structs.World)
-	if !isWorld && c.World == "" {
-		return fmt.Errorf("world must be set for %s", c.Object.Name)
-	}
-	c.World = determineWorld(c.World)
-
 	toWrite, err := readObjectsFromFile(obj, c.Files)
 	if err != nil {
 		return err
+	}
+
+	cliGivenWorld := toWorldId(c.World)[0]
+	byWorld := map[string][]structs.Object{}
+	for _, v := range toWrite {
+		if v.GetWorld() == "" { // object does not have world set
+			if c.World == "" {
+				return fmt.Errorf("world not set on either object or command line")
+			}
+			v.SetWorld(cliGivenWorld) // set world to the one given on the command line
+		} else { // object has world set
+			if c.World == "" {
+				// this is fine, object has a world set and command line doesn't specify one
+			} else if v.GetWorld() != cliGivenWorld {
+				return fmt.Errorf("world mismatch: %s != %s for object %s", v.GetWorld(), cliGivenWorld, v.GetId())
+			}
+		}
+		byWorld[v.GetWorld()] = append(byWorld[v.GetWorld()], v)
 	}
 
 	conn, err := newClient(c.Host, c.Port, c.IdleTimeout, c.ConnTimeout)
@@ -44,65 +54,62 @@ func (c *cliCreateCmd) Execute(args []string) error {
 		return err
 	}
 
-	checkErr := func(err error, errResp *structs.Error) error {
+	for world, subobjects := range byWorld {
+		err = updateObjects(conn, world, obj, subobjects)
 		if err != nil {
 			return err
-		}
-		if errResp != nil {
-			return fmt.Errorf("error: %s", errResp.Message)
-		}
-		return nil
-	}
-
-	switch obj.(type) {
-	case *structs.Actor:
-		in := make([]*structs.Actor, len(toWrite))
-		for i, v := range toWrite {
-			in[i] = v.(*structs.Actor)
-		}
-		resp, err := conn.SetActors(context.TODO(), &structs.SetActorsRequest{World: c.World, Data: in})
-		if resp == nil {
-			return err
-		}
-		return checkErr(err, resp.Error)
-	case *structs.Faction:
-		in := make([]*structs.Faction, len(toWrite))
-		for i, v := range toWrite {
-			in[i] = v.(*structs.Faction)
-		}
-		resp, err := conn.SetFactions(context.TODO(), &structs.SetFactionsRequest{World: c.World, Data: in})
-		if resp == nil {
-			return err
-		}
-		return checkErr(err, resp.Error)
-	case *structs.World:
-		for i, v := range toWrite {
-			_, err = conn.SetWorld(context.TODO(), &structs.SetWorldRequest{Data: v.(*structs.World)})
-			err = checkErr(err, nil)
-			if err != nil {
-				return fmt.Errorf("error on object %d: %w", i, err)
-			}
 		}
 	}
 
 	return nil
 }
 
-func readObjectsFromFile[T structs.Object](objToRead T, files []string) ([]T, error) {
-	found := []T{}
-	for _, f := range files {
-		data, err := os.ReadFile(f)
-		if err != nil {
-			return nil, err
+func updateObjects(conn structs.APIClient, world string, obj structs.Object, objs []structs.Object) error {
+	var (
+		rerr *structs.Error
+	)
+	switch obj.(type) {
+	case *structs.Actor:
+		in := make([]*structs.Actor, len(objs))
+		for i, v := range objs {
+			in[i] = v.(*structs.Actor)
 		}
-		for _, chunk := range bytes.Split(data, []byte("\n---\n")) {
-			obj := new(T)
-			err = yaml.Unmarshal(chunk, obj)
+		resp, err := conn.SetActors(context.TODO(), &structs.SetActorsRequest{World: world, Data: in})
+		if err != nil {
+			return err
+		} else if resp == nil {
+			return fmt.Errorf("nil response")
+		}
+		rerr = resp.Error
+	case *structs.Faction:
+		in := make([]*structs.Faction, len(objs))
+		for i, v := range objs {
+			in[i] = v.(*structs.Faction)
+		}
+		resp, err := conn.SetFactions(context.TODO(), &structs.SetFactionsRequest{World: world, Data: in})
+		if err != nil {
+			return err
+		} else if resp == nil {
+			return fmt.Errorf("nil response")
+		}
+		rerr = resp.Error
+	case *structs.World:
+		for _, v := range objs {
+			resp, err := conn.SetWorld(context.TODO(), &structs.SetWorldRequest{Data: v.(*structs.World)})
 			if err != nil {
-				return nil, err
+				return err
+			} else if resp == nil {
+				return fmt.Errorf("nil response")
+			} else if resp.Error != nil {
+				return fmt.Errorf("error: %s", resp.Error.Message)
 			}
-			found = append(found, *obj)
 		}
 	}
-	return found, nil
+
+	var err error
+	if rerr != nil {
+		err = fmt.Errorf("error: %s", rerr.Message)
+	}
+	log.Debug().Err(err).Msg("updateObjects response")
+	return err
 }

@@ -53,8 +53,8 @@ type Message interface {
 	// Must be called on successful processing of the message.
 	Ack() error
 
-	// Reject rejects the message & requeues it.
-	Reject(bool) error
+	// Reject rejects the message & should requeue unless the message has exceeded it's retry limit.
+	Reject() error
 
 	// Timestamp returns the time the message was sent.
 	Timestamp() time.Time

@@ -42,7 +42,7 @@ func (w *worker) Run() {
 
 	processMessage := func(msg queue.Message) {
 		if msg.Timestamp().Add(w.svc.cfg.MaxMessageAge).Before(time.Now()) {
-			w.log.Debug().Str("MessageId", msg.Id()).Err(msg.Reject(false)).Msg("Message too old, rejecting")
+			w.log.Debug().Str("MessageId", msg.Id()).Err(msg.Ack()).Msg("Message too old, acking and dropping")
 			return
 		}
 
@@ -55,6 +55,7 @@ func (w *worker) Run() {
 		err := w.asyncAPIRequest(msg.Context(), msg)
 		if err != nil {
 			w.log.Error().Err(err).Msg("Failed to process message")
+			pan.Err(err)
 		}
 	}
 

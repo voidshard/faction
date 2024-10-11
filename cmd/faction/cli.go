@@ -4,36 +4,10 @@ import (
 	"fmt"
 	"strings"
 	"time"
-
-	"github.com/voidshard/faction/internal/uuid"
-	"github.com/voidshard/faction/pkg/structs"
-
-	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
-	grpc "google.golang.org/grpc"
-	"google.golang.org/grpc/backoff"
-	"google.golang.org/grpc/credentials/insecure"
 )
 
 const (
 	docCli = `CLI for operations on the API`
-)
-
-var (
-	objects = map[string]structs.Object{ // map of objects we can interact with
-		"world":   &structs.World{},
-		"actor":   &structs.Actor{},
-		"faction": &structs.Faction{},
-	}
-	help = map[string]string{ // help text for each object
-		"world":   "Worlds are the top level object in the system, every other object exists within a world.",
-		"actor":   "Actors are individual entities that can interact & form factions.",
-		"faction": "Factions are groups of actors that can work together, form common ground(s) or simply work against other factions.",
-	}
-	shortNames = map[string]string{ // allows short hand names because we're lazy
-		"wo": "world",
-		"ac": "actor",
-		"fa": "faction",
-	}
 )
 
 type optCliConn struct {
@@ -52,6 +26,8 @@ type optsCli struct {
 	List   cliListCmd   `command:"list" description:"List objects"`
 	Create cliCreateCmd `command:"create" description:"Create objects"`
 	Delete cliDeleteCmd `command:"delete" description:"Delete objects"`
+	Watch  cliWatchCmd  `command:"watch" description:"Watch objects"`
+	Edit   cliEditCmd   `command:"edit" description:"Edit objects"`
 
 	Help cliHelpCmd `command:"help" description:"Help about available objects"`
 }
@@ -84,50 +60,4 @@ func (c *cliHelpCmd) Execute(args []string) error {
 	}
 
 	return nil
-}
-
-func newClient(host string, port int, idle, conntimeout time.Duration) (structs.APIClient, error) {
-	conn, err := grpc.Dial(
-		fmt.Sprintf("%s:%d", host, port),
-		grpc.WithTransportCredentials(insecure.NewCredentials()),
-		grpc.WithIdleTimeout(idle),
-		grpc.WithConnectParams(grpc.ConnectParams{
-			MinConnectTimeout: conntimeout,
-			Backoff:           backoff.DefaultConfig,
-		}),
-		grpc.WithStatsHandler(otelgrpc.NewClientHandler()),
-	)
-	if err != nil {
-		return nil, err
-	}
-	return structs.NewAPIClient(conn), nil
-}
-
-func validObject(name string) structs.Object {
-	name = strings.ToLower(name)
-
-	longname, ok := shortNames[name]
-	if ok {
-		name = longname
-	}
-
-	obj, _ := objects[name]
-	return obj
-}
-
-func invalidObjectError(in string) error {
-	valid := []string{}
-	for k := range objects {
-		valid = append(valid, k)
-	}
-	return fmt.Errorf("Invalid object '%s'. Valid names: %s", in, strings.Join(valid, ", "))
-}
-
-// determineWorld returns the world ID to use. If a UUID is given we assume it's the world ID. Otherwise
-// we assume it's the name and craft it's deterministic UUID from the name.
-func determineWorld(w string) string {
-	if uuid.IsValidUUID(w) {
-		return w
-	}
-	return uuid.NewID(w).String()
 }

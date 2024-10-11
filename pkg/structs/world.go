@@ -9,3 +9,7 @@ func (x *World) SetEtag(v string) {
 }
 
 func (x *World) SetWorld(v string) {}
+
+func (x *World) GetWorld() string {
+	return x.Id // duh!
+}

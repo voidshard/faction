@@ -42,15 +42,15 @@ func newRabbitChannelSubscription(logname string, replyChan *amqp.Channel, in <-
 				if !ok {
 					continue
 				}
-				log.Debug().Str("subject", m.RoutingKey).Msg("received message")
+				log.Debug().Str("subject", m.RoutingKey).Msg("subscription received message")
 
-				parentCtx, msgdata, err := extractTraceData(m.Body)
+				rab, err := NewRabbitMessage(m)
 				if err != nil {
-					log.Error().Err(err).Msg("failed to extract trace data")
+					log.Error().Err(err).Msg("failed to create rabbit message")
 					continue
 				}
-
-				out <- &rabbitMessage{msg: m, channel: replyChan, context: parentCtx, data: msgdata}
+				rab.setReplyChannel(replyChan)
+				out <- rab
 			}
 		}
 	}()

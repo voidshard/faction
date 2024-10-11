@@ -5,10 +5,16 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/voidshard/faction/internal/log"
 	"github.com/voidshard/faction/internal/uuid"
 	"github.com/voidshard/faction/pkg/structs"
 
 	amqp "github.com/rabbitmq/amqp091-go"
+)
+
+const (
+	rabbitRetryHeader = "x-retries"
+	rabbitRetryMax    = 5
 )
 
 type rabbitMessage struct {
@@ -22,6 +28,18 @@ type rabbitMessage struct {
 	data []byte
 }
 
+func NewRabbitMessage(m amqp.Delivery) (*rabbitMessage, error) {
+	parentCtx, msgdata, err := extractTraceData(m.Body)
+	if err != nil {
+		return nil, err
+	}
+	return &rabbitMessage{context: parentCtx, data: msgdata, msg: m}, nil
+}
+
+func (m *rabbitMessage) setReplyChannel(channel *amqp.Channel) {
+	m.channel = channel
+}
+
 func (m *rabbitMessage) Reply(ctx context.Context, data []byte) error {
 	if m.channel == nil {
 		return fmt.Errorf("no channel to reply on, only supported on API Request message replies")
@@ -30,6 +48,7 @@ func (m *rabbitMessage) Reply(ctx context.Context, data []byte) error {
 	if err != nil {
 		return err
 	}
+	log.Debug().Str("MessageId", m.msg.MessageId).Int("bytes", len(msgdata)).Msg("Injected telemetry, replying to message")
 	return m.channel.PublishWithContext(ctx,
 		"",            // exchange
 		m.msg.ReplyTo, // routing key
@@ -73,6 +92,18 @@ func (m *rabbitMessage) Ack() error {
 	return m.msg.Ack(false)
 }
 
-func (m *rabbitMessage) Reject(requeue bool) error {
-	return m.msg.Reject(requeue)
+func (m *rabbitMessage) Reject() error {
+	retries, ok := m.msg.Headers[rabbitRetryHeader]
+	if !ok {
+		retries = 0
+	}
+	attempt := retries.(int)
+	if attempt > rabbitRetryMax {
+		log.Debug().Int("attempt", attempt).Str("MessageId", m.msg.MessageId).Msg("Message has exceeded retry limit, rejecting")
+		return m.msg.Reject(false)
+	}
+	attempt += 1
+	log.Debug().Int("attempt", attempt).Str("MessageId", m.msg.MessageId).Msg("Message rejected, requeueing")
+	m.msg.Headers["x-retries"] = attempt
+	return m.msg.Reject(true)
 }

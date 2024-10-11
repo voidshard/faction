@@ -3,9 +3,6 @@ package main
 import (
 	"context"
 	"fmt"
-	"strings"
-
-	"gopkg.in/yaml.v3"
 
 	"github.com/voidshard/faction/pkg/structs"
 )
@@ -28,58 +25,69 @@ func (c *cliGetCmd) Execute(args []string) error {
 	}
 
 	_, isWorld := obj.(*structs.World)
-	if !isWorld && c.World == "" {
+	if isWorld {
+		c.Object.Id = toWorldId(c.Object.Id...)
+	} else if !isWorld && c.World == "" {
 		return fmt.Errorf("world must be set for %s", c.Object.Name)
 	}
-	c.World = determineWorld(c.World)
+	c.World = toWorldId(c.World)[0]
 
 	conn, err := newClient(c.Host, c.Port, c.IdleTimeout, c.ConnTimeout)
 	if err != nil {
 		return err
 	}
 
-	switch obj.(type) {
-	case *structs.Faction:
-		resp, err := conn.Factions(context.TODO(), &structs.GetFactionsRequest{World: c.World, Ids: c.Object.Id})
-		if resp == nil {
-			return err
-		}
-		return dumpYaml(resp.Data, resp.Error, err)
-	case *structs.Actor:
-		resp, err := conn.Actors(context.TODO(), &structs.GetActorsRequest{World: c.World, Ids: c.Object.Id})
-		if resp == nil {
-			return err
-		}
-		return dumpYaml(resp.Data, resp.Error, err)
-	case *structs.World:
-		resp, err := conn.Worlds(context.TODO(), &structs.GetWorldsRequest{Ids: c.Object.Id})
-		if resp == nil {
-			return err
-		}
-		return dumpYaml(resp.Data, resp.Error, err)
+	objs, err := getObjects(conn, c.World, obj, c.Object.Id)
+	if err != nil {
+		return err
 	}
 
-	return nil
+	yamlData, err := dumpYaml(objs)
+	if yamlData != nil {
+		fmt.Println(string(yamlData))
+	}
+	return err
 }
 
-func dumpYaml[T structs.Object](data []T, err *structs.Error, connErr error) error {
-	if connErr != nil {
-		return connErr
-	}
-	if err != nil {
-		return fmt.Errorf("error: %s", err.Message)
-	}
-
-	for i, d := range data {
-		b, err := yaml.Marshal(d)
+func getObjects(client structs.APIClient, world string, obj marshalable, ids []string) ([]marshalable, error) {
+	data := []marshalable{}
+	switch obj.(type) {
+	case *structs.Faction:
+		resp, err := client.Factions(context.TODO(), &structs.GetFactionsRequest{World: world, Ids: ids})
 		if err != nil {
-			return err
+			return nil, err
+		} else if resp == nil {
+			return nil, fmt.Errorf("nil response")
+		} else if resp.Error != nil {
+			return nil, fmt.Errorf("error: %s", resp.Error.Message)
 		}
-		if i > 0 && i < len(data) {
-			fmt.Println("---")
+		for _, d := range resp.Data {
+			data = append(data, d)
 		}
-		fmt.Println(strings.TrimSpace(string(b)))
+	case *structs.Actor:
+		resp, err := client.Actors(context.TODO(), &structs.GetActorsRequest{World: world, Ids: ids})
+		if err != nil {
+			return nil, err
+		} else if resp == nil {
+			return nil, fmt.Errorf("nil response")
+		} else if resp.Error != nil {
+			return nil, fmt.Errorf("error: %s", resp.Error.Message)
+		}
+		for _, d := range resp.Data {
+			data = append(data, d)
+		}
+	case *structs.World:
+		resp, err := client.Worlds(context.TODO(), &structs.GetWorldsRequest{Ids: ids})
+		if err != nil {
+			return nil, err
+		} else if resp == nil {
+			return nil, fmt.Errorf("nil response")
+		} else if resp.Error != nil {
+			return nil, fmt.Errorf("error: %s", resp.Error.Message)
+		}
+		for _, d := range resp.Data {
+			data = append(data, d)
+		}
 	}
-
-	return nil
+	return data, nil
 }

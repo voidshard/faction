@@ -32,7 +32,7 @@ func (c *cliListCmd) Execute(args []string) error {
 	if !isWorld && c.World == "" {
 		return fmt.Errorf("world must be set for %s", c.Object.Name)
 	}
-	c.World = determineWorld(c.World)
+	c.World = toWorldId(c.World)[0]
 
 	conn, err := newClient(c.Host, c.Port, c.IdleTimeout, c.ConnTimeout)
 	if err != nil {

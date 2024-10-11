@@ -29,6 +29,8 @@ package structs
 
 import (
     "google.golang.org/protobuf/encoding/protojson"
+
+    "buf.build/go/protoyaml"
 )
 EOF
 for file in $(find ./proto -type f -name "*.proto"); do
@@ -36,11 +38,19 @@ for file in $(find ./proto -type f -name "*.proto"); do
         lower=$(echo $line | tr '[:upper:]' '[:lower:]')
         cat >> pkg/structs/encoding.go <<EOF
 
-func (x *$line) Marshal() ([]byte, error) {
+func (x *$line) MarshalYAML() ([]byte, error) {
+    return protoyaml.Marshal(x)
+}
+
+func (x *$line) UnmarshalYAML(data []byte) error {
+    return protoyaml.Unmarshal(data, x)
+}
+
+func (x *$line) MarshalJSON() ([]byte, error) {
     return protojson.Marshal(x)
 }
 
-func (x *$line) Unmarshal(data []byte) error {
+func (x *$line) UnmarshalJSON(data []byte) error {
     return protojson.Unmarshal(data, x)
 }
 EOF

@@ -32,6 +32,13 @@ func newSpan(tr trace.Tracer, ctx context.Context, name string, attrs ...map[str
 	return &Span{root: span}
 }
 
+func (s *Span) Err(err error) error {
+	if err != nil {
+		s.root.RecordError(err)
+	}
+	return err
+}
+
 func toOtelAttrs(attrs ...map[string]interface{}) []attribute.KeyValue {
 	otelAttrs := []attribute.KeyValue{}
 	for _, attrset := range attrs {
@@ -42,6 +49,13 @@ func toOtelAttrs(attrs ...map[string]interface{}) []attribute.KeyValue {
 				val = reflect.ValueOf(v).Elem()
 			} else {
 				val = reflect.ValueOf(v)
+			}
+
+			err, ok := v.(error)
+			if ok {
+				// the only "struct" we will accept, should be set with Err() (above)
+				otelAttrs = append(otelAttrs, attribute.String(k, err.Error()))
+				continue
 			}
 
 			// do our best to convert the value to an OTel attribute

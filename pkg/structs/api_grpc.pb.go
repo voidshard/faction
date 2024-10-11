@@ -39,6 +39,7 @@ type APIClient interface {
 	SetFactions(ctx context.Context, in *SetFactionsRequest, opts ...grpc.CallOption) (*SetFactionsResponse, error)
 	ListFactions(ctx context.Context, in *ListFactionsRequest, opts ...grpc.CallOption) (*ListFactionsResponse, error)
 	DeleteFaction(ctx context.Context, in *DeleteFactionRequest, opts ...grpc.CallOption) (*DeleteFactionResponse, error)
+	OnChange(ctx context.Context, in *OnChangeRequest, opts ...grpc.CallOption) (API_OnChangeClient, error)
 }
 
 type aPIClient struct {
@@ -157,6 +158,38 @@ func (c *aPIClient) DeleteFaction(ctx context.Context, in *DeleteFactionRequest,
 	return out, nil
 }
 
+func (c *aPIClient) OnChange(ctx context.Context, in *OnChangeRequest, opts ...grpc.CallOption) (API_OnChangeClient, error) {
+	stream, err := c.cc.NewStream(ctx, &API_ServiceDesc.Streams[0], "/API/OnChange", opts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &aPIOnChangeClient{stream}
+	if err := x.ClientStream.SendMsg(in); err != nil {
+		return nil, err
+	}
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	return x, nil
+}
+
+type API_OnChangeClient interface {
+	Recv() (*OnChangeResponse, error)
+	grpc.ClientStream
+}
+
+type aPIOnChangeClient struct {
+	grpc.ClientStream
+}
+
+func (x *aPIOnChangeClient) Recv() (*OnChangeResponse, error) {
+	m := new(OnChangeResponse)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
 // APIServer is the server API for API service.
 // All implementations must embed UnimplementedAPIServer
 // for forward compatibility
@@ -178,6 +211,7 @@ type APIServer interface {
 	SetFactions(context.Context, *SetFactionsRequest) (*SetFactionsResponse, error)
 	ListFactions(context.Context, *ListFactionsRequest) (*ListFactionsResponse, error)
 	DeleteFaction(context.Context, *DeleteFactionRequest) (*DeleteFactionResponse, error)
+	OnChange(*OnChangeRequest, API_OnChangeServer) error
 	mustEmbedUnimplementedAPIServer()
 }
 
@@ -220,6 +254,9 @@ func (UnimplementedAPIServer) ListFactions(context.Context, *ListFactionsRequest
 }
 func (UnimplementedAPIServer) DeleteFaction(context.Context, *DeleteFactionRequest) (*DeleteFactionResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DeleteFaction not implemented")
+}
+func (UnimplementedAPIServer) OnChange(*OnChangeRequest, API_OnChangeServer) error {
+	return status.Errorf(codes.Unimplemented, "method OnChange not implemented")
 }
 func (UnimplementedAPIServer) mustEmbedUnimplementedAPIServer() {}
 
@@ -450,6 +487,27 @@ func _API_DeleteFaction_Handler(srv interface{}, ctx context.Context, dec func(i
 	return interceptor(ctx, in, info, handler)
 }
 
+func _API_OnChange_Handler(srv interface{}, stream grpc.ServerStream) error {
+	m := new(OnChangeRequest)
+	if err := stream.RecvMsg(m); err != nil {
+		return err
+	}
+	return srv.(APIServer).OnChange(m, &aPIOnChangeServer{stream})
+}
+
+type API_OnChangeServer interface {
+	Send(*OnChangeResponse) error
+	grpc.ServerStream
+}
+
+type aPIOnChangeServer struct {
+	grpc.ServerStream
+}
+
+func (x *aPIOnChangeServer) Send(m *OnChangeResponse) error {
+	return x.ServerStream.SendMsg(m)
+}
+
 // API_ServiceDesc is the grpc.ServiceDesc for API service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -506,6 +564,12 @@ var API_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _API_DeleteFaction_Handler,
 		},
 	},
-	Streams:  []grpc.StreamDesc{},
+	Streams: []grpc.StreamDesc{
+		{
+			StreamName:    "OnChange",
+			Handler:       _API_OnChange_Handler,
+			ServerStreams: true,
+		},
+	},
 	Metadata: "api.proto",
 }

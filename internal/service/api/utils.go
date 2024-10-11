@@ -127,7 +127,7 @@ func encodeRequest(in marshalable) ([]byte, error) {
 		return nil, fmt.Errorf("unknown method")
 	}
 
-	data, err := in.Marshal()
+	data, err := in.MarshalJSON()
 	if err != nil {
 		return nil, err
 	}

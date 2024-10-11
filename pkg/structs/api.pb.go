@@ -26,7 +26,7 @@ var file_api_proto_rawDesc = []byte{
 	0x6c, 0x64, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x1a, 0x0b, 0x61, 0x63, 0x74, 0x6f, 0x72, 0x2e,
 	0x70, 0x72, 0x6f, 0x74, 0x6f, 0x1a, 0x0d, 0x66, 0x61, 0x63, 0x74, 0x69, 0x6f, 0x6e, 0x2e, 0x70,
 	0x72, 0x6f, 0x74, 0x6f, 0x1a, 0x0f, 0x6f, 0x6e, 0x5f, 0x63, 0x68, 0x61, 0x6e, 0x67, 0x65, 0x2e,
-	0x70, 0x72, 0x6f, 0x74, 0x6f, 0x32, 0x9c, 0x05, 0x0a, 0x03, 0x41, 0x50, 0x49, 0x12, 0x2f, 0x0a,
+	0x70, 0x72, 0x6f, 0x74, 0x6f, 0x32, 0xcf, 0x05, 0x0a, 0x03, 0x41, 0x50, 0x49, 0x12, 0x2f, 0x0a,
 	0x06, 0x57, 0x6f, 0x72, 0x6c, 0x64, 0x73, 0x12, 0x11, 0x2e, 0x47, 0x65, 0x74, 0x57, 0x6f, 0x72,
 	0x6c, 0x64, 0x73, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x12, 0x2e, 0x47, 0x65, 0x74,
 	0x57, 0x6f, 0x72, 0x6c, 0x64, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x2f,
@@ -68,8 +68,11 @@ var file_api_proto_rawDesc = []byte{
 	0x63, 0x74, 0x69, 0x6f, 0x6e, 0x12, 0x15, 0x2e, 0x44, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x46, 0x61,
 	0x63, 0x74, 0x69, 0x6f, 0x6e, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x16, 0x2e, 0x44,
 	0x65, 0x6c, 0x65, 0x74, 0x65, 0x46, 0x61, 0x63, 0x74, 0x69, 0x6f, 0x6e, 0x52, 0x65, 0x73, 0x70,
-	0x6f, 0x6e, 0x73, 0x65, 0x42, 0x0d, 0x5a, 0x0b, 0x70, 0x6b, 0x67, 0x2f, 0x73, 0x74, 0x72, 0x75,
-	0x63, 0x74, 0x73, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
+	0x6f, 0x6e, 0x73, 0x65, 0x12, 0x31, 0x0a, 0x08, 0x4f, 0x6e, 0x43, 0x68, 0x61, 0x6e, 0x67, 0x65,
+	0x12, 0x10, 0x2e, 0x4f, 0x6e, 0x43, 0x68, 0x61, 0x6e, 0x67, 0x65, 0x52, 0x65, 0x71, 0x75, 0x65,
+	0x73, 0x74, 0x1a, 0x11, 0x2e, 0x4f, 0x6e, 0x43, 0x68, 0x61, 0x6e, 0x67, 0x65, 0x52, 0x65, 0x73,
+	0x70, 0x6f, 0x6e, 0x73, 0x65, 0x30, 0x01, 0x42, 0x0d, 0x5a, 0x0b, 0x70, 0x6b, 0x67, 0x2f, 0x73,
+	0x74, 0x72, 0x75, 0x63, 0x74, 0x73, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
 var file_api_proto_goTypes = []interface{}{
@@ -85,18 +88,20 @@ var file_api_proto_goTypes = []interface{}{
 	(*SetFactionsRequest)(nil),    // 9: SetFactionsRequest
 	(*ListFactionsRequest)(nil),   // 10: ListFactionsRequest
 	(*DeleteFactionRequest)(nil),  // 11: DeleteFactionRequest
-	(*GetWorldsResponse)(nil),     // 12: GetWorldsResponse
-	(*SetWorldResponse)(nil),      // 13: SetWorldResponse
-	(*ListWorldsResponse)(nil),    // 14: ListWorldsResponse
-	(*DeleteWorldResponse)(nil),   // 15: DeleteWorldResponse
-	(*GetActorsResponse)(nil),     // 16: GetActorsResponse
-	(*SetActorsResponse)(nil),     // 17: SetActorsResponse
-	(*ListActorsResponse)(nil),    // 18: ListActorsResponse
-	(*DeleteActorResponse)(nil),   // 19: DeleteActorResponse
-	(*GetFactionsResponse)(nil),   // 20: GetFactionsResponse
-	(*SetFactionsResponse)(nil),   // 21: SetFactionsResponse
-	(*ListFactionsResponse)(nil),  // 22: ListFactionsResponse
-	(*DeleteFactionResponse)(nil), // 23: DeleteFactionResponse
+	(*OnChangeRequest)(nil),       // 12: OnChangeRequest
+	(*GetWorldsResponse)(nil),     // 13: GetWorldsResponse
+	(*SetWorldResponse)(nil),      // 14: SetWorldResponse
+	(*ListWorldsResponse)(nil),    // 15: ListWorldsResponse
+	(*DeleteWorldResponse)(nil),   // 16: DeleteWorldResponse
+	(*GetActorsResponse)(nil),     // 17: GetActorsResponse
+	(*SetActorsResponse)(nil),     // 18: SetActorsResponse
+	(*ListActorsResponse)(nil),    // 19: ListActorsResponse
+	(*DeleteActorResponse)(nil),   // 20: DeleteActorResponse
+	(*GetFactionsResponse)(nil),   // 21: GetFactionsResponse
+	(*SetFactionsResponse)(nil),   // 22: SetFactionsResponse
+	(*ListFactionsResponse)(nil),  // 23: ListFactionsResponse
+	(*DeleteFactionResponse)(nil), // 24: DeleteFactionResponse
+	(*OnChangeResponse)(nil),      // 25: OnChangeResponse
 }
 var file_api_proto_depIdxs = []int32{
 	0,  // 0: API.Worlds:input_type -> GetWorldsRequest
@@ -111,20 +116,22 @@ var file_api_proto_depIdxs = []int32{
 	9,  // 9: API.SetFactions:input_type -> SetFactionsRequest
 	10, // 10: API.ListFactions:input_type -> ListFactionsRequest
 	11, // 11: API.DeleteFaction:input_type -> DeleteFactionRequest
-	12, // 12: API.Worlds:output_type -> GetWorldsResponse
-	13, // 13: API.SetWorld:output_type -> SetWorldResponse
-	14, // 14: API.ListWorlds:output_type -> ListWorldsResponse
-	15, // 15: API.DeleteWorld:output_type -> DeleteWorldResponse
-	16, // 16: API.Actors:output_type -> GetActorsResponse
-	17, // 17: API.SetActors:output_type -> SetActorsResponse
-	18, // 18: API.ListActors:output_type -> ListActorsResponse
-	19, // 19: API.DeleteActor:output_type -> DeleteActorResponse
-	20, // 20: API.Factions:output_type -> GetFactionsResponse
-	21, // 21: API.SetFactions:output_type -> SetFactionsResponse
-	22, // 22: API.ListFactions:output_type -> ListFactionsResponse
-	23, // 23: API.DeleteFaction:output_type -> DeleteFactionResponse
-	12, // [12:24] is the sub-list for method output_type
-	0,  // [0:12] is the sub-list for method input_type
+	12, // 12: API.OnChange:input_type -> OnChangeRequest
+	13, // 13: API.Worlds:output_type -> GetWorldsResponse
+	14, // 14: API.SetWorld:output_type -> SetWorldResponse
+	15, // 15: API.ListWorlds:output_type -> ListWorldsResponse
+	16, // 16: API.DeleteWorld:output_type -> DeleteWorldResponse
+	17, // 17: API.Actors:output_type -> GetActorsResponse
+	18, // 18: API.SetActors:output_type -> SetActorsResponse
+	19, // 19: API.ListActors:output_type -> ListActorsResponse
+	20, // 20: API.DeleteActor:output_type -> DeleteActorResponse
+	21, // 21: API.Factions:output_type -> GetFactionsResponse
+	22, // 22: API.SetFactions:output_type -> SetFactionsResponse
+	23, // 23: API.ListFactions:output_type -> ListFactionsResponse
+	24, // 24: API.DeleteFaction:output_type -> DeleteFactionResponse
+	25, // 25: API.OnChange:output_type -> OnChangeResponse
+	13, // [13:26] is the sub-list for method output_type
+	0,  // [0:13] is the sub-list for method input_type
 	0,  // [0:0] is the sub-list for extension type_name
 	0,  // [0:0] is the sub-list for extension extendee
 	0,  // [0:0] is the sub-list for field type_name

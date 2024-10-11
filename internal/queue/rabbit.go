@@ -18,10 +18,6 @@ import (
 const (
 	mqApiReq = "api-request"
 	mqStream = "change-stream"
-
-	mqReplyRoutines = 10
-
-	mqConnAttempts = 5
 )
 
 type RabbitQueue struct {
@@ -38,11 +34,10 @@ type RabbitQueue struct {
 	apiCh    *amqp.Channel
 	apiQueue *amqp.Queue
 
-	replyQueue   *amqp.Queue
-	replyLock    sync.Mutex
-	replyChans   map[string]*rabbitSubscription
-	replies      <-chan amqp.Delivery
-	replyMaxTime time.Duration
+	replyQueue *amqp.Queue
+	replyLock  sync.Mutex
+	replyChans map[string]*rabbitSubscription
+	replies    <-chan amqp.Delivery
 }
 
 type RabbitConfig struct {
@@ -50,9 +45,18 @@ type RabbitConfig struct {
 	Password string
 	Host     string
 	Port     int
+
+	ReplyMaxTime  time.Duration
+	ReplyRoutines int
 }
 
 func NewRabbitQueue(cfg *RabbitConfig) *RabbitQueue {
+	if cfg.ReplyMaxTime == 0 {
+		cfg.ReplyMaxTime = time.Second * 60
+	}
+	if cfg.ReplyRoutines < 1 {
+		cfg.ReplyRoutines = 10
+	}
 	return &RabbitQueue{
 		cfg: cfg,
 		log: log.Sublogger("rabbit-queue", map[string]string{
@@ -70,14 +74,21 @@ func (q *RabbitQueue) replyCleanRoutine() {
 	// never going to arrive
 
 	// our standard "time out" message; we can marshal it only once
-	rawData := []byte("timeout waiting for reply")
-	msgData, err := injectTraceData(context.Background(), []byte("timeout waiting for reply"))
+	apiErr := &structs.Error{Message: "timeout waiting for reply", Code: structs.ErrorCode_TIMEOUT}
+	errData, err := apiErr.MarshalJSON()
 	if err != nil {
-		q.log.Warn().Err(err).Msg("failed to inject trace data")
-		msgData = rawData
+		q.log.Warn().Err(err).Msg("failed to marshal static error data, API error responses may be confused")
+		errData = []byte("timeout")
 	}
+
+	msgData, err := injectTraceData(context.Background(), errData)
+	if err != nil {
+		q.log.Warn().Err(err).Msg("failed to inject trace data, API error responses may be confused")
+		msgData = errData
+	}
+
 	for {
-		time.Sleep(60 * time.Second)
+		time.Sleep(q.cfg.ReplyMaxTime / 5)
 
 		q.log.Debug().Msg("cleaning up old reply channels")
 		q.replyLock.Lock()
@@ -85,10 +96,10 @@ func (q *RabbitQueue) replyCleanRoutine() {
 		for id, sub := range q.replyChans {
 			q.replyLock.Unlock()
 
-			if time.Since(sub.created) > q.replyMaxTime {
+			if time.Since(sub.created) > q.cfg.ReplyMaxTime {
 				q.log.Debug().Str("id", id).Msg("cleaning up old reply channel")
 
-				sub.out <- &rabbitMessage{context: context.Background(), data: rawData, msg: amqp.Delivery{Body: msgData}}
+				sub.out <- &rabbitMessage{context: context.Background(), data: errData, msg: amqp.Delivery{Body: msgData}}
 
 				q.replyLock.Lock()
 				delete(q.replyChans, id)
@@ -112,10 +123,16 @@ func (q *RabbitQueue) replyRoutine() {
 			q.replyLock.Unlock()
 			continue
 		}
+		// unlock to send incase no one is listening / delays on the other end
 		q.replyLock.Unlock()
 
-		// unlock to send incase no one is listening / delays on the other end
-		ch.out <- &rabbitMessage{msg: msg}
+		rab, err := NewRabbitMessage(msg)
+		if err != nil {
+			log.Error().Str("MessageId", msg.MessageId).Err(err).Msg("failed to create rabbit message")
+			continue
+		}
+		q.log.Debug().Err(err).Str("MessageId", msg.MessageId).Msg("received reply, forwarding message to caller")
+		ch.out <- rab
 
 		q.replyLock.Lock()
 		delete(q.replyChans, msg.CorrelationId)
@@ -139,10 +156,12 @@ func (q *RabbitQueue) Close() {
 
 func (q *RabbitQueue) channel(prefetch int) (*amqp.Connection, *amqp.Channel, error) {
 	q.log.Info().Str("username", q.cfg.Username).Str("host", q.cfg.Host).Int("port", q.cfg.Port).Int("prefetch", prefetch).Msg("connecting to rabbitmq")
-	for i := 0; i < mqConnAttempts; i++ {
-		if i > 0 {
-			q.log.Debug().Int("attempt", i).Msg("backing off connceting to rabbitmq")
+	i := 0
+	for {
+		i += 1
+		if i > 1 {
 			time.Sleep(time.Duration(2*i*i) * time.Second)
+			q.log.Debug().Int("attempt", i).Msg("retrying connection to rabbitmq")
 		}
 
 		url := fmt.Sprintf("amqp://%s:%s@%s:%d/", q.cfg.Username, q.cfg.Password, q.cfg.Host, q.cfg.Port)
@@ -169,7 +188,6 @@ func (q *RabbitQueue) channel(prefetch int) (*amqp.Connection, *amqp.Channel, er
 
 		return conn, ch, nil
 	}
-	return nil, nil, fmt.Errorf("failed to connect to rabbitmq")
 }
 
 // connectApi connects to the RabbitMQ API queue
@@ -227,7 +245,7 @@ func (q *RabbitQueue) connectApi() error {
 	q.replies = replies
 
 	// kick off routines to reply to api responses
-	for i := 0; i < mqReplyRoutines; i++ {
+	for i := 0; i < q.cfg.ReplyRoutines; i++ {
 		go q.replyRoutine()
 	}
 	go q.replyCleanRoutine()
@@ -351,6 +369,7 @@ func (q *RabbitQueue) PublishChange(ctx context.Context, ch *structs.Change) err
 		return err
 	}
 
+	q.log.Debug().Str("subject", subject).Msg("publishing change")
 	return q.streamCh.PublishWithContext(ctx,
 		mqStream, // exchange
 		subject,  // routing key
@@ -418,8 +437,9 @@ func (q *RabbitQueue) SubscribeChange(ch *structs.Change, queueName string) (Sub
 		return nil, err
 	}
 
+	q.log.Debug().Str("subject", subject).Str("queue", queueName).Msg("subscribing to change")
 	return newRabbitChannelSubscription(
-		fmt.Sprintf("rabbit-sub-%s", queueName),
+		fmt.Sprintf("rabbit.%s.%s", subject, queueName),
 		nil,
 		messages,
 		conn,
@@ -433,8 +453,12 @@ func injectTraceData(ctx context.Context, data []byte) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	td = append(td, []byte("|")...)
-	return append(td, data...), nil
+
+	buf := bytes.NewBuffer(td)
+	buf.Write([]byte("|"))
+	buf.Write(data)
+
+	return buf.Bytes(), nil
 }
 
 // extractTraceData extracts trace data from the given data
@@ -444,10 +468,10 @@ func extractTraceData(data []byte) (context.Context, []byte, error) {
 	if err != nil {
 		return nil, nil, err
 	}
-	if len(parts) > 1 {
+	if len(parts) == 2 {
 		return ctx, parts[1], nil
 	}
-	return ctx, []byte{}, nil
+	return ctx, nil, fmt.Errorf("no data found")
 }
 
 // makeRabbitSubject converts a Change into a RabbitMQ subject.
@@ -462,6 +486,9 @@ func makeRabbitSubject(ch *structs.Change) (string, error) {
 	key, ok := structs.Metakey_name[int32(ch.Key)]
 	if !ok {
 		return "", fmt.Errorf("invalid key %d", ch.Key)
+	}
+	if ch.Key == structs.Metakey_KeyNone {
+		key = "*"
 	}
 	area := ch.Area
 	if area == "" {
