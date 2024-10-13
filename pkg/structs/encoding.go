@@ -7,6 +7,18 @@ import (
     "buf.build/go/protoyaml"
 )
 
+func (x *Affiliation) Kind() string {
+    return "Affiliation"
+}
+
+func (x *Affiliation) New() *Affiliation {
+    return &Affiliation{}
+}
+
+func (x *Affiliation) NewSlice() []*Affiliation {
+    return []*Affiliation{}
+}
+
 func (x *Affiliation) MarshalYAML() ([]byte, error) {
     return protoyaml.Marshal(x)
 }
@@ -21,6 +33,18 @@ func (x *Affiliation) MarshalJSON() ([]byte, error) {
 
 func (x *Affiliation) UnmarshalJSON(data []byte) error {
     return protojson.Unmarshal(data, x)
+}
+
+func (x *Faction) Kind() string {
+    return "Faction"
+}
+
+func (x *Faction) New() *Faction {
+    return &Faction{}
+}
+
+func (x *Faction) NewSlice() []*Faction {
+    return []*Faction{}
 }
 
 func (x *Faction) MarshalYAML() ([]byte, error) {
@@ -39,6 +63,18 @@ func (x *Faction) UnmarshalJSON(data []byte) error {
     return protojson.Unmarshal(data, x)
 }
 
+func (x *FactionStatus) Kind() string {
+    return "FactionStatus"
+}
+
+func (x *FactionStatus) New() *FactionStatus {
+    return &FactionStatus{}
+}
+
+func (x *FactionStatus) NewSlice() []*FactionStatus {
+    return []*FactionStatus{}
+}
+
 func (x *FactionStatus) MarshalYAML() ([]byte, error) {
     return protoyaml.Marshal(x)
 }
@@ -55,6 +91,18 @@ func (x *FactionStatus) UnmarshalJSON(data []byte) error {
     return protojson.Unmarshal(data, x)
 }
 
+func (x *GetFactionsRequest) Kind() string {
+    return "GetFactionsRequest"
+}
+
+func (x *GetFactionsRequest) New() *GetFactionsRequest {
+    return &GetFactionsRequest{}
+}
+
+func (x *GetFactionsRequest) NewSlice() []*GetFactionsRequest {
+    return []*GetFactionsRequest{}
+}
+
 func (x *GetFactionsRequest) MarshalYAML() ([]byte, error) {
     return protoyaml.Marshal(x)
 }
@@ -69,6 +117,18 @@ func (x *GetFactionsRequest) MarshalJSON() ([]byte, error) {
 
 func (x *GetFactionsRequest) UnmarshalJSON(data []byte) error {
     return protojson.Unmarshal(data, x)
+}
+
+func (x *GetFactionsResponse) Kind() string {
+    return "GetFactionsResponse"
+}
+
+func (x *GetFactionsResponse) New() *GetFactionsResponse {
+    return &GetFactionsResponse{}
+}
+
+func (x *GetFactionsResponse) NewSlice() []*GetFactionsResponse {
+    return []*GetFactionsResponse{}
 }
 
 func (x *GetFactionsResponse) MarshalYAML() ([]byte, error) {
@@ -91,6 +151,18 @@ func (x *GetFactionsResponse) SetError(err *Error) {
     x.Error = err
 }
 
+func (x *SetFactionsRequest) Kind() string {
+    return "SetFactionsRequest"
+}
+
+func (x *SetFactionsRequest) New() *SetFactionsRequest {
+    return &SetFactionsRequest{}
+}
+
+func (x *SetFactionsRequest) NewSlice() []*SetFactionsRequest {
+    return []*SetFactionsRequest{}
+}
+
 func (x *SetFactionsRequest) MarshalYAML() ([]byte, error) {
     return protoyaml.Marshal(x)
 }
@@ -105,6 +177,18 @@ func (x *SetFactionsRequest) MarshalJSON() ([]byte, error) {
 
 func (x *SetFactionsRequest) UnmarshalJSON(data []byte) error {
     return protojson.Unmarshal(data, x)
+}
+
+func (x *SetFactionsResponse) Kind() string {
+    return "SetFactionsResponse"
+}
+
+func (x *SetFactionsResponse) New() *SetFactionsResponse {
+    return &SetFactionsResponse{}
+}
+
+func (x *SetFactionsResponse) NewSlice() []*SetFactionsResponse {
+    return []*SetFactionsResponse{}
 }
 
 func (x *SetFactionsResponse) MarshalYAML() ([]byte, error) {
@@ -127,6 +211,18 @@ func (x *SetFactionsResponse) SetError(err *Error) {
     x.Error = err
 }
 
+func (x *DeleteFactionRequest) Kind() string {
+    return "DeleteFactionRequest"
+}
+
+func (x *DeleteFactionRequest) New() *DeleteFactionRequest {
+    return &DeleteFactionRequest{}
+}
+
+func (x *DeleteFactionRequest) NewSlice() []*DeleteFactionRequest {
+    return []*DeleteFactionRequest{}
+}
+
 func (x *DeleteFactionRequest) MarshalYAML() ([]byte, error) {
     return protoyaml.Marshal(x)
 }
@@ -141,6 +237,18 @@ func (x *DeleteFactionRequest) MarshalJSON() ([]byte, error) {
 
 func (x *DeleteFactionRequest) UnmarshalJSON(data []byte) error {
     return protojson.Unmarshal(data, x)
+}
+
+func (x *DeleteFactionResponse) Kind() string {
+    return "DeleteFactionResponse"
+}
+
+func (x *DeleteFactionResponse) New() *DeleteFactionResponse {
+    return &DeleteFactionResponse{}
+}
+
+func (x *DeleteFactionResponse) NewSlice() []*DeleteFactionResponse {
+    return []*DeleteFactionResponse{}
 }
 
 func (x *DeleteFactionResponse) MarshalYAML() ([]byte, error) {
@@ -163,6 +271,18 @@ func (x *DeleteFactionResponse) SetError(err *Error) {
     x.Error = err
 }
 
+func (x *ListFactionsRequest) Kind() string {
+    return "ListFactionsRequest"
+}
+
+func (x *ListFactionsRequest) New() *ListFactionsRequest {
+    return &ListFactionsRequest{}
+}
+
+func (x *ListFactionsRequest) NewSlice() []*ListFactionsRequest {
+    return []*ListFactionsRequest{}
+}
+
 func (x *ListFactionsRequest) MarshalYAML() ([]byte, error) {
     return protoyaml.Marshal(x)
 }
@@ -177,6 +297,18 @@ func (x *ListFactionsRequest) MarshalJSON() ([]byte, error) {
 
 func (x *ListFactionsRequest) UnmarshalJSON(data []byte) error {
     return protojson.Unmarshal(data, x)
+}
+
+func (x *ListFactionsResponse) Kind() string {
+    return "ListFactionsResponse"
+}
+
+func (x *ListFactionsResponse) New() *ListFactionsResponse {
+    return &ListFactionsResponse{}
+}
+
+func (x *ListFactionsResponse) NewSlice() []*ListFactionsResponse {
+    return []*ListFactionsResponse{}
 }
 
 func (x *ListFactionsResponse) MarshalYAML() ([]byte, error) {
@@ -199,6 +331,18 @@ func (x *ListFactionsResponse) SetError(err *Error) {
     x.Error = err
 }
 
+func (x *Relationship) Kind() string {
+    return "Relationship"
+}
+
+func (x *Relationship) New() *Relationship {
+    return &Relationship{}
+}
+
+func (x *Relationship) NewSlice() []*Relationship {
+    return []*Relationship{}
+}
+
 func (x *Relationship) MarshalYAML() ([]byte, error) {
     return protoyaml.Marshal(x)
 }
@@ -213,6 +357,18 @@ func (x *Relationship) MarshalJSON() ([]byte, error) {
 
 func (x *Relationship) UnmarshalJSON(data []byte) error {
     return protojson.Unmarshal(data, x)
+}
+
+func (x *WorldStatus) Kind() string {
+    return "WorldStatus"
+}
+
+func (x *WorldStatus) New() *WorldStatus {
+    return &WorldStatus{}
+}
+
+func (x *WorldStatus) NewSlice() []*WorldStatus {
+    return []*WorldStatus{}
 }
 
 func (x *WorldStatus) MarshalYAML() ([]byte, error) {
@@ -231,6 +387,18 @@ func (x *WorldStatus) UnmarshalJSON(data []byte) error {
     return protojson.Unmarshal(data, x)
 }
 
+func (x *World) Kind() string {
+    return "World"
+}
+
+func (x *World) New() *World {
+    return &World{}
+}
+
+func (x *World) NewSlice() []*World {
+    return []*World{}
+}
+
 func (x *World) MarshalYAML() ([]byte, error) {
     return protoyaml.Marshal(x)
 }
@@ -247,6 +415,18 @@ func (x *World) UnmarshalJSON(data []byte) error {
     return protojson.Unmarshal(data, x)
 }
 
+func (x *GetWorldsRequest) Kind() string {
+    return "GetWorldsRequest"
+}
+
+func (x *GetWorldsRequest) New() *GetWorldsRequest {
+    return &GetWorldsRequest{}
+}
+
+func (x *GetWorldsRequest) NewSlice() []*GetWorldsRequest {
+    return []*GetWorldsRequest{}
+}
+
 func (x *GetWorldsRequest) MarshalYAML() ([]byte, error) {
     return protoyaml.Marshal(x)
 }
@@ -261,6 +441,18 @@ func (x *GetWorldsRequest) MarshalJSON() ([]byte, error) {
 
 func (x *GetWorldsRequest) UnmarshalJSON(data []byte) error {
     return protojson.Unmarshal(data, x)
+}
+
+func (x *GetWorldsResponse) Kind() string {
+    return "GetWorldsResponse"
+}
+
+func (x *GetWorldsResponse) New() *GetWorldsResponse {
+    return &GetWorldsResponse{}
+}
+
+func (x *GetWorldsResponse) NewSlice() []*GetWorldsResponse {
+    return []*GetWorldsResponse{}
 }
 
 func (x *GetWorldsResponse) MarshalYAML() ([]byte, error) {
@@ -283,6 +475,18 @@ func (x *GetWorldsResponse) SetError(err *Error) {
     x.Error = err
 }
 
+func (x *SetWorldRequest) Kind() string {
+    return "SetWorldRequest"
+}
+
+func (x *SetWorldRequest) New() *SetWorldRequest {
+    return &SetWorldRequest{}
+}
+
+func (x *SetWorldRequest) NewSlice() []*SetWorldRequest {
+    return []*SetWorldRequest{}
+}
+
 func (x *SetWorldRequest) MarshalYAML() ([]byte, error) {
     return protoyaml.Marshal(x)
 }
@@ -297,6 +501,18 @@ func (x *SetWorldRequest) MarshalJSON() ([]byte, error) {
 
 func (x *SetWorldRequest) UnmarshalJSON(data []byte) error {
     return protojson.Unmarshal(data, x)
+}
+
+func (x *SetWorldResponse) Kind() string {
+    return "SetWorldResponse"
+}
+
+func (x *SetWorldResponse) New() *SetWorldResponse {
+    return &SetWorldResponse{}
+}
+
+func (x *SetWorldResponse) NewSlice() []*SetWorldResponse {
+    return []*SetWorldResponse{}
 }
 
 func (x *SetWorldResponse) MarshalYAML() ([]byte, error) {
@@ -319,6 +535,18 @@ func (x *SetWorldResponse) SetError(err *Error) {
     x.Error = err
 }
 
+func (x *DeleteWorldRequest) Kind() string {
+    return "DeleteWorldRequest"
+}
+
+func (x *DeleteWorldRequest) New() *DeleteWorldRequest {
+    return &DeleteWorldRequest{}
+}
+
+func (x *DeleteWorldRequest) NewSlice() []*DeleteWorldRequest {
+    return []*DeleteWorldRequest{}
+}
+
 func (x *DeleteWorldRequest) MarshalYAML() ([]byte, error) {
     return protoyaml.Marshal(x)
 }
@@ -333,6 +561,18 @@ func (x *DeleteWorldRequest) MarshalJSON() ([]byte, error) {
 
 func (x *DeleteWorldRequest) UnmarshalJSON(data []byte) error {
     return protojson.Unmarshal(data, x)
+}
+
+func (x *DeleteWorldResponse) Kind() string {
+    return "DeleteWorldResponse"
+}
+
+func (x *DeleteWorldResponse) New() *DeleteWorldResponse {
+    return &DeleteWorldResponse{}
+}
+
+func (x *DeleteWorldResponse) NewSlice() []*DeleteWorldResponse {
+    return []*DeleteWorldResponse{}
 }
 
 func (x *DeleteWorldResponse) MarshalYAML() ([]byte, error) {
@@ -355,6 +595,18 @@ func (x *DeleteWorldResponse) SetError(err *Error) {
     x.Error = err
 }
 
+func (x *ListWorldsRequest) Kind() string {
+    return "ListWorldsRequest"
+}
+
+func (x *ListWorldsRequest) New() *ListWorldsRequest {
+    return &ListWorldsRequest{}
+}
+
+func (x *ListWorldsRequest) NewSlice() []*ListWorldsRequest {
+    return []*ListWorldsRequest{}
+}
+
 func (x *ListWorldsRequest) MarshalYAML() ([]byte, error) {
     return protoyaml.Marshal(x)
 }
@@ -369,6 +621,18 @@ func (x *ListWorldsRequest) MarshalJSON() ([]byte, error) {
 
 func (x *ListWorldsRequest) UnmarshalJSON(data []byte) error {
     return protojson.Unmarshal(data, x)
+}
+
+func (x *ListWorldsResponse) Kind() string {
+    return "ListWorldsResponse"
+}
+
+func (x *ListWorldsResponse) New() *ListWorldsResponse {
+    return &ListWorldsResponse{}
+}
+
+func (x *ListWorldsResponse) NewSlice() []*ListWorldsResponse {
+    return []*ListWorldsResponse{}
 }
 
 func (x *ListWorldsResponse) MarshalYAML() ([]byte, error) {
@@ -391,6 +655,18 @@ func (x *ListWorldsResponse) SetError(err *Error) {
     x.Error = err
 }
 
+func (x *Error) Kind() string {
+    return "Error"
+}
+
+func (x *Error) New() *Error {
+    return &Error{}
+}
+
+func (x *Error) NewSlice() []*Error {
+    return []*Error{}
+}
+
 func (x *Error) MarshalYAML() ([]byte, error) {
     return protoyaml.Marshal(x)
 }
@@ -405,6 +681,18 @@ func (x *Error) MarshalJSON() ([]byte, error) {
 
 func (x *Error) UnmarshalJSON(data []byte) error {
     return protojson.Unmarshal(data, x)
+}
+
+func (x *Metaref) Kind() string {
+    return "Metaref"
+}
+
+func (x *Metaref) New() *Metaref {
+    return &Metaref{}
+}
+
+func (x *Metaref) NewSlice() []*Metaref {
+    return []*Metaref{}
 }
 
 func (x *Metaref) MarshalYAML() ([]byte, error) {
@@ -423,6 +711,18 @@ func (x *Metaref) UnmarshalJSON(data []byte) error {
     return protojson.Unmarshal(data, x)
 }
 
+func (x *Memory) Kind() string {
+    return "Memory"
+}
+
+func (x *Memory) New() *Memory {
+    return &Memory{}
+}
+
+func (x *Memory) NewSlice() []*Memory {
+    return []*Memory{}
+}
+
 func (x *Memory) MarshalYAML() ([]byte, error) {
     return protoyaml.Marshal(x)
 }
@@ -437,6 +737,18 @@ func (x *Memory) MarshalJSON() ([]byte, error) {
 
 func (x *Memory) UnmarshalJSON(data []byte) error {
     return protojson.Unmarshal(data, x)
+}
+
+func (x *Change) Kind() string {
+    return "Change"
+}
+
+func (x *Change) New() *Change {
+    return &Change{}
+}
+
+func (x *Change) NewSlice() []*Change {
+    return []*Change{}
 }
 
 func (x *Change) MarshalYAML() ([]byte, error) {
@@ -455,6 +767,18 @@ func (x *Change) UnmarshalJSON(data []byte) error {
     return protojson.Unmarshal(data, x)
 }
 
+func (x *OnChangeRequest) Kind() string {
+    return "OnChangeRequest"
+}
+
+func (x *OnChangeRequest) New() *OnChangeRequest {
+    return &OnChangeRequest{}
+}
+
+func (x *OnChangeRequest) NewSlice() []*OnChangeRequest {
+    return []*OnChangeRequest{}
+}
+
 func (x *OnChangeRequest) MarshalYAML() ([]byte, error) {
     return protoyaml.Marshal(x)
 }
@@ -469,6 +793,18 @@ func (x *OnChangeRequest) MarshalJSON() ([]byte, error) {
 
 func (x *OnChangeRequest) UnmarshalJSON(data []byte) error {
     return protojson.Unmarshal(data, x)
+}
+
+func (x *OnChangeResponse) Kind() string {
+    return "OnChangeResponse"
+}
+
+func (x *OnChangeResponse) New() *OnChangeResponse {
+    return &OnChangeResponse{}
+}
+
+func (x *OnChangeResponse) NewSlice() []*OnChangeResponse {
+    return []*OnChangeResponse{}
 }
 
 func (x *OnChangeResponse) MarshalYAML() ([]byte, error) {
@@ -491,6 +827,18 @@ func (x *OnChangeResponse) SetError(err *Error) {
     x.Error = err
 }
 
+func (x *ActorStatus) Kind() string {
+    return "ActorStatus"
+}
+
+func (x *ActorStatus) New() *ActorStatus {
+    return &ActorStatus{}
+}
+
+func (x *ActorStatus) NewSlice() []*ActorStatus {
+    return []*ActorStatus{}
+}
+
 func (x *ActorStatus) MarshalYAML() ([]byte, error) {
     return protoyaml.Marshal(x)
 }
@@ -505,6 +853,18 @@ func (x *ActorStatus) MarshalJSON() ([]byte, error) {
 
 func (x *ActorStatus) UnmarshalJSON(data []byte) error {
     return protojson.Unmarshal(data, x)
+}
+
+func (x *Actor) Kind() string {
+    return "Actor"
+}
+
+func (x *Actor) New() *Actor {
+    return &Actor{}
+}
+
+func (x *Actor) NewSlice() []*Actor {
+    return []*Actor{}
 }
 
 func (x *Actor) MarshalYAML() ([]byte, error) {
@@ -523,6 +883,18 @@ func (x *Actor) UnmarshalJSON(data []byte) error {
     return protojson.Unmarshal(data, x)
 }
 
+func (x *GetActorsRequest) Kind() string {
+    return "GetActorsRequest"
+}
+
+func (x *GetActorsRequest) New() *GetActorsRequest {
+    return &GetActorsRequest{}
+}
+
+func (x *GetActorsRequest) NewSlice() []*GetActorsRequest {
+    return []*GetActorsRequest{}
+}
+
 func (x *GetActorsRequest) MarshalYAML() ([]byte, error) {
     return protoyaml.Marshal(x)
 }
@@ -537,6 +909,18 @@ func (x *GetActorsRequest) MarshalJSON() ([]byte, error) {
 
 func (x *GetActorsRequest) UnmarshalJSON(data []byte) error {
     return protojson.Unmarshal(data, x)
+}
+
+func (x *GetActorsResponse) Kind() string {
+    return "GetActorsResponse"
+}
+
+func (x *GetActorsResponse) New() *GetActorsResponse {
+    return &GetActorsResponse{}
+}
+
+func (x *GetActorsResponse) NewSlice() []*GetActorsResponse {
+    return []*GetActorsResponse{}
 }
 
 func (x *GetActorsResponse) MarshalYAML() ([]byte, error) {
@@ -559,6 +943,18 @@ func (x *GetActorsResponse) SetError(err *Error) {
     x.Error = err
 }
 
+func (x *SetActorsRequest) Kind() string {
+    return "SetActorsRequest"
+}
+
+func (x *SetActorsRequest) New() *SetActorsRequest {
+    return &SetActorsRequest{}
+}
+
+func (x *SetActorsRequest) NewSlice() []*SetActorsRequest {
+    return []*SetActorsRequest{}
+}
+
 func (x *SetActorsRequest) MarshalYAML() ([]byte, error) {
     return protoyaml.Marshal(x)
 }
@@ -573,6 +969,18 @@ func (x *SetActorsRequest) MarshalJSON() ([]byte, error) {
 
 func (x *SetActorsRequest) UnmarshalJSON(data []byte) error {
     return protojson.Unmarshal(data, x)
+}
+
+func (x *SetActorsResponse) Kind() string {
+    return "SetActorsResponse"
+}
+
+func (x *SetActorsResponse) New() *SetActorsResponse {
+    return &SetActorsResponse{}
+}
+
+func (x *SetActorsResponse) NewSlice() []*SetActorsResponse {
+    return []*SetActorsResponse{}
 }
 
 func (x *SetActorsResponse) MarshalYAML() ([]byte, error) {
@@ -595,6 +1003,18 @@ func (x *SetActorsResponse) SetError(err *Error) {
     x.Error = err
 }
 
+func (x *DeleteActorRequest) Kind() string {
+    return "DeleteActorRequest"
+}
+
+func (x *DeleteActorRequest) New() *DeleteActorRequest {
+    return &DeleteActorRequest{}
+}
+
+func (x *DeleteActorRequest) NewSlice() []*DeleteActorRequest {
+    return []*DeleteActorRequest{}
+}
+
 func (x *DeleteActorRequest) MarshalYAML() ([]byte, error) {
     return protoyaml.Marshal(x)
 }
@@ -609,6 +1029,18 @@ func (x *DeleteActorRequest) MarshalJSON() ([]byte, error) {
 
 func (x *DeleteActorRequest) UnmarshalJSON(data []byte) error {
     return protojson.Unmarshal(data, x)
+}
+
+func (x *DeleteActorResponse) Kind() string {
+    return "DeleteActorResponse"
+}
+
+func (x *DeleteActorResponse) New() *DeleteActorResponse {
+    return &DeleteActorResponse{}
+}
+
+func (x *DeleteActorResponse) NewSlice() []*DeleteActorResponse {
+    return []*DeleteActorResponse{}
 }
 
 func (x *DeleteActorResponse) MarshalYAML() ([]byte, error) {
@@ -631,6 +1063,18 @@ func (x *DeleteActorResponse) SetError(err *Error) {
     x.Error = err
 }
 
+func (x *ListActorsRequest) Kind() string {
+    return "ListActorsRequest"
+}
+
+func (x *ListActorsRequest) New() *ListActorsRequest {
+    return &ListActorsRequest{}
+}
+
+func (x *ListActorsRequest) NewSlice() []*ListActorsRequest {
+    return []*ListActorsRequest{}
+}
+
 func (x *ListActorsRequest) MarshalYAML() ([]byte, error) {
     return protoyaml.Marshal(x)
 }
@@ -645,6 +1089,18 @@ func (x *ListActorsRequest) MarshalJSON() ([]byte, error) {
 
 func (x *ListActorsRequest) UnmarshalJSON(data []byte) error {
     return protojson.Unmarshal(data, x)
+}
+
+func (x *ListActorsResponse) Kind() string {
+    return "ListActorsResponse"
+}
+
+func (x *ListActorsResponse) New() *ListActorsResponse {
+    return &ListActorsResponse{}
+}
+
+func (x *ListActorsResponse) NewSlice() []*ListActorsResponse {
+    return []*ListActorsResponse{}
 }
 
 func (x *ListActorsResponse) MarshalYAML() ([]byte, error) {

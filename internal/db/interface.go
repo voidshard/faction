@@ -12,18 +12,10 @@ type Database interface {
 	SetWorld(c context.Context, etag string, in *structs.World) (string, error)
 	DeleteWorld(c context.Context, id string) error
 
-	// Meta(c context.Context, world, key string) (string, int, error)
-	//	SetMeta(c context.Context, world, key string, version int) error
-
-	Actors(c context.Context, world string, id []string) ([]*structs.Actor, error)
-	ListActors(c context.Context, world string, labels map[string]string, limit, offset int64) ([]*structs.Actor, error)
-	SetActors(c context.Context, world, etag string, in []*structs.Actor) (*Result, error)
-	DeleteActor(c context.Context, world string, id string) error
-
-	Factions(c context.Context, world string, id []string) ([]*structs.Faction, error)
-	ListFactions(c context.Context, world string, labels map[string]string, limit, offset int64) ([]*structs.Faction, error)
-	SetFactions(c context.Context, world, etag string, in []*structs.Faction) (*Result, error)
-	DeleteFaction(c context.Context, world string, id string) error
+	Get(c context.Context, world, kind string, id []string, out interface{}) error
+	List(c context.Context, world, kind string, labels map[string]string, limit, offset int64, out interface{}) error
+	Set(c context.Context, world, etag string, in []structs.Object) (*Result, error)
+	Delete(c context.Context, world, kind string, id string) error
 
 	Close()
 }

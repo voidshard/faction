@@ -7,10 +7,10 @@ import (
 	"time"
 
 	"github.com/voidshard/faction/internal/db"
-	"github.com/voidshard/faction/internal/log"
 	"github.com/voidshard/faction/internal/queue"
 	"github.com/voidshard/faction/internal/search"
 	"github.com/voidshard/faction/internal/service/api"
+	"github.com/voidshard/faction/pkg/util/log"
 )
 
 const (
@@ -98,12 +98,11 @@ func (c *optsAPI) Execute(args []string) error {
 	}
 
 	// setup the API server
-	srv := api.NewService(&api.Config{
+	server := api.NewServer(&api.Config{
 		Routines:      c.Routines,
 		MaxMessageAge: c.MaxMessageAge,
 		FlushSearch:   c.FlushSearch,
 	}, database, qu, sb)
-	server := api.NewServer(srv)
 
 	// basic signal handling
 	sigs := make(chan os.Signal, 1)

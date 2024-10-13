@@ -13,15 +13,13 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 
-	"github.com/voidshard/faction/internal/log"
-	"github.com/voidshard/faction/internal/uuid"
 	"github.com/voidshard/faction/pkg/structs"
+	"github.com/voidshard/faction/pkg/util/log"
+	"github.com/voidshard/faction/pkg/util/uuid"
 )
 
 const (
-	colWorlds   = "worlds"
-	colActors   = "actors"
-	colFactions = "factions"
+	colWorlds = "world"
 )
 
 type Mongo struct {
@@ -158,62 +156,27 @@ func (m *Mongo) DeleteWorld(c context.Context, id string) error {
 	return m.deleteObject(c, colWorlds, id)
 }
 
-func (m *Mongo) Actors(c context.Context, world string, id []string) ([]*structs.Actor, error) {
-	var results []*structs.Actor
-	return results, m.objects(c, world_collection(world, colActors), bson.M{"_id": bson.M{"$in": id}}, &results)
+func (m *Mongo) Get(c context.Context, world, kind string, id []string, out interface{}) error {
+	return m.objects(c, world_collection(world, kind), bson.M{"_id": bson.M{"$in": id}}, out)
 }
 
-func (m *Mongo) ListActors(c context.Context, world string, labels map[string]string, limit, offset int64) ([]*structs.Actor, error) {
-	var results []*structs.Actor
-	return results, m.listObjects(c, world_collection(world, colActors), labels, limit, offset, &results)
+func (m *Mongo) List(c context.Context, world, kind string, labels map[string]string, limit, offset int64, out interface{}) error {
+	return m.listObjects(c, world_collection(world, kind), labels, limit, offset, out)
 }
 
-func (m *Mongo) SetActors(c context.Context, world, etag string, in []*structs.Actor) (*Result, error) {
-	found, err := m.Worlds(c, []string{world})
-	if err != nil {
-		return nil, err
-	}
-	if len(found) == 0 {
-		return nil, fmt.Errorf("%w world not found: %s", ErrNotFound, world)
+func (m *Mongo) Delete(c context.Context, world, kind string, id string) error {
+	return m.deleteObject(c, world_collection(world, kind), id)
+}
+
+func (m *Mongo) Set(c context.Context, world, etag string, in []structs.Object) (*Result, error) {
+	if len(in) == 0 {
+		return nil, fmt.Errorf("%w no objects to set", ErrInvalid)
 	}
 	models, err := prepareSet(world, etag, in)
 	if err != nil {
 		return nil, err
 	}
-	return m.setObjects(c, world_collection(world, colActors), models)
-}
-
-func (m *Mongo) DeleteActor(c context.Context, world, id string) error {
-	return m.deleteObject(c, world_collection(world, colActors), id)
-}
-
-func (m *Mongo) Factions(c context.Context, world string, id []string) ([]*structs.Faction, error) {
-	var results []*structs.Faction
-	return results, m.objects(c, world_collection(world, colFactions), bson.M{"_id": bson.M{"$in": id}}, &results)
-}
-
-func (m *Mongo) ListFactions(c context.Context, world string, labels map[string]string, limit, offset int64) ([]*structs.Faction, error) {
-	var results []*structs.Faction
-	return results, m.listObjects(c, world_collection(world, colFactions), labels, limit, offset, &results)
-}
-
-func (m *Mongo) SetFactions(c context.Context, world, etag string, in []*structs.Faction) (*Result, error) {
-	found, err := m.Worlds(c, []string{world})
-	if err != nil {
-		return nil, err
-	}
-	if len(found) == 0 {
-		return nil, fmt.Errorf("%w world not found: %s", ErrNotFound, world)
-	}
-	models, err := prepareSet(world, etag, in)
-	if err != nil {
-		return nil, err
-	}
-	return m.setObjects(c, world_collection(world, colFactions), models)
-}
-
-func (m *Mongo) DeleteFaction(c context.Context, world, id string) error {
-	return m.deleteObject(c, world_collection(world, colFactions), id)
+	return m.setObjects(c, world_collection(world, in[0].Kind()), models)
 }
 
 func (m *Mongo) Close() {

@@ -5,7 +5,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/voidshard/faction/internal/log"
+	"github.com/voidshard/faction/pkg/util/log"
 	"github.com/voidshard/faction/pkg/structs"
 
 	"github.com/opensearch-project/opensearch-go/v4/opensearchapi"

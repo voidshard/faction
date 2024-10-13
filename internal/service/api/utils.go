@@ -2,11 +2,13 @@ package api
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"sort"
 
-	math "github.com/voidshard/faction/internal/math/integer"
+	"github.com/voidshard/faction/internal/db"
 	"github.com/voidshard/faction/pkg/structs"
+	math "github.com/voidshard/faction/pkg/util/math/integer"
 )
 
 const (
@@ -108,25 +110,7 @@ func clamp[I int | int64 | int32 | uint32](value *I, min I, max I, ifNull I) I {
 }
 
 func encodeRequest(in marshalable) ([]byte, error) {
-	method := ""
-	switch in.(type) {
-	case *structs.SetWorldRequest:
-		method = "SetWorld"
-	case *structs.DeleteWorldRequest:
-		method = "DeleteWorld"
-	case *structs.SetActorsRequest:
-		method = "SetActors"
-	case *structs.DeleteActorRequest:
-		method = "DeleteActor"
-	case *structs.SetFactionsRequest:
-		method = "SetFactions"
-	case *structs.DeleteFactionRequest:
-		method = "DeleteFaction"
-	}
-	if method == "" {
-		return nil, fmt.Errorf("unknown method")
-	}
-
+	method := in.Kind()
 	data, err := in.MarshalJSON()
 	if err != nil {
 		return nil, err
@@ -141,4 +125,23 @@ func decodeRequest(data []byte) (string, []byte, error) {
 		return "", nil, fmt.Errorf("invalid request")
 	}
 	return string(sections[0]), sections[1], nil
+}
+
+func toError(err error, code ...structs.ErrorCode) *structs.Error {
+	if err == nil {
+		return nil
+	}
+	if len(code) > 0 {
+		return &structs.Error{Code: code[0], Message: err.Error()}
+	}
+	if errors.Is(err, db.ErrNotFound) {
+		return &structs.Error{Code: structs.ErrorCode_NOT_FOUND, Message: err.Error()}
+	}
+	if errors.Is(err, db.ErrEtagMismatch) {
+		return &structs.Error{Code: structs.ErrorCode_CONFLICT, Message: err.Error()}
+	}
+	if errors.Is(err, db.ErrInvalid) {
+		return &structs.Error{Code: structs.ErrorCode_INVALID_OBJECT, Message: err.Error()}
+	}
+	return &structs.Error{Code: structs.ErrorCode_INTERNAL, Message: err.Error()}
 }

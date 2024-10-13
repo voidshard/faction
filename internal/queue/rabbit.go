@@ -8,8 +8,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/voidshard/faction/internal/log"
-	"github.com/voidshard/faction/internal/uuid"
+	"github.com/voidshard/faction/pkg/util/log"
+	"github.com/voidshard/faction/pkg/util/uuid"
 	"github.com/voidshard/faction/pkg/structs"
 
 	amqp "github.com/rabbitmq/amqp091-go"

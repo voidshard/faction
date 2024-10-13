@@ -16,6 +16,7 @@ type Marshalable interface {
 type Object interface {
 	Marshalable
 
+	Kind() string
 	GetId() string
 	SetId(v string)
 	GetEtag() string
@@ -26,6 +27,8 @@ type Object interface {
 }
 
 type Interactive interface {
+	Object
+
 	SetAllies(v []*Relationship)
 	SetEnemies(v []*Relationship)
 	GetAllies() []*Relationship

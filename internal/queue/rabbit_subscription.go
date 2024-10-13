@@ -3,7 +3,7 @@ package queue
 import (
 	"time"
 
-	"github.com/voidshard/faction/internal/log"
+	"github.com/voidshard/faction/pkg/util/log"
 
 	amqp "github.com/rabbitmq/amqp091-go"
 )

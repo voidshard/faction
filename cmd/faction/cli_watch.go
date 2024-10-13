@@ -6,7 +6,7 @@ import (
 	"io"
 	"strings"
 
-	"github.com/voidshard/faction/internal/log"
+	"github.com/voidshard/faction/pkg/util/log"
 	"github.com/voidshard/faction/pkg/structs"
 )
 

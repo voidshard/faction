@@ -7,9 +7,6 @@ import (
 )
 
 type Search interface {
-	IndexActors(context.Context, string, []*structs.Actor, bool) error
-	IndexFactions(context.Context, string, []*structs.Faction, bool) error
-
-	DeleteActor(context.Context, string, string) error
-	DeleteFaction(context.Context, string, string) error
+	Index(ctx context.Context, world string, in []structs.Object, flush bool) error
+	Delete(ctx context.Context, world, kind, id string) error
 }

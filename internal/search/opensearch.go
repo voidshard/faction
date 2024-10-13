@@ -14,8 +14,8 @@ import (
 	"github.com/opensearch-project/opensearch-go/v4"
 	"github.com/opensearch-project/opensearch-go/v4/opensearchapi"
 
-	"github.com/voidshard/faction/internal/log"
 	"github.com/voidshard/faction/pkg/structs"
+	"github.com/voidshard/faction/pkg/util/log"
 )
 
 type Opensearch struct {
@@ -74,28 +74,15 @@ func world_index(world, name string) string {
 	return fmt.Sprintf("%s_%s", name, strings.ToLower(base36.EncodeBytes([]byte(world))))
 }
 
-func (s *Opensearch) IndexActors(ctx context.Context, world string, actors []*structs.Actor, flush bool) error {
-	objects := make([]structs.Object, len(actors))
-	for i, a := range actors {
-		objects[i] = a
+func (s *Opensearch) Index(ctx context.Context, world string, in []structs.Object, flush bool) error {
+	if in == nil || len(in) == 0 {
+		return nil
 	}
-	return s.index(ctx, world_index(world, "actors"), objects, flush)
+	return s.index(ctx, world_index(world, in[0].Kind()), in, flush)
 }
 
-func (s *Opensearch) DeleteActor(ctx context.Context, world string, id string) error {
-	return s.delete(ctx, world_index(world, "actors"), id)
-}
-
-func (s *Opensearch) IndexFactions(ctx context.Context, world string, factions []*structs.Faction, flush bool) error {
-	objects := make([]structs.Object, len(factions))
-	for i, f := range factions {
-		objects[i] = f
-	}
-	return s.index(ctx, world_index(world, "factions"), objects, flush)
-}
-
-func (s *Opensearch) DeleteFaction(ctx context.Context, world string, id string) error {
-	return s.delete(ctx, world_index(world, "factions"), id)
+func (s *Opensearch) Delete(ctx context.Context, world, kind, id string) error {
+	return s.delete(ctx, world_index(world, kind), id)
 }
 
 func (s *Opensearch) ping() {

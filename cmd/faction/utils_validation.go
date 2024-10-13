@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/voidshard/faction/internal/log"
-	"github.com/voidshard/faction/internal/uuid"
+	"github.com/voidshard/faction/pkg/util/log"
+	"github.com/voidshard/faction/pkg/util/uuid"
 	"github.com/voidshard/faction/pkg/structs"
 )
 

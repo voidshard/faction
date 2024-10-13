@@ -36,7 +36,23 @@ EOF
 for file in $(find ./proto -type f -name "*.proto"); do
     grep "message" $file | awk '{print $2}' | while read -r line; do
         lower=$(echo $line | tr '[:upper:]' '[:lower:]')
+        cat >> pkg/structs/register_kinds.go <<EOF
+Register.Add($line{})
+EOF
+
         cat >> pkg/structs/encoding.go <<EOF
+
+func (x *$line) Kind() string {
+    return "$line"
+}
+
+func (x *$line) New() *$line {
+    return &$line{}
+}
+
+func (x *$line) NewSlice() []*$line {
+    return []*$line{}
+}
 
 func (x *$line) MarshalYAML() ([]byte, error) {
     return protoyaml.Marshal(x)
