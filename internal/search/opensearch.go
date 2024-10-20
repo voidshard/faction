@@ -71,7 +71,7 @@ func NewOpensearch(cfg *OpensearchConfig) (*Opensearch, error) {
 // ie. actors_world1, actors_world2 etc.
 // This forcibly divides data from different worlds and simplifies data management.
 func world_index(world, name string) string {
-	return fmt.Sprintf("%s_%s", name, strings.ToLower(base36.EncodeBytes([]byte(world))))
+	return strings.ToLower(fmt.Sprintf("%s_%s", name, base36.EncodeBytes([]byte(world))))
 }
 
 func (s *Opensearch) Index(ctx context.Context, world string, in []structs.Object, flush bool) error {
@@ -123,13 +123,13 @@ func (s *Opensearch) connect() {
 
 		api, err = opensearchapi.NewClient(opensearchapi.Config{Client: cfg})
 		if err != nil {
-			s.l.Error().Err(err).Msg("failed to create opensearch api client")
+			s.l.Warn().Err(err).Msg("failed to create opensearch api client")
 			continue
 		}
 
 		_, err = api.Ping(context.Background(), &opensearchapi.PingReq{})
 		if err != nil {
-			s.l.Error().Err(err).Msg("failed to ping opensearch")
+			s.l.Warn().Err(err).Msg("failed to ping opensearch")
 			continue
 		}
 

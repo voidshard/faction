@@ -17,7 +17,16 @@ var (
 	kindActor      = (&structs.Actor{}).Kind()
 )
 
-type worker struct {
+// API Worker handles write operations to the API, reading from a queue and acknowledging
+// a request as done only when all writes have been completed or cannot occur.
+//
+// Ie. an update to the database with a given etag followed by submitting a message to a queue
+// can be retried if the database resource either hasn't been updated (etag is the same as
+// what our request is updating) or the database update would do nothing (etag is what our
+// request would set). In this way we can retry an operation across the database,
+// queue and / or search, up until something else has done an update (in which case our etag will
+// mismatch and we know the operation cannot be done).
+type apiWorker struct {
 	kill chan bool
 	sub  queue.Subscription
 
@@ -25,8 +34,8 @@ type worker struct {
 	log log.Logger
 }
 
-func newWorker(name string, svr *Server, sub queue.Subscription) *worker {
-	return &worker{
+func newApiWorker(name string, svr *Server, sub queue.Subscription) *apiWorker {
+	return &apiWorker{
 		kill: make(chan bool),
 		sub:  sub,
 		svr:  svr,
@@ -34,7 +43,7 @@ func newWorker(name string, svr *Server, sub queue.Subscription) *worker {
 	}
 }
 
-func (w *worker) Kill() {
+func (w *apiWorker) Kill() {
 	w.log.Debug().Msg("Killing worker")
 	defer w.log.Debug().Msg("Worker killed")
 
@@ -44,7 +53,7 @@ func (w *worker) Kill() {
 	close(w.kill)
 }
 
-func (w *worker) Run() {
+func (w *apiWorker) Run() {
 	w.log.Debug().Msg("Worker started")
 	defer w.log.Debug().Msg("Worker stopped")
 

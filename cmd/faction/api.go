@@ -51,7 +51,7 @@ type optsAPI struct {
 
 	// MaxMessageAge is the maximum age of a message before it is considered stale
 	MaxMessageAge time.Duration `env:"MAX_MESSAGE_AGE" long:"max-message-age" description:"Maximum age of a message before it is considered stale" default:"10m"`
-	Routines      int           `env:"ROUTINES" long:"routines" description:"Number of routines to use for processing" default:"5"`
+	WorkersAPI    int           `env:"WORKERS_API" long:"workers-api" description:"Number of routines to use for processing api write requests" default:"5"`
 	Port          int           `env:"PORT" long:"port" description:"Port to listen on" default:"8080"`
 	FlushSearch   bool          `env:"FLUSH_SEARCH" long:"flush-search" description:"Wait for writes to searchbase before returning API writes (slow)"`
 }
@@ -99,7 +99,7 @@ func (c *optsAPI) Execute(args []string) error {
 
 	// setup the API server
 	server := api.NewServer(&api.Config{
-		Routines:      c.Routines,
+		WorkersAPI:    c.WorkersAPI,
 		MaxMessageAge: c.MaxMessageAge,
 		FlushSearch:   c.FlushSearch,
 	}, database, qu, sb)

@@ -272,5 +272,5 @@ func prepareSet[o structs.Object](world, newEtag string, in []o) ([]mongo.WriteM
 // ie. actors_world1, actors_world2 etc.
 // This forcibly divides data from different worlds and simplifies data management.
 func world_collection(world, name string) string {
-	return fmt.Sprintf("%s_%s", name, strings.ToLower(base36.EncodeBytes([]byte(world))))
+	return strings.ToLower(fmt.Sprintf("%s_%s", name, base36.EncodeBytes([]byte(world))))
 }

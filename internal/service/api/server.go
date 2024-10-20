@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"net"
-	"time"
 
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"google.golang.org/grpc"
@@ -18,22 +17,8 @@ import (
 	"github.com/voidshard/faction/pkg/util/log"
 )
 
-const (
-	defaultRoutines = 5
-	defaultMaxAge   = 60 * time.Minute // implies something is horribly wrong
-	defaultLimit    = 100
-	defaultMaxLimit = 1000
-)
-
-type Config struct {
-	// Routines is the number of worker routines to use for processing API requests.
-	Routines int
-
-	// MaxMessageAge is the maximum age of a message before it is considered stale.
-	MaxMessageAge time.Duration
-
-	// FlushSearch waits for writes to searchbase before returning API writes (slow).
-	FlushSearch bool
+type backgroundWorker interface {
+	Kill()
 }
 
 type Server struct {
@@ -48,10 +33,15 @@ type Server struct {
 	srv *grpc.Server
 	log log.Logger
 
-	workers []*worker
+	workers []backgroundWorker
 }
 
 func NewServer(cfg *Config, db db.Database, qu queue.Queue, sb search.Search) *Server {
+	if cfg == nil {
+		cfg = &Config{}
+	}
+	cfg.setDefaults()
+
 	srv := grpc.NewServer(grpc.StatsHandler(otelgrpc.NewServerHandler()))
 	me := &Server{
 		cfg: cfg,
@@ -354,10 +344,19 @@ func (s *Server) startWorkers() error {
 		s.stopWorkers()
 	}
 
-	s.workers = make([]*worker, s.cfg.Routines)
+	s.workers = make([]backgroundWorker, s.cfg.WorkersAPI+1)
 
-	s.log.Debug().Int("Routines", s.cfg.Routines).Msg("Starting workers")
-	for i := 0; i < s.cfg.Routines; i++ {
+	s.log.Debug().Msg("Starting tick manager")
+	tc, err := newTickManager("tick-manager", s.db, s.qu)
+	if err != nil {
+		log.Error().Err(err).Msg("Failed to create tick cache")
+		return err
+	}
+	go tc.Run()
+	s.workers[0] = tc
+
+	s.log.Debug().Int("Routines", s.cfg.WorkersAPI).Msg("Starting api workers")
+	for i := 1; i < s.cfg.WorkersAPI; i++ {
 		log.Debug().Int("Worker", i).Msg("Starting worker")
 
 		qsub, err := s.qu.SubscribeApiReq()
@@ -367,10 +366,10 @@ func (s *Server) startWorkers() error {
 			return err
 		}
 
-		wrk := newWorker(fmt.Sprintf("api-worker-%d", i), s, qsub)
+		wrk := newApiWorker(fmt.Sprintf("api-worker-%d", i), s, qsub)
 		s.workers[i] = wrk
 
-		go func(w *worker) {
+		go func(w *apiWorker) {
 			w.Run()
 		}(wrk)
 	}
@@ -383,7 +382,9 @@ func (s *Server) stopWorkers() {
 		return
 	}
 	for _, w := range s.workers {
-		w.Kill()
+		if w != nil {
+			w.Kill()
+		}
 	}
 	s.workers = nil
 }

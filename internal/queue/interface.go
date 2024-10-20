@@ -21,6 +21,17 @@ type Queue interface {
 	// queueName can be given to configure a durable queue. If not given
 	// a temporary non-durable queue will be used.
 	SubscribeChange(ch *structs.Change, queueName string) (Subscription, error)
+
+	// DeferChange defers a change to be processed at given tick.
+	DeferChange(c context.Context, ch *structs.Change, tick int64) error
+
+	// SubscribeDeferredChanges subscribes to changes that have been deferred to a given tick.
+	SubscribeDeferredChanges(world string, tick int64) (Subscription, error)
+
+	// DeleteDeferredChangeQueue deletes the queue for deferred changes at given tick.
+	// This should be called when the queue is no longer needed to tidy old queues we're
+	// never going to use again.
+	DeleteDeferredChangeQueue(world string, tick int64) error
 }
 
 type Closer interface {

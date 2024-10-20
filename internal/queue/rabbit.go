@@ -8,9 +8,9 @@ import (
 	"sync"
 	"time"
 
+	"github.com/voidshard/faction/pkg/structs"
 	"github.com/voidshard/faction/pkg/util/log"
 	"github.com/voidshard/faction/pkg/util/uuid"
-	"github.com/voidshard/faction/pkg/structs"
 
 	amqp "github.com/rabbitmq/amqp091-go"
 )
@@ -18,6 +18,7 @@ import (
 const (
 	mqApiReq = "api-request"
 	mqStream = "change-stream"
+	mqDefer  = "defer-change"
 )
 
 type RabbitQueue struct {
@@ -27,9 +28,11 @@ type RabbitQueue struct {
 	cfg *RabbitConfig
 	log log.Logger
 
+	// change stream
 	streamConn *amqp.Connection
 	streamCh   *amqp.Channel
 
+	// api request stream
 	apiConn  *amqp.Connection
 	apiCh    *amqp.Channel
 	apiQueue *amqp.Queue
@@ -37,7 +40,11 @@ type RabbitQueue struct {
 	replyQueue *amqp.Queue
 	replyLock  sync.Mutex
 	replyChans map[string]*rabbitSubscription
-	replies    <-chan amqp.Delivery
+	replies    <-chan amqp.Delivery // apiCh replies
+
+	// defer change stream
+	defConn *amqp.Connection
+	defCh   *amqp.Channel
 }
 
 type RabbitConfig struct {
@@ -48,6 +55,10 @@ type RabbitConfig struct {
 
 	ReplyMaxTime  time.Duration
 	ReplyRoutines int
+
+	PrefetchAPIRequests  int // default 1
+	PrefetchChangeStream int // default 20
+	PrefetchDeferStream  int // default 500
 }
 
 func NewRabbitQueue(cfg *RabbitConfig) *RabbitQueue {
@@ -56,6 +67,15 @@ func NewRabbitQueue(cfg *RabbitConfig) *RabbitQueue {
 	}
 	if cfg.ReplyRoutines < 1 {
 		cfg.ReplyRoutines = 10
+	}
+	if cfg.PrefetchAPIRequests < 1 {
+		cfg.PrefetchAPIRequests = 1
+	}
+	if cfg.PrefetchChangeStream < 1 {
+		cfg.PrefetchChangeStream = 20
+	}
+	if cfg.PrefetchDeferStream < 1 {
+		cfg.PrefetchDeferStream = 500
 	}
 	return &RabbitQueue{
 		cfg: cfg,
@@ -116,6 +136,23 @@ func (q *RabbitQueue) replyCleanRoutine() {
 // When we send an API request (PublishApiReq) we store the subscription channel in a map (correlation ID -> channel).
 // We listen for all replies to API requests here & forward them to the correct channel.
 func (q *RabbitQueue) replyRoutine() {
+	// https://www.rabbitmq.com/tutorials/tutorial-six-go
+	//
+	// Each client that calls PublishApiReq will create a new queue & consumer for itself (ie. reply to worker-14)
+	// and subscribe to the generic work queue (ie. mqApiReq). This way a client can receive replies to its own
+	// work requests. However we still need to work out exactly which caller on the client side to forward the message on to.
+	//
+	// That is, if you call PublishApiReq(do-foo id: x) you want a reply to that request not the answer to
+	// PublishApiReq(do-bar id: y) that this client may have sent (in another routine or something).
+	//
+	// So;
+	// [specific function call in client A] -> [generic work queue] -> [reply queue for client A] -> [specific function call in client A]
+	//
+	// Here we're getting replies to API requests on *this* clients reply queue, and working out which
+	// specific subscription to pass the message to, based on the correlation ID.
+	//
+	// Note that when we publish and API Request message we set a correlation ID, since this is returned to us
+	// in the reply, we know who to send the reply to.
 	for msg := range q.replies {
 		q.replyLock.Lock()
 		ch, ok := q.replyChans[msg.CorrelationId]
@@ -190,6 +227,21 @@ func (q *RabbitQueue) channel(prefetch int) (*amqp.Connection, *amqp.Channel, er
 	}
 }
 
+func (q *RabbitQueue) connectDefer() error {
+	if q.defConn != nil {
+		return nil
+	}
+
+	defConn, defCh, err := q.channel(q.cfg.PrefetchAPIRequests)
+	if err != nil {
+		return err
+	}
+	q.defConn = defConn
+	q.defCh = defCh
+
+	return nil
+}
+
 // connectApi connects to the RabbitMQ API queue
 func (q *RabbitQueue) connectApi() error {
 	if q.apiConn != nil {
@@ -197,7 +249,7 @@ func (q *RabbitQueue) connectApi() error {
 	}
 
 	// setup api request queue: where we send requests to
-	apiConn, apiChan, err := q.channel(1) // prefetch 1 message
+	apiConn, apiChan, err := q.channel(q.cfg.PrefetchAPIRequests)
 	if err != nil {
 		return err
 	}
@@ -271,7 +323,7 @@ func (q *RabbitQueue) connectStream() error {
 
 // newChangeStream creates a new change stream exchange & returns the connection & channel.
 func (q *RabbitQueue) newChangeStream() (*amqp.Connection, *amqp.Channel, error) {
-	conn, ch, err := q.channel(20) // prefetch 20 messages
+	conn, ch, err := q.channel(q.cfg.PrefetchChangeStream)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -294,25 +346,25 @@ func (q *RabbitQueue) PublishApiReq(ctx context.Context, data []byte) (Subscript
 
 	// prepare reply channel & message ID
 	mid := uuid.NewID().String()
-	correlationID := uuid.NewID().String()
+	cid := uuid.NewID().String()
 
 	// log & trace
-	defer q.log.Debug().Str("MessageId", mid).Int("data-size", len(data)).Msg("published api request")
+	defer q.log.Debug().Str("MessageId", mid).Str("CorrelationId", cid).Int("data-size", len(data)).Msg("published api request")
+
+	pan := log.NewSpan(ctx, "rabbit.PublishApiReq", map[string]interface{}{"mid": mid, "id": cid})
+	defer pan.End()
 
 	msgdata, err := injectTraceData(ctx, data)
 	if err != nil {
 		return nil, err
 	}
 
-	pan := log.NewSpan(ctx, "rabbit.PublishApiReq", map[string]interface{}{"mid": mid, "id": correlationID})
-	defer pan.End()
-
 	// store reply channel for our reply thread
 	q.replyLock.Lock()
 	defer q.replyLock.Unlock()
 
 	sub := newRabbitTopicSubscription()
-	q.replyChans[correlationID] = sub
+	q.replyChans[cid] = sub
 
 	return sub, q.apiCh.PublishWithContext(ctx,
 		"",              // exchange
@@ -325,7 +377,7 @@ func (q *RabbitQueue) PublishApiReq(ctx context.Context, data []byte) (Subscript
 			ContentType:   "text/plain",
 			Body:          msgdata,
 			MessageId:     mid,
-			CorrelationId: correlationID,
+			CorrelationId: cid,
 			ReplyTo:       q.replyQueue.Name,
 		},
 	)
@@ -352,7 +404,128 @@ func (q *RabbitQueue) SubscribeApiReq() (Subscription, error) {
 	return newRabbitChannelSubscription(fmt.Sprintf("rabbit-sub-%s", q.apiQueue.Name), q.apiCh, messages), nil
 }
 
-// PublishChange publishes a change to the change stream.
+func (q *RabbitQueue) DeferChange(ctx context.Context, ch *structs.Change, tick int64) error {
+	// Each world + tick has it's own queue that is durable, this way we can write changes into a
+	// queue and leave reading them (ie. subscribing to the queue) until desired (ie. the desired tick
+	// in the given world).
+	//
+	// Subscribers to 'deferred changes' are internal processes in the API server that watch each world
+	// and it's current tick & subscribe ticks up to the current tick. For any message on any of the queues
+	// subscribed to, they call "PublishChange" to send the change to the change stream exactly as if it
+	// "happend now".
+	//
+	// Ie. someone says "queue change X in world W for time n + 2" - we write that change to the queue
+	// "defer.W.n+2" and when we get to time n + 2 we read the queue and publish the change to the change stream.
+
+	defQueue, err := makeDeferredQueueName(ch.World, tick)
+	if err != nil {
+		return err
+	}
+
+	err = q.connectDefer()
+	if err != nil {
+		return err
+	}
+
+	queue, err := q.defCh.QueueDeclare(
+		defQueue, // name
+		true,     // durable
+		false,    // delete when unused
+		false,    // exclusive
+		false,    // no-wait
+		nil,      // arguments
+	)
+	if err != nil {
+		return err
+	}
+
+	mid := uuid.NewID().String()
+	cid := uuid.NewID().String()
+
+	pan := log.NewSpan(ctx, "rabbit.DeferChange", map[string]interface{}{"mid": mid, "id": cid})
+	defer pan.End()
+
+	// marshal & inject trace data
+	data, err := ch.MarshalJSON()
+	if err != nil {
+		return err
+	}
+	msgdata, err := injectTraceData(ctx, data)
+	if err != nil {
+		return err
+	}
+
+	q.log.Debug().Str("Queue", defQueue).Str("MessageId", mid).Str("CorrelationId", cid).Msg("deferring change")
+	return q.defCh.PublishWithContext(ctx,
+		"",         // exchange
+		queue.Name, // routing key
+		false,      // mandatory
+		false,      // immediate
+		amqp.Publishing{
+			Timestamp:     time.Now(),
+			MessageId:     mid,
+			CorrelationId: cid,
+			ContentType:   "text/plain",
+			Body:          msgdata,
+		})
+}
+
+func (q *RabbitQueue) DeleteDeferredChangeQueue(world string, tick int64) error {
+	defQueue, err := makeDeferredQueueName(world, tick)
+	if err != nil {
+		return err
+	}
+
+	err = q.connectDefer()
+	if err != nil {
+		return err
+	}
+
+	// https://github.com/rabbitmq/amqp091-go/blob/main/channel.go#L1030
+	q.log.Info().Str("Queue", defQueue).Msg("deleting deferred change queue")
+	_, err = q.defCh.QueueDelete(defQueue, false, false, true)
+	return err
+}
+
+func (q *RabbitQueue) SubscribeDeferredChanges(world string, tick int64) (Subscription, error) {
+	defQueue, err := makeDeferredQueueName(world, tick)
+	if err != nil {
+		return nil, err
+	}
+
+	err = q.connectDefer()
+	if err != nil {
+		return nil, err
+	}
+
+	queue, err := q.defCh.QueueDeclare(
+		defQueue, // name
+		true,     // durable
+		false,    // delete when unused
+		false,    // exclusive
+		false,    // no-wait
+		nil,      // arguments
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	messages, err := q.defCh.Consume(
+		queue.Name, // queue
+		"",         // consumer
+		false,      // auto-ack
+		false,      // exclusive
+		false,      // no-local
+		false,      // no-wait
+		nil,        // args
+	)
+	if err != nil {
+		return nil, err
+	}
+	return newRabbitChannelSubscription(fmt.Sprintf("rabbit-defer-%s", defQueue), q.defCh, messages), nil
+}
+
+// publishChange publishes a change to the change stream.
 func (q *RabbitQueue) PublishChange(ctx context.Context, ch *structs.Change) error {
 	subject, err := makeRabbitSubject(ch)
 	if err != nil {
@@ -364,12 +537,18 @@ func (q *RabbitQueue) PublishChange(ctx context.Context, ch *structs.Change) err
 		return err
 	}
 
+	mid := uuid.NewID().String()
+	cid := uuid.NewID().String()
+
+	pan := log.NewSpan(ctx, "rabbit.PublishChange", map[string]interface{}{"mid": mid, "id": cid})
+	defer pan.End()
+
 	msgdata, err := injectTraceData(ctx, []byte{})
 	if err != nil {
 		return err
 	}
 
-	q.log.Debug().Str("subject", subject).Msg("publishing change")
+	q.log.Debug().Str("subject", subject).Str("MessageId", mid).Str("CorrelationId", cid).Msg("publishing change")
 	return q.streamCh.PublishWithContext(ctx,
 		mqStream, // exchange
 		subject,  // routing key
@@ -377,8 +556,8 @@ func (q *RabbitQueue) PublishChange(ctx context.Context, ch *structs.Change) err
 		false,    // immediate
 		amqp.Publishing{
 			Timestamp:     time.Now(),
-			MessageId:     uuid.NewID().String(),
-			CorrelationId: uuid.NewID().String(),
+			MessageId:     mid,
+			CorrelationId: cid,
 			ContentType:   "text/plain",
 			Body:          msgdata,
 		},
@@ -474,14 +653,22 @@ func extractTraceData(data []byte) (context.Context, []byte, error) {
 	return ctx, nil, fmt.Errorf("no data found")
 }
 
+func makeDeferredQueueName(world string, tick int64) (string, error) {
+	if world == "" {
+		return "", fmt.Errorf("world must be specified")
+	}
+	return fmt.Sprintf("defer.%s.%d", world, tick), nil
+}
+
 // makeRabbitSubject converts a Change into a RabbitMQ subject.
 func makeRabbitSubject(ch *structs.Change) (string, error) {
 	// "World" cannot be wildcarded.
 	// https://www.rabbitmq.com/tutorials/tutorial-five-go
 	// * (star) can substitute for exactly one word.
 	// # (hash) can substitute for zero or more words.
-	if ch.World == "" {
-		return "", fmt.Errorf("world must be specified")
+	world := ch.World
+	if world == "" {
+		world = "*"
 	}
 	key, ok := structs.Metakey_name[int32(ch.Key)]
 	if !ok {
@@ -498,7 +685,7 @@ func makeRabbitSubject(ch *structs.Change) (string, error) {
 	if id == "" {
 		id = "*"
 	}
-	return fmt.Sprintf("%s.%s.%s.%s", ch.World, area, key, id), nil
+	return fmt.Sprintf("%s.%s.%s.%s", world, area, key, id), nil
 }
 
 // fromRabbitSubject converts a RabbitMQ subject into a Change.
