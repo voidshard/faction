@@ -36,6 +36,7 @@ type Server struct {
 
 	tickManager *tickManager
 	workers     []backgroundWorker
+	apiSub      queue.Subscription
 }
 
 func NewServer(cfg *Config, db db.Database, qu queue.Queue, sb search.Search) (*Server, error) {
@@ -145,7 +146,9 @@ func (s *Server) SetWorld(ctx context.Context, in *structs.SetWorldRequest) (*st
 	obj := &structs.SetWorldResponse{}
 	s.genericAsyncRequestResponse(ctx, in, obj)
 	if obj.Error != nil {
-		pan.Err(fmt.Errorf(obj.Error.Message))
+		err := fmt.Errorf(obj.Error.Message)
+		s.log.Error().Err(err).Msg("Failed to set world")
+		pan.Err(err)
 	}
 	return obj, nil
 }
@@ -193,7 +196,7 @@ func (s *Server) Factions(ctx context.Context, in *structs.GetFactionsRequest) (
 	}
 
 	data := []*structs.Faction{}
-	err := s.db.Get(ctx, in.World, "Faction", in.Ids, &data)
+	err = s.db.Get(ctx, in.World, "Faction", in.Ids, &data)
 	return &structs.GetFactionsResponse{Data: data, Error: toError(err)}, nil
 }
 
@@ -203,7 +206,9 @@ func (s *Server) SetFactions(ctx context.Context, in *structs.SetFactionsRequest
 	obj := &structs.SetFactionsResponse{}
 	s.genericAsyncRequestResponse(ctx, in, obj)
 	if obj.Error != nil {
-		pan.Err(fmt.Errorf(obj.Error.Message))
+		err := fmt.Errorf(obj.Error.Message)
+		s.log.Error().Err(err).Msg("Failed to set factions")
+		pan.Err(err)
 	}
 	return obj, nil
 }
@@ -247,7 +252,7 @@ func (s *Server) Actors(ctx context.Context, in *structs.GetActorsRequest) (*str
 	}
 
 	data := []*structs.Actor{}
-	err := s.db.Get(ctx, in.World, "Actor", in.Ids, &data)
+	err = s.db.Get(ctx, in.World, "Actor", in.Ids, &data)
 	if err != nil {
 		s.log.Error().Err(err).Msg("Failed to get actors")
 		pan.Err(err)
@@ -306,7 +311,7 @@ func (s *Server) OnChange(in *structs.OnChangeRequest, stream structs.API_OnChan
 	err := validOnChange(in)
 	if err != nil {
 		s.log.Warn().Err(err).Msg("Invalid request")
-		strean.Send(&structs.OnChangeResponse{Error: toError(err)})
+		stream.Send(&structs.OnChangeResponse{Error: toError(err)})
 		return err
 	}
 
@@ -331,7 +336,7 @@ func (s *Server) OnChange(in *structs.OnChangeRequest, stream structs.API_OnChan
 
 	// start the change listener
 	l.Debug().Msg("Starting change listener")
-	defer l.Debug().Msg("Stopped change listener")
+
 	sub, err := s.qu.SubscribeChange(in.Data, in.Queue)
 	if err != nil {
 		l.Error().Err(err).Msg("Failed to start change listener")
@@ -355,7 +360,7 @@ func (s *Server) OnChange(in *structs.OnChangeRequest, stream structs.API_OnChan
 				return nil
 			}
 			l.Debug().Str("MessageId", msg.Id()).Msg("Received change")
-			pan := log.NewSpan(msg.Context(), "api.OnChange", attrs)
+			pan := log.NewSpan(msg.Context(), "api.OnChange", attrs, map[string]interface{}{"MessageId": msg.Id()})
 
 			change := &structs.Change{}
 			err := change.UnmarshalJSON(msg.Data())
@@ -374,9 +379,8 @@ func (s *Server) OnChange(in *structs.OnChangeRequest, stream structs.API_OnChan
 			err = stream.Send(&structs.OnChangeResponse{Data: change, Ack: ackId, Error: toError(err)})
 			if err != nil {
 				l.Error().Err(err).Msg("Failed to send change")
+				pan.Err(err)
 			}
-
-			pan.Err(err)
 			pan.End()
 		}
 	}
@@ -398,10 +402,6 @@ func (s *Server) AckStream(stream grpc.ClientStreamingServer[structs.AckRequest,
 			}
 			err = s.qu.Ack(ackId)
 			s.log.Debug().Err(err).Str("AckId", ackId).Msg("Received ack from client")
-			if err != nil {
-				// tell the caller something went wrong, this doesn't stop the stream
-				stream.Send(&structs.AckResponse{Error: toError(err)})
-			}
 		}
 	}
 }
@@ -479,8 +479,18 @@ func (s *Server) startWorkers() error {
 	if s.workers != nil {
 		s.stopWorkers()
 	}
+	if s.apiSub != nil {
+		s.apiSub.Close()
+	}
 
 	s.workers = make([]backgroundWorker, s.cfg.WorkersAPI+1)
+
+	qsub, err := s.qu.DequeueApiReq()
+	if err != nil {
+		log.Error().Err(err).Msg("Failed to subscribe to queue")
+		return err
+	}
+	s.apiSub = qsub
 
 	s.log.Debug().Msg("Starting tick manager")
 	tc, err := newTickManager("tick-manager", s.db, s.qu)
@@ -493,18 +503,11 @@ func (s *Server) startWorkers() error {
 	s.tickManager = tc
 
 	s.log.Debug().Int("Routines", s.cfg.WorkersAPI).Msg("Starting api workers")
-	for i := 1; i < s.cfg.WorkersAPI; i++ {
+	for i := 0; i < s.cfg.WorkersAPI; i++ {
 		log.Debug().Int("Worker", i).Msg("Starting worker")
 
-		qsub, err := s.qu.DequeueApiReq()
-		if err != nil {
-			defer s.stopWorkers()
-			log.Error().Err(err).Msg("Failed to subscribe to queue")
-			return err
-		}
-
 		wrk := newApiWorker(fmt.Sprintf("api-worker-%d", i), s, qsub)
-		s.workers[i] = wrk
+		s.workers[i+1] = wrk
 
 		go func(w *apiWorker) {
 			w.Run()
@@ -524,4 +527,8 @@ func (s *Server) stopWorkers() {
 		}
 	}
 	s.workers = nil
+	if s.apiSub != nil {
+		s.apiSub.Close()
+	}
+	s.apiSub = nil
 }

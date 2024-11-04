@@ -49,7 +49,7 @@ func newQueue(qu queue.Queue) (*Queue, error) {
 	}
 
 	// setup & kick off routines
-	me = &Queue{qu: qu, id: id, log: l, ackCache: cache, ackSub: sub}
+	me := &Queue{qu: qu, id: id, log: l, ackCache: cache, ackSub: sub}
 
 	go func() {
 		for msg := range sub.Channel() { // no need to ack (queue to sub is "")

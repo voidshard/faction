@@ -9,7 +9,8 @@ import (
 )
 
 const (
-	validQueueEx = "^[0-9a-zA-Z_]{120}$"
+	// "At least 3 chars; a-z A-Z 0-9 and underscore. No leading or trailing underscores."
+	validQueueEx = "^[0-9a-zA-Z]{1}[0-9a-zA-Z_]{0,118}[0-9a-zA-Z]{1}$"
 )
 
 var (
@@ -36,7 +37,7 @@ func validDeferChange(in *structs.DeferChangeRequest) error {
 	if in == nil {
 		return fmt.Errorf("%w nil", ErrInvalid)
 	}
-	key, ok := structs.Metakey_name[int32(in.Data.Key)]
+	_, ok := structs.Metakey_name[int32(in.Data.Key)]
 	if !ok {
 		return fmt.Errorf("%w key %d", ErrInvalid, in.Data.Key)
 	}
@@ -57,7 +58,7 @@ func validDeferChange(in *structs.DeferChangeRequest) error {
 }
 
 func validOnChange(in *structs.OnChangeRequest) error {
-	key, ok := structs.Metakey_name[int32(in.Data.Key)]
+	_, ok := structs.Metakey_name[int32(in.Data.Key)]
 	if !ok {
 		return fmt.Errorf("%w key %d", ErrInvalid, in.Data.Key)
 	}
@@ -67,7 +68,7 @@ func validOnChange(in *structs.OnChangeRequest) error {
 		return fmt.Errorf("%w area %s", ErrInvalid, in.Data.Area)
 	} else if in.Data.Id != "" && !uuid.IsValidUUID(in.Data.Id) {
 		return fmt.Errorf("%w id %s", ErrInvalid, in.Data.Id)
-	} else if in.Queue != "" && !valudQueueName.MatchString(in.Queue) {
+	} else if in.Queue != "" && !validQueueRe.MatchString(in.Queue) {
 		return fmt.Errorf("%w queue %s should match %s", ErrInvalid, in.Queue, validQueueEx)
 	}
 	return nil

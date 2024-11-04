@@ -48,7 +48,6 @@ func (w *apiWorker) Kill() {
 	defer w.log.Debug().Msg("Worker killed")
 
 	w.kill <- true
-	w.sub.Close()
 
 	close(w.kill)
 }
