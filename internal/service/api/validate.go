@@ -33,6 +33,25 @@ func validIDs(in hasIDs) error {
 	return nil
 }
 
+func validObject(o structs.Object) error {
+	if o == nil {
+		return fmt.Errorf("%w nil", ErrInvalid)
+	}
+	if o.GetId() == "" && o.GetEtag() == "" { // creating
+		// pass
+	} else if uuid.IsValidUUID(o.GetId()) && uuid.IsValidUUID(o.GetEtag()) { // updating
+		// pass
+	} else {
+		return fmt.Errorf("%w id %s etag %s, should be valid UUIDs or empty", ErrInvalid, o.GetId(), o.GetEtag())
+	}
+	// The World ID of a World is it's own ID, so we don't need to set that unless we're updating,
+	// which we've already checked above.
+	if o.Kind() != kindWorld && !uuid.IsValidUUID(o.GetWorld()) {
+		return fmt.Errorf("%w require valid world set %s", ErrInvalid, o.GetWorld())
+	}
+	return nil
+}
+
 func validDeferChange(in *structs.DeferChangeRequest) error {
 	if in == nil {
 		return fmt.Errorf("%w nil", ErrInvalid)

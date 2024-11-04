@@ -143,6 +143,14 @@ func (s *Server) Worlds(ctx context.Context, in *structs.GetWorldsRequest) (*str
 func (s *Server) SetWorld(ctx context.Context, in *structs.SetWorldRequest) (*structs.SetWorldResponse, error) {
 	pan := log.NewSpan(ctx, "api.SetWorld", map[string]interface{}{"id": in.Data.Id})
 	defer pan.End()
+
+	err := validObject(in.Data)
+	if err != nil {
+		s.log.Warn().Err(err).Msg("Invalid request")
+		pan.Err(err)
+		return &structs.SetWorldResponse{Error: toError(err)}, nil
+	}
+
 	obj := &structs.SetWorldResponse{}
 	s.genericAsyncRequestResponse(ctx, in, obj)
 	if obj.Error != nil {
@@ -203,6 +211,16 @@ func (s *Server) Factions(ctx context.Context, in *structs.GetFactionsRequest) (
 func (s *Server) SetFactions(ctx context.Context, in *structs.SetFactionsRequest) (*structs.SetFactionsResponse, error) {
 	pan := log.NewSpan(ctx, "api.SetFactions", map[string]interface{}{"id-count": len(in.Data)})
 	defer pan.End()
+
+	for _, o := range in.Data {
+		err := validObject(o)
+		if err != nil {
+			s.log.Warn().Err(err).Msg("Invalid request")
+			pan.Err(err)
+			return &structs.SetFactionsResponse{Error: toError(err)}, nil
+		}
+	}
+
 	obj := &structs.SetFactionsResponse{}
 	s.genericAsyncRequestResponse(ctx, in, obj)
 	if obj.Error != nil {
@@ -263,6 +281,16 @@ func (s *Server) Actors(ctx context.Context, in *structs.GetActorsRequest) (*str
 func (s *Server) SetActors(ctx context.Context, in *structs.SetActorsRequest) (*structs.SetActorsResponse, error) {
 	pan := log.NewSpan(ctx, "api.SetActor", map[string]interface{}{"id-count": len(in.Data)})
 	defer pan.End()
+
+	for _, o := range in.Data {
+		err := validObject(o)
+		if err != nil {
+			s.log.Warn().Err(err).Msg("Invalid request")
+			pan.Err(err)
+			return &structs.SetActorsResponse{Error: toError(err)}, nil
+		}
+	}
+
 	obj := &structs.SetActorsResponse{}
 	s.genericAsyncRequestResponse(ctx, in, obj)
 	if obj.Error != nil {
