@@ -26,7 +26,7 @@ type optDatabase struct {
 }
 
 type optSearchbase struct {
-	Sb_Address       string        `long:"sb-address" env:"SB_ADDRESS" description:"Search host, accepts comma delimited" default:"http://localhost:9200"`
+	Sb_Address       string        `long:"sb-address" env:"SB_ADDRESS" description:"Search host, accepts comma delimited" default:"https://localhost:9200"`
 	Sb_Username      string        `long:"sb-username" env:"SB_USERNAME" description:"Database user" default:"admin"`
 	Sb_Password      string        `long:"sb-password" env:"SB_PASSWORD" description:"Database password" default:"Opensearch123!"`
 	Sb_FlushInterval time.Duration `long:"sb-flush-interval" env:"SB_FLUSH_INTERVAL" description:"Flush interval for searchbase" default:"5s"`
@@ -52,7 +52,7 @@ type optsAPI struct {
 	// MaxMessageAge is the maximum age of a message before it is considered stale
 	MaxMessageAge time.Duration `env:"MAX_MESSAGE_AGE" long:"max-message-age" description:"Maximum age of a message before it is considered stale" default:"10m"`
 	WorkersAPI    int           `env:"WORKERS_API" long:"workers-api" description:"Number of routines to use for processing api write requests" default:"5"`
-	Port          int           `env:"PORT" long:"port" description:"Port to listen on" default:"8080"`
+	Port          int           `env:"PORT" long:"port" description:"Port to listen on" default:"5000"`
 	FlushSearch   bool          `env:"FLUSH_SEARCH" long:"flush-search" description:"Wait for writes to searchbase before returning API writes (slow)"`
 }
 
@@ -76,13 +76,16 @@ func (c *optsAPI) Execute(args []string) error {
 	}
 
 	// connect to the queue
-	qu := queue.NewRabbitQueue(&queue.RabbitConfig{
+	qu, err := queue.NewRabbitQueue(&queue.RabbitConfig{
 		Host:     c.Q_Host,
 		Port:     c.Q_Port,
 		Username: c.Q_Username,
 		Password: c.Q_Password,
 	})
-	log.Info().Str("host", c.Q_Host).Int("port", c.Q_Port).Str("username", c.Q_Username).Msg("queue connection")
+	log.Info().Err(err).Str("host", c.Q_Host).Int("port", c.Q_Port).Str("username", c.Q_Username).Msg("queue connection")
+	if err != nil {
+		return err
+	}
 
 	// connect to search
 	sb, err := search.NewOpensearch(&search.OpensearchConfig{
@@ -98,11 +101,15 @@ func (c *optsAPI) Execute(args []string) error {
 	}
 
 	// setup the API server
-	server := api.NewServer(&api.Config{
+	server, err := api.NewServer(&api.Config{
 		WorkersAPI:    c.WorkersAPI,
 		MaxMessageAge: c.MaxMessageAge,
 		FlushSearch:   c.FlushSearch,
 	}, database, qu, sb)
+	log.Info().Err(err).Int("port", c.Port).Msg("api server")
+	if err != nil {
+		return err
+	}
 
 	// basic signal handling
 	sigs := make(chan os.Signal, 1)

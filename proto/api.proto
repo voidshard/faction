@@ -44,4 +44,7 @@ service API {
 //    rpc SetJob(SetJobRequest) returns (SetJobResponse);
 
     rpc OnChange(OnChangeRequest) returns (stream OnChangeResponse);
+    rpc AckStream(stream AckRequest) returns (AckResponse);
+
+    rpc DeferChange(DeferChangeRequest) returns (DeferChangeResponse);
 }

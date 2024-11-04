@@ -4,8 +4,9 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/voidshard/faction/pkg/util/log"
+	"github.com/voidshard/faction/pkg/client"
 	"github.com/voidshard/faction/pkg/structs"
+	"github.com/voidshard/faction/pkg/util/log"
 )
 
 type cliCreateCmd struct {
@@ -49,7 +50,7 @@ func (c *cliCreateCmd) Execute(args []string) error {
 		byWorld[v.GetWorld()] = append(byWorld[v.GetWorld()], v)
 	}
 
-	conn, err := newClient(c.Host, c.Port, c.IdleTimeout, c.ConnTimeout)
+	conn, err := client.New(c.Host, c.Port, c.IdleTimeout, c.ConnTimeout)
 	if err != nil {
 		return err
 	}

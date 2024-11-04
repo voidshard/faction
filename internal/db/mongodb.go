@@ -54,9 +54,9 @@ func NewMongo(cfg *MongoConfig) (*Mongo, error) {
 
 	me := &Mongo{
 		opts: opts,
-		log: log.Sublogger("mongodb", map[string]string{
+		log: log.Sublogger("mongodb", map[string]interface{}{
 			"host":     cfg.Host,
-			"port":     fmt.Sprintf("%d", cfg.Port),
+			"port":     cfg.Port,
 			"database": cfg.Database,
 		}),
 		cfg:  cfg,

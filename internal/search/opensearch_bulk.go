@@ -5,8 +5,8 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/voidshard/faction/pkg/util/log"
 	"github.com/voidshard/faction/pkg/structs"
+	"github.com/voidshard/faction/pkg/util/log"
 
 	"github.com/opensearch-project/opensearch-go/v4/opensearchapi"
 	"github.com/opensearch-project/opensearch-go/v4/opensearchutil"
@@ -27,7 +27,7 @@ type indexObject struct {
 }
 
 func newOpensearchBulk(index string, api *opensearchapi.Client, cfg *OpensearchConfig) (*opensearchBulk, error) {
-	l := log.Sublogger("opensearch-bulk", map[string]string{"index": index})
+	l := log.Sublogger("opensearch-bulk", map[string]interface{}{"index": index})
 
 	me := &opensearchBulk{
 		l:     l,

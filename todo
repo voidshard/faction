@@ -1,1 +1,0 @@
-[ ] Worlds in mongo are looked up before inserting other objects, we can probably do something smarter ..

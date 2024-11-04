@@ -6,8 +6,10 @@ import (
 	"io"
 	"strings"
 
-	"github.com/voidshard/faction/pkg/util/log"
+	"github.com/voidshard/faction/pkg/client"
 	"github.com/voidshard/faction/pkg/structs"
+	"github.com/voidshard/faction/pkg/util/log"
+	"google.golang.org/grpc"
 )
 
 type cliWatchCmd struct {
@@ -26,10 +28,9 @@ type cliWatchCmd struct {
 }
 
 func (c *cliWatchCmd) Execute(args []string) error {
-	if c.World == "" {
-		return fmt.Errorf("world is required")
+	if c.World != "" {
+		c.World = toWorldId(c.World)[0]
 	}
-	c.World = toWorldId(c.World)[0]
 
 	key := validKey(c.Object)
 	if key == structs.Metakey_KeyNone && c.Object != "" {
@@ -38,12 +39,12 @@ func (c *cliWatchCmd) Execute(args []string) error {
 		return fmt.Errorf("invalid object type %s", c.Object)
 	}
 
-	client, err := newClient(c.Host, c.Port, c.IdleTimeout, c.ConnTimeout)
+	client, err := client.New(c.Host, c.Port, c.IdleTimeout, c.ConnTimeout)
 	if err != nil {
 		return err
 	}
 
-	l := log.Sublogger("cli.Watch", map[string]string{
+	l := log.Sublogger("cli.Watch", map[string]interface{}{
 		"world":  c.World,
 		"area":   c.Area,
 		"object": c.Object,
@@ -63,6 +64,14 @@ func (c *cliWatchCmd) Execute(args []string) error {
 	})
 	if err != nil {
 		return err
+	}
+
+	var ackstream grpc.ClientStreamingClient[structs.AckRequest, structs.AckResponse]
+	if c.Queue != "" {
+		ackstream, err = client.AckStream(context.Background())
+		if err != nil {
+			return err
+		}
 	}
 
 	for {
@@ -92,5 +101,8 @@ func (c *cliWatchCmd) Execute(args []string) error {
 		}
 
 		fmt.Printf("World: %s | Area: %s | Object: %s | Id: %s\n", resp.Data.World, resp.Data.Area, rkey, resp.Data.Id)
+		if c.Queue != "" {
+			ackstream.Send(&structs.AckRequest{Ack: []string{resp.Ack}})
+		}
 	}
 }

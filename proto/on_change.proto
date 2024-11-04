@@ -18,5 +18,26 @@ message OnChangeRequest {
 
 message OnChangeResponse {
     Change Data = 1;
+    string Ack = 2;
+    optional Error Error = 3;
+}
+
+message DeferChangeRequest {
+    Change Data = 1; // world, key and Id are required
+
+    // one of these is required
+    optional int64 ToTick = 2; // The tick to defer the change to
+    optional int64 ByTick = 3; // The tick to defer the change by, short hand for "ToTick=World.Tick+ByTick"
+}
+
+message DeferChangeResponse {
     optional Error Error = 2;
+}
+
+message AckRequest {
+    repeated string Ack = 1;
+}
+
+message AckResponse {
+    optional Error Error = 1;
 }

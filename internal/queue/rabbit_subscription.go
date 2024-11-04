@@ -3,75 +3,60 @@ package queue
 import (
 	"time"
 
-	"github.com/voidshard/faction/pkg/util/log"
-
 	amqp "github.com/rabbitmq/amqp091-go"
+	"github.com/voidshard/faction/pkg/util/log"
 )
 
 type rabbitSubscription struct {
-	out  chan Message
-	kill chan bool
-
-	closed   bool
-	closeOut bool
-
+	kill    chan bool    // signal to stop the subscription
+	out     chan Message // channel a user will read messages from
 	created time.Time
+	log     log.Logger
 }
 
-func newRabbitTopicSubscription() *rabbitSubscription {
-	return &rabbitSubscription{created: time.Now(), closeOut: true, out: make(chan Message)}
-}
-
-func newRabbitChannelSubscription(logname string, replyChan *amqp.Channel, in <-chan amqp.Delivery, onExit ...Closer) *rabbitSubscription {
-	out := make(chan Message)
-	kill := make(chan bool)
-	go func() {
-		log := log.Sublogger(logname)
-
-		for _, v := range onExit {
-			defer v.Close()
-		}
-		defer close(out)
-
-		for {
-			select {
-			case <-kill:
-				log.Debug().Msg("stopping subscription worker")
-				return
-			case m, ok := <-in:
-				if !ok {
-					continue
-				}
-				log.Debug().Str("subject", m.RoutingKey).Msg("subscription received message")
-
-				rab, err := NewRabbitMessage(m)
-				if err != nil {
-					log.Error().Err(err).Msg("failed to create rabbit message")
-					continue
-				}
-				rab.setReplyChannel(replyChan)
-				out <- rab
-			}
-		}
-	}()
-	return &rabbitSubscription{created: time.Now(), out: out, kill: kill}
-}
-
-func (s *rabbitSubscription) Channel() <-chan Message {
-	return s.out
-}
-
-func (s *rabbitSubscription) Close() {
-	if !s.closed {
-		log.Debug().Msg("closing subscription")
-		if s.closeOut {
-			// since the channel sub variant does this in it's goroutine
-			close(s.out)
-		}
-		if s.kill != nil {
-			s.kill <- true
-			close(s.kill)
-		}
-		s.closed = true
+func newRabbitSubscription(name string, attrs ...map[string]interface{}) *rabbitSubscription {
+	return &rabbitSubscription{
+		out:     make(chan Message),
+		created: time.Now(),
+		log:     log.Sublogger(name, attrs...),
 	}
+}
+
+func (rs *rabbitSubscription) consumeDeliveries(ch *rabbitChannel, deliveries <-chan amqp.Delivery) {
+	rs.kill = make(chan bool)
+	for {
+		select {
+		case <-rs.kill:
+			rs.log.Debug().Str("Channel", ch.id).Msg("Rabbit subscription consuming deliveries killed")
+			return
+		case d, ok := <-deliveries:
+			if !ok {
+				continue
+				//rs.log.Debug().Str("Channel", ch.id).Msg("Rabbit subscription consuming deliveries: delivery channel closed")
+				//rs.Close()
+				//return
+			}
+			msg, err := newRabbitMessage(d)
+			if err != nil {
+				rs.log.Warn().Err(err).Str("Channel", ch.id).Msg("Rabbit subscription failed to create message from delivery")
+				continue
+			}
+			msg.setReplyChannel(ch)
+			rs.out <- msg
+		}
+	}
+}
+
+func (rs *rabbitSubscription) Channel() <-chan Message {
+	return rs.out
+}
+
+func (rs *rabbitSubscription) Close() error {
+	rs.log.Debug().Msg("Rabbit subscription closing")
+	if rs.kill != nil {
+		rs.kill <- true
+		close(rs.kill)
+	}
+	close(rs.out)
+	return nil
 }

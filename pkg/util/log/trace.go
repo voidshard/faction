@@ -1,8 +1,10 @@
 package log
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"os"
 	"strings"
 
@@ -32,6 +34,33 @@ func UnmarshalTrace(data []byte) (context.Context, error) {
 	carrier := propagation.MapCarrier{}
 	err := json.Unmarshal(data, &carrier)
 	return propgator.Extract(context.Background(), carrier), err
+}
+
+// InjectTraceData injects trace data, prepending it to the given data.
+func InjectTraceData(ctx context.Context, data []byte) ([]byte, error) {
+	td, err := MarshalTrace(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	buf := bytes.NewBuffer(td)
+	buf.Write([]byte("|"))
+	buf.Write(data)
+
+	return buf.Bytes(), nil
+}
+
+// ExtractTraceData extracts trace data from the given data
+func ExtractTraceData(data []byte) (context.Context, []byte, error) {
+	parts := bytes.SplitN(data, []byte("|"), 2)
+	ctx, err := UnmarshalTrace(parts[0])
+	if err != nil {
+		return nil, nil, err
+	}
+	if len(parts) == 2 {
+		return ctx, parts[1], nil
+	}
+	return ctx, nil, fmt.Errorf("no data found")
 }
 
 func discoverServiceName() string {

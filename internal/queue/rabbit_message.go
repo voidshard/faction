@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/voidshard/faction/pkg/structs"
 	"github.com/voidshard/faction/pkg/util/log"
 	"github.com/voidshard/faction/pkg/util/uuid"
 
@@ -19,7 +18,7 @@ const (
 
 type rabbitMessage struct {
 	msg     amqp.Delivery
-	channel *amqp.Channel
+	channel *rabbitChannel
 
 	// parsed context
 	context context.Context
@@ -28,15 +27,15 @@ type rabbitMessage struct {
 	data []byte
 }
 
-func NewRabbitMessage(m amqp.Delivery) (*rabbitMessage, error) {
-	parentCtx, msgdata, err := extractTraceData(m.Body)
+func newRabbitMessage(m amqp.Delivery) (*rabbitMessage, error) {
+	parentCtx, msgdata, err := log.ExtractTraceData(m.Body)
 	if err != nil {
 		return nil, err
 	}
 	return &rabbitMessage{context: parentCtx, data: msgdata, msg: m}, nil
 }
 
-func (m *rabbitMessage) setReplyChannel(channel *amqp.Channel) {
+func (m *rabbitMessage) setReplyChannel(channel *rabbitChannel) {
 	m.channel = channel
 }
 
@@ -44,20 +43,20 @@ func (m *rabbitMessage) Reply(ctx context.Context, data []byte) error {
 	if m.channel == nil {
 		return fmt.Errorf("no channel to reply on, only supported on API Request message replies")
 	}
-	msgdata, err := injectTraceData(ctx, data)
+	msgdata, err := log.InjectTraceData(ctx, data)
 	if err != nil {
 		return err
 	}
-	log.Debug().Str("MessageId", m.msg.MessageId).Int("bytes", len(msgdata)).Msg("Injected telemetry, replying to message")
-	return m.channel.PublishWithContext(ctx,
+	log.Debug().Str("ReplyTo", m.msg.ReplyTo).Str("MessageId", m.msg.MessageId).Int("bytes", len(msgdata)).Msg("Injected telemetry, replying to message")
+	return m.channel.Channel().PublishWithContext(ctx,
 		"",            // exchange
 		m.msg.ReplyTo, // routing key
 		false,         // mandatory
 		false,         // immediate
 		amqp.Publishing{
 			MessageId:     uuid.NewID().String(),
-			Timestamp:     time.Now(),
 			CorrelationId: m.msg.CorrelationId,
+			Timestamp:     time.Now(),
 			ContentType:   "text/plain",
 			Body:          msgdata,
 		},
@@ -68,12 +67,12 @@ func (m *rabbitMessage) Id() string {
 	return m.msg.MessageId
 }
 
-func (m *rabbitMessage) Timestamp() time.Time {
-	return m.msg.Timestamp
+func (m *rabbitMessage) CorrelationId() string {
+	return m.msg.CorrelationId
 }
 
-func (m *rabbitMessage) Change() (*structs.Change, error) {
-	return fromRabbitSubject(m.msg.RoutingKey)
+func (m *rabbitMessage) Timestamp() time.Time {
+	return m.msg.Timestamp
 }
 
 func (m *rabbitMessage) Subject() string {

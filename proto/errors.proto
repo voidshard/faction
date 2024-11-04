@@ -4,11 +4,10 @@ option go_package = "pkg/structs";
 enum ErrorCode {
     OK = 0; // Or "no error"
     INTERNAL = 1;
-    INVALID_ARGUMENT = 2;
+    INVALID = 2;
     CONFLICT = 3;
     NOT_FOUND = 4;
-    INVALID_OBJECT = 5;
-    TIMEOUT = 6;
+    TIMEOUT = 5;
 }
 
 message Error {

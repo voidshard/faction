@@ -2,11 +2,9 @@ package api
 
 import (
 	"bytes"
-	"errors"
 	"fmt"
 	"sort"
 
-	"github.com/voidshard/faction/internal/db"
 	"github.com/voidshard/faction/pkg/structs"
 	math "github.com/voidshard/faction/pkg/util/math/integer"
 )
@@ -125,23 +123,4 @@ func decodeRequest(data []byte) (string, []byte, error) {
 		return "", nil, fmt.Errorf("invalid request")
 	}
 	return string(sections[0]), sections[1], nil
-}
-
-func toError(err error, code ...structs.ErrorCode) *structs.Error {
-	if err == nil {
-		return nil
-	}
-	if len(code) > 0 {
-		return &structs.Error{Code: code[0], Message: err.Error()}
-	}
-	if errors.Is(err, db.ErrNotFound) {
-		return &structs.Error{Code: structs.ErrorCode_NOT_FOUND, Message: err.Error()}
-	}
-	if errors.Is(err, db.ErrEtagMismatch) {
-		return &structs.Error{Code: structs.ErrorCode_CONFLICT, Message: err.Error()}
-	}
-	if errors.Is(err, db.ErrInvalid) {
-		return &structs.Error{Code: structs.ErrorCode_INVALID_OBJECT, Message: err.Error()}
-	}
-	return &structs.Error{Code: structs.ErrorCode_INTERNAL, Message: err.Error()}
 }

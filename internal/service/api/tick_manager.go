@@ -12,12 +12,23 @@ import (
 	"github.com/voidshard/faction/pkg/util/log"
 )
 
+// tickManager is responsible for watching each world and monitoring the current Tick of each.
+// We do this so that any incoming 'defer' events for world(s) we can push to the correct tick(s).
+//
+// Worker processes here subscribe to multiple queues per world, namely [world,tick .. world,tick-3].
+// And late 'defers' to this tick or the last 3 are therefore caught and issued as changes.
+//
+// When a world tick changes subscriptions are rolled forward and events are pushed to the world's change stream.
+// In this way we can ensure that
+// 1. Users can defer ticks to any future tick
+// 2. We're relaxed to late coming events & race conditions
+// 3. We avoid hitting the DB whenever something needs to be deferred "by X ticks"
 type tickManager struct {
 	kill chan bool
 	log  log.Logger
 
 	db           db.Database
-	qu           queue.Queue
+	qu           *Queue
 	worldChanges queue.Subscription
 
 	// cache of world id -> current tick, strictly increasing
@@ -29,7 +40,7 @@ type tickManager struct {
 	subsLock sync.Mutex
 }
 
-func newTickManager(name string, db db.Database, qu queue.Queue) (*tickManager, error) {
+func newTickManager(name string, db db.Database, qu *Queue) (*tickManager, error) {
 	// ie. subscribe to all changes on all world objects
 	sub, err := qu.SubscribeChange(&structs.Change{Key: structs.Metakey_KeyWorld}, "")
 	if err != nil {
@@ -52,7 +63,8 @@ func (tc *tickManager) handleWorldChange(msg queue.Message) {
 	pan := log.NewSpan(msg.Context(), "api.tickManager.handleWorldChange", map[string]interface{}{"mid": msg.Id()})
 	defer pan.End()
 
-	ch, err := msg.Change()
+	ch := &structs.Change{}
+	err := ch.UnmarshalJSON(msg.Data())
 	if err != nil {
 		tc.log.Error().Err(err).Msg("Failed to get change from message")
 		pan.Err(err)
@@ -90,7 +102,18 @@ func (tc *tickManager) handleWorldChange(msg queue.Message) {
 	}
 
 	tc.log.Info().Str("MessageId", msg.Id()).Str("World", ch.World).Int64("Tick", worlds[0].Tick).Msg("Updated tick cache")
-	msg.Ack()
+}
+
+// Tick returns the current tick for a given world from our cache
+func (tc *tickManager) Tick(world string) (int64, error) {
+	tc.cacheLock.Lock()
+	defer tc.cacheLock.Unlock()
+
+	v, ok := tc.cache[world]
+	if !ok {
+		return 0, fmt.Errorf("%w world %s", ErrNotFound, world)
+	}
+	return v, nil
 }
 
 func (tc *tickManager) watchSubscription(sub queue.Subscription) {
@@ -185,7 +208,10 @@ func (tc *tickManager) Run() {
 			select {
 			case <-tc.kill:
 				return
-			case msg := <-tc.worldChanges.Channel():
+			case msg, ok := <-tc.worldChanges.Channel():
+				if !ok {
+					continue
+				}
 				tc.log.Debug().Str("MessageId", msg.Id()).Msg("Tick manager recieved world change message")
 				tc.handleWorldChange(msg)
 			}

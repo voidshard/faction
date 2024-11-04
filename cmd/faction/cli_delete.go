@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/voidshard/faction/pkg/client"
 	"github.com/voidshard/faction/pkg/structs"
 )
 
@@ -34,7 +35,7 @@ func (c *cliDeleteCmd) Execute(args []string) error {
 	}
 	c.World = toWorldId(c.World)[0]
 
-	conn, err := newClient(c.Host, c.Port, c.IdleTimeout, c.ConnTimeout)
+	conn, err := client.New(c.Host, c.Port, c.IdleTimeout, c.ConnTimeout)
 	if err != nil {
 		return err
 	}

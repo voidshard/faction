@@ -58,7 +58,7 @@ func NewOpensearch(cfg *OpensearchConfig) (*Opensearch, error) {
 	}
 	me := &Opensearch{
 		cfg:      cfg,
-		l:        log.Sublogger("opensearch", map[string]string{"username": cfg.Username, "address": cfg.Address}),
+		l:        log.Sublogger("opensearch", map[string]interface{}{"username": cfg.Username, "address": cfg.Address}),
 		bulklock: sync.Mutex{},
 		bulk:     map[string]*opensearchBulk{},
 	}

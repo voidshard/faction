@@ -3,56 +3,52 @@ package queue
 import (
 	"context"
 	"time"
-
-	"github.com/voidshard/faction/pkg/structs"
 )
 
 type Queue interface {
-	// PublishApiReq publishes data to the API request stream.
-	PublishApiReq(c context.Context, data []byte) (Subscription, error)
+	// Request creates a new request on the given queue and waits for a reply
+	Request(ctx context.Context, queue string, data []byte) (Subscription, error)
 
-	// SubscribeApiReq subscribes to the API request stream.
-	SubscribeApiReq() (Subscription, error)
+	// Enqueue adds a message to the queue, but does not wait nor expect a reply.
+	Enqueue(ctx context.Context, queue string, data []byte) error
 
-	// PublishChange publishes a change to the change stream.
-	PublishChange(c context.Context, ch *structs.Change) error
+	// Dequeue returns a subscription to the given queue.
+	Dequeue(queue string) (Subscription, error)
 
-	// SubscribeChange subscribes to changes on the change stream.
-	// queueName can be given to configure a durable queue. If not given
-	// a temporary non-durable queue will be used.
-	SubscribeChange(ch *structs.Change, queueName string) (Subscription, error)
+	// Publish sends a message to the given topic, these messages are fan-out to all subscribers.
+	// The key accepts empty strings to match all keys at the given key index
+	Publish(ctx context.Context, topic string, key []string, data []byte) error
 
-	// DeferChange defers a change to be processed at given tick.
-	DeferChange(c context.Context, ch *structs.Change, tick int64) error
+	// Subscribe returns a subscription to the given topic matching the given key.
+	// The key accepts empty strings to match all keys at the given key index
+	Subscribe(queue, topic string, key []string) (Subscription, error)
 
-	// SubscribeDeferredChanges subscribes to changes that have been deferred to a given tick.
-	SubscribeDeferredChanges(world string, tick int64) (Subscription, error)
+	// DeleteQueue deletes the given queue.
+	DeleteQueue(queue string) error
 
-	// DeleteDeferredChangeQueue deletes the queue for deferred changes at given tick.
-	// This should be called when the queue is no longer needed to tidy old queues we're
-	// never going to use again.
-	DeleteDeferredChangeQueue(world string, tick int64) error
+	// Close all connections / channels ready for shutdown.
+	Close() error
 }
 
-type Closer interface {
+type closer interface {
 	Close() error
 }
 
 type Subscription interface {
 	Channel() <-chan Message
-	Close()
+	Close() error
 }
 
 type Message interface {
+	// Id returns the message id.
 	Id() string
 
-	// Reply sends a reply to the message.
-	// This is only supported on messages from the API request stream.
-	Reply(context.Context, []byte) error
+	// CorrelationId returns the message correlation id.
+	CorrelationId() string
 
-	// Change returns the change that triggered the message.
-	// This is only set on messages from a change subscription.
-	Change() (*structs.Change, error)
+	// Reply sends a reply to the message.
+	// Only supported on messages delivered via Dequeue
+	Reply(context.Context, []byte) error
 
 	// Subject returns the subject of the message.
 	Subject() string
