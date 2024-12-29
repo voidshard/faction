@@ -58,7 +58,7 @@ func NewRabbitQueue(cfg *RabbitConfig) (*RabbitQueue, error) {
 			"host": cfg.Host,
 			"port": cfg.Port,
 		}),
-		replyQueue: fmt.Sprintf("reply.%s", uuid.NewID().String()),
+		replyQueue: fmt.Sprintf("internal.reply.%s", uuid.NewID().String()),
 		replyLock:  sync.Mutex{},
 		replyChans: make(map[string]*rabbitSubscription),
 	}, nil

@@ -13,8 +13,8 @@ const (
 type optCliConn struct {
 	Host        string        `long:"host" env:"HOST" description:"API host" default:"localhost"`
 	Port        int           `long:"port" env:"PORT" description:"API port" default:"5000"`
-	IdleTimeout time.Duration `long:"idle-timeout" description:"Idle timeout" default:"30s"`
-	ConnTimeout time.Duration `long:"conn-timeout" description:"Connection timeout" default:"5s"`
+	IdleTimeout time.Duration `long:"idle-timeout" env:"IDLE_TIMEOUT" description:"Idle timeout" default:"30s"`
+	ConnTimeout time.Duration `long:"conn-timeout" env:"CONN_TIMEOUT" description:"Connection timeout" default:"5s"`
 }
 
 type optCliGlobal struct {

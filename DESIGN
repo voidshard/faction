@@ -1,0 +1,236 @@
+
+Primitives
+==========
+
+- Metaref is a reference 
+    {key: well known constant representing a concept, value: specific concept}
+    eg. {key: faction, value: company}
+
+- Everything has labels, a map[string]string of arbitrary fields
+
+- Everything has attributes, a map[string]float of arbitrary numbers
+
+- We define a "Select" object with Any, All, Not fields of map[string]string
+
+    Where the 'Fields' of an object are the union of 
+    - the object Labels (map[string]string)
+    - object specific information
+
+    Ie. an Actor with
+
+      Labels:
+          "my-culture/class": "serf"
+          "favourite-colour": "blue"
+      Race: "human"
+      Culture: "my-culture"
+      Religion: "smurfdom"
+      Professions:
+          Smith: Beginner
+          Tailor: Expert
+      Ranks:
+          Royal-Forge: Clerk
+
+    Might produce the following "fields"
+        kind: Actor
+        labels.my-culture/class: serf
+        labels.favourite-colour: blue
+        race: human
+        culture: my-culture
+        religion: smurfdom
+        professions.smith: beginner
+        professions.tailor: expert
+        ranks.royal-forge: clerk
+
+    We can then apply 'Any' 'All' and 'Not' semantics.
+
+
+- We define a "feeling" object
+    Fear        [negative] => "How scared am I of [target]?"
+        - Hinders opponents acting against the object of their fears
+        - Worsens morale for opponents
+    Opinion     [any] => "How much I approve or disapprove of [target]"
+        - Generally has the source support, or not, the target
+    Trust       [any] => "How likely is it that [target] will betray me?"
+        - Controls potential treachery
+    Affiliation [positive] => "How much I feel indebted to or belong to/with [target]"
+        - Ensures that source stays loyal to [target]
+        - Measure of work done with / for [target]
+
+  Where different values carry a different weight. Ie, a single point of 'trust' is worth multiple 
+  points of 'opinion.' Values for these weights are configured globally for a world so that
+  actions that +/- feelings have consistent heft in a setting.
+
+- Thus a "thought," which can be attached to some object(s) is
+    Feeling (what one thinks) + Match (target(s) of thought)
+
+- We define a "distribution" representing some random number within desired parameters
+    Min float
+    Max float
+    Mean float
+    StandardDeviation float
+
+- Aribitrary keys that a user can specify
+    goal
+        Expresses what goal(s) actors / factions prioritize, which goals actions might 
+        help & which goal(s) jobs are in aid of
+    profession
+        Some skill that actor(s) can possess that might be useful in completing job(s)
+    commodity
+        Some trade / harvestable item
+
+
+[?] - Each higher level object can return a []Metaref that are associated with it
+    Ie. an actor might return
+        {key: religion, value: id},
+        {key: culture, value: id},
+        {key: race, value: id},
+        {key: profession, value: id},
+        [...]
+    These represent how A might dislike B because of bias around their culture / race / profession / class
+
+
+Objects
+=======
+
+Actor:
+
+
+Profession:
+
+    ranks:
+    - name string
+      setLabels map[string]string
+      thoughts []Thought
+      level int // higher is better, multiple ranks of same 'level' is fine
+    [..]
+
+    Eg.
+    - name master
+      level 10
+    - name master-in-residence
+      level 10
+    - name apprentice
+      level 1
+    - name expert
+      level 5
+    - name adept
+      level 2
+
+   
+   ranks:
+     leader:
+       eligible:
+         candidates:
+
+
+Faction:
+
+    common:
+      setLabels map[string]string
+      thoughts []Thought
+    
+    goals: map[string]int
+    actions: map[string]int  
+
+    ranks:
+      - name string
+        influence
+            actions map[string]int // how much weight someone with this rank has on deciding actions
+        level int // higher is better, multiple ranks of same 'level' is fine
+        count // how many people there should be of this rank
+            min
+                value int
+                multipleOf
+                    rankName string
+                    ratio double
+            max
+                value int
+                multipleOf
+                    rankName string
+                    ratio double
+        eligible // who can attain this rank
+          candidates Select {Any, All, Not}
+          score (list of)
+            - weight int // + or - weight
+              match Select {Any, All, Not}
+
+
+Culture:
+    common:
+      setLabels map[string]string
+      thoughts []Thought
+    classes:
+      name string
+        setLabels map[string]string
+        thoughts []Thought
+          
+  eg.
+
+    common:
+      setLabels: {}
+      thoughts:
+      - # shared zealotry
+        target: {key: religion, value: myfaith}
+        feeling:
+          trust: 80
+      - # shared fear of magicians
+        target: {key: profession, value: mage}
+        feeling:
+          fear: 30
+      - # shared healthy fear of warfare 
+        target: {key: action, value: war}
+        feeling:
+          fear: 100
+    classes:
+      name: noble
+        setLabels: {culture/myculture/class: noble}
+        thoughts:
+        - # likes anything that serves a 'power' goal
+          target: {key: goal, value: power}
+          feeling:
+            trust: 20
+        - # distrusts peasents of own culture
+          target: {key: culture, value: myculture}
+          select: {all: {culture/myculture/class: peasent}}
+          feeling:
+            trust: -50
+      name: peasent
+        setLabels: {culture/myculture/class: noble}
+        thoughts:
+        - # likes anything that serves a 'growth' goal
+          target: {key: goal, value: growth}
+          feeling:
+            trust: 40
+        - # distrusts but feels obligated to nobles of same culture
+          target: {key: culture, value: myculture}
+          select: {all: {culture/myculture/class: noble}}
+          feeling:
+            trust: -20
+            affiliation: 10
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

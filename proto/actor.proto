@@ -1,9 +1,8 @@
 syntax = "proto3";
 option go_package = "pkg/structs";
 
-import "metadata.proto";
+import "common.proto";
 import "errors.proto";
-import "relationship.proto";
 
 message ActorStatus {
 }
@@ -14,32 +13,33 @@ message Actor {
     string Etag = 2;
     string World = 3;
     map<string, string> Labels = 4;
-    map<string, int64> Attributes = 5;
+    map<string, double> Attributes = 5;
+    string Type = 6;
 
     // Guiding principals
-    map<string, double> Ethos = 6; // how much the person values each ethos
-    map<string, double> Goals = 7; // how much the person values each goal
+    map<string, double> Ethos = 7; // how much the person values each ethos
+    map<string, double> Goals = 8; // how much the person values each goal
 
     // Learned skills
-    map<string, uint64> Skills = 8;
+    map<string, double> Professions = 9;
+    // map<string, double> Ranks ; // ranks in faction(s)
 
     //
-    string Race = 9;
-    string Culture = 10;
+    string Race = 10;
+    string Culture = 11;
 
-    repeated Relationship Allies = 11;
-    repeated Relationship Enemies = 12;
+//    repeated Relationship Allies = 12;
+//    repeated Relationship Enemies = 13;
 
-    uint64 BirthTick = 13;
-    uint64 DeathTick = 14;
-
-    uint64 ExpectedDeathTick = 15; // expected death via natural causes
-    optional Metaref DeathCause = 16;
+    uint64 BirthTick = 14;
+    uint64 DeathTick = 15;
+    uint64 ExpectedDeathTick = 16; // expected death via natural causes
+    optional Metaref DeathCause = 17;
 
     // roughly where the person lives & operates in the world
-    string Area = 17;
+    string Area = 18;
 
-    optional ActorStatus Status = 18;
+    optional ActorStatus Status = 19;
 }
 
 message GetActorsRequest {
@@ -72,8 +72,8 @@ message DeleteActorResponse {
 }
 
 message ListActorsRequest {
-    optional uint32 Limit = 1;
-    optional uint32 Offset = 2;
+    optional uint64 Limit = 1;
+    optional uint64 Offset = 2;
     map<string, string> Labels = 3;
     string World = 4;
 }

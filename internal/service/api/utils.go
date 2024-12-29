@@ -3,10 +3,6 @@ package api
 import (
 	"bytes"
 	"fmt"
-	"sort"
-
-	"github.com/voidshard/faction/pkg/structs"
-	math "github.com/voidshard/faction/pkg/util/math/integer"
 )
 
 const (
@@ -17,6 +13,7 @@ const (
 	actorMaxMemories  = 5 // nb. this is per relation
 )
 
+/*
 func tidyRelations(in structs.Interactive, maxRelations int) {
 	// dedupe
 	relations := []*structs.Relationship{}
@@ -89,15 +86,16 @@ func tidyMemories(in structs.Interactive, maxMemories int) {
 		relation.SetMemories(tidyRelationMemories(memories, maxMemories))
 	}
 }
+*/
 
-func defaultValue[I int | int64 | int32 | uint32](value *I, otherwise I) I {
+func defaultValue(value *uint64, otherwise uint64) uint64 {
 	if value == nil {
 		return otherwise
 	}
 	return *value
 }
 
-func clamp[I int | int64 | int32 | uint32](value *I, min I, max I, ifNull I) I {
+func clamp(value *uint64, min, max, ifNull uint64) uint64 {
 	v := defaultValue(value, ifNull)
 	if v < min {
 		return min

@@ -33,6 +33,7 @@ import (
     "buf.build/go/protoyaml"
 )
 EOF
+
 for file in $(find ./proto -type f -name "*.proto"); do
     grep "message" $file | awk '{print $2}' | while read -r line; do
         lower=$(echo $line | tr '[:upper:]' '[:lower:]')
@@ -40,10 +41,6 @@ for file in $(find ./proto -type f -name "*.proto"); do
 
 func (x *$line) Kind() string {
     return "$line"
-}
-
-func (x *$line) New() *$line {
-    return &$line{}
 }
 
 func (x *$line) NewSlice() []*$line {
@@ -81,4 +78,9 @@ done
 # sets up bson tag for Id -> _id (for MongoDB)
 for file in $(find ./pkg/structs -type f -name "*.pb.go"); do
     sed -i 's/json:"Id,/bson:"_id" &/g' $file 
+done
+
+# sets up bson tag for UniqueName -> _id (for MongoDB)
+for file in $(find ./pkg/structs -type f -name "*.pb.go"); do
+    sed -i 's/json:"UniqueName,/bson:"_id" &/g' $file 
 done

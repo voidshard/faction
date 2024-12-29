@@ -1,31 +1,31 @@
 services:
   # ==== Faction ====
-# api:
-#   build: .
-#   depends_on:
-#     - mongo
-#     - rabbit
-#     - opensearch-node1
-#   environment:
-#     DEBUG: "true"
-#     DB_HOST: mongo
-#     DB_USERNAME: admin
-#     DB_PASSWORD: admin
-#     DB_DATABASE: faction
-#     SB_ADDRESS: https://opensearch-node1:9200
-#     SB_USERNAME: admin
-#     SB_PASSWORD: Opensearch123!
-#     Q_HOST: rabbit
-#     Q_USERNAME: admin
-#     Q_PASSWORD: admin
-#     OTEL_EXPORTER_OTLP_ENDPOINT: grpc://otel-collector:4317
-#     OTEL_RESOURCE_ATTRIBUTES: "service.name=faction-api,service.version=0.0.1"
-#     OTEL_LOG_LEVEL: TRACE
-#     OTEL_EXPORTER_OTLP_INSECURE: "true"
-#   command: api
-#   ports:
-#     - 5000:5000
-#     
+  api:
+    build: .
+    depends_on:
+      - mongo
+      - rabbit
+      - opensearch-node1
+    environment:
+      DEBUG: "true"
+      DB_HOST: mongo
+      DB_USERNAME: admin
+      DB_PASSWORD: admin
+      DB_DATABASE: faction
+      SB_ADDRESS: https://opensearch-node1:9200
+      SB_USERNAME: admin
+      SB_PASSWORD: Opensearch123!
+      Q_HOST: rabbit
+      Q_USERNAME: admin
+      Q_PASSWORD: admin
+      OTEL_EXPORTER_OTLP_ENDPOINT: grpc://otel-collector:4317
+      OTEL_RESOURCE_ATTRIBUTES: "service.name=faction-api,service.version=0.0.1"
+      OTEL_LOG_LEVEL: TRACE
+      OTEL_EXPORTER_OTLP_INSECURE: "true"
+    command: api
+    ports:
+      - 5000:5000
+     
   # ==== Queue ====
   rabbit: # rabbit, but with the management UI
     image: "rabbitmq:management"

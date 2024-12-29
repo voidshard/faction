@@ -60,7 +60,7 @@ type Message interface {
 	// Must be called on successful processing of the message.
 	Ack() error
 
-	// Reject rejects the message & should requeue unless the message has exceeded it's retry limit.
+	// Reject rejects the message, will be requeued
 	Reject() error
 
 	// Timestamp returns the time the message was sent.

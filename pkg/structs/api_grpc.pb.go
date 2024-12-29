@@ -27,10 +27,26 @@ const (
 	API_SetActors_FullMethodName     = "/API/SetActors"
 	API_ListActors_FullMethodName    = "/API/ListActors"
 	API_DeleteActor_FullMethodName   = "/API/DeleteActor"
+	API_Actions_FullMethodName       = "/API/Actions"
+	API_SetActions_FullMethodName    = "/API/SetActions"
+	API_DeleteAction_FullMethodName  = "/API/DeleteAction"
+	API_ListActions_FullMethodName   = "/API/ListActions"
+	API_Races_FullMethodName         = "/API/Races"
+	API_SetRaces_FullMethodName      = "/API/SetRaces"
+	API_DeleteRace_FullMethodName    = "/API/DeleteRace"
+	API_ListRaces_FullMethodName     = "/API/ListRaces"
+	API_Cultures_FullMethodName      = "/API/Cultures"
+	API_SetCultures_FullMethodName   = "/API/SetCultures"
+	API_DeleteCulture_FullMethodName = "/API/DeleteCulture"
+	API_ListCultures_FullMethodName  = "/API/ListCultures"
 	API_Factions_FullMethodName      = "/API/Factions"
 	API_SetFactions_FullMethodName   = "/API/SetFactions"
 	API_ListFactions_FullMethodName  = "/API/ListFactions"
 	API_DeleteFaction_FullMethodName = "/API/DeleteFaction"
+	API_Jobs_FullMethodName          = "/API/Jobs"
+	API_SetJobs_FullMethodName       = "/API/SetJobs"
+	API_ListJobs_FullMethodName      = "/API/ListJobs"
+	API_DeleteJob_FullMethodName     = "/API/DeleteJob"
 	API_OnChange_FullMethodName      = "/API/OnChange"
 	API_AckStream_FullMethodName     = "/API/AckStream"
 	API_DeferChange_FullMethodName   = "/API/DeferChange"
@@ -48,15 +64,26 @@ type APIClient interface {
 	SetActors(ctx context.Context, in *SetActorsRequest, opts ...grpc.CallOption) (*SetActorsResponse, error)
 	ListActors(ctx context.Context, in *ListActorsRequest, opts ...grpc.CallOption) (*ListActorsResponse, error)
 	DeleteActor(ctx context.Context, in *DeleteActorRequest, opts ...grpc.CallOption) (*DeleteActorResponse, error)
-	// rpc Races(GetRacesRequest) returns (GetRacesResponse);
-	// rpc SetRace(SetRaceRequest) returns (SetRaceResponse);
-	//
-	// rpc Cultures(GetCulturesRequest) returns (GetCulturesResponse);
-	// rpc SetCulture(SetCultureRequest) returns (SetCultureResponse);
+	Actions(ctx context.Context, in *GetActionsRequest, opts ...grpc.CallOption) (*GetActionsResponse, error)
+	SetActions(ctx context.Context, in *SetActionsRequest, opts ...grpc.CallOption) (*SetActionsResponse, error)
+	DeleteAction(ctx context.Context, in *DeleteActionRequest, opts ...grpc.CallOption) (*DeleteActionResponse, error)
+	ListActions(ctx context.Context, in *ListActionsRequest, opts ...grpc.CallOption) (*ListActionsResponse, error)
+	Races(ctx context.Context, in *GetRacesRequest, opts ...grpc.CallOption) (*GetRacesResponse, error)
+	SetRaces(ctx context.Context, in *SetRacesRequest, opts ...grpc.CallOption) (*SetRacesResponse, error)
+	DeleteRace(ctx context.Context, in *DeleteRaceRequest, opts ...grpc.CallOption) (*DeleteRaceResponse, error)
+	ListRaces(ctx context.Context, in *ListRacesRequest, opts ...grpc.CallOption) (*ListRacesResponse, error)
+	Cultures(ctx context.Context, in *GetCulturesRequest, opts ...grpc.CallOption) (*GetCulturesResponse, error)
+	SetCultures(ctx context.Context, in *SetCulturesRequest, opts ...grpc.CallOption) (*SetCulturesResponse, error)
+	DeleteCulture(ctx context.Context, in *DeleteCultureRequest, opts ...grpc.CallOption) (*DeleteCultureResponse, error)
+	ListCultures(ctx context.Context, in *ListCulturesRequest, opts ...grpc.CallOption) (*ListCulturesResponse, error)
 	Factions(ctx context.Context, in *GetFactionsRequest, opts ...grpc.CallOption) (*GetFactionsResponse, error)
 	SetFactions(ctx context.Context, in *SetFactionsRequest, opts ...grpc.CallOption) (*SetFactionsResponse, error)
 	ListFactions(ctx context.Context, in *ListFactionsRequest, opts ...grpc.CallOption) (*ListFactionsResponse, error)
 	DeleteFaction(ctx context.Context, in *DeleteFactionRequest, opts ...grpc.CallOption) (*DeleteFactionResponse, error)
+	Jobs(ctx context.Context, in *GetJobsRequest, opts ...grpc.CallOption) (*GetJobsResponse, error)
+	SetJobs(ctx context.Context, in *SetJobsRequest, opts ...grpc.CallOption) (*SetJobsResponse, error)
+	ListJobs(ctx context.Context, in *ListJobsRequest, opts ...grpc.CallOption) (*ListJobsResponse, error)
+	DeleteJob(ctx context.Context, in *DeleteJobRequest, opts ...grpc.CallOption) (*DeleteJobResponse, error)
 	OnChange(ctx context.Context, in *OnChangeRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[OnChangeResponse], error)
 	AckStream(ctx context.Context, opts ...grpc.CallOption) (grpc.ClientStreamingClient[AckRequest, AckResponse], error)
 	DeferChange(ctx context.Context, in *DeferChangeRequest, opts ...grpc.CallOption) (*DeferChangeResponse, error)
@@ -150,6 +177,126 @@ func (c *aPIClient) DeleteActor(ctx context.Context, in *DeleteActorRequest, opt
 	return out, nil
 }
 
+func (c *aPIClient) Actions(ctx context.Context, in *GetActionsRequest, opts ...grpc.CallOption) (*GetActionsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetActionsResponse)
+	err := c.cc.Invoke(ctx, API_Actions_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *aPIClient) SetActions(ctx context.Context, in *SetActionsRequest, opts ...grpc.CallOption) (*SetActionsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(SetActionsResponse)
+	err := c.cc.Invoke(ctx, API_SetActions_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *aPIClient) DeleteAction(ctx context.Context, in *DeleteActionRequest, opts ...grpc.CallOption) (*DeleteActionResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(DeleteActionResponse)
+	err := c.cc.Invoke(ctx, API_DeleteAction_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *aPIClient) ListActions(ctx context.Context, in *ListActionsRequest, opts ...grpc.CallOption) (*ListActionsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListActionsResponse)
+	err := c.cc.Invoke(ctx, API_ListActions_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *aPIClient) Races(ctx context.Context, in *GetRacesRequest, opts ...grpc.CallOption) (*GetRacesResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetRacesResponse)
+	err := c.cc.Invoke(ctx, API_Races_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *aPIClient) SetRaces(ctx context.Context, in *SetRacesRequest, opts ...grpc.CallOption) (*SetRacesResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(SetRacesResponse)
+	err := c.cc.Invoke(ctx, API_SetRaces_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *aPIClient) DeleteRace(ctx context.Context, in *DeleteRaceRequest, opts ...grpc.CallOption) (*DeleteRaceResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(DeleteRaceResponse)
+	err := c.cc.Invoke(ctx, API_DeleteRace_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *aPIClient) ListRaces(ctx context.Context, in *ListRacesRequest, opts ...grpc.CallOption) (*ListRacesResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListRacesResponse)
+	err := c.cc.Invoke(ctx, API_ListRaces_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *aPIClient) Cultures(ctx context.Context, in *GetCulturesRequest, opts ...grpc.CallOption) (*GetCulturesResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetCulturesResponse)
+	err := c.cc.Invoke(ctx, API_Cultures_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *aPIClient) SetCultures(ctx context.Context, in *SetCulturesRequest, opts ...grpc.CallOption) (*SetCulturesResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(SetCulturesResponse)
+	err := c.cc.Invoke(ctx, API_SetCultures_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *aPIClient) DeleteCulture(ctx context.Context, in *DeleteCultureRequest, opts ...grpc.CallOption) (*DeleteCultureResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(DeleteCultureResponse)
+	err := c.cc.Invoke(ctx, API_DeleteCulture_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *aPIClient) ListCultures(ctx context.Context, in *ListCulturesRequest, opts ...grpc.CallOption) (*ListCulturesResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListCulturesResponse)
+	err := c.cc.Invoke(ctx, API_ListCultures_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *aPIClient) Factions(ctx context.Context, in *GetFactionsRequest, opts ...grpc.CallOption) (*GetFactionsResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(GetFactionsResponse)
@@ -184,6 +331,46 @@ func (c *aPIClient) DeleteFaction(ctx context.Context, in *DeleteFactionRequest,
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(DeleteFactionResponse)
 	err := c.cc.Invoke(ctx, API_DeleteFaction_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *aPIClient) Jobs(ctx context.Context, in *GetJobsRequest, opts ...grpc.CallOption) (*GetJobsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetJobsResponse)
+	err := c.cc.Invoke(ctx, API_Jobs_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *aPIClient) SetJobs(ctx context.Context, in *SetJobsRequest, opts ...grpc.CallOption) (*SetJobsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(SetJobsResponse)
+	err := c.cc.Invoke(ctx, API_SetJobs_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *aPIClient) ListJobs(ctx context.Context, in *ListJobsRequest, opts ...grpc.CallOption) (*ListJobsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListJobsResponse)
+	err := c.cc.Invoke(ctx, API_ListJobs_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *aPIClient) DeleteJob(ctx context.Context, in *DeleteJobRequest, opts ...grpc.CallOption) (*DeleteJobResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(DeleteJobResponse)
+	err := c.cc.Invoke(ctx, API_DeleteJob_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -244,15 +431,26 @@ type APIServer interface {
 	SetActors(context.Context, *SetActorsRequest) (*SetActorsResponse, error)
 	ListActors(context.Context, *ListActorsRequest) (*ListActorsResponse, error)
 	DeleteActor(context.Context, *DeleteActorRequest) (*DeleteActorResponse, error)
-	// rpc Races(GetRacesRequest) returns (GetRacesResponse);
-	// rpc SetRace(SetRaceRequest) returns (SetRaceResponse);
-	//
-	// rpc Cultures(GetCulturesRequest) returns (GetCulturesResponse);
-	// rpc SetCulture(SetCultureRequest) returns (SetCultureResponse);
+	Actions(context.Context, *GetActionsRequest) (*GetActionsResponse, error)
+	SetActions(context.Context, *SetActionsRequest) (*SetActionsResponse, error)
+	DeleteAction(context.Context, *DeleteActionRequest) (*DeleteActionResponse, error)
+	ListActions(context.Context, *ListActionsRequest) (*ListActionsResponse, error)
+	Races(context.Context, *GetRacesRequest) (*GetRacesResponse, error)
+	SetRaces(context.Context, *SetRacesRequest) (*SetRacesResponse, error)
+	DeleteRace(context.Context, *DeleteRaceRequest) (*DeleteRaceResponse, error)
+	ListRaces(context.Context, *ListRacesRequest) (*ListRacesResponse, error)
+	Cultures(context.Context, *GetCulturesRequest) (*GetCulturesResponse, error)
+	SetCultures(context.Context, *SetCulturesRequest) (*SetCulturesResponse, error)
+	DeleteCulture(context.Context, *DeleteCultureRequest) (*DeleteCultureResponse, error)
+	ListCultures(context.Context, *ListCulturesRequest) (*ListCulturesResponse, error)
 	Factions(context.Context, *GetFactionsRequest) (*GetFactionsResponse, error)
 	SetFactions(context.Context, *SetFactionsRequest) (*SetFactionsResponse, error)
 	ListFactions(context.Context, *ListFactionsRequest) (*ListFactionsResponse, error)
 	DeleteFaction(context.Context, *DeleteFactionRequest) (*DeleteFactionResponse, error)
+	Jobs(context.Context, *GetJobsRequest) (*GetJobsResponse, error)
+	SetJobs(context.Context, *SetJobsRequest) (*SetJobsResponse, error)
+	ListJobs(context.Context, *ListJobsRequest) (*ListJobsResponse, error)
+	DeleteJob(context.Context, *DeleteJobRequest) (*DeleteJobResponse, error)
 	OnChange(*OnChangeRequest, grpc.ServerStreamingServer[OnChangeResponse]) error
 	AckStream(grpc.ClientStreamingServer[AckRequest, AckResponse]) error
 	DeferChange(context.Context, *DeferChangeRequest) (*DeferChangeResponse, error)
@@ -290,6 +488,42 @@ func (UnimplementedAPIServer) ListActors(context.Context, *ListActorsRequest) (*
 func (UnimplementedAPIServer) DeleteActor(context.Context, *DeleteActorRequest) (*DeleteActorResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DeleteActor not implemented")
 }
+func (UnimplementedAPIServer) Actions(context.Context, *GetActionsRequest) (*GetActionsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Actions not implemented")
+}
+func (UnimplementedAPIServer) SetActions(context.Context, *SetActionsRequest) (*SetActionsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SetActions not implemented")
+}
+func (UnimplementedAPIServer) DeleteAction(context.Context, *DeleteActionRequest) (*DeleteActionResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DeleteAction not implemented")
+}
+func (UnimplementedAPIServer) ListActions(context.Context, *ListActionsRequest) (*ListActionsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListActions not implemented")
+}
+func (UnimplementedAPIServer) Races(context.Context, *GetRacesRequest) (*GetRacesResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Races not implemented")
+}
+func (UnimplementedAPIServer) SetRaces(context.Context, *SetRacesRequest) (*SetRacesResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SetRaces not implemented")
+}
+func (UnimplementedAPIServer) DeleteRace(context.Context, *DeleteRaceRequest) (*DeleteRaceResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DeleteRace not implemented")
+}
+func (UnimplementedAPIServer) ListRaces(context.Context, *ListRacesRequest) (*ListRacesResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListRaces not implemented")
+}
+func (UnimplementedAPIServer) Cultures(context.Context, *GetCulturesRequest) (*GetCulturesResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Cultures not implemented")
+}
+func (UnimplementedAPIServer) SetCultures(context.Context, *SetCulturesRequest) (*SetCulturesResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SetCultures not implemented")
+}
+func (UnimplementedAPIServer) DeleteCulture(context.Context, *DeleteCultureRequest) (*DeleteCultureResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DeleteCulture not implemented")
+}
+func (UnimplementedAPIServer) ListCultures(context.Context, *ListCulturesRequest) (*ListCulturesResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListCultures not implemented")
+}
 func (UnimplementedAPIServer) Factions(context.Context, *GetFactionsRequest) (*GetFactionsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Factions not implemented")
 }
@@ -301,6 +535,18 @@ func (UnimplementedAPIServer) ListFactions(context.Context, *ListFactionsRequest
 }
 func (UnimplementedAPIServer) DeleteFaction(context.Context, *DeleteFactionRequest) (*DeleteFactionResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DeleteFaction not implemented")
+}
+func (UnimplementedAPIServer) Jobs(context.Context, *GetJobsRequest) (*GetJobsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Jobs not implemented")
+}
+func (UnimplementedAPIServer) SetJobs(context.Context, *SetJobsRequest) (*SetJobsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SetJobs not implemented")
+}
+func (UnimplementedAPIServer) ListJobs(context.Context, *ListJobsRequest) (*ListJobsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListJobs not implemented")
+}
+func (UnimplementedAPIServer) DeleteJob(context.Context, *DeleteJobRequest) (*DeleteJobResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DeleteJob not implemented")
 }
 func (UnimplementedAPIServer) OnChange(*OnChangeRequest, grpc.ServerStreamingServer[OnChangeResponse]) error {
 	return status.Errorf(codes.Unimplemented, "method OnChange not implemented")
@@ -476,6 +722,222 @@ func _API_DeleteActor_Handler(srv interface{}, ctx context.Context, dec func(int
 	return interceptor(ctx, in, info, handler)
 }
 
+func _API_Actions_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetActionsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(APIServer).Actions(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: API_Actions_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(APIServer).Actions(ctx, req.(*GetActionsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _API_SetActions_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SetActionsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(APIServer).SetActions(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: API_SetActions_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(APIServer).SetActions(ctx, req.(*SetActionsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _API_DeleteAction_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeleteActionRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(APIServer).DeleteAction(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: API_DeleteAction_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(APIServer).DeleteAction(ctx, req.(*DeleteActionRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _API_ListActions_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListActionsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(APIServer).ListActions(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: API_ListActions_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(APIServer).ListActions(ctx, req.(*ListActionsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _API_Races_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetRacesRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(APIServer).Races(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: API_Races_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(APIServer).Races(ctx, req.(*GetRacesRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _API_SetRaces_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SetRacesRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(APIServer).SetRaces(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: API_SetRaces_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(APIServer).SetRaces(ctx, req.(*SetRacesRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _API_DeleteRace_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeleteRaceRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(APIServer).DeleteRace(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: API_DeleteRace_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(APIServer).DeleteRace(ctx, req.(*DeleteRaceRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _API_ListRaces_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListRacesRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(APIServer).ListRaces(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: API_ListRaces_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(APIServer).ListRaces(ctx, req.(*ListRacesRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _API_Cultures_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetCulturesRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(APIServer).Cultures(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: API_Cultures_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(APIServer).Cultures(ctx, req.(*GetCulturesRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _API_SetCultures_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SetCulturesRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(APIServer).SetCultures(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: API_SetCultures_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(APIServer).SetCultures(ctx, req.(*SetCulturesRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _API_DeleteCulture_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeleteCultureRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(APIServer).DeleteCulture(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: API_DeleteCulture_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(APIServer).DeleteCulture(ctx, req.(*DeleteCultureRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _API_ListCultures_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListCulturesRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(APIServer).ListCultures(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: API_ListCultures_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(APIServer).ListCultures(ctx, req.(*ListCulturesRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _API_Factions_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(GetFactionsRequest)
 	if err := dec(in); err != nil {
@@ -544,6 +1006,78 @@ func _API_DeleteFaction_Handler(srv interface{}, ctx context.Context, dec func(i
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(APIServer).DeleteFaction(ctx, req.(*DeleteFactionRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _API_Jobs_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetJobsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(APIServer).Jobs(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: API_Jobs_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(APIServer).Jobs(ctx, req.(*GetJobsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _API_SetJobs_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SetJobsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(APIServer).SetJobs(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: API_SetJobs_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(APIServer).SetJobs(ctx, req.(*SetJobsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _API_ListJobs_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListJobsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(APIServer).ListJobs(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: API_ListJobs_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(APIServer).ListJobs(ctx, req.(*ListJobsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _API_DeleteJob_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeleteJobRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(APIServer).DeleteJob(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: API_DeleteJob_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(APIServer).DeleteJob(ctx, req.(*DeleteJobRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -624,6 +1158,54 @@ var API_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _API_DeleteActor_Handler,
 		},
 		{
+			MethodName: "Actions",
+			Handler:    _API_Actions_Handler,
+		},
+		{
+			MethodName: "SetActions",
+			Handler:    _API_SetActions_Handler,
+		},
+		{
+			MethodName: "DeleteAction",
+			Handler:    _API_DeleteAction_Handler,
+		},
+		{
+			MethodName: "ListActions",
+			Handler:    _API_ListActions_Handler,
+		},
+		{
+			MethodName: "Races",
+			Handler:    _API_Races_Handler,
+		},
+		{
+			MethodName: "SetRaces",
+			Handler:    _API_SetRaces_Handler,
+		},
+		{
+			MethodName: "DeleteRace",
+			Handler:    _API_DeleteRace_Handler,
+		},
+		{
+			MethodName: "ListRaces",
+			Handler:    _API_ListRaces_Handler,
+		},
+		{
+			MethodName: "Cultures",
+			Handler:    _API_Cultures_Handler,
+		},
+		{
+			MethodName: "SetCultures",
+			Handler:    _API_SetCultures_Handler,
+		},
+		{
+			MethodName: "DeleteCulture",
+			Handler:    _API_DeleteCulture_Handler,
+		},
+		{
+			MethodName: "ListCultures",
+			Handler:    _API_ListCultures_Handler,
+		},
+		{
 			MethodName: "Factions",
 			Handler:    _API_Factions_Handler,
 		},
@@ -638,6 +1220,22 @@ var API_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "DeleteFaction",
 			Handler:    _API_DeleteFaction_Handler,
+		},
+		{
+			MethodName: "Jobs",
+			Handler:    _API_Jobs_Handler,
+		},
+		{
+			MethodName: "SetJobs",
+			Handler:    _API_SetJobs_Handler,
+		},
+		{
+			MethodName: "ListJobs",
+			Handler:    _API_ListJobs_Handler,
+		},
+		{
+			MethodName: "DeleteJob",
+			Handler:    _API_DeleteJob_Handler,
 		},
 		{
 			MethodName: "DeferChange",

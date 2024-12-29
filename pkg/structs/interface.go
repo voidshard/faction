@@ -26,6 +26,8 @@ type Object interface {
 	String() string
 }
 
+type Relationship struct{} // TEMP -> possibly remove later
+
 type Interactive interface {
 	Object
 

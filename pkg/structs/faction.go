@@ -12,6 +12,7 @@ func (x *Faction) SetWorld(v string) {
 	x.World = v
 }
 
+/*
 func (x *Faction) SetAllies(v []*Relationship) {
 	x.Allies = v
 }
@@ -19,3 +20,4 @@ func (x *Faction) SetAllies(v []*Relationship) {
 func (x *Faction) SetEnemies(v []*Relationship) {
 	x.Enemies = v
 }
+*/

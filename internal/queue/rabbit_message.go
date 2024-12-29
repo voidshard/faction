@@ -92,17 +92,6 @@ func (m *rabbitMessage) Ack() error {
 }
 
 func (m *rabbitMessage) Reject() error {
-	retries, ok := m.msg.Headers[rabbitRetryHeader]
-	if !ok {
-		retries = 0
-	}
-	attempt := retries.(int)
-	if attempt > rabbitRetryMax {
-		log.Debug().Int("attempt", attempt).Str("MessageId", m.msg.MessageId).Msg("Message has exceeded retry limit, rejecting")
-		return m.msg.Reject(false)
-	}
-	attempt += 1
-	log.Debug().Int("attempt", attempt).Str("MessageId", m.msg.MessageId).Msg("Message rejected, requeueing")
-	m.msg.Headers["x-retries"] = attempt
+	log.Debug().Str("MessageId", m.msg.MessageId).Msg("Message rejected, requeueing")
 	return m.msg.Reject(true)
 }

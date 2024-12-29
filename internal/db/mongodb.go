@@ -117,20 +117,8 @@ func (m *Mongo) ListWorlds(c context.Context, labels map[string]string, limit, o
 
 func (m *Mongo) SetWorld(c context.Context, etag string, in *structs.World) (string, error) {
 	m.log.Debug().Str("database", m.cfg.Database).Str("collection", colWorlds).Str("_id", in.Id).Str("etag", in.Etag).Msg("setWorld")
-	if in.Name == "" {
-		return "", fmt.Errorf("%w world name required", ErrInvalid)
-	}
-
-	// if we don't have an ID we'll generate one
-	// if a name is set we'll use that for a deterministic ID
 	if in.Id == "" {
-		if in.Name == "" { // random ID
-			in.Id = uuid.NewID().String()
-		} else { // deterministic ID
-			in.Id = uuid.NewID(in.Name).String()
-		}
-	} else if !uuid.IsValidUUID(in.Id) {
-		return "", fmt.Errorf("%w invalid id: %s", ErrInvalid, in.Id)
+		return "", fmt.Errorf("%w world id required", ErrInvalid)
 	}
 
 	filter := bson.D{{"_id", in.Id}, {"etag", bson.M{"$in": []string{in.Etag, etag}}}}
@@ -143,6 +131,10 @@ func (m *Mongo) SetWorld(c context.Context, etag string, in *structs.World) (str
 		options.Update().SetUpsert(true),
 	)
 	if err != nil {
+		if mongo.IsDuplicateKeyError(err) {
+			return "", ErrDuplicate
+		}
+		// Timeout / network error
 		return "", err
 	}
 	if result.UpsertedCount+result.ModifiedCount == 0 {
@@ -230,7 +222,10 @@ func (m *Mongo) setObjects(c context.Context, collection string, models []mongo.
 
 	results, err := m.collection(collection).BulkWrite(c, models, options.BulkWrite().SetOrdered(false))
 	if err != nil {
-		return nil, err
+		if mongo.IsDuplicateKeyError(err) {
+			return nil, ErrDuplicate
+		}
+		return nil, err // Timeout / network error
 	}
 
 	res := NewResult()
@@ -245,13 +240,10 @@ func prepareSet[o structs.Object](world, newEtag string, in []o) ([]mongo.WriteM
 	models := []mongo.WriteModel{}
 	for _, v := range in {
 		var mod mongo.WriteModel
-		if v.GetId() == "" { // if it doesn't have an id we're inserting
+		if v.GetEtag() == "" { // if it doesn't have an Etag we're inserting
 			v.SetId(uuid.NewID().String())
 			mod = mongo.NewInsertOneModel().SetDocument(v)
 		} else { // otherwise we're updating (well, replacing)
-			if !uuid.IsValidUUID(v.GetId()) {
-				return nil, fmt.Errorf("%w invalid id: %s", ErrInvalid, v.GetId())
-			}
 			// update if the ID and either the new or the old etag match
 			// (ie. if we did a partial update but the etag hasn't changed since our write operation).
 			// If we update with the same etag then nothing will change.

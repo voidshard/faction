@@ -18,7 +18,7 @@ type cliWatchCmd struct {
 	optCliGlobal
 
 	// World is set in optCliGlobal
-	Area string `long:"area" short:"a" description:"Area to watch for changes" default:""`
+	Type string `long:"type" short:"t" description:"Type to watch for changes" default:""`
 
 	Object string `long:"object" short:"o" description:"Object type to watch for changes" default:""`
 
@@ -32,10 +32,8 @@ func (c *cliWatchCmd) Execute(args []string) error {
 		c.World = toWorldId(c.World)[0]
 	}
 
-	key := validKey(c.Object)
-	if key == structs.Metakey_KeyNone && c.Object != "" {
-		// you tried to watch an object, but we got a None key
-		// presumably this isn't what you wanted
+	c.Object = strings.Title(c.Object)
+	if c.Object != "" && !structs.IsValidAPIKind(c.Object) {
 		return fmt.Errorf("invalid object type %s", c.Object)
 	}
 
@@ -45,19 +43,19 @@ func (c *cliWatchCmd) Execute(args []string) error {
 	}
 
 	l := log.Sublogger("cli.Watch", map[string]interface{}{
-		"world":  c.World,
-		"area":   c.Area,
-		"object": c.Object,
-		"id":     c.Id,
-		"queue":  c.Queue,
+		"world": c.World,
+		"kind":  c.Object,
+		"type":  c.Type,
+		"id":    c.Id,
+		"queue": c.Queue,
 	})
 	l.Info().Msg("Starting watch")
 	defer l.Debug().Msg("Stopped watch")
 	sub, err := client.OnChange(context.Background(), &structs.OnChangeRequest{
 		Data: &structs.Change{
 			World: c.World,
-			Area:  c.Area,
-			Key:   key,
+			Key:   c.Object,
+			Type:  c.Type,
 			Id:    c.Id,
 		},
 		Queue: c.Queue,
@@ -92,15 +90,7 @@ func (c *cliWatchCmd) Execute(args []string) error {
 			return fmt.Errorf("error in watch: %s", resp.Error.Message)
 		}
 
-		rkey, ok := structs.Metakey_name[int32(resp.Data.Key)]
-		if !ok {
-			rkey = "None"
-			l.Warn().Str("key", fmt.Sprintf("%d", resp.Data.Key)).Msg("Unknown key from server")
-		} else {
-			rkey = strings.Replace(rkey, "Key", "", 1)
-		}
-
-		fmt.Printf("World: %s | Area: %s | Object: %s | Id: %s\n", resp.Data.World, resp.Data.Area, rkey, resp.Data.Id)
+		fmt.Printf("World: %s | Kind: %s | Type: %s | Id: %s\n", resp.Data.World, resp.Data.Key, resp.Data.Type, resp.Data.Id)
 		if c.Queue != "" {
 			ackstream.Send(&structs.AckRequest{Ack: []string{resp.Ack}})
 		}

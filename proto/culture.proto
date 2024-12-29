@@ -1,0 +1,61 @@
+syntax = "proto3";
+option go_package = "pkg/structs";
+
+import "errors.proto";
+
+// Culture is a moving group identity, in our case we care about their average Ethics 
+// and feelings about potential Goals, Actions etc.
+message Culture {
+    string Id = 1;
+    string Etag = 2;
+    string World = 3;
+    map<string, string> Labels = 4;
+    map<string, double> Attributes = 5;
+    string Type = 6;
+
+    // Biases <Reference, Value>
+    // Biases are a way to store the culture's feelings about certain things.
+    // We use this as short hand for "people of this culture tend to feel x"
+}
+
+message GetCulturesRequest {
+    repeated string Ids = 1;
+    string World = 2;
+}
+
+message GetCulturesResponse {
+    repeated Culture Data = 1;
+    optional Error Error = 2;
+}
+
+message SetCulturesRequest {
+    repeated Culture Data = 1;
+    string World = 2;
+}
+
+message SetCulturesResponse {
+    string Etag = 1;
+    optional Error Error = 2;
+}
+
+message DeleteCultureRequest {
+    string Id = 1;
+    string World = 2;
+}
+
+message DeleteCultureResponse {
+    optional Error Error = 1;
+}
+
+message ListCulturesRequest {
+    optional uint64 Limit = 1;
+    optional uint64 Offset = 2;
+    map<string, string> Labels = 3;
+    string World = 4;
+}
+
+message ListCulturesResponse {
+    repeated Culture Data = 1;
+    optional Error Error = 2;
+}
+

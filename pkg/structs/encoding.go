@@ -7,660 +7,8 @@ import (
     "buf.build/go/protoyaml"
 )
 
-func (x *Affiliation) Kind() string {
-    return "Affiliation"
-}
-
-func (x *Affiliation) New() *Affiliation {
-    return &Affiliation{}
-}
-
-func (x *Affiliation) NewSlice() []*Affiliation {
-    return []*Affiliation{}
-}
-
-func (x *Affiliation) MarshalYAML() ([]byte, error) {
-    return protoyaml.Marshal(x)
-}
-
-func (x *Affiliation) UnmarshalYAML(data []byte) error {
-    return protoyaml.Unmarshal(data, x)
-}
-
-func (x *Affiliation) MarshalJSON() ([]byte, error) {
-    return protojson.Marshal(x)
-}
-
-func (x *Affiliation) UnmarshalJSON(data []byte) error {
-    return protojson.Unmarshal(data, x)
-}
-
-func (x *Faction) Kind() string {
-    return "Faction"
-}
-
-func (x *Faction) New() *Faction {
-    return &Faction{}
-}
-
-func (x *Faction) NewSlice() []*Faction {
-    return []*Faction{}
-}
-
-func (x *Faction) MarshalYAML() ([]byte, error) {
-    return protoyaml.Marshal(x)
-}
-
-func (x *Faction) UnmarshalYAML(data []byte) error {
-    return protoyaml.Unmarshal(data, x)
-}
-
-func (x *Faction) MarshalJSON() ([]byte, error) {
-    return protojson.Marshal(x)
-}
-
-func (x *Faction) UnmarshalJSON(data []byte) error {
-    return protojson.Unmarshal(data, x)
-}
-
-func (x *FactionStatus) Kind() string {
-    return "FactionStatus"
-}
-
-func (x *FactionStatus) New() *FactionStatus {
-    return &FactionStatus{}
-}
-
-func (x *FactionStatus) NewSlice() []*FactionStatus {
-    return []*FactionStatus{}
-}
-
-func (x *FactionStatus) MarshalYAML() ([]byte, error) {
-    return protoyaml.Marshal(x)
-}
-
-func (x *FactionStatus) UnmarshalYAML(data []byte) error {
-    return protoyaml.Unmarshal(data, x)
-}
-
-func (x *FactionStatus) MarshalJSON() ([]byte, error) {
-    return protojson.Marshal(x)
-}
-
-func (x *FactionStatus) UnmarshalJSON(data []byte) error {
-    return protojson.Unmarshal(data, x)
-}
-
-func (x *GetFactionsRequest) Kind() string {
-    return "GetFactionsRequest"
-}
-
-func (x *GetFactionsRequest) New() *GetFactionsRequest {
-    return &GetFactionsRequest{}
-}
-
-func (x *GetFactionsRequest) NewSlice() []*GetFactionsRequest {
-    return []*GetFactionsRequest{}
-}
-
-func (x *GetFactionsRequest) MarshalYAML() ([]byte, error) {
-    return protoyaml.Marshal(x)
-}
-
-func (x *GetFactionsRequest) UnmarshalYAML(data []byte) error {
-    return protoyaml.Unmarshal(data, x)
-}
-
-func (x *GetFactionsRequest) MarshalJSON() ([]byte, error) {
-    return protojson.Marshal(x)
-}
-
-func (x *GetFactionsRequest) UnmarshalJSON(data []byte) error {
-    return protojson.Unmarshal(data, x)
-}
-
-func (x *GetFactionsResponse) Kind() string {
-    return "GetFactionsResponse"
-}
-
-func (x *GetFactionsResponse) New() *GetFactionsResponse {
-    return &GetFactionsResponse{}
-}
-
-func (x *GetFactionsResponse) NewSlice() []*GetFactionsResponse {
-    return []*GetFactionsResponse{}
-}
-
-func (x *GetFactionsResponse) MarshalYAML() ([]byte, error) {
-    return protoyaml.Marshal(x)
-}
-
-func (x *GetFactionsResponse) UnmarshalYAML(data []byte) error {
-    return protoyaml.Unmarshal(data, x)
-}
-
-func (x *GetFactionsResponse) MarshalJSON() ([]byte, error) {
-    return protojson.Marshal(x)
-}
-
-func (x *GetFactionsResponse) UnmarshalJSON(data []byte) error {
-    return protojson.Unmarshal(data, x)
-}
-
-func (x *GetFactionsResponse) SetError(err *Error) {
-    x.Error = err
-}
-
-func (x *SetFactionsRequest) Kind() string {
-    return "SetFactionsRequest"
-}
-
-func (x *SetFactionsRequest) New() *SetFactionsRequest {
-    return &SetFactionsRequest{}
-}
-
-func (x *SetFactionsRequest) NewSlice() []*SetFactionsRequest {
-    return []*SetFactionsRequest{}
-}
-
-func (x *SetFactionsRequest) MarshalYAML() ([]byte, error) {
-    return protoyaml.Marshal(x)
-}
-
-func (x *SetFactionsRequest) UnmarshalYAML(data []byte) error {
-    return protoyaml.Unmarshal(data, x)
-}
-
-func (x *SetFactionsRequest) MarshalJSON() ([]byte, error) {
-    return protojson.Marshal(x)
-}
-
-func (x *SetFactionsRequest) UnmarshalJSON(data []byte) error {
-    return protojson.Unmarshal(data, x)
-}
-
-func (x *SetFactionsResponse) Kind() string {
-    return "SetFactionsResponse"
-}
-
-func (x *SetFactionsResponse) New() *SetFactionsResponse {
-    return &SetFactionsResponse{}
-}
-
-func (x *SetFactionsResponse) NewSlice() []*SetFactionsResponse {
-    return []*SetFactionsResponse{}
-}
-
-func (x *SetFactionsResponse) MarshalYAML() ([]byte, error) {
-    return protoyaml.Marshal(x)
-}
-
-func (x *SetFactionsResponse) UnmarshalYAML(data []byte) error {
-    return protoyaml.Unmarshal(data, x)
-}
-
-func (x *SetFactionsResponse) MarshalJSON() ([]byte, error) {
-    return protojson.Marshal(x)
-}
-
-func (x *SetFactionsResponse) UnmarshalJSON(data []byte) error {
-    return protojson.Unmarshal(data, x)
-}
-
-func (x *SetFactionsResponse) SetError(err *Error) {
-    x.Error = err
-}
-
-func (x *DeleteFactionRequest) Kind() string {
-    return "DeleteFactionRequest"
-}
-
-func (x *DeleteFactionRequest) New() *DeleteFactionRequest {
-    return &DeleteFactionRequest{}
-}
-
-func (x *DeleteFactionRequest) NewSlice() []*DeleteFactionRequest {
-    return []*DeleteFactionRequest{}
-}
-
-func (x *DeleteFactionRequest) MarshalYAML() ([]byte, error) {
-    return protoyaml.Marshal(x)
-}
-
-func (x *DeleteFactionRequest) UnmarshalYAML(data []byte) error {
-    return protoyaml.Unmarshal(data, x)
-}
-
-func (x *DeleteFactionRequest) MarshalJSON() ([]byte, error) {
-    return protojson.Marshal(x)
-}
-
-func (x *DeleteFactionRequest) UnmarshalJSON(data []byte) error {
-    return protojson.Unmarshal(data, x)
-}
-
-func (x *DeleteFactionResponse) Kind() string {
-    return "DeleteFactionResponse"
-}
-
-func (x *DeleteFactionResponse) New() *DeleteFactionResponse {
-    return &DeleteFactionResponse{}
-}
-
-func (x *DeleteFactionResponse) NewSlice() []*DeleteFactionResponse {
-    return []*DeleteFactionResponse{}
-}
-
-func (x *DeleteFactionResponse) MarshalYAML() ([]byte, error) {
-    return protoyaml.Marshal(x)
-}
-
-func (x *DeleteFactionResponse) UnmarshalYAML(data []byte) error {
-    return protoyaml.Unmarshal(data, x)
-}
-
-func (x *DeleteFactionResponse) MarshalJSON() ([]byte, error) {
-    return protojson.Marshal(x)
-}
-
-func (x *DeleteFactionResponse) UnmarshalJSON(data []byte) error {
-    return protojson.Unmarshal(data, x)
-}
-
-func (x *DeleteFactionResponse) SetError(err *Error) {
-    x.Error = err
-}
-
-func (x *ListFactionsRequest) Kind() string {
-    return "ListFactionsRequest"
-}
-
-func (x *ListFactionsRequest) New() *ListFactionsRequest {
-    return &ListFactionsRequest{}
-}
-
-func (x *ListFactionsRequest) NewSlice() []*ListFactionsRequest {
-    return []*ListFactionsRequest{}
-}
-
-func (x *ListFactionsRequest) MarshalYAML() ([]byte, error) {
-    return protoyaml.Marshal(x)
-}
-
-func (x *ListFactionsRequest) UnmarshalYAML(data []byte) error {
-    return protoyaml.Unmarshal(data, x)
-}
-
-func (x *ListFactionsRequest) MarshalJSON() ([]byte, error) {
-    return protojson.Marshal(x)
-}
-
-func (x *ListFactionsRequest) UnmarshalJSON(data []byte) error {
-    return protojson.Unmarshal(data, x)
-}
-
-func (x *ListFactionsResponse) Kind() string {
-    return "ListFactionsResponse"
-}
-
-func (x *ListFactionsResponse) New() *ListFactionsResponse {
-    return &ListFactionsResponse{}
-}
-
-func (x *ListFactionsResponse) NewSlice() []*ListFactionsResponse {
-    return []*ListFactionsResponse{}
-}
-
-func (x *ListFactionsResponse) MarshalYAML() ([]byte, error) {
-    return protoyaml.Marshal(x)
-}
-
-func (x *ListFactionsResponse) UnmarshalYAML(data []byte) error {
-    return protoyaml.Unmarshal(data, x)
-}
-
-func (x *ListFactionsResponse) MarshalJSON() ([]byte, error) {
-    return protojson.Marshal(x)
-}
-
-func (x *ListFactionsResponse) UnmarshalJSON(data []byte) error {
-    return protojson.Unmarshal(data, x)
-}
-
-func (x *ListFactionsResponse) SetError(err *Error) {
-    x.Error = err
-}
-
-func (x *Relationship) Kind() string {
-    return "Relationship"
-}
-
-func (x *Relationship) New() *Relationship {
-    return &Relationship{}
-}
-
-func (x *Relationship) NewSlice() []*Relationship {
-    return []*Relationship{}
-}
-
-func (x *Relationship) MarshalYAML() ([]byte, error) {
-    return protoyaml.Marshal(x)
-}
-
-func (x *Relationship) UnmarshalYAML(data []byte) error {
-    return protoyaml.Unmarshal(data, x)
-}
-
-func (x *Relationship) MarshalJSON() ([]byte, error) {
-    return protojson.Marshal(x)
-}
-
-func (x *Relationship) UnmarshalJSON(data []byte) error {
-    return protojson.Unmarshal(data, x)
-}
-
-func (x *WorldStatus) Kind() string {
-    return "WorldStatus"
-}
-
-func (x *WorldStatus) New() *WorldStatus {
-    return &WorldStatus{}
-}
-
-func (x *WorldStatus) NewSlice() []*WorldStatus {
-    return []*WorldStatus{}
-}
-
-func (x *WorldStatus) MarshalYAML() ([]byte, error) {
-    return protoyaml.Marshal(x)
-}
-
-func (x *WorldStatus) UnmarshalYAML(data []byte) error {
-    return protoyaml.Unmarshal(data, x)
-}
-
-func (x *WorldStatus) MarshalJSON() ([]byte, error) {
-    return protojson.Marshal(x)
-}
-
-func (x *WorldStatus) UnmarshalJSON(data []byte) error {
-    return protojson.Unmarshal(data, x)
-}
-
-func (x *World) Kind() string {
-    return "World"
-}
-
-func (x *World) New() *World {
-    return &World{}
-}
-
-func (x *World) NewSlice() []*World {
-    return []*World{}
-}
-
-func (x *World) MarshalYAML() ([]byte, error) {
-    return protoyaml.Marshal(x)
-}
-
-func (x *World) UnmarshalYAML(data []byte) error {
-    return protoyaml.Unmarshal(data, x)
-}
-
-func (x *World) MarshalJSON() ([]byte, error) {
-    return protojson.Marshal(x)
-}
-
-func (x *World) UnmarshalJSON(data []byte) error {
-    return protojson.Unmarshal(data, x)
-}
-
-func (x *GetWorldsRequest) Kind() string {
-    return "GetWorldsRequest"
-}
-
-func (x *GetWorldsRequest) New() *GetWorldsRequest {
-    return &GetWorldsRequest{}
-}
-
-func (x *GetWorldsRequest) NewSlice() []*GetWorldsRequest {
-    return []*GetWorldsRequest{}
-}
-
-func (x *GetWorldsRequest) MarshalYAML() ([]byte, error) {
-    return protoyaml.Marshal(x)
-}
-
-func (x *GetWorldsRequest) UnmarshalYAML(data []byte) error {
-    return protoyaml.Unmarshal(data, x)
-}
-
-func (x *GetWorldsRequest) MarshalJSON() ([]byte, error) {
-    return protojson.Marshal(x)
-}
-
-func (x *GetWorldsRequest) UnmarshalJSON(data []byte) error {
-    return protojson.Unmarshal(data, x)
-}
-
-func (x *GetWorldsResponse) Kind() string {
-    return "GetWorldsResponse"
-}
-
-func (x *GetWorldsResponse) New() *GetWorldsResponse {
-    return &GetWorldsResponse{}
-}
-
-func (x *GetWorldsResponse) NewSlice() []*GetWorldsResponse {
-    return []*GetWorldsResponse{}
-}
-
-func (x *GetWorldsResponse) MarshalYAML() ([]byte, error) {
-    return protoyaml.Marshal(x)
-}
-
-func (x *GetWorldsResponse) UnmarshalYAML(data []byte) error {
-    return protoyaml.Unmarshal(data, x)
-}
-
-func (x *GetWorldsResponse) MarshalJSON() ([]byte, error) {
-    return protojson.Marshal(x)
-}
-
-func (x *GetWorldsResponse) UnmarshalJSON(data []byte) error {
-    return protojson.Unmarshal(data, x)
-}
-
-func (x *GetWorldsResponse) SetError(err *Error) {
-    x.Error = err
-}
-
-func (x *SetWorldRequest) Kind() string {
-    return "SetWorldRequest"
-}
-
-func (x *SetWorldRequest) New() *SetWorldRequest {
-    return &SetWorldRequest{}
-}
-
-func (x *SetWorldRequest) NewSlice() []*SetWorldRequest {
-    return []*SetWorldRequest{}
-}
-
-func (x *SetWorldRequest) MarshalYAML() ([]byte, error) {
-    return protoyaml.Marshal(x)
-}
-
-func (x *SetWorldRequest) UnmarshalYAML(data []byte) error {
-    return protoyaml.Unmarshal(data, x)
-}
-
-func (x *SetWorldRequest) MarshalJSON() ([]byte, error) {
-    return protojson.Marshal(x)
-}
-
-func (x *SetWorldRequest) UnmarshalJSON(data []byte) error {
-    return protojson.Unmarshal(data, x)
-}
-
-func (x *SetWorldResponse) Kind() string {
-    return "SetWorldResponse"
-}
-
-func (x *SetWorldResponse) New() *SetWorldResponse {
-    return &SetWorldResponse{}
-}
-
-func (x *SetWorldResponse) NewSlice() []*SetWorldResponse {
-    return []*SetWorldResponse{}
-}
-
-func (x *SetWorldResponse) MarshalYAML() ([]byte, error) {
-    return protoyaml.Marshal(x)
-}
-
-func (x *SetWorldResponse) UnmarshalYAML(data []byte) error {
-    return protoyaml.Unmarshal(data, x)
-}
-
-func (x *SetWorldResponse) MarshalJSON() ([]byte, error) {
-    return protojson.Marshal(x)
-}
-
-func (x *SetWorldResponse) UnmarshalJSON(data []byte) error {
-    return protojson.Unmarshal(data, x)
-}
-
-func (x *SetWorldResponse) SetError(err *Error) {
-    x.Error = err
-}
-
-func (x *DeleteWorldRequest) Kind() string {
-    return "DeleteWorldRequest"
-}
-
-func (x *DeleteWorldRequest) New() *DeleteWorldRequest {
-    return &DeleteWorldRequest{}
-}
-
-func (x *DeleteWorldRequest) NewSlice() []*DeleteWorldRequest {
-    return []*DeleteWorldRequest{}
-}
-
-func (x *DeleteWorldRequest) MarshalYAML() ([]byte, error) {
-    return protoyaml.Marshal(x)
-}
-
-func (x *DeleteWorldRequest) UnmarshalYAML(data []byte) error {
-    return protoyaml.Unmarshal(data, x)
-}
-
-func (x *DeleteWorldRequest) MarshalJSON() ([]byte, error) {
-    return protojson.Marshal(x)
-}
-
-func (x *DeleteWorldRequest) UnmarshalJSON(data []byte) error {
-    return protojson.Unmarshal(data, x)
-}
-
-func (x *DeleteWorldResponse) Kind() string {
-    return "DeleteWorldResponse"
-}
-
-func (x *DeleteWorldResponse) New() *DeleteWorldResponse {
-    return &DeleteWorldResponse{}
-}
-
-func (x *DeleteWorldResponse) NewSlice() []*DeleteWorldResponse {
-    return []*DeleteWorldResponse{}
-}
-
-func (x *DeleteWorldResponse) MarshalYAML() ([]byte, error) {
-    return protoyaml.Marshal(x)
-}
-
-func (x *DeleteWorldResponse) UnmarshalYAML(data []byte) error {
-    return protoyaml.Unmarshal(data, x)
-}
-
-func (x *DeleteWorldResponse) MarshalJSON() ([]byte, error) {
-    return protojson.Marshal(x)
-}
-
-func (x *DeleteWorldResponse) UnmarshalJSON(data []byte) error {
-    return protojson.Unmarshal(data, x)
-}
-
-func (x *DeleteWorldResponse) SetError(err *Error) {
-    x.Error = err
-}
-
-func (x *ListWorldsRequest) Kind() string {
-    return "ListWorldsRequest"
-}
-
-func (x *ListWorldsRequest) New() *ListWorldsRequest {
-    return &ListWorldsRequest{}
-}
-
-func (x *ListWorldsRequest) NewSlice() []*ListWorldsRequest {
-    return []*ListWorldsRequest{}
-}
-
-func (x *ListWorldsRequest) MarshalYAML() ([]byte, error) {
-    return protoyaml.Marshal(x)
-}
-
-func (x *ListWorldsRequest) UnmarshalYAML(data []byte) error {
-    return protoyaml.Unmarshal(data, x)
-}
-
-func (x *ListWorldsRequest) MarshalJSON() ([]byte, error) {
-    return protojson.Marshal(x)
-}
-
-func (x *ListWorldsRequest) UnmarshalJSON(data []byte) error {
-    return protojson.Unmarshal(data, x)
-}
-
-func (x *ListWorldsResponse) Kind() string {
-    return "ListWorldsResponse"
-}
-
-func (x *ListWorldsResponse) New() *ListWorldsResponse {
-    return &ListWorldsResponse{}
-}
-
-func (x *ListWorldsResponse) NewSlice() []*ListWorldsResponse {
-    return []*ListWorldsResponse{}
-}
-
-func (x *ListWorldsResponse) MarshalYAML() ([]byte, error) {
-    return protoyaml.Marshal(x)
-}
-
-func (x *ListWorldsResponse) UnmarshalYAML(data []byte) error {
-    return protoyaml.Unmarshal(data, x)
-}
-
-func (x *ListWorldsResponse) MarshalJSON() ([]byte, error) {
-    return protojson.Marshal(x)
-}
-
-func (x *ListWorldsResponse) UnmarshalJSON(data []byte) error {
-    return protojson.Unmarshal(data, x)
-}
-
-func (x *ListWorldsResponse) SetError(err *Error) {
-    x.Error = err
-}
-
 func (x *Error) Kind() string {
     return "Error"
-}
-
-func (x *Error) New() *Error {
-    return &Error{}
 }
 
 func (x *Error) NewSlice() []*Error {
@@ -683,68 +31,984 @@ func (x *Error) UnmarshalJSON(data []byte) error {
     return protojson.Unmarshal(data, x)
 }
 
-func (x *Metaref) Kind() string {
-    return "Metaref"
+func (x *Action) Kind() string {
+    return "Action"
 }
 
-func (x *Metaref) New() *Metaref {
-    return &Metaref{}
+func (x *Action) NewSlice() []*Action {
+    return []*Action{}
 }
 
-func (x *Metaref) NewSlice() []*Metaref {
-    return []*Metaref{}
-}
-
-func (x *Metaref) MarshalYAML() ([]byte, error) {
+func (x *Action) MarshalYAML() ([]byte, error) {
     return protoyaml.Marshal(x)
 }
 
-func (x *Metaref) UnmarshalYAML(data []byte) error {
+func (x *Action) UnmarshalYAML(data []byte) error {
     return protoyaml.Unmarshal(data, x)
 }
 
-func (x *Metaref) MarshalJSON() ([]byte, error) {
+func (x *Action) MarshalJSON() ([]byte, error) {
     return protojson.Marshal(x)
 }
 
-func (x *Metaref) UnmarshalJSON(data []byte) error {
+func (x *Action) UnmarshalJSON(data []byte) error {
     return protojson.Unmarshal(data, x)
 }
 
-func (x *Memory) Kind() string {
-    return "Memory"
+func (x *ActionPhase) Kind() string {
+    return "ActionPhase"
 }
 
-func (x *Memory) New() *Memory {
-    return &Memory{}
+func (x *ActionPhase) NewSlice() []*ActionPhase {
+    return []*ActionPhase{}
 }
 
-func (x *Memory) NewSlice() []*Memory {
-    return []*Memory{}
-}
-
-func (x *Memory) MarshalYAML() ([]byte, error) {
+func (x *ActionPhase) MarshalYAML() ([]byte, error) {
     return protoyaml.Marshal(x)
 }
 
-func (x *Memory) UnmarshalYAML(data []byte) error {
+func (x *ActionPhase) UnmarshalYAML(data []byte) error {
     return protoyaml.Unmarshal(data, x)
 }
 
-func (x *Memory) MarshalJSON() ([]byte, error) {
+func (x *ActionPhase) MarshalJSON() ([]byte, error) {
     return protojson.Marshal(x)
 }
 
-func (x *Memory) UnmarshalJSON(data []byte) error {
+func (x *ActionPhase) UnmarshalJSON(data []byte) error {
     return protojson.Unmarshal(data, x)
+}
+
+func (x *ActionCost) Kind() string {
+    return "ActionCost"
+}
+
+func (x *ActionCost) NewSlice() []*ActionCost {
+    return []*ActionCost{}
+}
+
+func (x *ActionCost) MarshalYAML() ([]byte, error) {
+    return protoyaml.Marshal(x)
+}
+
+func (x *ActionCost) UnmarshalYAML(data []byte) error {
+    return protoyaml.Unmarshal(data, x)
+}
+
+func (x *ActionCost) MarshalJSON() ([]byte, error) {
+    return protojson.Marshal(x)
+}
+
+func (x *ActionCost) UnmarshalJSON(data []byte) error {
+    return protojson.Unmarshal(data, x)
+}
+
+func (x *GetActionsRequest) Kind() string {
+    return "GetActionsRequest"
+}
+
+func (x *GetActionsRequest) NewSlice() []*GetActionsRequest {
+    return []*GetActionsRequest{}
+}
+
+func (x *GetActionsRequest) MarshalYAML() ([]byte, error) {
+    return protoyaml.Marshal(x)
+}
+
+func (x *GetActionsRequest) UnmarshalYAML(data []byte) error {
+    return protoyaml.Unmarshal(data, x)
+}
+
+func (x *GetActionsRequest) MarshalJSON() ([]byte, error) {
+    return protojson.Marshal(x)
+}
+
+func (x *GetActionsRequest) UnmarshalJSON(data []byte) error {
+    return protojson.Unmarshal(data, x)
+}
+
+func (x *GetActionsResponse) Kind() string {
+    return "GetActionsResponse"
+}
+
+func (x *GetActionsResponse) NewSlice() []*GetActionsResponse {
+    return []*GetActionsResponse{}
+}
+
+func (x *GetActionsResponse) MarshalYAML() ([]byte, error) {
+    return protoyaml.Marshal(x)
+}
+
+func (x *GetActionsResponse) UnmarshalYAML(data []byte) error {
+    return protoyaml.Unmarshal(data, x)
+}
+
+func (x *GetActionsResponse) MarshalJSON() ([]byte, error) {
+    return protojson.Marshal(x)
+}
+
+func (x *GetActionsResponse) UnmarshalJSON(data []byte) error {
+    return protojson.Unmarshal(data, x)
+}
+
+func (x *GetActionsResponse) SetError(err *Error) {
+    x.Error = err
+}
+
+func (x *SetActionsRequest) Kind() string {
+    return "SetActionsRequest"
+}
+
+func (x *SetActionsRequest) NewSlice() []*SetActionsRequest {
+    return []*SetActionsRequest{}
+}
+
+func (x *SetActionsRequest) MarshalYAML() ([]byte, error) {
+    return protoyaml.Marshal(x)
+}
+
+func (x *SetActionsRequest) UnmarshalYAML(data []byte) error {
+    return protoyaml.Unmarshal(data, x)
+}
+
+func (x *SetActionsRequest) MarshalJSON() ([]byte, error) {
+    return protojson.Marshal(x)
+}
+
+func (x *SetActionsRequest) UnmarshalJSON(data []byte) error {
+    return protojson.Unmarshal(data, x)
+}
+
+func (x *SetActionsResponse) Kind() string {
+    return "SetActionsResponse"
+}
+
+func (x *SetActionsResponse) NewSlice() []*SetActionsResponse {
+    return []*SetActionsResponse{}
+}
+
+func (x *SetActionsResponse) MarshalYAML() ([]byte, error) {
+    return protoyaml.Marshal(x)
+}
+
+func (x *SetActionsResponse) UnmarshalYAML(data []byte) error {
+    return protoyaml.Unmarshal(data, x)
+}
+
+func (x *SetActionsResponse) MarshalJSON() ([]byte, error) {
+    return protojson.Marshal(x)
+}
+
+func (x *SetActionsResponse) UnmarshalJSON(data []byte) error {
+    return protojson.Unmarshal(data, x)
+}
+
+func (x *SetActionsResponse) SetError(err *Error) {
+    x.Error = err
+}
+
+func (x *DeleteActionRequest) Kind() string {
+    return "DeleteActionRequest"
+}
+
+func (x *DeleteActionRequest) NewSlice() []*DeleteActionRequest {
+    return []*DeleteActionRequest{}
+}
+
+func (x *DeleteActionRequest) MarshalYAML() ([]byte, error) {
+    return protoyaml.Marshal(x)
+}
+
+func (x *DeleteActionRequest) UnmarshalYAML(data []byte) error {
+    return protoyaml.Unmarshal(data, x)
+}
+
+func (x *DeleteActionRequest) MarshalJSON() ([]byte, error) {
+    return protojson.Marshal(x)
+}
+
+func (x *DeleteActionRequest) UnmarshalJSON(data []byte) error {
+    return protojson.Unmarshal(data, x)
+}
+
+func (x *DeleteActionResponse) Kind() string {
+    return "DeleteActionResponse"
+}
+
+func (x *DeleteActionResponse) NewSlice() []*DeleteActionResponse {
+    return []*DeleteActionResponse{}
+}
+
+func (x *DeleteActionResponse) MarshalYAML() ([]byte, error) {
+    return protoyaml.Marshal(x)
+}
+
+func (x *DeleteActionResponse) UnmarshalYAML(data []byte) error {
+    return protoyaml.Unmarshal(data, x)
+}
+
+func (x *DeleteActionResponse) MarshalJSON() ([]byte, error) {
+    return protojson.Marshal(x)
+}
+
+func (x *DeleteActionResponse) UnmarshalJSON(data []byte) error {
+    return protojson.Unmarshal(data, x)
+}
+
+func (x *DeleteActionResponse) SetError(err *Error) {
+    x.Error = err
+}
+
+func (x *ListActionsRequest) Kind() string {
+    return "ListActionsRequest"
+}
+
+func (x *ListActionsRequest) NewSlice() []*ListActionsRequest {
+    return []*ListActionsRequest{}
+}
+
+func (x *ListActionsRequest) MarshalYAML() ([]byte, error) {
+    return protoyaml.Marshal(x)
+}
+
+func (x *ListActionsRequest) UnmarshalYAML(data []byte) error {
+    return protoyaml.Unmarshal(data, x)
+}
+
+func (x *ListActionsRequest) MarshalJSON() ([]byte, error) {
+    return protojson.Marshal(x)
+}
+
+func (x *ListActionsRequest) UnmarshalJSON(data []byte) error {
+    return protojson.Unmarshal(data, x)
+}
+
+func (x *ListActionsResponse) Kind() string {
+    return "ListActionsResponse"
+}
+
+func (x *ListActionsResponse) NewSlice() []*ListActionsResponse {
+    return []*ListActionsResponse{}
+}
+
+func (x *ListActionsResponse) MarshalYAML() ([]byte, error) {
+    return protoyaml.Marshal(x)
+}
+
+func (x *ListActionsResponse) UnmarshalYAML(data []byte) error {
+    return protoyaml.Unmarshal(data, x)
+}
+
+func (x *ListActionsResponse) MarshalJSON() ([]byte, error) {
+    return protojson.Marshal(x)
+}
+
+func (x *ListActionsResponse) UnmarshalJSON(data []byte) error {
+    return protojson.Unmarshal(data, x)
+}
+
+func (x *ListActionsResponse) SetError(err *Error) {
+    x.Error = err
+}
+
+func (x *Culture) Kind() string {
+    return "Culture"
+}
+
+func (x *Culture) NewSlice() []*Culture {
+    return []*Culture{}
+}
+
+func (x *Culture) MarshalYAML() ([]byte, error) {
+    return protoyaml.Marshal(x)
+}
+
+func (x *Culture) UnmarshalYAML(data []byte) error {
+    return protoyaml.Unmarshal(data, x)
+}
+
+func (x *Culture) MarshalJSON() ([]byte, error) {
+    return protojson.Marshal(x)
+}
+
+func (x *Culture) UnmarshalJSON(data []byte) error {
+    return protojson.Unmarshal(data, x)
+}
+
+func (x *GetCulturesRequest) Kind() string {
+    return "GetCulturesRequest"
+}
+
+func (x *GetCulturesRequest) NewSlice() []*GetCulturesRequest {
+    return []*GetCulturesRequest{}
+}
+
+func (x *GetCulturesRequest) MarshalYAML() ([]byte, error) {
+    return protoyaml.Marshal(x)
+}
+
+func (x *GetCulturesRequest) UnmarshalYAML(data []byte) error {
+    return protoyaml.Unmarshal(data, x)
+}
+
+func (x *GetCulturesRequest) MarshalJSON() ([]byte, error) {
+    return protojson.Marshal(x)
+}
+
+func (x *GetCulturesRequest) UnmarshalJSON(data []byte) error {
+    return protojson.Unmarshal(data, x)
+}
+
+func (x *GetCulturesResponse) Kind() string {
+    return "GetCulturesResponse"
+}
+
+func (x *GetCulturesResponse) NewSlice() []*GetCulturesResponse {
+    return []*GetCulturesResponse{}
+}
+
+func (x *GetCulturesResponse) MarshalYAML() ([]byte, error) {
+    return protoyaml.Marshal(x)
+}
+
+func (x *GetCulturesResponse) UnmarshalYAML(data []byte) error {
+    return protoyaml.Unmarshal(data, x)
+}
+
+func (x *GetCulturesResponse) MarshalJSON() ([]byte, error) {
+    return protojson.Marshal(x)
+}
+
+func (x *GetCulturesResponse) UnmarshalJSON(data []byte) error {
+    return protojson.Unmarshal(data, x)
+}
+
+func (x *GetCulturesResponse) SetError(err *Error) {
+    x.Error = err
+}
+
+func (x *SetCulturesRequest) Kind() string {
+    return "SetCulturesRequest"
+}
+
+func (x *SetCulturesRequest) NewSlice() []*SetCulturesRequest {
+    return []*SetCulturesRequest{}
+}
+
+func (x *SetCulturesRequest) MarshalYAML() ([]byte, error) {
+    return protoyaml.Marshal(x)
+}
+
+func (x *SetCulturesRequest) UnmarshalYAML(data []byte) error {
+    return protoyaml.Unmarshal(data, x)
+}
+
+func (x *SetCulturesRequest) MarshalJSON() ([]byte, error) {
+    return protojson.Marshal(x)
+}
+
+func (x *SetCulturesRequest) UnmarshalJSON(data []byte) error {
+    return protojson.Unmarshal(data, x)
+}
+
+func (x *SetCulturesResponse) Kind() string {
+    return "SetCulturesResponse"
+}
+
+func (x *SetCulturesResponse) NewSlice() []*SetCulturesResponse {
+    return []*SetCulturesResponse{}
+}
+
+func (x *SetCulturesResponse) MarshalYAML() ([]byte, error) {
+    return protoyaml.Marshal(x)
+}
+
+func (x *SetCulturesResponse) UnmarshalYAML(data []byte) error {
+    return protoyaml.Unmarshal(data, x)
+}
+
+func (x *SetCulturesResponse) MarshalJSON() ([]byte, error) {
+    return protojson.Marshal(x)
+}
+
+func (x *SetCulturesResponse) UnmarshalJSON(data []byte) error {
+    return protojson.Unmarshal(data, x)
+}
+
+func (x *SetCulturesResponse) SetError(err *Error) {
+    x.Error = err
+}
+
+func (x *DeleteCultureRequest) Kind() string {
+    return "DeleteCultureRequest"
+}
+
+func (x *DeleteCultureRequest) NewSlice() []*DeleteCultureRequest {
+    return []*DeleteCultureRequest{}
+}
+
+func (x *DeleteCultureRequest) MarshalYAML() ([]byte, error) {
+    return protoyaml.Marshal(x)
+}
+
+func (x *DeleteCultureRequest) UnmarshalYAML(data []byte) error {
+    return protoyaml.Unmarshal(data, x)
+}
+
+func (x *DeleteCultureRequest) MarshalJSON() ([]byte, error) {
+    return protojson.Marshal(x)
+}
+
+func (x *DeleteCultureRequest) UnmarshalJSON(data []byte) error {
+    return protojson.Unmarshal(data, x)
+}
+
+func (x *DeleteCultureResponse) Kind() string {
+    return "DeleteCultureResponse"
+}
+
+func (x *DeleteCultureResponse) NewSlice() []*DeleteCultureResponse {
+    return []*DeleteCultureResponse{}
+}
+
+func (x *DeleteCultureResponse) MarshalYAML() ([]byte, error) {
+    return protoyaml.Marshal(x)
+}
+
+func (x *DeleteCultureResponse) UnmarshalYAML(data []byte) error {
+    return protoyaml.Unmarshal(data, x)
+}
+
+func (x *DeleteCultureResponse) MarshalJSON() ([]byte, error) {
+    return protojson.Marshal(x)
+}
+
+func (x *DeleteCultureResponse) UnmarshalJSON(data []byte) error {
+    return protojson.Unmarshal(data, x)
+}
+
+func (x *DeleteCultureResponse) SetError(err *Error) {
+    x.Error = err
+}
+
+func (x *ListCulturesRequest) Kind() string {
+    return "ListCulturesRequest"
+}
+
+func (x *ListCulturesRequest) NewSlice() []*ListCulturesRequest {
+    return []*ListCulturesRequest{}
+}
+
+func (x *ListCulturesRequest) MarshalYAML() ([]byte, error) {
+    return protoyaml.Marshal(x)
+}
+
+func (x *ListCulturesRequest) UnmarshalYAML(data []byte) error {
+    return protoyaml.Unmarshal(data, x)
+}
+
+func (x *ListCulturesRequest) MarshalJSON() ([]byte, error) {
+    return protojson.Marshal(x)
+}
+
+func (x *ListCulturesRequest) UnmarshalJSON(data []byte) error {
+    return protojson.Unmarshal(data, x)
+}
+
+func (x *ListCulturesResponse) Kind() string {
+    return "ListCulturesResponse"
+}
+
+func (x *ListCulturesResponse) NewSlice() []*ListCulturesResponse {
+    return []*ListCulturesResponse{}
+}
+
+func (x *ListCulturesResponse) MarshalYAML() ([]byte, error) {
+    return protoyaml.Marshal(x)
+}
+
+func (x *ListCulturesResponse) UnmarshalYAML(data []byte) error {
+    return protoyaml.Unmarshal(data, x)
+}
+
+func (x *ListCulturesResponse) MarshalJSON() ([]byte, error) {
+    return protojson.Marshal(x)
+}
+
+func (x *ListCulturesResponse) UnmarshalJSON(data []byte) error {
+    return protojson.Unmarshal(data, x)
+}
+
+func (x *ListCulturesResponse) SetError(err *Error) {
+    x.Error = err
+}
+
+func (x *Job) Kind() string {
+    return "Job"
+}
+
+func (x *Job) NewSlice() []*Job {
+    return []*Job{}
+}
+
+func (x *Job) MarshalYAML() ([]byte, error) {
+    return protoyaml.Marshal(x)
+}
+
+func (x *Job) UnmarshalYAML(data []byte) error {
+    return protoyaml.Unmarshal(data, x)
+}
+
+func (x *Job) MarshalJSON() ([]byte, error) {
+    return protojson.Marshal(x)
+}
+
+func (x *Job) UnmarshalJSON(data []byte) error {
+    return protojson.Unmarshal(data, x)
+}
+
+func (x *GetJobsRequest) Kind() string {
+    return "GetJobsRequest"
+}
+
+func (x *GetJobsRequest) NewSlice() []*GetJobsRequest {
+    return []*GetJobsRequest{}
+}
+
+func (x *GetJobsRequest) MarshalYAML() ([]byte, error) {
+    return protoyaml.Marshal(x)
+}
+
+func (x *GetJobsRequest) UnmarshalYAML(data []byte) error {
+    return protoyaml.Unmarshal(data, x)
+}
+
+func (x *GetJobsRequest) MarshalJSON() ([]byte, error) {
+    return protojson.Marshal(x)
+}
+
+func (x *GetJobsRequest) UnmarshalJSON(data []byte) error {
+    return protojson.Unmarshal(data, x)
+}
+
+func (x *GetJobsResponse) Kind() string {
+    return "GetJobsResponse"
+}
+
+func (x *GetJobsResponse) NewSlice() []*GetJobsResponse {
+    return []*GetJobsResponse{}
+}
+
+func (x *GetJobsResponse) MarshalYAML() ([]byte, error) {
+    return protoyaml.Marshal(x)
+}
+
+func (x *GetJobsResponse) UnmarshalYAML(data []byte) error {
+    return protoyaml.Unmarshal(data, x)
+}
+
+func (x *GetJobsResponse) MarshalJSON() ([]byte, error) {
+    return protojson.Marshal(x)
+}
+
+func (x *GetJobsResponse) UnmarshalJSON(data []byte) error {
+    return protojson.Unmarshal(data, x)
+}
+
+func (x *GetJobsResponse) SetError(err *Error) {
+    x.Error = err
+}
+
+func (x *SetJobsRequest) Kind() string {
+    return "SetJobsRequest"
+}
+
+func (x *SetJobsRequest) NewSlice() []*SetJobsRequest {
+    return []*SetJobsRequest{}
+}
+
+func (x *SetJobsRequest) MarshalYAML() ([]byte, error) {
+    return protoyaml.Marshal(x)
+}
+
+func (x *SetJobsRequest) UnmarshalYAML(data []byte) error {
+    return protoyaml.Unmarshal(data, x)
+}
+
+func (x *SetJobsRequest) MarshalJSON() ([]byte, error) {
+    return protojson.Marshal(x)
+}
+
+func (x *SetJobsRequest) UnmarshalJSON(data []byte) error {
+    return protojson.Unmarshal(data, x)
+}
+
+func (x *SetJobsResponse) Kind() string {
+    return "SetJobsResponse"
+}
+
+func (x *SetJobsResponse) NewSlice() []*SetJobsResponse {
+    return []*SetJobsResponse{}
+}
+
+func (x *SetJobsResponse) MarshalYAML() ([]byte, error) {
+    return protoyaml.Marshal(x)
+}
+
+func (x *SetJobsResponse) UnmarshalYAML(data []byte) error {
+    return protoyaml.Unmarshal(data, x)
+}
+
+func (x *SetJobsResponse) MarshalJSON() ([]byte, error) {
+    return protojson.Marshal(x)
+}
+
+func (x *SetJobsResponse) UnmarshalJSON(data []byte) error {
+    return protojson.Unmarshal(data, x)
+}
+
+func (x *SetJobsResponse) SetError(err *Error) {
+    x.Error = err
+}
+
+func (x *DeleteJobRequest) Kind() string {
+    return "DeleteJobRequest"
+}
+
+func (x *DeleteJobRequest) NewSlice() []*DeleteJobRequest {
+    return []*DeleteJobRequest{}
+}
+
+func (x *DeleteJobRequest) MarshalYAML() ([]byte, error) {
+    return protoyaml.Marshal(x)
+}
+
+func (x *DeleteJobRequest) UnmarshalYAML(data []byte) error {
+    return protoyaml.Unmarshal(data, x)
+}
+
+func (x *DeleteJobRequest) MarshalJSON() ([]byte, error) {
+    return protojson.Marshal(x)
+}
+
+func (x *DeleteJobRequest) UnmarshalJSON(data []byte) error {
+    return protojson.Unmarshal(data, x)
+}
+
+func (x *DeleteJobResponse) Kind() string {
+    return "DeleteJobResponse"
+}
+
+func (x *DeleteJobResponse) NewSlice() []*DeleteJobResponse {
+    return []*DeleteJobResponse{}
+}
+
+func (x *DeleteJobResponse) MarshalYAML() ([]byte, error) {
+    return protoyaml.Marshal(x)
+}
+
+func (x *DeleteJobResponse) UnmarshalYAML(data []byte) error {
+    return protoyaml.Unmarshal(data, x)
+}
+
+func (x *DeleteJobResponse) MarshalJSON() ([]byte, error) {
+    return protojson.Marshal(x)
+}
+
+func (x *DeleteJobResponse) UnmarshalJSON(data []byte) error {
+    return protojson.Unmarshal(data, x)
+}
+
+func (x *DeleteJobResponse) SetError(err *Error) {
+    x.Error = err
+}
+
+func (x *ListJobsRequest) Kind() string {
+    return "ListJobsRequest"
+}
+
+func (x *ListJobsRequest) NewSlice() []*ListJobsRequest {
+    return []*ListJobsRequest{}
+}
+
+func (x *ListJobsRequest) MarshalYAML() ([]byte, error) {
+    return protoyaml.Marshal(x)
+}
+
+func (x *ListJobsRequest) UnmarshalYAML(data []byte) error {
+    return protoyaml.Unmarshal(data, x)
+}
+
+func (x *ListJobsRequest) MarshalJSON() ([]byte, error) {
+    return protojson.Marshal(x)
+}
+
+func (x *ListJobsRequest) UnmarshalJSON(data []byte) error {
+    return protojson.Unmarshal(data, x)
+}
+
+func (x *ListJobsResponse) Kind() string {
+    return "ListJobsResponse"
+}
+
+func (x *ListJobsResponse) NewSlice() []*ListJobsResponse {
+    return []*ListJobsResponse{}
+}
+
+func (x *ListJobsResponse) MarshalYAML() ([]byte, error) {
+    return protoyaml.Marshal(x)
+}
+
+func (x *ListJobsResponse) UnmarshalYAML(data []byte) error {
+    return protoyaml.Unmarshal(data, x)
+}
+
+func (x *ListJobsResponse) MarshalJSON() ([]byte, error) {
+    return protojson.Marshal(x)
+}
+
+func (x *ListJobsResponse) UnmarshalJSON(data []byte) error {
+    return protojson.Unmarshal(data, x)
+}
+
+func (x *ListJobsResponse) SetError(err *Error) {
+    x.Error = err
+}
+
+func (x *Race) Kind() string {
+    return "Race"
+}
+
+func (x *Race) NewSlice() []*Race {
+    return []*Race{}
+}
+
+func (x *Race) MarshalYAML() ([]byte, error) {
+    return protoyaml.Marshal(x)
+}
+
+func (x *Race) UnmarshalYAML(data []byte) error {
+    return protoyaml.Unmarshal(data, x)
+}
+
+func (x *Race) MarshalJSON() ([]byte, error) {
+    return protojson.Marshal(x)
+}
+
+func (x *Race) UnmarshalJSON(data []byte) error {
+    return protojson.Unmarshal(data, x)
+}
+
+func (x *GetRacesRequest) Kind() string {
+    return "GetRacesRequest"
+}
+
+func (x *GetRacesRequest) NewSlice() []*GetRacesRequest {
+    return []*GetRacesRequest{}
+}
+
+func (x *GetRacesRequest) MarshalYAML() ([]byte, error) {
+    return protoyaml.Marshal(x)
+}
+
+func (x *GetRacesRequest) UnmarshalYAML(data []byte) error {
+    return protoyaml.Unmarshal(data, x)
+}
+
+func (x *GetRacesRequest) MarshalJSON() ([]byte, error) {
+    return protojson.Marshal(x)
+}
+
+func (x *GetRacesRequest) UnmarshalJSON(data []byte) error {
+    return protojson.Unmarshal(data, x)
+}
+
+func (x *GetRacesResponse) Kind() string {
+    return "GetRacesResponse"
+}
+
+func (x *GetRacesResponse) NewSlice() []*GetRacesResponse {
+    return []*GetRacesResponse{}
+}
+
+func (x *GetRacesResponse) MarshalYAML() ([]byte, error) {
+    return protoyaml.Marshal(x)
+}
+
+func (x *GetRacesResponse) UnmarshalYAML(data []byte) error {
+    return protoyaml.Unmarshal(data, x)
+}
+
+func (x *GetRacesResponse) MarshalJSON() ([]byte, error) {
+    return protojson.Marshal(x)
+}
+
+func (x *GetRacesResponse) UnmarshalJSON(data []byte) error {
+    return protojson.Unmarshal(data, x)
+}
+
+func (x *GetRacesResponse) SetError(err *Error) {
+    x.Error = err
+}
+
+func (x *SetRacesRequest) Kind() string {
+    return "SetRacesRequest"
+}
+
+func (x *SetRacesRequest) NewSlice() []*SetRacesRequest {
+    return []*SetRacesRequest{}
+}
+
+func (x *SetRacesRequest) MarshalYAML() ([]byte, error) {
+    return protoyaml.Marshal(x)
+}
+
+func (x *SetRacesRequest) UnmarshalYAML(data []byte) error {
+    return protoyaml.Unmarshal(data, x)
+}
+
+func (x *SetRacesRequest) MarshalJSON() ([]byte, error) {
+    return protojson.Marshal(x)
+}
+
+func (x *SetRacesRequest) UnmarshalJSON(data []byte) error {
+    return protojson.Unmarshal(data, x)
+}
+
+func (x *SetRacesResponse) Kind() string {
+    return "SetRacesResponse"
+}
+
+func (x *SetRacesResponse) NewSlice() []*SetRacesResponse {
+    return []*SetRacesResponse{}
+}
+
+func (x *SetRacesResponse) MarshalYAML() ([]byte, error) {
+    return protoyaml.Marshal(x)
+}
+
+func (x *SetRacesResponse) UnmarshalYAML(data []byte) error {
+    return protoyaml.Unmarshal(data, x)
+}
+
+func (x *SetRacesResponse) MarshalJSON() ([]byte, error) {
+    return protojson.Marshal(x)
+}
+
+func (x *SetRacesResponse) UnmarshalJSON(data []byte) error {
+    return protojson.Unmarshal(data, x)
+}
+
+func (x *SetRacesResponse) SetError(err *Error) {
+    x.Error = err
+}
+
+func (x *DeleteRaceRequest) Kind() string {
+    return "DeleteRaceRequest"
+}
+
+func (x *DeleteRaceRequest) NewSlice() []*DeleteRaceRequest {
+    return []*DeleteRaceRequest{}
+}
+
+func (x *DeleteRaceRequest) MarshalYAML() ([]byte, error) {
+    return protoyaml.Marshal(x)
+}
+
+func (x *DeleteRaceRequest) UnmarshalYAML(data []byte) error {
+    return protoyaml.Unmarshal(data, x)
+}
+
+func (x *DeleteRaceRequest) MarshalJSON() ([]byte, error) {
+    return protojson.Marshal(x)
+}
+
+func (x *DeleteRaceRequest) UnmarshalJSON(data []byte) error {
+    return protojson.Unmarshal(data, x)
+}
+
+func (x *DeleteRaceResponse) Kind() string {
+    return "DeleteRaceResponse"
+}
+
+func (x *DeleteRaceResponse) NewSlice() []*DeleteRaceResponse {
+    return []*DeleteRaceResponse{}
+}
+
+func (x *DeleteRaceResponse) MarshalYAML() ([]byte, error) {
+    return protoyaml.Marshal(x)
+}
+
+func (x *DeleteRaceResponse) UnmarshalYAML(data []byte) error {
+    return protoyaml.Unmarshal(data, x)
+}
+
+func (x *DeleteRaceResponse) MarshalJSON() ([]byte, error) {
+    return protojson.Marshal(x)
+}
+
+func (x *DeleteRaceResponse) UnmarshalJSON(data []byte) error {
+    return protojson.Unmarshal(data, x)
+}
+
+func (x *DeleteRaceResponse) SetError(err *Error) {
+    x.Error = err
+}
+
+func (x *ListRacesRequest) Kind() string {
+    return "ListRacesRequest"
+}
+
+func (x *ListRacesRequest) NewSlice() []*ListRacesRequest {
+    return []*ListRacesRequest{}
+}
+
+func (x *ListRacesRequest) MarshalYAML() ([]byte, error) {
+    return protoyaml.Marshal(x)
+}
+
+func (x *ListRacesRequest) UnmarshalYAML(data []byte) error {
+    return protoyaml.Unmarshal(data, x)
+}
+
+func (x *ListRacesRequest) MarshalJSON() ([]byte, error) {
+    return protojson.Marshal(x)
+}
+
+func (x *ListRacesRequest) UnmarshalJSON(data []byte) error {
+    return protojson.Unmarshal(data, x)
+}
+
+func (x *ListRacesResponse) Kind() string {
+    return "ListRacesResponse"
+}
+
+func (x *ListRacesResponse) NewSlice() []*ListRacesResponse {
+    return []*ListRacesResponse{}
+}
+
+func (x *ListRacesResponse) MarshalYAML() ([]byte, error) {
+    return protoyaml.Marshal(x)
+}
+
+func (x *ListRacesResponse) UnmarshalYAML(data []byte) error {
+    return protoyaml.Unmarshal(data, x)
+}
+
+func (x *ListRacesResponse) MarshalJSON() ([]byte, error) {
+    return protojson.Marshal(x)
+}
+
+func (x *ListRacesResponse) UnmarshalJSON(data []byte) error {
+    return protojson.Unmarshal(data, x)
+}
+
+func (x *ListRacesResponse) SetError(err *Error) {
+    x.Error = err
 }
 
 func (x *ActorStatus) Kind() string {
     return "ActorStatus"
-}
-
-func (x *ActorStatus) New() *ActorStatus {
-    return &ActorStatus{}
 }
 
 func (x *ActorStatus) NewSlice() []*ActorStatus {
@@ -771,10 +1035,6 @@ func (x *Actor) Kind() string {
     return "Actor"
 }
 
-func (x *Actor) New() *Actor {
-    return &Actor{}
-}
-
 func (x *Actor) NewSlice() []*Actor {
     return []*Actor{}
 }
@@ -799,10 +1059,6 @@ func (x *GetActorsRequest) Kind() string {
     return "GetActorsRequest"
 }
 
-func (x *GetActorsRequest) New() *GetActorsRequest {
-    return &GetActorsRequest{}
-}
-
 func (x *GetActorsRequest) NewSlice() []*GetActorsRequest {
     return []*GetActorsRequest{}
 }
@@ -825,10 +1081,6 @@ func (x *GetActorsRequest) UnmarshalJSON(data []byte) error {
 
 func (x *GetActorsResponse) Kind() string {
     return "GetActorsResponse"
-}
-
-func (x *GetActorsResponse) New() *GetActorsResponse {
-    return &GetActorsResponse{}
 }
 
 func (x *GetActorsResponse) NewSlice() []*GetActorsResponse {
@@ -859,10 +1111,6 @@ func (x *SetActorsRequest) Kind() string {
     return "SetActorsRequest"
 }
 
-func (x *SetActorsRequest) New() *SetActorsRequest {
-    return &SetActorsRequest{}
-}
-
 func (x *SetActorsRequest) NewSlice() []*SetActorsRequest {
     return []*SetActorsRequest{}
 }
@@ -885,10 +1133,6 @@ func (x *SetActorsRequest) UnmarshalJSON(data []byte) error {
 
 func (x *SetActorsResponse) Kind() string {
     return "SetActorsResponse"
-}
-
-func (x *SetActorsResponse) New() *SetActorsResponse {
-    return &SetActorsResponse{}
 }
 
 func (x *SetActorsResponse) NewSlice() []*SetActorsResponse {
@@ -919,10 +1163,6 @@ func (x *DeleteActorRequest) Kind() string {
     return "DeleteActorRequest"
 }
 
-func (x *DeleteActorRequest) New() *DeleteActorRequest {
-    return &DeleteActorRequest{}
-}
-
 func (x *DeleteActorRequest) NewSlice() []*DeleteActorRequest {
     return []*DeleteActorRequest{}
 }
@@ -945,10 +1185,6 @@ func (x *DeleteActorRequest) UnmarshalJSON(data []byte) error {
 
 func (x *DeleteActorResponse) Kind() string {
     return "DeleteActorResponse"
-}
-
-func (x *DeleteActorResponse) New() *DeleteActorResponse {
-    return &DeleteActorResponse{}
 }
 
 func (x *DeleteActorResponse) NewSlice() []*DeleteActorResponse {
@@ -979,10 +1215,6 @@ func (x *ListActorsRequest) Kind() string {
     return "ListActorsRequest"
 }
 
-func (x *ListActorsRequest) New() *ListActorsRequest {
-    return &ListActorsRequest{}
-}
-
 func (x *ListActorsRequest) NewSlice() []*ListActorsRequest {
     return []*ListActorsRequest{}
 }
@@ -1005,10 +1237,6 @@ func (x *ListActorsRequest) UnmarshalJSON(data []byte) error {
 
 func (x *ListActorsResponse) Kind() string {
     return "ListActorsResponse"
-}
-
-func (x *ListActorsResponse) New() *ListActorsResponse {
-    return &ListActorsResponse{}
 }
 
 func (x *ListActorsResponse) NewSlice() []*ListActorsResponse {
@@ -1035,12 +1263,520 @@ func (x *ListActorsResponse) SetError(err *Error) {
     x.Error = err
 }
 
-func (x *Change) Kind() string {
-    return "Change"
+func (x *Faction) Kind() string {
+    return "Faction"
 }
 
-func (x *Change) New() *Change {
-    return &Change{}
+func (x *Faction) NewSlice() []*Faction {
+    return []*Faction{}
+}
+
+func (x *Faction) MarshalYAML() ([]byte, error) {
+    return protoyaml.Marshal(x)
+}
+
+func (x *Faction) UnmarshalYAML(data []byte) error {
+    return protoyaml.Unmarshal(data, x)
+}
+
+func (x *Faction) MarshalJSON() ([]byte, error) {
+    return protojson.Marshal(x)
+}
+
+func (x *Faction) UnmarshalJSON(data []byte) error {
+    return protojson.Unmarshal(data, x)
+}
+
+func (x *FactionStatus) Kind() string {
+    return "FactionStatus"
+}
+
+func (x *FactionStatus) NewSlice() []*FactionStatus {
+    return []*FactionStatus{}
+}
+
+func (x *FactionStatus) MarshalYAML() ([]byte, error) {
+    return protoyaml.Marshal(x)
+}
+
+func (x *FactionStatus) UnmarshalYAML(data []byte) error {
+    return protoyaml.Unmarshal(data, x)
+}
+
+func (x *FactionStatus) MarshalJSON() ([]byte, error) {
+    return protojson.Marshal(x)
+}
+
+func (x *FactionStatus) UnmarshalJSON(data []byte) error {
+    return protojson.Unmarshal(data, x)
+}
+
+func (x *GetFactionsRequest) Kind() string {
+    return "GetFactionsRequest"
+}
+
+func (x *GetFactionsRequest) NewSlice() []*GetFactionsRequest {
+    return []*GetFactionsRequest{}
+}
+
+func (x *GetFactionsRequest) MarshalYAML() ([]byte, error) {
+    return protoyaml.Marshal(x)
+}
+
+func (x *GetFactionsRequest) UnmarshalYAML(data []byte) error {
+    return protoyaml.Unmarshal(data, x)
+}
+
+func (x *GetFactionsRequest) MarshalJSON() ([]byte, error) {
+    return protojson.Marshal(x)
+}
+
+func (x *GetFactionsRequest) UnmarshalJSON(data []byte) error {
+    return protojson.Unmarshal(data, x)
+}
+
+func (x *GetFactionsResponse) Kind() string {
+    return "GetFactionsResponse"
+}
+
+func (x *GetFactionsResponse) NewSlice() []*GetFactionsResponse {
+    return []*GetFactionsResponse{}
+}
+
+func (x *GetFactionsResponse) MarshalYAML() ([]byte, error) {
+    return protoyaml.Marshal(x)
+}
+
+func (x *GetFactionsResponse) UnmarshalYAML(data []byte) error {
+    return protoyaml.Unmarshal(data, x)
+}
+
+func (x *GetFactionsResponse) MarshalJSON() ([]byte, error) {
+    return protojson.Marshal(x)
+}
+
+func (x *GetFactionsResponse) UnmarshalJSON(data []byte) error {
+    return protojson.Unmarshal(data, x)
+}
+
+func (x *GetFactionsResponse) SetError(err *Error) {
+    x.Error = err
+}
+
+func (x *SetFactionsRequest) Kind() string {
+    return "SetFactionsRequest"
+}
+
+func (x *SetFactionsRequest) NewSlice() []*SetFactionsRequest {
+    return []*SetFactionsRequest{}
+}
+
+func (x *SetFactionsRequest) MarshalYAML() ([]byte, error) {
+    return protoyaml.Marshal(x)
+}
+
+func (x *SetFactionsRequest) UnmarshalYAML(data []byte) error {
+    return protoyaml.Unmarshal(data, x)
+}
+
+func (x *SetFactionsRequest) MarshalJSON() ([]byte, error) {
+    return protojson.Marshal(x)
+}
+
+func (x *SetFactionsRequest) UnmarshalJSON(data []byte) error {
+    return protojson.Unmarshal(data, x)
+}
+
+func (x *SetFactionsResponse) Kind() string {
+    return "SetFactionsResponse"
+}
+
+func (x *SetFactionsResponse) NewSlice() []*SetFactionsResponse {
+    return []*SetFactionsResponse{}
+}
+
+func (x *SetFactionsResponse) MarshalYAML() ([]byte, error) {
+    return protoyaml.Marshal(x)
+}
+
+func (x *SetFactionsResponse) UnmarshalYAML(data []byte) error {
+    return protoyaml.Unmarshal(data, x)
+}
+
+func (x *SetFactionsResponse) MarshalJSON() ([]byte, error) {
+    return protojson.Marshal(x)
+}
+
+func (x *SetFactionsResponse) UnmarshalJSON(data []byte) error {
+    return protojson.Unmarshal(data, x)
+}
+
+func (x *SetFactionsResponse) SetError(err *Error) {
+    x.Error = err
+}
+
+func (x *DeleteFactionRequest) Kind() string {
+    return "DeleteFactionRequest"
+}
+
+func (x *DeleteFactionRequest) NewSlice() []*DeleteFactionRequest {
+    return []*DeleteFactionRequest{}
+}
+
+func (x *DeleteFactionRequest) MarshalYAML() ([]byte, error) {
+    return protoyaml.Marshal(x)
+}
+
+func (x *DeleteFactionRequest) UnmarshalYAML(data []byte) error {
+    return protoyaml.Unmarshal(data, x)
+}
+
+func (x *DeleteFactionRequest) MarshalJSON() ([]byte, error) {
+    return protojson.Marshal(x)
+}
+
+func (x *DeleteFactionRequest) UnmarshalJSON(data []byte) error {
+    return protojson.Unmarshal(data, x)
+}
+
+func (x *DeleteFactionResponse) Kind() string {
+    return "DeleteFactionResponse"
+}
+
+func (x *DeleteFactionResponse) NewSlice() []*DeleteFactionResponse {
+    return []*DeleteFactionResponse{}
+}
+
+func (x *DeleteFactionResponse) MarshalYAML() ([]byte, error) {
+    return protoyaml.Marshal(x)
+}
+
+func (x *DeleteFactionResponse) UnmarshalYAML(data []byte) error {
+    return protoyaml.Unmarshal(data, x)
+}
+
+func (x *DeleteFactionResponse) MarshalJSON() ([]byte, error) {
+    return protojson.Marshal(x)
+}
+
+func (x *DeleteFactionResponse) UnmarshalJSON(data []byte) error {
+    return protojson.Unmarshal(data, x)
+}
+
+func (x *DeleteFactionResponse) SetError(err *Error) {
+    x.Error = err
+}
+
+func (x *ListFactionsRequest) Kind() string {
+    return "ListFactionsRequest"
+}
+
+func (x *ListFactionsRequest) NewSlice() []*ListFactionsRequest {
+    return []*ListFactionsRequest{}
+}
+
+func (x *ListFactionsRequest) MarshalYAML() ([]byte, error) {
+    return protoyaml.Marshal(x)
+}
+
+func (x *ListFactionsRequest) UnmarshalYAML(data []byte) error {
+    return protoyaml.Unmarshal(data, x)
+}
+
+func (x *ListFactionsRequest) MarshalJSON() ([]byte, error) {
+    return protojson.Marshal(x)
+}
+
+func (x *ListFactionsRequest) UnmarshalJSON(data []byte) error {
+    return protojson.Unmarshal(data, x)
+}
+
+func (x *ListFactionsResponse) Kind() string {
+    return "ListFactionsResponse"
+}
+
+func (x *ListFactionsResponse) NewSlice() []*ListFactionsResponse {
+    return []*ListFactionsResponse{}
+}
+
+func (x *ListFactionsResponse) MarshalYAML() ([]byte, error) {
+    return protoyaml.Marshal(x)
+}
+
+func (x *ListFactionsResponse) UnmarshalYAML(data []byte) error {
+    return protoyaml.Unmarshal(data, x)
+}
+
+func (x *ListFactionsResponse) MarshalJSON() ([]byte, error) {
+    return protojson.Marshal(x)
+}
+
+func (x *ListFactionsResponse) UnmarshalJSON(data []byte) error {
+    return protojson.Unmarshal(data, x)
+}
+
+func (x *ListFactionsResponse) SetError(err *Error) {
+    x.Error = err
+}
+
+func (x *WorldStatus) Kind() string {
+    return "WorldStatus"
+}
+
+func (x *WorldStatus) NewSlice() []*WorldStatus {
+    return []*WorldStatus{}
+}
+
+func (x *WorldStatus) MarshalYAML() ([]byte, error) {
+    return protoyaml.Marshal(x)
+}
+
+func (x *WorldStatus) UnmarshalYAML(data []byte) error {
+    return protoyaml.Unmarshal(data, x)
+}
+
+func (x *WorldStatus) MarshalJSON() ([]byte, error) {
+    return protojson.Marshal(x)
+}
+
+func (x *WorldStatus) UnmarshalJSON(data []byte) error {
+    return protojson.Unmarshal(data, x)
+}
+
+func (x *World) Kind() string {
+    return "World"
+}
+
+func (x *World) NewSlice() []*World {
+    return []*World{}
+}
+
+func (x *World) MarshalYAML() ([]byte, error) {
+    return protoyaml.Marshal(x)
+}
+
+func (x *World) UnmarshalYAML(data []byte) error {
+    return protoyaml.Unmarshal(data, x)
+}
+
+func (x *World) MarshalJSON() ([]byte, error) {
+    return protojson.Marshal(x)
+}
+
+func (x *World) UnmarshalJSON(data []byte) error {
+    return protojson.Unmarshal(data, x)
+}
+
+func (x *GetWorldsRequest) Kind() string {
+    return "GetWorldsRequest"
+}
+
+func (x *GetWorldsRequest) NewSlice() []*GetWorldsRequest {
+    return []*GetWorldsRequest{}
+}
+
+func (x *GetWorldsRequest) MarshalYAML() ([]byte, error) {
+    return protoyaml.Marshal(x)
+}
+
+func (x *GetWorldsRequest) UnmarshalYAML(data []byte) error {
+    return protoyaml.Unmarshal(data, x)
+}
+
+func (x *GetWorldsRequest) MarshalJSON() ([]byte, error) {
+    return protojson.Marshal(x)
+}
+
+func (x *GetWorldsRequest) UnmarshalJSON(data []byte) error {
+    return protojson.Unmarshal(data, x)
+}
+
+func (x *GetWorldsResponse) Kind() string {
+    return "GetWorldsResponse"
+}
+
+func (x *GetWorldsResponse) NewSlice() []*GetWorldsResponse {
+    return []*GetWorldsResponse{}
+}
+
+func (x *GetWorldsResponse) MarshalYAML() ([]byte, error) {
+    return protoyaml.Marshal(x)
+}
+
+func (x *GetWorldsResponse) UnmarshalYAML(data []byte) error {
+    return protoyaml.Unmarshal(data, x)
+}
+
+func (x *GetWorldsResponse) MarshalJSON() ([]byte, error) {
+    return protojson.Marshal(x)
+}
+
+func (x *GetWorldsResponse) UnmarshalJSON(data []byte) error {
+    return protojson.Unmarshal(data, x)
+}
+
+func (x *GetWorldsResponse) SetError(err *Error) {
+    x.Error = err
+}
+
+func (x *SetWorldRequest) Kind() string {
+    return "SetWorldRequest"
+}
+
+func (x *SetWorldRequest) NewSlice() []*SetWorldRequest {
+    return []*SetWorldRequest{}
+}
+
+func (x *SetWorldRequest) MarshalYAML() ([]byte, error) {
+    return protoyaml.Marshal(x)
+}
+
+func (x *SetWorldRequest) UnmarshalYAML(data []byte) error {
+    return protoyaml.Unmarshal(data, x)
+}
+
+func (x *SetWorldRequest) MarshalJSON() ([]byte, error) {
+    return protojson.Marshal(x)
+}
+
+func (x *SetWorldRequest) UnmarshalJSON(data []byte) error {
+    return protojson.Unmarshal(data, x)
+}
+
+func (x *SetWorldResponse) Kind() string {
+    return "SetWorldResponse"
+}
+
+func (x *SetWorldResponse) NewSlice() []*SetWorldResponse {
+    return []*SetWorldResponse{}
+}
+
+func (x *SetWorldResponse) MarshalYAML() ([]byte, error) {
+    return protoyaml.Marshal(x)
+}
+
+func (x *SetWorldResponse) UnmarshalYAML(data []byte) error {
+    return protoyaml.Unmarshal(data, x)
+}
+
+func (x *SetWorldResponse) MarshalJSON() ([]byte, error) {
+    return protojson.Marshal(x)
+}
+
+func (x *SetWorldResponse) UnmarshalJSON(data []byte) error {
+    return protojson.Unmarshal(data, x)
+}
+
+func (x *SetWorldResponse) SetError(err *Error) {
+    x.Error = err
+}
+
+func (x *DeleteWorldRequest) Kind() string {
+    return "DeleteWorldRequest"
+}
+
+func (x *DeleteWorldRequest) NewSlice() []*DeleteWorldRequest {
+    return []*DeleteWorldRequest{}
+}
+
+func (x *DeleteWorldRequest) MarshalYAML() ([]byte, error) {
+    return protoyaml.Marshal(x)
+}
+
+func (x *DeleteWorldRequest) UnmarshalYAML(data []byte) error {
+    return protoyaml.Unmarshal(data, x)
+}
+
+func (x *DeleteWorldRequest) MarshalJSON() ([]byte, error) {
+    return protojson.Marshal(x)
+}
+
+func (x *DeleteWorldRequest) UnmarshalJSON(data []byte) error {
+    return protojson.Unmarshal(data, x)
+}
+
+func (x *DeleteWorldResponse) Kind() string {
+    return "DeleteWorldResponse"
+}
+
+func (x *DeleteWorldResponse) NewSlice() []*DeleteWorldResponse {
+    return []*DeleteWorldResponse{}
+}
+
+func (x *DeleteWorldResponse) MarshalYAML() ([]byte, error) {
+    return protoyaml.Marshal(x)
+}
+
+func (x *DeleteWorldResponse) UnmarshalYAML(data []byte) error {
+    return protoyaml.Unmarshal(data, x)
+}
+
+func (x *DeleteWorldResponse) MarshalJSON() ([]byte, error) {
+    return protojson.Marshal(x)
+}
+
+func (x *DeleteWorldResponse) UnmarshalJSON(data []byte) error {
+    return protojson.Unmarshal(data, x)
+}
+
+func (x *DeleteWorldResponse) SetError(err *Error) {
+    x.Error = err
+}
+
+func (x *ListWorldsRequest) Kind() string {
+    return "ListWorldsRequest"
+}
+
+func (x *ListWorldsRequest) NewSlice() []*ListWorldsRequest {
+    return []*ListWorldsRequest{}
+}
+
+func (x *ListWorldsRequest) MarshalYAML() ([]byte, error) {
+    return protoyaml.Marshal(x)
+}
+
+func (x *ListWorldsRequest) UnmarshalYAML(data []byte) error {
+    return protoyaml.Unmarshal(data, x)
+}
+
+func (x *ListWorldsRequest) MarshalJSON() ([]byte, error) {
+    return protojson.Marshal(x)
+}
+
+func (x *ListWorldsRequest) UnmarshalJSON(data []byte) error {
+    return protojson.Unmarshal(data, x)
+}
+
+func (x *ListWorldsResponse) Kind() string {
+    return "ListWorldsResponse"
+}
+
+func (x *ListWorldsResponse) NewSlice() []*ListWorldsResponse {
+    return []*ListWorldsResponse{}
+}
+
+func (x *ListWorldsResponse) MarshalYAML() ([]byte, error) {
+    return protoyaml.Marshal(x)
+}
+
+func (x *ListWorldsResponse) UnmarshalYAML(data []byte) error {
+    return protoyaml.Unmarshal(data, x)
+}
+
+func (x *ListWorldsResponse) MarshalJSON() ([]byte, error) {
+    return protojson.Marshal(x)
+}
+
+func (x *ListWorldsResponse) UnmarshalJSON(data []byte) error {
+    return protojson.Unmarshal(data, x)
+}
+
+func (x *ListWorldsResponse) SetError(err *Error) {
+    x.Error = err
+}
+
+func (x *Change) Kind() string {
+    return "Change"
 }
 
 func (x *Change) NewSlice() []*Change {
@@ -1067,10 +1803,6 @@ func (x *OnChangeRequest) Kind() string {
     return "OnChangeRequest"
 }
 
-func (x *OnChangeRequest) New() *OnChangeRequest {
-    return &OnChangeRequest{}
-}
-
 func (x *OnChangeRequest) NewSlice() []*OnChangeRequest {
     return []*OnChangeRequest{}
 }
@@ -1093,10 +1825,6 @@ func (x *OnChangeRequest) UnmarshalJSON(data []byte) error {
 
 func (x *OnChangeResponse) Kind() string {
     return "OnChangeResponse"
-}
-
-func (x *OnChangeResponse) New() *OnChangeResponse {
-    return &OnChangeResponse{}
 }
 
 func (x *OnChangeResponse) NewSlice() []*OnChangeResponse {
@@ -1127,10 +1855,6 @@ func (x *DeferChangeRequest) Kind() string {
     return "DeferChangeRequest"
 }
 
-func (x *DeferChangeRequest) New() *DeferChangeRequest {
-    return &DeferChangeRequest{}
-}
-
 func (x *DeferChangeRequest) NewSlice() []*DeferChangeRequest {
     return []*DeferChangeRequest{}
 }
@@ -1153,10 +1877,6 @@ func (x *DeferChangeRequest) UnmarshalJSON(data []byte) error {
 
 func (x *DeferChangeResponse) Kind() string {
     return "DeferChangeResponse"
-}
-
-func (x *DeferChangeResponse) New() *DeferChangeResponse {
-    return &DeferChangeResponse{}
 }
 
 func (x *DeferChangeResponse) NewSlice() []*DeferChangeResponse {
@@ -1187,10 +1907,6 @@ func (x *AckRequest) Kind() string {
     return "AckRequest"
 }
 
-func (x *AckRequest) New() *AckRequest {
-    return &AckRequest{}
-}
-
 func (x *AckRequest) NewSlice() []*AckRequest {
     return []*AckRequest{}
 }
@@ -1215,10 +1931,6 @@ func (x *AckResponse) Kind() string {
     return "AckResponse"
 }
 
-func (x *AckResponse) New() *AckResponse {
-    return &AckResponse{}
-}
-
 func (x *AckResponse) NewSlice() []*AckResponse {
     return []*AckResponse{}
 }
@@ -1241,4 +1953,124 @@ func (x *AckResponse) UnmarshalJSON(data []byte) error {
 
 func (x *AckResponse) SetError(err *Error) {
     x.Error = err
+}
+
+func (x *Metaref) Kind() string {
+    return "Metaref"
+}
+
+func (x *Metaref) NewSlice() []*Metaref {
+    return []*Metaref{}
+}
+
+func (x *Metaref) MarshalYAML() ([]byte, error) {
+    return protoyaml.Marshal(x)
+}
+
+func (x *Metaref) UnmarshalYAML(data []byte) error {
+    return protoyaml.Unmarshal(data, x)
+}
+
+func (x *Metaref) MarshalJSON() ([]byte, error) {
+    return protojson.Marshal(x)
+}
+
+func (x *Metaref) UnmarshalJSON(data []byte) error {
+    return protojson.Unmarshal(data, x)
+}
+
+func (x *Distribution) Kind() string {
+    return "Distribution"
+}
+
+func (x *Distribution) NewSlice() []*Distribution {
+    return []*Distribution{}
+}
+
+func (x *Distribution) MarshalYAML() ([]byte, error) {
+    return protoyaml.Marshal(x)
+}
+
+func (x *Distribution) UnmarshalYAML(data []byte) error {
+    return protoyaml.Unmarshal(data, x)
+}
+
+func (x *Distribution) MarshalJSON() ([]byte, error) {
+    return protojson.Marshal(x)
+}
+
+func (x *Distribution) UnmarshalJSON(data []byte) error {
+    return protojson.Unmarshal(data, x)
+}
+
+func (x *Select) Kind() string {
+    return "Select"
+}
+
+func (x *Select) NewSlice() []*Select {
+    return []*Select{}
+}
+
+func (x *Select) MarshalYAML() ([]byte, error) {
+    return protoyaml.Marshal(x)
+}
+
+func (x *Select) UnmarshalYAML(data []byte) error {
+    return protoyaml.Unmarshal(data, x)
+}
+
+func (x *Select) MarshalJSON() ([]byte, error) {
+    return protojson.Marshal(x)
+}
+
+func (x *Select) UnmarshalJSON(data []byte) error {
+    return protojson.Unmarshal(data, x)
+}
+
+func (x *Feeling) Kind() string {
+    return "Feeling"
+}
+
+func (x *Feeling) NewSlice() []*Feeling {
+    return []*Feeling{}
+}
+
+func (x *Feeling) MarshalYAML() ([]byte, error) {
+    return protoyaml.Marshal(x)
+}
+
+func (x *Feeling) UnmarshalYAML(data []byte) error {
+    return protoyaml.Unmarshal(data, x)
+}
+
+func (x *Feeling) MarshalJSON() ([]byte, error) {
+    return protojson.Marshal(x)
+}
+
+func (x *Feeling) UnmarshalJSON(data []byte) error {
+    return protojson.Unmarshal(data, x)
+}
+
+func (x *Thought) Kind() string {
+    return "Thought"
+}
+
+func (x *Thought) NewSlice() []*Thought {
+    return []*Thought{}
+}
+
+func (x *Thought) MarshalYAML() ([]byte, error) {
+    return protoyaml.Marshal(x)
+}
+
+func (x *Thought) UnmarshalYAML(data []byte) error {
+    return protoyaml.Unmarshal(data, x)
+}
+
+func (x *Thought) MarshalJSON() ([]byte, error) {
+    return protojson.Marshal(x)
+}
+
+func (x *Thought) UnmarshalJSON(data []byte) error {
+    return protojson.Unmarshal(data, x)
 }

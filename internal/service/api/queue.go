@@ -34,7 +34,7 @@ type Queue struct {
 
 func newQueue(qu queue.Queue) (*Queue, error) {
 	// generate a unique id for this server
-	id := uuid.NewID().String()
+	id := fmt.Sprintf("internal.queue.%s", uuid.NewID().String())
 	l := log.Sublogger("apiserver.Queue", map[string]interface{}{"id": id})
 
 	// prep a cache for acks that this server is waiting on
@@ -43,7 +43,7 @@ func newQueue(qu queue.Queue) (*Queue, error) {
 	)
 
 	// subscribe to an ack topic for this server
-	sub, err := qu.Subscribe("", topicChangesAck, []string{id, ""})
+	sub, err := qu.Subscribe(id, topicChangesAck, []string{id, ""})
 	if err != nil {
 		return nil, err
 	}
@@ -66,6 +66,7 @@ func newQueue(qu queue.Queue) (*Queue, error) {
 }
 
 func (q *Queue) Close() {
+	q.qu.DeleteQueue(q.id)
 	q.ackSub.Close()
 	q.qu.Close()
 }
@@ -90,7 +91,7 @@ func (q *Queue) Ack(id string) error {
 	return fmt.Errorf("invalid ack id %s", id)
 }
 
-func (q *Queue) DeferAck(msg queue.Message) string {
+func (q *Queue) DeferAck(msg queue.Message, change *structs.Change) string {
 	ackId := fmt.Sprintf("%s.%s", q.id, msg.Id())
 	q.ackCache.Set(msg.Id(), msg, ttlcache.DefaultTTL)
 	return ackId
@@ -108,10 +109,7 @@ func (q *Queue) DequeueApiReq() (queue.Subscription, error) {
 
 // PublishChange publishes a change to the change stream.
 func (q *Queue) PublishChange(ctx context.Context, ch *structs.Change) error {
-	key, err := toQueueKey(ch)
-	if err != nil {
-		return err
-	}
+	key := toQueueKey(ch)
 	data, err := ch.MarshalJSON()
 	if err != nil {
 		return err
@@ -123,18 +121,13 @@ func (q *Queue) PublishChange(ctx context.Context, ch *structs.Change) error {
 // queueName can be given to configure a durable queue. If not given
 // a temporary non-durable queue will be used.
 func (q *Queue) SubscribeChange(ch *structs.Change, queueName string) (queue.Subscription, error) {
-	key, err := toQueueKey(ch)
-	if err != nil {
-		return nil, err
-	}
-	if queueName != "" { // ensure that queue name cannot clash with something internal
-		queueName = fmt.Sprintf("subscribe-change.apiserver.%s", queueName)
-	}
+	key := toQueueKey(ch)
+	queueName = fmt.Sprintf("subscribe-change.apiserver.%s", queueName)
 	return q.qu.Subscribe(queueName, topicChanges, key)
 }
 
 // DeferChange defers a change to be processed at given tick.
-func (q *Queue) DeferChange(ctx context.Context, ch *structs.Change, tick int64) error {
+func (q *Queue) DeferChange(ctx context.Context, ch *structs.Change, tick uint64) error {
 	data, err := ch.MarshalJSON()
 	if err != nil {
 		return err
@@ -147,7 +140,7 @@ func (q *Queue) DeferChange(ctx context.Context, ch *structs.Change, tick int64)
 }
 
 // SubscribeDeferredChanges subscribes to changes that have been deferred to a given tick.
-func (q *Queue) SubscribeDeferredChanges(world string, tick int64) (queue.Subscription, error) {
+func (q *Queue) SubscribeDeferredChanges(world string, tick uint64) (queue.Subscription, error) {
 	qname, err := deferredQueueName(world, tick)
 	if err != nil {
 		return nil, err
@@ -158,7 +151,7 @@ func (q *Queue) SubscribeDeferredChanges(world string, tick int64) (queue.Subscr
 // DeleteDeferredChangeQueue deletes the queue for deferred changes at given tick.
 // This should be called when the queue is no longer needed to tidy old queues we're
 // never going to use again.
-func (q *Queue) DeleteDeferredChangeQueue(world string, tick int64) error {
+func (q *Queue) DeleteDeferredChangeQueue(world string, tick uint64) error {
 	qname, err := deferredQueueName(world, tick)
 	if err != nil {
 		return err
@@ -166,30 +159,14 @@ func (q *Queue) DeleteDeferredChangeQueue(world string, tick int64) error {
 	return q.qu.DeleteQueue(qname)
 }
 
-func deferredQueueName(world string, tick int64) (string, error) {
+func deferredQueueName(world string, tick uint64) (string, error) {
 	if !uuid.IsValidUUID(world) {
 		return "", fmt.Errorf("invalid world id %s", world)
 	}
-	return fmt.Sprintf("apiserver-defer-%s.%d", world, tick), nil
+	return fmt.Sprintf("internal.defer.%s.%d", world, tick), nil
 }
 
 // toQueueKey converts a Change into a queue Key ([]string)
-func toQueueKey(ch *structs.Change) ([]string, error) {
-	key := make([]string, 4) // world, area, (metadata) key, id
-
-	key[0] = ch.World
-	key[1] = ch.Area
-	key[3] = ch.Id
-
-	metakey, ok := structs.Metakey_name[int32(ch.Key)]
-	if !ok {
-		return nil, fmt.Errorf("invalid key %d", ch.Key)
-	}
-	if ch.Key == structs.Metakey_KeyNone {
-		key[2] = ""
-	} else {
-		key[2] = metakey
-	}
-
-	return key, nil
+func toQueueKey(ch *structs.Change) []string {
+	return []string{ch.World, ch.Key, ch.Type, ch.Id}
 }

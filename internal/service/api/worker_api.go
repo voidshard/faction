@@ -12,9 +12,22 @@ var (
 	kindSetWorld   = (&structs.SetWorldRequest{}).Kind()
 	kindSetFaction = (&structs.SetFactionsRequest{}).Kind()
 	kindSetActor   = (&structs.SetActorsRequest{}).Kind()
-	kindWorld      = (&structs.World{}).Kind()
-	kindFaction    = (&structs.Faction{}).Kind()
-	kindActor      = (&structs.Actor{}).Kind()
+	kindSetRace    = (&structs.SetRacesRequest{}).Kind()
+	kindSetCulture = (&structs.SetCulturesRequest{}).Kind()
+	kindSetJob     = (&structs.SetJobsRequest{}).Kind()
+
+	kindDeleteWorld   = (&structs.DeleteWorldRequest{}).Kind()
+	kindDeleteFaction = (&structs.DeleteFactionRequest{}).Kind()
+	kindDeleteActor   = (&structs.DeleteActorRequest{}).Kind()
+	kindDeleteRace    = (&structs.DeleteRaceRequest{}).Kind()
+	kindDeleteCulture = (&structs.DeleteCultureRequest{}).Kind()
+	kindDeleteJob     = (&structs.DeleteJobRequest{}).Kind()
+
+	kindWorld   = (&structs.World{}).Kind()
+	kindFaction = (&structs.Faction{}).Kind()
+	kindActor   = (&structs.Actor{}).Kind()
+	kindRace    = (&structs.Race{}).Kind()
+	kindCulture = (&structs.Culture{}).Kind()
 )
 
 // API Worker handles write operations to the API, reading from a queue and acknowledging

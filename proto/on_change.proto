@@ -1,14 +1,14 @@
 syntax = "proto3";
 option go_package = "pkg/structs";
 
-import "metadata.proto";
+import "common.proto";
 import "errors.proto";
 
 message Change {
-    string World = 1;
-    string Area = 2;
-    Metakey Key = 3;
-    string Id = 4;
+    string World = 1; // world this change occurs in
+    string Key = 2; // key designating the object type this represents (eg. actor, faction)
+    string Type = 3; // type; a subtype so objects can have custom controllers
+    string Id = 4; // object id
 }
 
 message OnChangeRequest {
@@ -26,8 +26,8 @@ message DeferChangeRequest {
     Change Data = 1; // world, key and Id are required
 
     // one of these is required
-    optional int64 ToTick = 2; // The tick to defer the change to
-    optional int64 ByTick = 3; // The tick to defer the change by, short hand for "ToTick=World.Tick+ByTick"
+    optional uint64 ToTick = 2; // The tick to defer the change to
+    optional uint64 ByTick = 3; // The tick to defer the change by, short hand for "ToTick=World.Tick+ByTick"
 }
 
 message DeferChangeResponse {

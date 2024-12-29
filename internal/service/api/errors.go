@@ -22,7 +22,7 @@ func toError(err error, code ...structs.ErrorCode) *structs.Error {
 	if errors.Is(err, db.ErrNotFound) || errors.Is(err, ErrNotFound) {
 		return &structs.Error{Code: structs.ErrorCode_NOT_FOUND, Message: err.Error()}
 	}
-	if errors.Is(err, db.ErrEtagMismatch) {
+	if errors.Is(err, db.ErrDuplicate) || errors.Is(err, db.ErrEtagMismatch) {
 		return &structs.Error{Code: structs.ErrorCode_CONFLICT, Message: err.Error()}
 	}
 	if errors.Is(err, db.ErrInvalid) || errors.Is(err, ErrInvalid) {

@@ -46,6 +46,7 @@ type optQueue struct {
 type optsAPI struct {
 	optGeneral
 	optDatabase
+	optLocker
 	optSearchbase
 	optQueue
 

@@ -1,5 +1,6 @@
 package structs
 
+/*
 // Relationships applies the sort.Interface to a slice of Relationships
 type Relationships []*Relationship
 
@@ -19,3 +20,4 @@ func (r Relationships) Swap(i, j int) {
 func (x *Relationship) SetMemories(v []*Memory) {
 	x.Memories = v
 }
+*/

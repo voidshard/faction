@@ -1,5 +1,11 @@
 package structs
 
+/*
+type Memory struct {
+	Weight   int
+	Category string
+}
+
 // Memories applies the sort.Interface to a slice of Memories
 type Memories []*Memory
 
@@ -15,3 +21,4 @@ func (m Memories) Less(i, j int) bool {
 func (m Memories) Swap(i, j int) {
 	m[i], m[j] = m[j], m[i]
 }
+*/

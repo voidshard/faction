@@ -17,8 +17,8 @@ type cliListCmd struct {
 		Name string `positional-arg-name:"object" description:"Object to list"`
 	} `positional-args:"true" required:"true"`
 
-	Limit  int `long:"limit" default:"100" description:"Limit number of results"`
-	Offset int `short:"o" long:"offset" default:"0" description:"Offset results"`
+	Limit  uint64 `long:"limit" default:"100" description:"Limit number of results"`
+	Offset uint64 `short:"o" long:"offset" default:"0" description:"Offset results"`
 
 	Labels map[string]string `short:"l" long:"labels" description:"Filter by labels"`
 }
@@ -40,8 +40,8 @@ func (c *cliListCmd) Execute(args []string) error {
 		return err
 	}
 
-	lim := uint32(c.Limit)
-	off := uint32(c.Offset)
+	lim := uint64(c.Limit)
+	off := uint64(c.Offset)
 
 	switch obj.(type) {
 	case *structs.Actor:

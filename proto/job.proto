@@ -1,0 +1,54 @@
+syntax = "proto3";
+option go_package = "pkg/structs";
+
+import "errors.proto";
+
+message Job {
+    string Id = 1;
+    string Etag = 2;
+    string World = 3;
+    map<string, string> Labels = 4;
+    map<string, double> Attributes = 5;
+    string Type = 6;
+}
+
+message GetJobsRequest {
+    repeated string Ids = 1;
+    string World = 2;
+}
+
+message GetJobsResponse {
+    repeated Job Data = 1;
+    optional Error Error = 2;
+}
+
+message SetJobsRequest {
+    repeated Job Data = 1;
+    string World = 2;
+}
+
+message SetJobsResponse {
+    string Etag = 1;
+    optional Error Error = 2;
+}
+
+message DeleteJobRequest {
+    string Id = 1;
+    string World = 2;
+}
+
+message DeleteJobResponse {
+    optional Error Error = 1;
+}
+
+message ListJobsRequest {
+    optional uint64 Limit = 1;
+    optional uint64 Offset = 2;
+    map<string, string> Labels = 3;
+    string World = 4;
+}
+
+message ListJobsResponse {
+    repeated Job Data = 1;
+    optional Error Error = 2;
+}

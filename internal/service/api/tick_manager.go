@@ -10,6 +10,7 @@ import (
 	"github.com/voidshard/faction/internal/queue"
 	"github.com/voidshard/faction/pkg/structs"
 	"github.com/voidshard/faction/pkg/util/log"
+	"github.com/voidshard/faction/pkg/util/uuid"
 )
 
 // tickManager is responsible for watching each world and monitoring the current Tick of each.
@@ -32,7 +33,7 @@ type tickManager struct {
 	worldChanges queue.Subscription
 
 	// cache of world id -> current tick, strictly increasing
-	cache     map[string]int64
+	cache     map[string]uint64
 	cacheLock sync.Mutex
 
 	// worldid,tick -> subscription (subscriptions to deferred changes for a given world/tick)
@@ -42,7 +43,7 @@ type tickManager struct {
 
 func newTickManager(name string, db db.Database, qu *Queue) (*tickManager, error) {
 	// ie. subscribe to all changes on all world objects
-	sub, err := qu.SubscribeChange(&structs.Change{Key: structs.Metakey_KeyWorld}, "")
+	sub, err := qu.SubscribeChange(&structs.Change{Key: kindWorld}, fmt.Sprintf("internal.tick-manager.%s", uuid.NewID().String()))
 	if err != nil {
 		return nil, err
 	}
@@ -52,7 +53,7 @@ func newTickManager(name string, db db.Database, qu *Queue) (*tickManager, error
 		db:           db,
 		qu:           qu,
 		worldChanges: sub,
-		cache:        make(map[string]int64),
+		cache:        make(map[string]uint64),
 		cacheLock:    sync.Mutex{},
 		subs:         make(map[string]queue.Subscription),
 		subsLock:     sync.Mutex{},
@@ -92,7 +93,7 @@ func (tc *tickManager) handleWorldChange(msg queue.Message) {
 		tc.cacheLock.Unlock()
 		err := tc.maybeAlterSubscriptions(ch.World, worlds[0].Tick)
 		if err != nil {
-			tc.log.Error().Str("World", ch.World).Int64("Tick", worlds[0].Tick).Err(err).Msg("Failed to alter subscriptions")
+			tc.log.Error().Str("World", ch.World).Uint64("Tick", worlds[0].Tick).Err(err).Msg("Failed to alter subscriptions")
 			pan.Err(err)
 			msg.Reject() // requeue
 			return
@@ -101,11 +102,11 @@ func (tc *tickManager) handleWorldChange(msg queue.Message) {
 		tc.cacheLock.Unlock()
 	}
 
-	tc.log.Info().Str("MessageId", msg.Id()).Str("World", ch.World).Int64("Tick", worlds[0].Tick).Msg("Updated tick cache")
+	tc.log.Info().Str("MessageId", msg.Id()).Str("World", ch.World).Uint64("Tick", worlds[0].Tick).Msg("Updated tick cache")
 }
 
 // Tick returns the current tick for a given world from our cache
-func (tc *tickManager) Tick(world string) (int64, error) {
+func (tc *tickManager) Tick(world string) (uint64, error) {
 	tc.cacheLock.Lock()
 	defer tc.cacheLock.Unlock()
 
@@ -150,7 +151,7 @@ func (tc *tickManager) watchSubscription(sub queue.Subscription) {
 	}
 }
 
-func (tc *tickManager) maybeAlterSubscriptions(world string, tick int64) error {
+func (tc *tickManager) maybeAlterSubscriptions(world string, tick uint64) error {
 	// since tick is always increasing, we should always sub onto the next tick
 	// and remove the oldest tick (tick - 4).
 	// ie. if we're at tick 10, we'll sub to 7,8,9,10 and remove 6
@@ -175,7 +176,7 @@ func (tc *tickManager) maybeAlterSubscriptions(world string, tick int64) error {
 
 		sub, err := tc.qu.SubscribeDeferredChanges(world, i)
 		if err != nil {
-			log.Warn().Str("World", world).Int("Tick", int(i)).Err(err).Msg("Failed to subscribe to deferred changes")
+			log.Warn().Str("World", world).Uint64("Tick", i).Err(err).Msg("Failed to subscribe to deferred changes")
 			return err
 		}
 		go tc.watchSubscription(sub)
@@ -193,7 +194,7 @@ func (tc *tickManager) maybeAlterSubscriptions(world string, tick int64) error {
 
 		err := tc.qu.DeleteDeferredChangeQueue(world, tick-4)
 		if err != nil {
-			tc.log.Warn().Str("World", world).Int("Tick", int(tick-4)).Err(err).Msg("Failed to delete deferred change queue")
+			tc.log.Warn().Str("World", world).Uint64("Tick", tick-4).Err(err).Msg("Failed to delete deferred change queue")
 		}
 	}
 
@@ -249,7 +250,7 @@ func (tc *tickManager) populateCache() {
 		for _, w := range worlds {
 			err = tc.maybeAlterSubscriptions(w.Id, w.Tick)
 			if err != nil {
-				tc.log.Warn().Str("World", w.Id).Int64("Tick", w.Tick).Err(err).Msg("Populating tick cache, failed to alter subscriptions")
+				tc.log.Warn().Str("World", w.Id).Uint64("Tick", w.Tick).Err(err).Msg("Populating tick cache, failed to alter subscriptions")
 				pan.Err(err)
 				time.Sleep(time.Second * 2)
 				continue

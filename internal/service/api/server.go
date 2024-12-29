@@ -15,7 +15,6 @@ import (
 	"github.com/voidshard/faction/internal/search"
 	"github.com/voidshard/faction/pkg/structs"
 	"github.com/voidshard/faction/pkg/util/log"
-	"github.com/voidshard/faction/pkg/util/uuid"
 )
 
 type backgroundWorker interface {
@@ -96,8 +95,9 @@ func (s *Server) DeferChange(ctx context.Context, in *structs.DeferChangeRequest
 		return &structs.DeferChangeResponse{Error: toError(err)}, nil
 	}
 
-	key, _ := structs.Metakey_name[int32(in.Data.Key)] // validated above
-	pan.SetAttributes(map[string]interface{}{"world": in.Data.World, "id": in.Data.Id, "key": key, "to-tick": *in.ToTick, "by-tick": *in.ByTick})
+	pan.SetAttributes(map[string]interface{}{
+		"world": in.Data.World, "id": in.Data.Id, "key": in.Data.Key, "to-tick": *in.ToTick, "by-tick": *in.ByTick,
+	})
 
 	// we've been given the specific tick to defer to (easy case)
 	if *in.ToTick > 0 {
@@ -122,10 +122,10 @@ func (s *Server) DeferChange(ctx context.Context, in *structs.DeferChangeRequest
 }
 
 func (s *Server) Worlds(ctx context.Context, in *structs.GetWorldsRequest) (*structs.GetWorldsResponse, error) {
-	pan := log.NewSpan(ctx, "api.Worlds", map[string]interface{}{"id-count": len(in.Ids)})
+	pan := log.NewSpan(ctx, "api.Worlds", map[string]interface{}{"IdCount": len(in.Ids)})
 	defer pan.End()
 
-	err := validIDs(in)
+	err := validIDs(kindWorld, in)
 	if err != nil {
 		s.log.Warn().Err(err).Msg("Invalid request")
 		pan.Err(err)
@@ -141,49 +141,19 @@ func (s *Server) Worlds(ctx context.Context, in *structs.GetWorldsRequest) (*str
 }
 
 func (s *Server) SetWorld(ctx context.Context, in *structs.SetWorldRequest) (*structs.SetWorldResponse, error) {
-	pan := log.NewSpan(ctx, "api.SetWorld", map[string]interface{}{"id": in.Data.Id})
-	defer pan.End()
-
-	err := validObject(in.Data)
-	if err != nil {
-		s.log.Warn().Err(err).Msg("Invalid request")
-		pan.Err(err)
-		return &structs.SetWorldResponse{Error: toError(err)}, nil
-	}
-
 	obj := &structs.SetWorldResponse{}
-	s.genericAsyncRequestResponse(ctx, in, obj)
-	if obj.Error != nil {
-		err := fmt.Errorf(obj.Error.Message)
-		s.log.Error().Err(err).Msg("Failed to set world")
-		pan.Err(err)
-	}
+	s.genericSet(ctx, kindWorld, in.Data.Id, []structs.Object{in.Data}, in, obj)
 	return obj, nil
 }
 
 func (s *Server) DeleteWorld(ctx context.Context, in *structs.DeleteWorldRequest) (*structs.DeleteWorldResponse, error) {
-	pan := log.NewSpan(ctx, "api.DeleteWorld", map[string]interface{}{"id": in.Id})
-	defer pan.End()
-
-	if in == nil || !uuid.IsValidUUID(in.Id) {
-		err := fmt.Errorf("%w %v", ErrInvalid, in)
-		s.log.Warn().Err(err).Msg("Invalid request")
-		pan.Err(err)
-		return &structs.DeleteWorldResponse{Error: toError(err)}, nil
-	}
-
 	obj := &structs.DeleteWorldResponse{}
-	s.genericAsyncRequestResponse(ctx, in, obj)
-	if obj.Error != nil {
-		err := fmt.Errorf(obj.Error.Message)
-		s.log.Error().Err(err).Msg("Failed to delete world")
-		pan.Err(err)
-	}
+	s.genericDelete(ctx, kindWorld, in.Id, in.Id, in, obj)
 	return obj, nil
 }
 
 func (s *Server) ListWorlds(ctx context.Context, in *structs.ListWorldsRequest) (*structs.ListWorldsResponse, error) {
-	pan := log.NewSpan(ctx, "api.ListWorlds", map[string]interface{}{"limit": in.Limit, "offset": in.Offset})
+	pan := log.NewSpan(ctx, "api.ListWorlds", map[string]interface{}{"Limit": in.Limit, "Offset": in.Offset})
 	defer pan.End()
 	data, err := s.db.ListWorlds(ctx, in.Labels, int64(clamp(in.Limit, 1, defaultMaxLimit, defaultLimit)), int64(defaultValue(in.Offset, 0)))
 	if err != nil {
@@ -192,146 +162,161 @@ func (s *Server) ListWorlds(ctx context.Context, in *structs.ListWorldsRequest) 
 	return &structs.ListWorldsResponse{Data: data, Error: toError(err)}, nil
 }
 
-func (s *Server) Factions(ctx context.Context, in *structs.GetFactionsRequest) (*structs.GetFactionsResponse, error) {
-	pan := log.NewSpan(ctx, "api.Factions", map[string]interface{}{"id-count": len(in.Ids)})
+func (s *Server) genericGet(ctx context.Context, kind, world string, ids hasIDs, data interface{}) error {
+	pan := log.NewSpan(ctx, fmt.Sprintf("api.%s", kind), map[string]interface{}{"IdCount": len(ids.GetIds()), "World": world})
 	defer pan.End()
 
-	err := validIDs(in)
+	err := validIDs(kind, ids)
 	if err != nil {
 		s.log.Warn().Err(err).Msg("Invalid request")
 		pan.Err(err)
-		return &structs.GetFactionsResponse{Error: toError(err)}, nil
+		return err
 	}
 
+	return s.db.Get(ctx, world, kind, ids.GetIds(), data)
+}
+
+func (s *Server) genericSet(ctx context.Context, kind, world string, objects interface{}, req marshalable, resp marshalableReply) {
+	in, ok := objects.([]interface{})
+	if !ok {
+		in = []interface{}{objects}
+	}
+
+	pan := log.NewSpan(ctx, fmt.Sprintf("api.Set%s", kind), map[string]interface{}{"IdCount": len(in), "World": world})
+	defer pan.End()
+
+	if kind != kindWorld {
+		_, err := s.tickManager.Tick(world)
+		if errors.Is(err, ErrNotFound) {
+			resp.SetError(toError(err))
+			return
+		} else if err != nil {
+			s.log.Error().Str("World", world).Err(err).Msg("Failed to get world tick")
+			pan.Err(err)
+			resp.SetError(toError(err))
+			return
+		}
+	}
+
+	for _, raw := range in {
+		o, ok := raw.(structs.Object)
+		if !ok {
+			s.log.Warn().Msg("Failed to cast given interface{} as structs.Object")
+			continue
+		}
+		err := validObject(o)
+		if err != nil {
+			s.log.Warn().Err(err).Msg("Invalid request")
+			pan.Err(err)
+			resp.SetError(toError(err))
+			return
+		}
+	}
+
+	s.genericRequestResponse(ctx, req, resp)
+	if resp.GetError() != nil {
+		err := fmt.Errorf(resp.GetError().Message)
+		s.log.Error().Err(err).Msg("Failed to set objects")
+		pan.Err(err)
+		return
+	}
+
+	return
+}
+
+func (s *Server) genericDelete(ctx context.Context, kind, world, id string, req marshalable, resp marshalableReply) {
+	pan := log.NewSpan(ctx, fmt.Sprintf("api.Delete%s", kind), map[string]interface{}{"Id": id, "World": world})
+	defer pan.End()
+
+	err := validID(kind, id)
+	if err != nil {
+		err := fmt.Errorf("%w %v", ErrInvalid, id)
+		s.log.Warn().Err(err).Msg("Invalid request")
+		pan.Err(err)
+		resp.SetError(toError(err))
+		return
+	}
+
+	s.genericRequestResponse(ctx, req, resp)
+	if resp.GetError() != nil {
+		err := fmt.Errorf(resp.GetError().Message)
+		s.log.Error().Err(err).Msg("Failed to delete object")
+		pan.Err(err)
+		return
+	}
+
+	return
+}
+
+func (s *Server) genericList(ctx context.Context, kind, world string, limit, offset *uint64, labels map[string]string, data interface{}) error {
+	pan := log.NewSpan(ctx, fmt.Sprintf("api.List%s", kind), map[string]interface{}{"Limit": limit, "Offset": offset, "World": world})
+	defer pan.End()
+	err := s.db.List(ctx, world, kind, labels, int64(clamp(limit, 1, defaultMaxLimit, defaultLimit)), int64(defaultValue(offset, 0)), data)
+	if err != nil {
+		log.Error().Err(err).Msg("Failed to list objects")
+		pan.Err(err)
+	}
+	return err
+}
+
+func (s *Server) Factions(ctx context.Context, in *structs.GetFactionsRequest) (*structs.GetFactionsResponse, error) {
 	data := []*structs.Faction{}
-	err = s.db.Get(ctx, in.World, "Faction", in.Ids, &data)
+	err := s.genericGet(ctx, kindFaction, in.World, in, &data)
 	return &structs.GetFactionsResponse{Data: data, Error: toError(err)}, nil
 }
 
 func (s *Server) SetFactions(ctx context.Context, in *structs.SetFactionsRequest) (*structs.SetFactionsResponse, error) {
-	pan := log.NewSpan(ctx, "api.SetFactions", map[string]interface{}{"id-count": len(in.Data)})
-	defer pan.End()
-
-	for _, o := range in.Data {
-		err := validObject(o)
-		if err != nil {
-			s.log.Warn().Err(err).Msg("Invalid request")
-			pan.Err(err)
-			return &structs.SetFactionsResponse{Error: toError(err)}, nil
-		}
-	}
-
 	obj := &structs.SetFactionsResponse{}
-	s.genericAsyncRequestResponse(ctx, in, obj)
-	if obj.Error != nil {
-		err := fmt.Errorf(obj.Error.Message)
-		s.log.Error().Err(err).Msg("Failed to set factions")
-		pan.Err(err)
-	}
+	s.genericSet(ctx, kindFaction, in.World, in.Data, in, obj)
 	return obj, nil
 }
 
 func (s *Server) DeleteFaction(ctx context.Context, in *structs.DeleteFactionRequest) (*structs.DeleteFactionResponse, error) {
-	pan := log.NewSpan(ctx, "api.DeleteFaction", map[string]interface{}{"id": in.Id})
-	defer pan.End()
-
-	if in == nil || !uuid.IsValidUUID(in.Id) {
-		err := fmt.Errorf("%w %v", ErrInvalid, in)
-		s.log.Warn().Err(err).Msg("Invalid request")
-		pan.Err(err)
-		return &structs.DeleteFactionResponse{Error: toError(err)}, nil
-	}
-
-	obj := &structs.DeleteFactionResponse{}
-	s.genericAsyncRequestResponse(ctx, in, obj)
-	return obj, nil
+	out := &structs.DeleteFactionResponse{}
+	s.genericDelete(ctx, kindFaction, in.World, in.Id, in, out)
+	return out, nil
 }
 
 func (s *Server) ListFactions(ctx context.Context, in *structs.ListFactionsRequest) (*structs.ListFactionsResponse, error) {
-	pan := log.NewSpan(ctx, "api.ListFactions", map[string]interface{}{"limit": in.Limit, "offset": in.Offset})
-	defer pan.End()
 	data := []*structs.Faction{}
-	err := s.db.List(ctx, in.World, "Faction", in.Labels, int64(clamp(in.Limit, 1, defaultMaxLimit, defaultLimit)), int64(defaultValue(in.Offset, 0)), &data)
-	if err != nil {
-		pan.Err(err)
-	}
+	err := s.genericList(ctx, kindFaction, in.World, in.Limit, in.Offset, in.Labels, &data)
 	return &structs.ListFactionsResponse{Data: data, Error: toError(err)}, nil
 }
 
 func (s *Server) Actors(ctx context.Context, in *structs.GetActorsRequest) (*structs.GetActorsResponse, error) {
-	pan := log.NewSpan(ctx, "api.Actors", map[string]interface{}{"id-count": len(in.Ids)})
-	defer pan.End()
-
-	err := validIDs(in)
-	if err != nil {
-		s.log.Warn().Err(err).Msg("Invalid request")
-		pan.Err(err)
-		return &structs.GetActorsResponse{Error: toError(err)}, nil
-	}
-
 	data := []*structs.Actor{}
-	err = s.db.Get(ctx, in.World, "Actor", in.Ids, &data)
-	if err != nil {
-		s.log.Error().Err(err).Msg("Failed to get actors")
-		pan.Err(err)
-	}
+	err := s.genericGet(ctx, kindActor, in.World, in, &data)
 	return &structs.GetActorsResponse{Data: data, Error: toError(err)}, nil
 }
 
 func (s *Server) SetActors(ctx context.Context, in *structs.SetActorsRequest) (*structs.SetActorsResponse, error) {
-	pan := log.NewSpan(ctx, "api.SetActor", map[string]interface{}{"id-count": len(in.Data)})
-	defer pan.End()
-
-	for _, o := range in.Data {
-		err := validObject(o)
-		if err != nil {
-			s.log.Warn().Err(err).Msg("Invalid request")
-			pan.Err(err)
-			return &structs.SetActorsResponse{Error: toError(err)}, nil
-		}
-	}
-
-	obj := &structs.SetActorsResponse{}
-	s.genericAsyncRequestResponse(ctx, in, obj)
-	if obj.Error != nil {
-		err := fmt.Errorf(obj.Error.Message)
-		s.log.Error().Err(err).Msg("Failed to set actors")
-		pan.Err(err)
-	}
-	return obj, nil
+	data := &structs.SetActorsResponse{}
+	s.genericSet(ctx, kindActor, in.World, in.Data, in, data)
+	return data, nil
 }
 
 func (s *Server) DeleteActor(ctx context.Context, in *structs.DeleteActorRequest) (*structs.DeleteActorResponse, error) {
-	pan := log.NewSpan(ctx, "api.DeleteActor", map[string]interface{}{"id": in.Id})
-	defer pan.End()
-
-	if in == nil || !uuid.IsValidUUID(in.Id) {
-		err := fmt.Errorf("%w %v", ErrInvalid, in)
-		s.log.Warn().Err(err).Msg("Invalid request")
-		pan.Err(err)
-		return &structs.DeleteActorResponse{Error: toError(err)}, nil
-	}
-
-	obj := &structs.DeleteActorResponse{}
-	s.genericAsyncRequestResponse(ctx, in, obj)
-	if obj.Error != nil {
-		err := fmt.Errorf(obj.Error.Message)
-		s.log.Error().Err(err).Msg("Failed to delete actor")
-		pan.Err(err)
-	}
-	return obj, nil
+	data := &structs.DeleteActorResponse{}
+	s.genericDelete(ctx, kindActor, in.World, in.Id, in, data)
+	return data, nil
 }
 
 func (s *Server) ListActors(ctx context.Context, in *structs.ListActorsRequest) (*structs.ListActorsResponse, error) {
-	pan := log.NewSpan(ctx, "api.ListActors", map[string]interface{}{"limit": in.Limit, "offset": in.Offset})
-	defer pan.End()
 	data := []*structs.Actor{}
-	err := s.db.List(ctx, in.World, "Actor", in.Labels, int64(clamp(in.Limit, 1, defaultMaxLimit, defaultLimit)), int64(defaultValue(in.Offset, 0)), &data)
-	if err != nil {
-		s.log.Error().Err(err).Msg("Failed to list actors")
-		pan.Err(err)
-	}
+	err := s.genericList(ctx, kindActor, in.World, in.Limit, in.Offset, in.Labels, &data)
 	return &structs.ListActorsResponse{Data: data, Error: toError(err)}, nil
+}
+
+func (s *Server) Races(ctx context.Context, in *structs.GetRacesRequest) (*structs.GetRacesResponse, error) {
+	data := []*structs.Race{}
+	err := s.genericGet(ctx, kindRace, in.World, in, &data)
+	return &structs.GetRacesResponse{Data: data, Error: toError(err)}, nil
+}
+
+func (s *Server) SetRaces(ctx context.Context, in *structs.SetRacesRequest) (*structs.SetRacesResponse, error) {
+	data := &structs.SetRacesResponse{}
+	s.genericSet(ctx, kindRace, in.World, in.Data, in, data)
+	return data, nil
 }
 
 func (s *Server) OnChange(in *structs.OnChangeRequest, stream structs.API_OnChangeServer) error {
@@ -343,8 +328,6 @@ func (s *Server) OnChange(in *structs.OnChangeRequest, stream structs.API_OnChan
 		return err
 	}
 
-	key, _ := structs.Metakey_name[int32(in.Data.Key)] // validated above
-
 	// setup log & trace
 	peerAddr := ""
 	peer, ok := peer.FromContext(stream.Context())
@@ -354,8 +337,8 @@ func (s *Server) OnChange(in *structs.OnChangeRequest, stream structs.API_OnChan
 
 	attrs := map[string]interface{}{
 		"world": in.Data.World,
-		"area":  in.Data.Area,
-		"key":   key,
+		"key":   in.Data.Key,
+		"type":  in.Data.Type,
 		"id":    in.Data.Id,
 		"queue": in.Queue,
 		"peer":  peerAddr,
@@ -393,6 +376,9 @@ func (s *Server) OnChange(in *structs.OnChangeRequest, stream structs.API_OnChan
 			change := &structs.Change{}
 			err := change.UnmarshalJSON(msg.Data())
 			if err != nil {
+				if in.Queue != "" {
+					msg.Ack() // message is borked
+				}
 				l.Error().Err(err).Msg("Failed to unmarshal change")
 				pan.Err(err)
 				pan.End()
@@ -401,7 +387,7 @@ func (s *Server) OnChange(in *structs.OnChangeRequest, stream structs.API_OnChan
 
 			ackId := ""
 			if in.Queue != "" {
-				ackId = s.qu.DeferAck(msg)
+				ackId = s.qu.DeferAck(msg, change)
 			}
 
 			err = stream.Send(&structs.OnChangeResponse{Data: change, Ack: ackId, Error: toError(err)})
@@ -434,8 +420,8 @@ func (s *Server) AckStream(stream grpc.ClientStreamingServer[structs.AckRequest,
 	}
 }
 
-// genericAsyncRequestResponse is a helper function to send a request to the queue and wait for a response.
-// We do this for all write requests sent to the API Server.
+// genericRequestResponse is a helper function to send a request to the queue and wait for a response.
+// We do this for all write requests (Set & Delete) sent to the API Server.
 //
 // This allows us to retry, reject, ack or nack requests as internally as required.
 // Ie. we can ensure that we write to the database and emit to the queue, if either fails we can reject and
@@ -443,8 +429,8 @@ func (s *Server) AckStream(stream grpc.ClientStreamingServer[structs.AckRequest,
 //
 // This causes a worker routine running on an API Server (even us) to call asyncAPIRequest defined in
 // async.go -- from here the relevant functions defined in async.go are called.
-func (s *Server) genericAsyncRequestResponse(c context.Context, in marshalable, out marshalableReply) {
-	pan := log.NewSpan(c, "api.genericAsyncRequestResponse")
+func (s *Server) genericRequestResponse(c context.Context, in marshalable, out marshalableReply) {
+	pan := log.NewSpan(c, "api.genericRequestResponse")
 	defer pan.End()
 
 	data, err := encodeRequest(in)
