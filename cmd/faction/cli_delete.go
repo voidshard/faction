@@ -28,12 +28,9 @@ func (c *cliDeleteCmd) Execute(args []string) error {
 	}
 
 	_, isWorld := obj.(*structs.World)
-	if isWorld {
-		c.Object.Id = toWorldId(c.Object.Id...)
-	} else if !isWorld && c.World == "" {
+	if !isWorld && c.World == "" {
 		return fmt.Errorf("world must be set for %s", c.Object.Name)
 	}
-	c.World = toWorldId(c.World)[0]
 
 	conn, err := client.New(c.Host, c.Port, c.IdleTimeout, c.ConnTimeout)
 	if err != nil {

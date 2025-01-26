@@ -15,9 +15,9 @@ import (
 )
 
 const (
-	queueAPIRequests = "apiserver-api-requests"
-	topicChanges     = "apiserver-changes"
-	topicChangesAck  = "apiserver-changes-ack"
+	queueAPIRequests = "internal.apiserver-api-requests"
+	topicChanges     = "internal.apiserver-changes"
+	topicChangesAck  = "internal.apiserver-changes-ack"
 )
 
 // Queue presents queue functionality the way the APISever expects to use it.
@@ -43,7 +43,7 @@ func newQueue(qu queue.Queue) (*Queue, error) {
 	)
 
 	// subscribe to an ack topic for this server
-	sub, err := qu.Subscribe(id, topicChangesAck, []string{id, ""})
+	sub, err := qu.Subscribe(id, topicChangesAck, []string{id, ""}, false)
 	if err != nil {
 		return nil, err
 	}
@@ -120,10 +120,10 @@ func (q *Queue) PublishChange(ctx context.Context, ch *structs.Change) error {
 // SubscribeChange subscribes to changes on the change stream.
 // queueName can be given to configure a durable queue. If not given
 // a temporary non-durable queue will be used.
-func (q *Queue) SubscribeChange(ch *structs.Change, queueName string) (queue.Subscription, error) {
+func (q *Queue) SubscribeChange(ch *structs.Change, queueName string, durable bool) (queue.Subscription, error) {
 	key := toQueueKey(ch)
 	queueName = fmt.Sprintf("subscribe-change.apiserver.%s", queueName)
-	return q.qu.Subscribe(queueName, topicChanges, key)
+	return q.qu.Subscribe(queueName, topicChanges, key, durable)
 }
 
 // DeferChange defers a change to be processed at given tick.

@@ -28,10 +28,6 @@ type cliWatchCmd struct {
 }
 
 func (c *cliWatchCmd) Execute(args []string) error {
-	if c.World != "" {
-		c.World = toWorldId(c.World)[0]
-	}
-
 	c.Object = strings.Title(c.Object)
 	if c.Object != "" && !structs.IsValidAPIKind(c.Object) {
 		return fmt.Errorf("invalid object type %s", c.Object)

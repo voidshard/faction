@@ -15,6 +15,7 @@ import (
 	"github.com/voidshard/faction/internal/search"
 	"github.com/voidshard/faction/pkg/structs"
 	"github.com/voidshard/faction/pkg/util/log"
+	"github.com/voidshard/faction/pkg/util/uuid"
 )
 
 type backgroundWorker interface {
@@ -348,7 +349,14 @@ func (s *Server) OnChange(in *structs.OnChangeRequest, stream structs.API_OnChan
 	// start the change listener
 	l.Debug().Msg("Starting change listener")
 
-	sub, err := s.qu.SubscribeChange(in.Data, in.Queue)
+	// determine if the queue needs a name & if we're auto deleting & acking
+	durable := true
+	if in.Queue == "" {
+		durable = false
+		in.Queue = fmt.Sprintf("client.%s", uuid.NewID().String())
+	}
+
+	sub, err := s.qu.SubscribeChange(in.Data, in.Queue, durable)
 	if err != nil {
 		l.Error().Err(err).Msg("Failed to start change listener")
 		return err

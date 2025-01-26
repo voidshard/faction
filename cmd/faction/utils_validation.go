@@ -5,8 +5,6 @@ import (
 	"strings"
 
 	"github.com/voidshard/faction/pkg/structs"
-	"github.com/voidshard/faction/pkg/util/log"
-	"github.com/voidshard/faction/pkg/util/uuid"
 )
 
 var (
@@ -52,20 +50,4 @@ func invalidObjectError(in string) error {
 		valid = append(valid, k)
 	}
 	return fmt.Errorf("Invalid object '%s'. Valid names: %s", in, strings.Join(valid, ", "))
-}
-
-// toWorldId takes a list of strings and converts them to UUIDs if they're not already.
-func toWorldId(in ...string) []string {
-	out := []string{}
-	for _, w := range in {
-		if uuid.IsValidUUID(w) {
-			log.Debug().Str("id", w).Msg("using world UUID")
-			out = append(out, w)
-		} else {
-			id := uuid.NewID(w).String()
-			log.Debug().Str("world", w).Str("id", id).Msg("using world name to determine UUID")
-			out = append(out, id)
-		}
-	}
-	return out
 }

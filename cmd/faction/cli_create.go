@@ -32,19 +32,18 @@ func (c *cliCreateCmd) Execute(args []string) error {
 		return err
 	}
 
-	cliGivenWorld := toWorldId(c.World)[0]
 	byWorld := map[string][]structs.Object{}
 	for _, v := range toWrite {
 		if v.GetWorld() == "" { // object does not have world set
 			if c.World == "" {
 				return fmt.Errorf("world not set on either object or command line")
 			}
-			v.SetWorld(cliGivenWorld) // set world to the one given on the command line
+			v.SetWorld(c.World) // set world to the one given on the command line
 		} else { // object has world set
 			if c.World == "" {
 				// this is fine, object has a world set and command line doesn't specify one
-			} else if v.GetWorld() != cliGivenWorld {
-				return fmt.Errorf("world mismatch: %s != %s for object %s", v.GetWorld(), cliGivenWorld, v.GetId())
+			} else if v.GetWorld() != c.World {
+				return fmt.Errorf("world mismatch: %s != %s for object %s", v.GetWorld(), c.World, v.GetId())
 			}
 		}
 		byWorld[v.GetWorld()] = append(byWorld[v.GetWorld()], v)

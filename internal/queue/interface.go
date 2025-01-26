@@ -21,7 +21,7 @@ type Queue interface {
 
 	// Subscribe returns a subscription to the given topic matching the given key.
 	// The key accepts empty strings to match all keys at the given key index
-	Subscribe(queue, topic string, key []string) (Subscription, error)
+	Subscribe(queue, topic string, key []string, durable bool) (Subscription, error)
 
 	// DeleteQueue deletes the given queue.
 	DeleteQueue(queue string) error

@@ -122,7 +122,7 @@ func validDeferChange(in *structs.DeferChangeRequest) error {
 }
 
 func validOnChange(in *structs.OnChangeRequest) error {
-	if !structs.IsValidAPIKind(in.Data.Key) {
+	if in.Data.Key != "" && !structs.IsValidAPIKind(in.Data.Key) {
 		return fmt.Errorf("%w key %s", ErrInvalid, in.Data.Key)
 	}
 	if in.Data.World != "" && !uuid.IsValidUUID(in.Data.World) {
@@ -131,7 +131,7 @@ func validOnChange(in *structs.OnChangeRequest) error {
 		return fmt.Errorf("%w type %s", ErrInvalid, in.Data.Type)
 	} else if in.Data.Id != "" && !uuid.IsValidUUID(in.Data.Id) {
 		return fmt.Errorf("%w id %s", ErrInvalid, in.Data.Id)
-	} else if !validQueueRe.MatchString(in.Queue) {
+	} else if in.Queue != "" && !validQueueRe.MatchString(in.Queue) {
 		return fmt.Errorf("%w queue %s should match %s", ErrInvalid, in.Queue, validQueueEx)
 	} else if strings.HasPrefix(in.Queue, "internal.") {
 		return fmt.Errorf("%w queue %s may not start with internal.", ErrInvalid, in.Queue)

@@ -250,13 +250,12 @@ func (q *RabbitQueue) Publish(ctx context.Context, topic string, key []string, d
 }
 
 // Subscribe returns a subscription to the given topic.
-func (q *RabbitQueue) Subscribe(queue, topic string, key []string) (Subscription, error) {
+func (q *RabbitQueue) Subscribe(queue, topic string, key []string, durable bool) (Subscription, error) {
 	rchan, err := newRabbitChannel(q.cfg, fmt.Sprintf("%s:%s", queue, topic), q.cfg.PrefetchSubscribe)
 	if err != nil {
 		return nil, err
 	}
 
-	durable := queue != ""
 	rkey := toRabbitKey(key)
 
 	notify := make(chan *amqp.Channel)

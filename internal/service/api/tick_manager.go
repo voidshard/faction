@@ -43,7 +43,11 @@ type tickManager struct {
 
 func newTickManager(name string, db db.Database, qu *Queue) (*tickManager, error) {
 	// ie. subscribe to all changes on all world objects
-	sub, err := qu.SubscribeChange(&structs.Change{Key: kindWorld}, fmt.Sprintf("internal.tick-manager.%s", uuid.NewID().String()))
+	sub, err := qu.SubscribeChange(
+		&structs.Change{Key: kindWorld},
+		fmt.Sprintf("internal.tick-manager.%s", uuid.NewID().String()),
+		false,
+	)
 	if err != nil {
 		return nil, err
 	}
