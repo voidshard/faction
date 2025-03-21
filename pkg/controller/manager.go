@@ -9,7 +9,7 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/voidshard/faction/pkg/structs"
+	"github.com/voidshard/faction/pkg/structs/v1"
 	"github.com/voidshard/faction/pkg/util/lock"
 	"github.com/voidshard/faction/pkg/util/log"
 
@@ -21,7 +21,7 @@ var (
 )
 
 type Manager struct {
-	structs.APIClient
+	v1.APIClient
 
 	name       string
 	controller Controller
@@ -31,11 +31,11 @@ type Manager struct {
 
 	streamlock sync.Mutex
 	streams    map[string]*stream
-	events     chan *structs.OnChangeResponse
-	ack        grpc.ClientStreamingClient[structs.AckRequest, structs.AckResponse]
+	events     chan *v1.OnChangeResponse
+	ack        grpc.ClientStreamingClient[v1.AckRequest, v1.AckResponse]
 }
 
-func NewManager(name string, client structs.APIClient, locker lock.Locker) *Manager {
+func NewManager(name string, client v1.APIClient, locker lock.Locker) *Manager {
 	if locker == nil {
 		locker = &nullLocker{}
 	}
@@ -46,7 +46,7 @@ func NewManager(name string, client structs.APIClient, locker lock.Locker) *Mana
 		l:          log.Sublogger(name),
 		streamlock: sync.Mutex{},
 		streams:    make(map[string]*stream),
-		events:     make(chan *structs.OnChangeResponse),
+		events:     make(chan *v1.OnChangeResponse),
 	}
 }
 
@@ -121,7 +121,7 @@ func (m *Manager) Run(ctrl Controller) error {
 				continue
 			}
 
-			err = m.ack.Send(&structs.AckRequest{Ack: []string{req.Ack}})
+			err = m.ack.Send(&v1.AckRequest{Ack: []string{req.Ack}})
 			if err != nil {
 				m.l.Warn().Err(err).Msg("error sending ack")
 				pan.Err(err)
@@ -131,7 +131,7 @@ func (m *Manager) Run(ctrl Controller) error {
 	}
 }
 
-func (m *Manager) Deregister(ch *structs.Change) error {
+func (m *Manager) Deregister(ch *v1.Change) error {
 	key := changeKey(ch)
 
 	m.streamlock.Lock()
@@ -145,7 +145,7 @@ func (m *Manager) Deregister(ch *structs.Change) error {
 	return st.Close()
 }
 
-func (m *Manager) Register(ch *structs.Change) error {
+func (m *Manager) Register(ch *v1.Change) error {
 	key := changeKey(ch)
 
 	m.streamlock.Lock()
@@ -167,6 +167,6 @@ func (m *Manager) Register(ch *structs.Change) error {
 	return nil
 }
 
-func changeKey(ch *structs.Change) string {
+func changeKey(ch *v1.Change) string {
 	return fmt.Sprintf("%s_%s_%d_%s", ch.World, ch.Area, ch.Key, ch.Id)
 }

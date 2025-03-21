@@ -6,7 +6,7 @@ import (
 	"os/exec"
 
 	"github.com/voidshard/faction/pkg/client"
-	"github.com/voidshard/faction/pkg/structs"
+	"github.com/voidshard/faction/pkg/kind"
 )
 
 type cliEditCmd struct {
@@ -15,34 +15,33 @@ type cliEditCmd struct {
 	optCliGlobal
 
 	Object struct {
-		Name string `positional-arg-name:"object" description:"Object to get"`
+		Kind string `positional-arg-name:"object" description:"Object to get"`
 		Id   string `positional-arg-name:"id" description:"ID of object to get"`
 	} `positional-args:"true" required:"true"`
 }
 
 func (c *cliEditCmd) Execute(args []string) error {
-	obj := validObject(c.Object.Name)
-	if obj == nil {
-		return invalidObjectError(c.Object.Name)
+	c.Object.Kind = validKind(c.Object.Kind)
+	if c.Object.Kind == "" {
+		return fmt.Errorf("invalid object kind %s", c.Object.Kind)
 	}
 
-	_, isWorld := obj.(*structs.World)
-	if !isWorld && c.World == "" {
-		return fmt.Errorf("world must be set for %s", c.Object.Name)
+	if !kind.IsGlobal(c.Object.Kind) && c.World == "" {
+		return fmt.Errorf("world must be set for non-global objects")
 	}
 
-	conn, err := client.New(c.Host, c.Port, c.IdleTimeout, c.ConnTimeout)
+	conn, err := client.New(client.NewConfig())
 	if err != nil {
 		return err
 	}
 
-	// read object from API
-	objs, err := getObjects(conn, c.World, obj, []string{c.Object.Id})
+	// get object
+	objs, err := conn.Get().Ids([]string{c.Object.Id}).World(c.World).Do(c.Object.Kind)
 	if err != nil {
 		return err
 	}
 	if len(objs) != 1 {
-		return fmt.Errorf("expected 1 object, got %d", len(objs))
+		return fmt.Errorf("object not found")
 	}
 
 	// write to temp file
@@ -90,12 +89,6 @@ func (c *cliEditCmd) Execute(args []string) error {
 		return nil
 	}
 
-	// read the file back in
-	edited, err := readObjectsFromFile(obj, []string{f.Name()})
-	if err != nil {
-		return err
-	}
-
 	// update the object
-	return updateObjects(conn, c.World, obj, edited)
+	return applyYamlUpdate(conn, c.World, []string{f.Name()})
 }

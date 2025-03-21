@@ -1,11 +1,10 @@
 package main
 
 import (
-	"context"
 	"fmt"
 
 	"github.com/voidshard/faction/pkg/client"
-	"github.com/voidshard/faction/pkg/structs"
+	"github.com/voidshard/faction/pkg/kind"
 )
 
 type cliGetCmd struct {
@@ -14,28 +13,31 @@ type cliGetCmd struct {
 	optCliGlobal
 
 	Object struct {
-		Name string   `positional-arg-name:"object" description:"Object to get"`
-		Id   []string `positional-arg-name:"id" description:"ID of object to get"`
+		Kind string `positional-arg-name:"object" description:"Object to get"`
 	} `positional-args:"true" required:"true"`
+
+	Limit  int64 `long:"limit" default:"100" description:"Limit number of results"`
+	Offset int64 `short:"o" long:"offset" default:"0" description:"Offset results"`
+
+	Labels map[string]string `short:"l" long:"labels" description:"Filter by labels"`
 }
 
 func (c *cliGetCmd) Execute(args []string) error {
-	obj := validObject(c.Object.Name)
-	if obj == nil {
-		return invalidObjectError(c.Object.Name)
+	c.Object.Kind = validKind(c.Object.Kind)
+	if c.Object.Kind == "" {
+		return fmt.Errorf("invalid object kind %s", c.Object.Kind)
 	}
 
-	_, isWorld := obj.(*structs.World)
-	if !isWorld && c.World == "" {
-		return fmt.Errorf("world must be set for %s", c.Object.Name)
+	if !kind.IsGlobal(c.Object.Kind) && c.World == "" {
+		return fmt.Errorf("world must be set for non-global objects")
 	}
 
-	conn, err := client.New(c.Host, c.Port, c.IdleTimeout, c.ConnTimeout)
+	conn, err := client.New(client.NewConfig())
 	if err != nil {
 		return err
 	}
 
-	objs, err := getObjects(conn, c.World, obj, c.Object.Id)
+	objs, err := conn.Get().Ids(args).Limit(c.Limit).Offset(c.Offset).Labels(c.Labels).World(c.World).Do(c.Object.Kind)
 	if err != nil {
 		return err
 	}
@@ -45,47 +47,4 @@ func (c *cliGetCmd) Execute(args []string) error {
 		fmt.Println(string(yamlData))
 	}
 	return err
-}
-
-func getObjects(client structs.APIClient, world string, obj marshalable, ids []string) ([]marshalable, error) {
-	data := []marshalable{}
-	switch obj.(type) {
-	case *structs.Faction:
-		resp, err := client.Factions(context.TODO(), &structs.GetFactionsRequest{World: world, Ids: ids})
-		if err != nil {
-			return nil, err
-		} else if resp == nil {
-			return nil, fmt.Errorf("nil response")
-		} else if resp.Error != nil {
-			return nil, fmt.Errorf("error: %s", resp.Error.Message)
-		}
-		for _, d := range resp.Data {
-			data = append(data, d)
-		}
-	case *structs.Actor:
-		resp, err := client.Actors(context.TODO(), &structs.GetActorsRequest{World: world, Ids: ids})
-		if err != nil {
-			return nil, err
-		} else if resp == nil {
-			return nil, fmt.Errorf("nil response")
-		} else if resp.Error != nil {
-			return nil, fmt.Errorf("error: %s", resp.Error.Message)
-		}
-		for _, d := range resp.Data {
-			data = append(data, d)
-		}
-	case *structs.World:
-		resp, err := client.Worlds(context.TODO(), &structs.GetWorldsRequest{Ids: ids})
-		if err != nil {
-			return nil, err
-		} else if resp == nil {
-			return nil, fmt.Errorf("nil response")
-		} else if resp.Error != nil {
-			return nil, fmt.Errorf("error: %s", resp.Error.Message)
-		}
-		for _, d := range resp.Data {
-			data = append(data, d)
-		}
-	}
-	return data, nil
 }

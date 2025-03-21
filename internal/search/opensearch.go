@@ -14,7 +14,7 @@ import (
 	"github.com/opensearch-project/opensearch-go/v4"
 	"github.com/opensearch-project/opensearch-go/v4/opensearchapi"
 
-	"github.com/voidshard/faction/pkg/structs"
+	v1 "github.com/voidshard/faction/pkg/structs/v1"
 	"github.com/voidshard/faction/pkg/util/log"
 )
 
@@ -74,15 +74,47 @@ func world_index(world, name string) string {
 	return strings.ToLower(fmt.Sprintf("%s_%s", name, base36.EncodeBytes([]byte(world))))
 }
 
-func (s *Opensearch) Index(ctx context.Context, world string, in []structs.Object, flush bool) error {
+func (s *Opensearch) Index(ctx context.Context, world string, in []v1.Object, flush bool) error {
 	if in == nil || len(in) == 0 {
 		return nil
 	}
-	return s.index(ctx, world_index(world, in[0].Kind()), in, flush)
+	return s.index(ctx, world_index(world, in[0].GetKind()), in, flush)
 }
 
 func (s *Opensearch) Delete(ctx context.Context, world, kind, id string) error {
 	return s.delete(ctx, world_index(world, kind), id)
+}
+
+func (s *Opensearch) Find(ctx context.Context, world string, q *v1.Query) ([]string, error) {
+	pan := log.NewSpan(ctx, "opensearch.find", map[string]interface{}{"world": world, "kind": q.Kind})
+	defer pan.End()
+
+	qs, err := toOpensearchQuery(q)
+	if err != nil {
+		pan.Err(err)
+		return nil, err
+	}
+	s.l.Debug().Str("world", world).Str("kind", q.Kind).Str("query", qs).Msg("querying opensearch")
+	req := &opensearchapi.SearchReq{
+		Indices: []string{world_index(world, q.Kind)},
+		Body:    strings.NewReader(qs),
+	}
+	resp, err := s.api.Search(ctx, req)
+	if err != nil {
+		pan.Err(err)
+		return nil, err
+	}
+	pan.SetAttributes(map[string]interface{}{"took_ms": resp.Took, "total": resp.Hits.Total.Value, "errors": resp.Errors})
+	s.l.Debug().Int("took_ms", resp.Took).Int("total", resp.Hits.Total.Value).Msg("opensearch returned results")
+	if resp.Errors {
+		s.l.Warn().Str("body", resp.Inspect().Response.String()).Msg("opensearch returned errors")
+	}
+
+	ids := []string{}
+	for _, hit := range resp.Hits.Hits {
+		ids = append(ids, hit.ID)
+	}
+	return ids, nil
 }
 
 func (s *Opensearch) ping() {
@@ -172,7 +204,7 @@ func (s *Opensearch) getBulk(index string) (*opensearchBulk, error) {
 	return b, nil
 }
 
-func (s *Opensearch) index(ctx context.Context, index string, objects []structs.Object, flush bool) error {
+func (s *Opensearch) index(ctx context.Context, index string, objects []v1.Object, flush bool) error {
 	s.l.Debug().Str("index", index).Int("count", len(objects)).Bool("flush", flush).Msg("indexing objects")
 	defer s.l.Debug().Str("index", index).Int("count", len(objects)).Bool("flush", flush).Msg("indexed objects")
 

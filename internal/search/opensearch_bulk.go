@@ -3,9 +3,10 @@ package search
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 
-	"github.com/voidshard/faction/pkg/structs"
+	v1 "github.com/voidshard/faction/pkg/structs/v1"
 	"github.com/voidshard/faction/pkg/util/log"
 
 	"github.com/opensearch-project/opensearch-go/v4/opensearchapi"
@@ -22,7 +23,7 @@ type opensearchBulk struct {
 
 type indexObject struct {
 	ctx    context.Context
-	obj    structs.Object
+	obj    v1.Object
 	result func(error)
 }
 
@@ -86,7 +87,14 @@ func (b *opensearchBulk) indexObject(work *indexObject) {
 		pan.End()
 	}()
 
-	data, err := work.obj.MarshalJSON()
+	fields, err := v1.GetFields(work.obj)
+	if err != nil {
+		b.l.Error().Err(err).Str("id", work.obj.GetId()).Str("index", b.index).Msg("failed to get fields")
+		pan.Err(err)
+		return
+	}
+
+	data, err := json.Marshal(fields)
 	if err != nil {
 		b.l.Error().Err(err).Str("id", work.obj.GetId()).Str("index", b.index).Msg("failed to marshal object")
 		pan.Err(err)
@@ -147,6 +155,6 @@ func (b *opensearchBulk) start() {
 	}
 }
 
-func (b *opensearchBulk) Index(ctx context.Context, obj structs.Object, result func(error)) {
+func (b *opensearchBulk) Index(ctx context.Context, obj v1.Object, result func(error)) {
 	b.work <- &indexObject{ctx: ctx, obj: obj, result: result}
 }

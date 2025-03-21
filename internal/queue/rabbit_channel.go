@@ -28,7 +28,7 @@ type rabbitChannel struct {
 }
 
 func newRabbitChannel(cfg *RabbitConfig, name string, prefetch int) (*rabbitChannel, error) {
-	id := uuid.NewID().String()
+	id := uuid.New()
 	rc := &rabbitChannel{
 		id:       id,
 		cfg:      cfg,

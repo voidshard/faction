@@ -12,14 +12,15 @@ type optGeneral struct {
 
 var cmdAPI optsAPI
 var cmdCli optsCli
-var cmdController optsController
+
+//var cmdController optsController
 
 var parser = flags.NewParser(nil, flags.Default)
 
 func init() {
 	parser.AddCommand("api", "Run API Server", docApi, &cmdAPI)
 	parser.AddCommand("cli", "CLI to interact with API server", docCli, &cmdCli)
-	parser.AddCommand("controller", "Run a controller", docController, &cmdController)
+	//parser.AddCommand("controller", "Run a controller", docController, &cmdController)
 }
 
 func main() {

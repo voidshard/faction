@@ -8,8 +8,6 @@ import (
 	"math/rand"
 	"regexp"
 	"time"
-
-	"github.com/martinlindhe/base36"
 )
 
 const (
@@ -23,17 +21,13 @@ var (
 	// checks if we match a UUID like 123e4567-e89b-12d3-a456-426655440000
 	validUUID = regexp.MustCompile("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$")
 
-	// checks if we match a base64 encoded no-dashes UUID like
-	// 1H2R2Q1G1L2U2U2R1L1G1J1C1G2P2R1H1L1E1F2R2U2T1G1H1L2P2P1K2S1D1H1F
-	valudB36ID = regexp.MustCompile("^[0-9A-Z]{65}$")
-
 	rng = rand.New(rand.NewSource(time.Now().UnixNano()))
 )
 
 type UUID [16]byte
 
 // Create a new ID string deterministically
-func NewID(args ...interface{}) UUID {
+func New(args ...interface{}) string {
 	if len(args) == 0 {
 		// random
 		return newUUID(
@@ -42,9 +36,9 @@ func NewID(args ...interface{}) UUID {
 			rng.Int(),
 			rng.Int(),
 			rng.Int(),
-		)
+		).string()
 	}
-	return newUUID(args...)
+	return newUUID(args...).string()
 }
 
 // IsValidUUID returns if the given string represents a UUID
@@ -55,24 +49,9 @@ func IsValidUUID(in string) bool {
 	return validUUID.MatchString(in)
 }
 
-// IsValidB36ID returns if the given string represents a base36 encoded UUID
-// We expect: no dashes, all uppercase
-func IsValidB36ID(in string) bool {
-	if in == "" {
-		return false
-	}
-	return valudB36ID.MatchString(in)
-}
-
 // String returns the string form of a UUID
-func (u UUID) String() string {
+func (u UUID) string() string {
 	return fmt.Sprintf("%x-%x-%x-%x-%x", u[0:4], u[4:6], u[6:8], u[8:10], u[10:])
-}
-
-// StringB36 returns the base36 string form of a UUID
-// This string is longer than the standard UUID string, but is all uppercase.
-func (u UUID) StringB36() string {
-	return base36.EncodeBytes(u[:])
 }
 
 func (u *UUID) setVariant(variant byte) {

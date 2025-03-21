@@ -2,41 +2,36 @@ package api
 
 import (
 	"context"
-	"errors"
+	"encoding/json"
 	"fmt"
-	"net"
-
-	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/peer"
+	"net/http"
 
 	"github.com/voidshard/faction/internal/db"
 	"github.com/voidshard/faction/internal/queue"
 	"github.com/voidshard/faction/internal/search"
-	"github.com/voidshard/faction/pkg/structs"
+	"github.com/voidshard/faction/pkg/kind"
+	"github.com/voidshard/faction/pkg/structs/api"
 	"github.com/voidshard/faction/pkg/util/log"
-	"github.com/voidshard/faction/pkg/util/uuid"
+
+	"github.com/gorilla/handlers"
+	"github.com/gorilla/mux"
 )
 
-type backgroundWorker interface {
-	Kill()
-}
+const (
+	apiVersion = "v1"
+)
 
+// Server encapsulates serving our service as an HTTP API.
 type Server struct {
-	structs.UnimplementedAPIServer
-
 	cfg *Config
-
-	db db.Database
-	qu *Queue
-	sb search.Search
-
-	srv *grpc.Server
 	log log.Logger
 
-	tickManager *tickManager
-	workers     []backgroundWorker
-	apiSub      queue.Subscription
+	srv    *http.Server
+	router *mux.Router
+
+	shuttingDown bool
+
+	svc *Service
 }
 
 func NewServer(cfg *Config, db db.Database, qu queue.Queue, sb search.Search) (*Server, error) {
@@ -45,512 +40,458 @@ func NewServer(cfg *Config, db db.Database, qu queue.Queue, sb search.Search) (*
 	}
 	cfg.setDefaults()
 
-	apiQueue, err := newQueue(qu)
+	svc, err := newService(cfg, db, qu, sb)
 	if err != nil {
 		return nil, err
 	}
 
-	srv := grpc.NewServer(grpc.StatsHandler(otelgrpc.NewServerHandler()))
 	me := &Server{
-		cfg: cfg,
-		db:  db,
-		qu:  apiQueue,
-		sb:  sb,
-		srv: srv,
-		log: log.Sublogger("api"),
+		cfg:    cfg,
+		log:    log.Sublogger("api.server"),
+		router: mux.NewRouter(),
+		svc:    svc,
 	}
 
-	structs.RegisterAPIServer(srv, me)
+	me.router.HandleFunc(fmt.Sprintf("/_health"), me.health).Methods("GET")
+	me.router.HandleFunc(fmt.Sprintf("/%s/event", apiVersion), me.deferEvent).Methods("POST")
+	me.router.HandleFunc(fmt.Sprintf("/%s/event", apiVersion), me.onChangeEvent).Methods("GET") // Websocket
+	me.router.HandleFunc(fmt.Sprintf("/%s/{world}/search", apiVersion), me.search).Methods("GET")
+	me.router.HandleFunc(fmt.Sprintf("/%s/{kind}", apiVersion), me.getKind).Methods("GET")
+	me.router.HandleFunc(fmt.Sprintf("/%s/{kind}", apiVersion), me.setKind).Methods("POST")
+	me.router.HandleFunc(fmt.Sprintf("/%s/{kind}", apiVersion), me.delKind).Methods("DELETE")
+
 	return me, nil
 }
 
-func (s *Server) Serve(port int) error {
-	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", port))
-	if err != nil {
-		s.log.Error().Int("port", port).Err(err).Msg("Failed to listen")
-		return err
+func (s *Server) writeResp(w http.ResponseWriter, code int, resp interface{}) {
+	if resp == nil {
+		resp = struct {
+			Error *api.ErrorResponse
+		}{
+			Error: &api.ErrorResponse{},
+		}
 	}
-	s.log.Info().Msg("Serving...")
-	err = s.startWorkers()
+
+	data, err := json.Marshal(resp)
 	if err != nil {
-		return err
+		w.Header().Set("Content-Type", "text/plain")
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(err.Error()))
+		return
 	}
-	return s.srv.Serve(lis)
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(code)
+	w.Write(data)
+
+	if code >= 500 {
+		log.Error().Int("code", code).Msg(string(data))
+	} else if code >= 400 {
+		log.Warn().Int("code", code).Msg(string(data))
+	}
 }
 
-func (s *Server) Stop() {
-	s.log.Info().Msg("...Exiting")
-	s.stopWorkers()
-	s.srv.Stop()
-}
+func (s *Server) onChangeEvent(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithTimeout(r.Context(), s.cfg.TimeoutRead)
+	defer cancel()
 
-func (s *Server) DeferChange(ctx context.Context, in *structs.DeferChangeRequest) (*structs.DeferChangeResponse, error) {
-	pan := log.NewSpan(ctx, "api.DeferChange")
+	pan := log.NewSpan(ctx, "api.onChangeEvent", map[string]interface{}{"url": r.URL.String()})
+	ctx = pan.Context // make sure the root span is in the context
 	defer pan.End()
 
-	// validate the request
-	err := validDeferChange(in)
+	resp := &api.ErrorResponse{}
+
+	// parse request from URL query params
+	qvars := r.URL.Query()
+	req := &api.StreamEvents{
+		World:      qvars.Get("world"),
+		Kind:       qvars.Get("kind"),
+		Id:         qvars.Get("id"),
+		Controller: qvars.Get("controller"),
+		Queue:      qvars.Get("queue"),
+	}
+
+	// upgrade to a websocket
+	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
-		s.log.Warn().Err(err).Msg("Invalid request")
 		pan.Err(err)
-		return &structs.DeferChangeResponse{Error: toError(err)}, nil
+		resp.Code = http.StatusInternalServerError
+		resp.Message = "failed to upgrade connection to websocket"
+		s.writeResp(w, http.StatusInternalServerError, resp)
+		return
+	}
+	sock := newWebSocket(s.svc, conn)
+
+	// usual validations
+	if req.Kind != "" && !kind.IsValid(req.Kind) {
+		pan.Err(fmt.Errorf("kind %s not found", req.Kind))
+		resp.Code = http.StatusBadRequest
+		resp.Message = "invalid kind"
+		sock.Close(resp)
+		return
+	}
+	err = kind.Validate(req.Kind, req)
+	if err != nil {
+		pan.Err(err)
+		resp.Code = http.StatusBadRequest
+		resp.Message = err.Error()
+		sock.Close(resp)
+		return
+	}
+
+	// subscribe to events
+	events, kill, err := s.svc.subscribeToEvents(req)
+	if err != nil {
+		pan.Err(err)
+		resp.Code = http.StatusInternalServerError
+		resp.Message = "failed to subscribe to events"
+		sock.Close(resp)
+		return
+	}
+
+	// start the pump to begin normal operation
+	sock.Pump(events, kill)
+	return
+}
+
+func (s *Server) deferEvent(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithTimeout(r.Context(), s.cfg.TimeoutRead)
+	defer cancel()
+
+	pan := log.NewSpan(ctx, "api.DeferEvent")
+	ctx = pan.Context // make sure the root span is in the context
+	defer pan.End()
+
+	resp := &api.DeferEventResponse{Error: &api.ErrorResponse{}}
+	req := &api.DeferEventRequest{}
+
+	err := readJson(r, req)
+	if err != nil {
+		pan.Err(err)
+		resp.Error.Code = http.StatusBadRequest
+		resp.Error.Message = "invalid request json"
+		s.writeResp(w, http.StatusBadRequest, resp)
+		return
+	}
+
+	if !kind.IsValid(req.Kind) {
+		err = fmt.Errorf("kind %s not found", req.Kind)
+		pan.Err(err)
+		resp.Error.Code = http.StatusBadRequest
+		resp.Error.Message = "invalid kind"
+		s.writeResp(w, http.StatusBadRequest, resp)
+		return
+	}
+
+	pan.SetAttributes(map[string]interface{}{"kind": req.Kind, "world": req.World, "controller": req.Controller, "id": req.Id, "to-tick": req.ToTick, "by-tick": req.ByTick})
+
+	err = kind.Validate(req.Kind, req)
+	if err != nil {
+		pan.Err(err)
+		resp.Error.Code = http.StatusBadRequest
+		resp.Error.Message = err.Error()
+		s.writeResp(w, http.StatusBadRequest, resp)
+		return
+	}
+
+	err = s.svc.deferEvent(ctx, req, resp)
+	if err != nil {
+		pan.Err(err)
+		resp.Error.Code = errorCodeHTTP(err)
+		resp.Error.Message = err.Error()
+		s.writeResp(w, errorCodeHTTP(err), resp)
+		return
+	}
+
+	s.writeResp(w, http.StatusOK, resp)
+	return
+}
+
+func (s *Server) search(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithTimeout(r.Context(), s.cfg.TimeoutRead)
+	defer cancel()
+
+	pan := log.NewSpan(ctx, "api.Search")
+	ctx = pan.Context // make sure the root span is in the context
+	defer pan.End()
+
+	req := &api.SearchRequest{}
+	resp := &api.SearchResponse{Error: &api.ErrorResponse{}}
+
+	err := readJson(r, req)
+	if err != nil {
+		pan.Err(err)
+		resp.Error.Code = http.StatusBadRequest
+		resp.Error.Message = "invalid request json"
+		s.writeResp(w, http.StatusBadRequest, resp)
+		return
+	}
+
+	if !kind.IsValid(req.Kind) {
+		pan.Err(fmt.Errorf("kind %s not found", req.Kind))
+		resp.Error.Code = http.StatusNotFound
+		resp.Error.Message = "invalid kind"
+		s.writeResp(w, http.StatusNotFound, resp)
+		return
+	}
+
+	vars := mux.Vars(r)
+	world, ok := vars["world"]
+	if !ok || world == "" {
+		pan.Err(fmt.Errorf("world id invalid"))
+		resp.Error.Code = http.StatusBadRequest
+		resp.Error.Message = "invalid world"
+		s.writeResp(w, http.StatusBadRequest, resp)
+		return
+	}
+
+	err = kind.Validate(req.Kind, req)
+	if err != nil {
+		pan.Err(err)
+		resp.Error.Code = http.StatusBadRequest
+		resp.Error.Message = err.Error()
+		s.writeResp(w, http.StatusBadRequest, resp)
+		return
 	}
 
 	pan.SetAttributes(map[string]interface{}{
-		"world": in.Data.World, "id": in.Data.Id, "key": in.Data.Key, "to-tick": *in.ToTick, "by-tick": *in.ByTick,
+		"kind":          req.Kind,
+		"world":         world,
+		"limit":         req.Limit,
+		"random-weight": req.RandomWeight,
+		"all":           len(req.All),
+		"any":           len(req.Any),
+		"not":           len(req.Not),
+		"score":         len(req.Score),
 	})
 
-	// we've been given the specific tick to defer to (easy case)
-	if *in.ToTick > 0 {
-		err := s.qu.DeferChange(ctx, in.Data, *in.ToTick)
-		pan.Err(err)
-		return &structs.DeferChangeResponse{Error: toError(err)}, nil
-	}
-
-	// read world tick out of tick manager: since it keeps (mostly) up-to-date with the DB objects
-	// nb. it actually doesn't matter if we defer 1 or 2 behind the current tick because the tick manager monitors
-	// the last few world-tick queues to catch late comers.
-	tick, err := s.tickManager.Tick(in.Data.World)
-	if err != nil {
-		s.log.Error().Err(err).Msg("Failed to get world tick")
-		pan.Err(err)
-		return &structs.DeferChangeResponse{Error: toError(err)}, nil
-	}
-
-	err = s.qu.DeferChange(ctx, in.Data, tick+*in.ByTick)
-	pan.Err(err)
-	return &structs.DeferChangeResponse{Error: toError(err)}, nil
-}
-
-func (s *Server) Worlds(ctx context.Context, in *structs.GetWorldsRequest) (*structs.GetWorldsResponse, error) {
-	pan := log.NewSpan(ctx, "api.Worlds", map[string]interface{}{"IdCount": len(in.Ids)})
-	defer pan.End()
-
-	err := validIDs(kindWorld, in)
-	if err != nil {
-		s.log.Warn().Err(err).Msg("Invalid request")
-		pan.Err(err)
-		return &structs.GetWorldsResponse{Error: toError(err)}, nil
-	}
-
-	data, err := s.db.Worlds(ctx, in.Ids)
-	if err != nil {
-		s.log.Error().Err(err).Msg("Failed to get worlds")
-		pan.Err(err)
-	}
-	return &structs.GetWorldsResponse{Data: data, Error: toError(err)}, nil
-}
-
-func (s *Server) SetWorld(ctx context.Context, in *structs.SetWorldRequest) (*structs.SetWorldResponse, error) {
-	obj := &structs.SetWorldResponse{}
-	s.genericSet(ctx, kindWorld, in.Data.Id, []structs.Object{in.Data}, in, obj)
-	return obj, nil
-}
-
-func (s *Server) DeleteWorld(ctx context.Context, in *structs.DeleteWorldRequest) (*structs.DeleteWorldResponse, error) {
-	obj := &structs.DeleteWorldResponse{}
-	s.genericDelete(ctx, kindWorld, in.Id, in.Id, in, obj)
-	return obj, nil
-}
-
-func (s *Server) ListWorlds(ctx context.Context, in *structs.ListWorldsRequest) (*structs.ListWorldsResponse, error) {
-	pan := log.NewSpan(ctx, "api.ListWorlds", map[string]interface{}{"Limit": in.Limit, "Offset": in.Offset})
-	defer pan.End()
-	data, err := s.db.ListWorlds(ctx, in.Labels, int64(clamp(in.Limit, 1, defaultMaxLimit, defaultLimit)), int64(defaultValue(in.Offset, 0)))
+	err = s.svc.searchKind(ctx, world, req, resp)
 	if err != nil {
 		pan.Err(err)
-	}
-	return &structs.ListWorldsResponse{Data: data, Error: toError(err)}, nil
-}
-
-func (s *Server) genericGet(ctx context.Context, kind, world string, ids hasIDs, data interface{}) error {
-	pan := log.NewSpan(ctx, fmt.Sprintf("api.%s", kind), map[string]interface{}{"IdCount": len(ids.GetIds()), "World": world})
-	defer pan.End()
-
-	err := validIDs(kind, ids)
-	if err != nil {
-		s.log.Warn().Err(err).Msg("Invalid request")
-		pan.Err(err)
-		return err
-	}
-
-	return s.db.Get(ctx, world, kind, ids.GetIds(), data)
-}
-
-func (s *Server) genericSet(ctx context.Context, kind, world string, objects interface{}, req marshalable, resp marshalableReply) {
-	in, ok := objects.([]interface{})
-	if !ok {
-		in = []interface{}{objects}
-	}
-
-	pan := log.NewSpan(ctx, fmt.Sprintf("api.Set%s", kind), map[string]interface{}{"IdCount": len(in), "World": world})
-	defer pan.End()
-
-	if kind != kindWorld {
-		_, err := s.tickManager.Tick(world)
-		if errors.Is(err, ErrNotFound) {
-			resp.SetError(toError(err))
-			return
-		} else if err != nil {
-			s.log.Error().Str("World", world).Err(err).Msg("Failed to get world tick")
-			pan.Err(err)
-			resp.SetError(toError(err))
-			return
-		}
-	}
-
-	for _, raw := range in {
-		o, ok := raw.(structs.Object)
-		if !ok {
-			s.log.Warn().Msg("Failed to cast given interface{} as structs.Object")
-			continue
-		}
-		err := validObject(o)
-		if err != nil {
-			s.log.Warn().Err(err).Msg("Invalid request")
-			pan.Err(err)
-			resp.SetError(toError(err))
-			return
-		}
-	}
-
-	s.genericRequestResponse(ctx, req, resp)
-	if resp.GetError() != nil {
-		err := fmt.Errorf(resp.GetError().Message)
-		s.log.Error().Err(err).Msg("Failed to set objects")
-		pan.Err(err)
+		resp.Error.Code = errorCodeHTTP(err)
+		resp.Error.Message = err.Error()
+		s.writeResp(w, errorCodeHTTP(err), resp)
 		return
 	}
 
+	s.writeResp(w, http.StatusOK, resp)
 	return
 }
 
-func (s *Server) genericDelete(ctx context.Context, kind, world, id string, req marshalable, resp marshalableReply) {
-	pan := log.NewSpan(ctx, fmt.Sprintf("api.Delete%s", kind), map[string]interface{}{"Id": id, "World": world})
+// nb. technically dictating our reply based on a GET body is considered anti-html best practice
+// but opensearch / elasticsearch do this because it makes more sense than forcing users to use
+// a POST to get data OR forcing a boatload of query params .. so .. eh.
+func (s *Server) getKind(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithTimeout(r.Context(), s.cfg.TimeoutRead)
+	defer cancel()
+
+	pan := log.NewSpan(ctx, "api.Get")
+	ctx = pan.Context // make sure the root span is in the context
 	defer pan.End()
 
-	err := validID(kind, id)
+	resp := &api.GetResponse{Error: &api.ErrorResponse{}}
+
+	// read out the kind
+	vars := mux.Vars(r)
+	k, ok := vars["kind"]
+	if !ok || !kind.IsValid(k) {
+		pan.Err(fmt.Errorf("kind %s not found", k))
+		resp.Error.Code = http.StatusNotFound
+		resp.Error.Message = "not found"
+		s.writeResp(w, http.StatusNotFound, resp)
+		return
+	}
+	pan.SetAttributes(map[string]interface{}{"kind": k})
+
+	// parse the body of the request
+	body := &api.GetRequest{}
+	err := readJson(r, body)
 	if err != nil {
-		err := fmt.Errorf("%w %v", ErrInvalid, id)
-		s.log.Warn().Err(err).Msg("Invalid request")
 		pan.Err(err)
-		resp.SetError(toError(err))
+		resp.Error.Code = http.StatusBadRequest
+		resp.Error.Message = "invalid request json"
+		s.writeResp(w, http.StatusBadRequest, resp)
 		return
 	}
 
-	s.genericRequestResponse(ctx, req, resp)
-	if resp.GetError() != nil {
-		err := fmt.Errorf(resp.GetError().Message)
-		s.log.Error().Err(err).Msg("Failed to delete object")
+	// we could just ignore this, but it might confuse a caller if we ignore inputs
+	if len(body.Ids) > 0 && len(body.Labels) > 0 {
+		pan.Err(fmt.Errorf("cannot specify both IDs and labels in get"))
+		resp.Error.Code = http.StatusBadRequest
+		resp.Error.Message = "cannot specify both IDs and labels in get"
+		s.writeResp(w, http.StatusBadRequest, resp)
+		return
+	}
+	if body.Limit <= 0 {
+		body.Limit = 100 // set default if user doesn't specify
+	}
+
+	// set some attributes for the span
+	pan.SetAttributes(map[string]interface{}{
+		"ids":    len(body.Ids),
+		"limit":  body.Limit,
+		"offset": body.Offset,
+		"labels": len(body.Labels),
+		"world":  body.World,
+	})
+
+	// validate the GetRequest Fields
+	err = kind.Validate(k, body)
+	if err != nil {
 		pan.Err(err)
+		resp.Error.Code = http.StatusBadRequest
+		resp.Error.Message = err.Error()
+		s.writeResp(w, http.StatusBadRequest, resp)
 		return
 	}
 
+	err = s.svc.getKind(ctx, k, body, resp)
+	if err != nil {
+		pan.Err(err)
+		resp.Error.Code = errorCodeHTTP(err)
+		resp.Error.Message = err.Error()
+		s.writeResp(w, errorCodeHTTP(err), resp)
+		return
+	}
+
+	s.writeResp(w, http.StatusOK, resp)
 	return
 }
 
-func (s *Server) genericList(ctx context.Context, kind, world string, limit, offset *uint64, labels map[string]string, data interface{}) error {
-	pan := log.NewSpan(ctx, fmt.Sprintf("api.List%s", kind), map[string]interface{}{"Limit": limit, "Offset": offset, "World": world})
-	defer pan.End()
-	err := s.db.List(ctx, world, kind, labels, int64(clamp(limit, 1, defaultMaxLimit, defaultLimit)), int64(defaultValue(offset, 0)), data)
-	if err != nil {
-		log.Error().Err(err).Msg("Failed to list objects")
-		pan.Err(err)
-	}
-	return err
-}
+func (s *Server) setKind(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithTimeout(r.Context(), s.cfg.TimeoutWrite)
+	defer cancel()
 
-func (s *Server) Factions(ctx context.Context, in *structs.GetFactionsRequest) (*structs.GetFactionsResponse, error) {
-	data := []*structs.Faction{}
-	err := s.genericGet(ctx, kindFaction, in.World, in, &data)
-	return &structs.GetFactionsResponse{Data: data, Error: toError(err)}, nil
-}
-
-func (s *Server) SetFactions(ctx context.Context, in *structs.SetFactionsRequest) (*structs.SetFactionsResponse, error) {
-	obj := &structs.SetFactionsResponse{}
-	s.genericSet(ctx, kindFaction, in.World, in.Data, in, obj)
-	return obj, nil
-}
-
-func (s *Server) DeleteFaction(ctx context.Context, in *structs.DeleteFactionRequest) (*structs.DeleteFactionResponse, error) {
-	out := &structs.DeleteFactionResponse{}
-	s.genericDelete(ctx, kindFaction, in.World, in.Id, in, out)
-	return out, nil
-}
-
-func (s *Server) ListFactions(ctx context.Context, in *structs.ListFactionsRequest) (*structs.ListFactionsResponse, error) {
-	data := []*structs.Faction{}
-	err := s.genericList(ctx, kindFaction, in.World, in.Limit, in.Offset, in.Labels, &data)
-	return &structs.ListFactionsResponse{Data: data, Error: toError(err)}, nil
-}
-
-func (s *Server) Actors(ctx context.Context, in *structs.GetActorsRequest) (*structs.GetActorsResponse, error) {
-	data := []*structs.Actor{}
-	err := s.genericGet(ctx, kindActor, in.World, in, &data)
-	return &structs.GetActorsResponse{Data: data, Error: toError(err)}, nil
-}
-
-func (s *Server) SetActors(ctx context.Context, in *structs.SetActorsRequest) (*structs.SetActorsResponse, error) {
-	data := &structs.SetActorsResponse{}
-	s.genericSet(ctx, kindActor, in.World, in.Data, in, data)
-	return data, nil
-}
-
-func (s *Server) DeleteActor(ctx context.Context, in *structs.DeleteActorRequest) (*structs.DeleteActorResponse, error) {
-	data := &structs.DeleteActorResponse{}
-	s.genericDelete(ctx, kindActor, in.World, in.Id, in, data)
-	return data, nil
-}
-
-func (s *Server) ListActors(ctx context.Context, in *structs.ListActorsRequest) (*structs.ListActorsResponse, error) {
-	data := []*structs.Actor{}
-	err := s.genericList(ctx, kindActor, in.World, in.Limit, in.Offset, in.Labels, &data)
-	return &structs.ListActorsResponse{Data: data, Error: toError(err)}, nil
-}
-
-func (s *Server) Races(ctx context.Context, in *structs.GetRacesRequest) (*structs.GetRacesResponse, error) {
-	data := []*structs.Race{}
-	err := s.genericGet(ctx, kindRace, in.World, in, &data)
-	return &structs.GetRacesResponse{Data: data, Error: toError(err)}, nil
-}
-
-func (s *Server) SetRaces(ctx context.Context, in *structs.SetRacesRequest) (*structs.SetRacesResponse, error) {
-	data := &structs.SetRacesResponse{}
-	s.genericSet(ctx, kindRace, in.World, in.Data, in, data)
-	return data, nil
-}
-
-func (s *Server) OnChange(in *structs.OnChangeRequest, stream structs.API_OnChangeServer) error {
-	// validate the request
-	err := validOnChange(in)
-	if err != nil {
-		s.log.Warn().Err(err).Msg("Invalid request")
-		stream.Send(&structs.OnChangeResponse{Error: toError(err)})
-		return err
-	}
-
-	// setup log & trace
-	peerAddr := ""
-	peer, ok := peer.FromContext(stream.Context())
-	if ok {
-		peerAddr = peer.Addr.String()
-	}
-
-	attrs := map[string]interface{}{
-		"world": in.Data.World,
-		"key":   in.Data.Key,
-		"type":  in.Data.Type,
-		"id":    in.Data.Id,
-		"queue": in.Queue,
-		"peer":  peerAddr,
-	}
-	l := log.Sublogger("api.OnChange", attrs)
-
-	// start the change listener
-	l.Debug().Msg("Starting change listener")
-
-	// determine if the queue needs a name & if we're auto deleting & acking
-	durable := true
-	if in.Queue == "" {
-		durable = false
-		in.Queue = fmt.Sprintf("client.%s", uuid.NewID().String())
-	}
-
-	sub, err := s.qu.SubscribeChange(in.Data, in.Queue, durable)
-	if err != nil {
-		l.Error().Err(err).Msg("Failed to start change listener")
-		return err
-	}
-
-	defer func() {
-		l.Debug().Msg("Closing change listener")
-		sub.Close()
-	}()
-
-	// while the stream is open, send changes to client
-	for {
-		select {
-		case <-stream.Context().Done():
-			err := stream.Context().Err()
-			s.log.Debug().Err(err).Msg("OnChange client disconnected")
-			return err
-		case msg, ok := <-sub.Channel():
-			if !ok {
-				return nil
-			}
-			l.Debug().Str("MessageId", msg.Id()).Msg("Received change")
-			pan := log.NewSpan(msg.Context(), "api.OnChange", attrs, map[string]interface{}{"MessageId": msg.Id()})
-
-			change := &structs.Change{}
-			err := change.UnmarshalJSON(msg.Data())
-			if err != nil {
-				if in.Queue != "" {
-					msg.Ack() // message is borked
-				}
-				l.Error().Err(err).Msg("Failed to unmarshal change")
-				pan.Err(err)
-				pan.End()
-				continue
-			}
-
-			ackId := ""
-			if in.Queue != "" {
-				ackId = s.qu.DeferAck(msg, change)
-			}
-
-			err = stream.Send(&structs.OnChangeResponse{Data: change, Ack: ackId, Error: toError(err)})
-			if err != nil {
-				l.Error().Err(err).Msg("Failed to send change")
-				pan.Err(err)
-			}
-			pan.End()
-		}
-	}
-}
-
-// AckStream is a stream that receives acks from the client.
-// We pass these to the Queue to deal with. Messages will be dealt with locally if
-// possible or published into a topic so whomever sent them can deal with them.
-func (s *Server) AckStream(stream grpc.ClientStreamingServer[structs.AckRequest, structs.AckResponse]) error {
-	for {
-		msg, err := stream.Recv()
-		if err != nil {
-			s.log.Debug().Err(err).Msg("AckStream client disconnected")
-			return err
-		}
-		for _, ackId := range msg.Ack {
-			if ackId == "" {
-				continue
-			}
-			err = s.qu.Ack(ackId)
-			s.log.Debug().Err(err).Str("AckId", ackId).Msg("Received ack from client")
-		}
-	}
-}
-
-// genericRequestResponse is a helper function to send a request to the queue and wait for a response.
-// We do this for all write requests (Set & Delete) sent to the API Server.
-//
-// This allows us to retry, reject, ack or nack requests as internally as required.
-// Ie. we can ensure that we write to the database and emit to the queue, if either fails we can reject and
-// retry the request (the db write will be idempotent if the object Etag has not changed in the meantime).
-//
-// This causes a worker routine running on an API Server (even us) to call asyncAPIRequest defined in
-// async.go -- from here the relevant functions defined in async.go are called.
-func (s *Server) genericRequestResponse(c context.Context, in marshalable, out marshalableReply) {
-	pan := log.NewSpan(c, "api.genericRequestResponse")
+	pan := log.NewSpan(ctx, "api.setKind")
+	ctx = pan.Context // make sure the root span is in the context
 	defer pan.End()
 
-	data, err := encodeRequest(in)
+	resp := &api.SetResponse{Error: &api.ErrorResponse{}}
+
+	// read out the kind
+	vars := mux.Vars(r)
+	k, ok := vars["kind"]
+	if !ok || !kind.IsValid(k) {
+		pan.Err(fmt.Errorf("kind %s not found", k))
+		resp.Error.Code = http.StatusNotFound
+		resp.Error.Message = "not found"
+		s.writeResp(w, http.StatusNotFound, resp)
+		return
+	}
+	pan.SetAttributes(map[string]interface{}{"kind": k})
+
+	// parse the body of the request
+	body := &api.SetRequest{}
+	err := readJson(r, body)
 	if err != nil {
-		out.SetError(toError(err))
-		log.Error().Err(err).Msg("Failed to encode request")
 		pan.Err(err)
+		resp.Error.Code = http.StatusBadRequest
+		resp.Error.Message = "invalid request json"
+		s.writeResp(w, http.StatusBadRequest, resp)
 		return
 	}
 
-	// publish the request
-	s.log.Debug().Int("Bytes", len(data)).Msg("Publishing request")
-	rchan, err := s.qu.EnqueueApiReq(c, data)
+	// validate request Fields
+	err = kind.Validate(k, body)
 	if err != nil {
-		out.SetError(toError(err))
-		log.Error().Err(err).Msg("Failed to publish request")
 		pan.Err(err)
+		resp.Error.Code = http.StatusBadRequest
+		resp.Error.Message = err.Error()
+		s.writeResp(w, http.StatusBadRequest, resp)
 		return
 	}
 
-	// wait for a reply
-	reply := <-rchan.Channel()
-	if reply == nil {
-		err := errors.New("no data in reply")
-		out.SetError(&structs.Error{Message: err.Error(), Code: 500})
-		log.Error().Err(err).Msg("Nil reply received")
+	err = s.svc.setKind(ctx, k, body, resp)
+	if err != nil {
 		pan.Err(err)
-		return
-	}
-	if reply.Data == nil || len(reply.Data()) == 0 {
-		log.Debug().Str("MessageId", reply.Id()).Msg("Received reply with no data")
-		return // no data in reply
-	}
-
-	log.Debug().Str("MessageId", reply.Id()).Int("Bytes", len(reply.Data())).Msg("Received reply")
-
-	err = out.UnmarshalJSON(reply.Data())
-	if err == nil {
-		return // seems legit
-	}
-
-	// before we complain that the message is invalid, try to unmarshal it as an error
-	errStruct := &structs.Error{}
-	suberr := errStruct.UnmarshalJSON(reply.Data())
-	if suberr == nil { // ok something is telling us it broke
-		out.SetError(errStruct)
-		log.Error().Err(suberr).Msg("unexpected error message returned")
-		pan.Err(suberr)
+		resp.Error.Code = errorCodeHTTP(err)
+		resp.Error.Message = err.Error()
+		s.writeResp(w, errorCodeHTTP(err), resp)
 		return
 	}
 
-	// um, no idea what happened
-	out.SetError(toError(err))
-	log.Error().Err(err).Msg("Failed to unmarshal reply")
-	pan.Err(err)
+	s.writeResp(w, http.StatusOK, resp)
 	return
 }
 
-func (s *Server) startWorkers() error {
-	if s.workers != nil {
-		s.stopWorkers()
-	}
-	if s.apiSub != nil {
-		s.apiSub.Close()
-	}
+func (s *Server) delKind(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithTimeout(r.Context(), s.cfg.TimeoutWrite)
+	defer cancel()
 
-	s.workers = make([]backgroundWorker, s.cfg.WorkersAPI+1)
+	pan := log.NewSpan(ctx, "api.delKind")
+	ctx = pan.Context // make sure the root span is in the context
+	defer pan.End()
 
-	qsub, err := s.qu.DequeueApiReq()
-	if err != nil {
-		log.Error().Err(err).Msg("Failed to subscribe to queue")
-		return err
-	}
-	s.apiSub = qsub
+	resp := &api.DeleteResponse{Error: &api.ErrorResponse{}}
 
-	s.log.Debug().Msg("Starting tick manager")
-	tc, err := newTickManager("tick-manager", s.db, s.qu)
-	if err != nil {
-		log.Error().Err(err).Msg("Failed to create tick cache")
-		return err
-	}
-	go tc.Run()
-	s.workers[0] = tc
-	s.tickManager = tc
-
-	s.log.Debug().Int("Routines", s.cfg.WorkersAPI).Msg("Starting api workers")
-	for i := 0; i < s.cfg.WorkersAPI; i++ {
-		log.Debug().Int("Worker", i).Msg("Starting worker")
-
-		wrk := newApiWorker(fmt.Sprintf("api-worker-%d", i), s, qsub)
-		s.workers[i+1] = wrk
-
-		go func(w *apiWorker) {
-			w.Run()
-		}(wrk)
-	}
-
-	return nil
-}
-
-func (s *Server) stopWorkers() {
-	if s.workers == nil {
+	// read out the kind
+	vars := mux.Vars(r)
+	k, ok := vars["kind"]
+	if !ok || !kind.IsValid(k) {
+		pan.Err(fmt.Errorf("kind %s not found", k))
+		resp.Error.Code = http.StatusNotFound
+		resp.Error.Message = "not found"
+		s.writeResp(w, http.StatusNotFound, resp)
 		return
 	}
-	for _, w := range s.workers {
-		if w != nil {
-			w.Kill()
-		}
+	pan.SetAttributes(map[string]interface{}{"kind": k})
+
+	// parse the body of the request
+	body := &api.DeleteRequest{}
+	err := readJson(r, body)
+	if err != nil {
+		pan.Err(err)
+		resp.Error.Code = http.StatusBadRequest
+		resp.Error.Message = "invalid request json"
+		s.writeResp(w, http.StatusBadRequest, resp)
+		return
 	}
-	s.workers = nil
-	if s.apiSub != nil {
-		s.apiSub.Close()
+
+	// validate request Fields
+	err = kind.Validate(k, body)
+	if err != nil {
+		pan.Err(err)
+		resp.Error.Code = http.StatusBadRequest
+		resp.Error.Message = err.Error()
+		s.writeResp(w, http.StatusBadRequest, resp)
+		return
 	}
-	s.apiSub = nil
+
+	pan.SetAttributes(map[string]interface{}{"ids": len(body.Ids), "world": body.World})
+
+	err = s.svc.deleteKind(ctx, k, body, resp)
+	if err != nil {
+		pan.Err(err)
+		resp.Error.Code = errorCodeHTTP(err)
+		resp.Error.Message = err.Error()
+		s.writeResp(w, errorCodeHTTP(err), resp)
+		return
+	}
+
+	s.writeResp(w, http.StatusOK, resp)
+	return
+}
+
+func (s *Server) health(w http.ResponseWriter, r *http.Request) {
+	if s.shuttingDown {
+		w.WriteHeader(http.StatusServiceUnavailable)
+	} else {
+		w.WriteHeader(http.StatusOK)
+	}
+}
+
+func (s *Server) Stop() {
+	s.shuttingDown = true
+	s.svc.Shutdown()
+	s.srv.Shutdown(context.Background())
+}
+
+func (s *Server) Serve(port int) error {
+	s.srv = &http.Server{
+		Addr:         fmt.Sprintf(":%d", port),
+		Handler:      handlers.CompressHandler(s.router),
+		ReadTimeout:  s.cfg.TimeoutRead,
+		WriteTimeout: s.cfg.TimeoutWrite,
+	}
+	return s.srv.ListenAndServe()
 }

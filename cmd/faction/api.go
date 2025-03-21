@@ -3,6 +3,7 @@ package main
 import (
 	"os"
 	"os/signal"
+	"sync"
 	"syscall"
 	"time"
 
@@ -46,15 +47,17 @@ type optQueue struct {
 type optsAPI struct {
 	optGeneral
 	optDatabase
-	optLocker
+	//optLocker
 	optSearchbase
 	optQueue
 
 	// MaxMessageAge is the maximum age of a message before it is considered stale
 	MaxMessageAge time.Duration `env:"MAX_MESSAGE_AGE" long:"max-message-age" description:"Maximum age of a message before it is considered stale" default:"10m"`
-	WorkersAPI    int           `env:"WORKERS_API" long:"workers-api" description:"Number of routines to use for processing api write requests" default:"5"`
 	Port          int           `env:"PORT" long:"port" description:"Port to listen on" default:"5000"`
 	FlushSearch   bool          `env:"FLUSH_SEARCH" long:"flush-search" description:"Wait for writes to searchbase before returning API writes (slow)"`
+
+	TimeoutRead  time.Duration `env:"TIMEOUT_READ" long:"timeout-read" description:"Read timeout" default:"60s"`
+	TimeoutWrite time.Duration `env:"TIMEOUT_WRITE" long:"timeout-write" description:"Write timeout" default:"60s"`
 }
 
 func (c *optsAPI) Execute(args []string) error {
@@ -63,47 +66,67 @@ func (c *optsAPI) Execute(args []string) error {
 		log.SetGlobalLevel()
 	}
 
+	ready := sync.WaitGroup{}
+	ready.Add(3)
+	var database db.Database
+	var qu queue.Queue
+	var sb search.Search
+
 	// connect to the database
-	database, err := db.NewMongo(&db.MongoConfig{
-		Host:     c.Db_Host,
-		Port:     c.Db_Port,
-		Username: c.Db_Username,
-		Password: c.Db_Password,
-		Database: c.Db_Database,
-	})
-	log.Info().Err(err).Str("host", c.Db_Host).Int("port", c.Db_Port).Str("username", c.Db_Username).Str("database", c.Db_Database).Msg("database connection")
-	if err != nil {
-		return err
-	}
+	go func() {
+		defer ready.Done()
+		var err error
+		database, err = db.NewMongo(&db.MongoConfig{
+			Host:     c.Db_Host,
+			Port:     c.Db_Port,
+			Username: c.Db_Username,
+			Password: c.Db_Password,
+			Database: c.Db_Database,
+		})
+		log.Info().Err(err).Str("host", c.Db_Host).Int("port", c.Db_Port).Str("username", c.Db_Username).Str("database", c.Db_Database).Msg("database connection")
+		if err != nil {
+			panic(err)
+		}
+	}()
 
 	// connect to the queue
-	qu, err := queue.NewRabbitQueue(&queue.RabbitConfig{
-		Host:     c.Q_Host,
-		Port:     c.Q_Port,
-		Username: c.Q_Username,
-		Password: c.Q_Password,
-	})
-	log.Info().Err(err).Str("host", c.Q_Host).Int("port", c.Q_Port).Str("username", c.Q_Username).Msg("queue connection")
-	if err != nil {
-		return err
-	}
+	go func() {
+		defer ready.Done()
+		var err error
+		qu, err = queue.NewRabbitQueue(&queue.RabbitConfig{
+			Host:     c.Q_Host,
+			Port:     c.Q_Port,
+			Username: c.Q_Username,
+			Password: c.Q_Password,
+		})
+		log.Info().Err(err).Str("host", c.Q_Host).Int("port", c.Q_Port).Str("username", c.Q_Username).Msg("queue connection")
+		if err != nil {
+			panic(err)
+		}
+	}()
 
 	// connect to search
-	sb, err := search.NewOpensearch(&search.OpensearchConfig{
-		Address:       c.Sb_Address,
-		Username:      c.Sb_Username,
-		Password:      c.Sb_Password,
-		FlushInterval: c.Sb_FlushInterval,
-		WriteRoutines: c.Sb_WriteRoutines,
-	})
-	log.Info().Err(err).Str("address", c.Sb_Address).Str("username", c.Sb_Username).Msg("search connection")
-	if err != nil {
-		return err
-	}
+	go func() {
+		defer ready.Done()
+		var err error
+		sb, err = search.NewOpensearch(&search.OpensearchConfig{
+			Address:       c.Sb_Address,
+			Username:      c.Sb_Username,
+			Password:      c.Sb_Password,
+			FlushInterval: c.Sb_FlushInterval,
+			WriteRoutines: c.Sb_WriteRoutines,
+		})
+		log.Info().Err(err).Str("address", c.Sb_Address).Str("username", c.Sb_Username).Msg("search connection")
+		if err != nil {
+			panic(err)
+		}
+	}()
+
+	// wait for our connections to succeed
+	ready.Wait()
 
 	// setup the API server
 	server, err := api.NewServer(&api.Config{
-		WorkersAPI:    c.WorkersAPI,
 		MaxMessageAge: c.MaxMessageAge,
 		FlushSearch:   c.FlushSearch,
 	}, database, qu, sb)

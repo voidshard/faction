@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"strings"
-	"time"
 )
 
 const (
@@ -11,10 +10,8 @@ const (
 )
 
 type optCliConn struct {
-	Host        string        `long:"host" env:"HOST" description:"API host" default:"localhost"`
-	Port        int           `long:"port" env:"PORT" description:"API port" default:"5000"`
-	IdleTimeout time.Duration `long:"idle-timeout" env:"IDLE_TIMEOUT" description:"Idle timeout" default:"30s"`
-	ConnTimeout time.Duration `long:"conn-timeout" env:"CONN_TIMEOUT" description:"Connection timeout" default:"5s"`
+	Host string `long:"host" env:"HOST" description:"API host" default:"localhost"`
+	Port int    `long:"port" env:"PORT" description:"API port" default:"5000"`
 }
 
 type optCliGlobal struct {
@@ -23,11 +20,12 @@ type optCliGlobal struct {
 
 type optsCli struct {
 	Get    cliGetCmd    `command:"get" description:"Get objects"`
-	List   cliListCmd   `command:"list" description:"List objects"`
 	Create cliCreateCmd `command:"create" description:"Create objects"`
-	Delete cliDeleteCmd `command:"delete" description:"Delete objects"`
-	Watch  cliWatchCmd  `command:"watch" description:"Watch objects"`
 	Edit   cliEditCmd   `command:"edit" description:"Edit objects"`
+	Delete cliDeleteCmd `command:"delete" description:"Delete objects"`
+	Watch  cliWatchCmd  `command:"watch" description:"Watch events"`
+	Event  cliEventCmd  `command:"event" description:"Emit events (force reconcile, debugging)"`
+	Search cliSearchCmd `command:"search" description:"Search for objects"`
 
 	Help cliHelpCmd `command:"help" description:"Help about available objects"`
 }

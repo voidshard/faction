@@ -7,13 +7,11 @@ import (
 	"time"
 
 	"github.com/martinlindhe/base36"
-	"go.opentelemetry.io/contrib/instrumentation/go.mongodb.org/mongo-driver/mongo/otelmongo"
-
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 
-	"github.com/voidshard/faction/pkg/structs"
+	v1 "github.com/voidshard/faction/pkg/structs/v1"
 	"github.com/voidshard/faction/pkg/util/log"
 	"github.com/voidshard/faction/pkg/util/uuid"
 )
@@ -43,9 +41,11 @@ func NewMongo(cfg *MongoConfig) (*Mongo, error) {
 	ctx, cancel := context.WithTimeout(context.TODO(), 10*time.Second)
 	defer cancel()
 
-	opts := options.Client().ApplyURI(url)
+	bsonOpts := &options.BSONOptions{UseJSONStructTags: true}
+
+	opts := options.Client().ApplyURI(url).SetBSONOptions(bsonOpts)
 	// github.com/open-telemetry/opentelemetry-go-contrib/blob/main/instrumentation/go.mongodb.org/mongo-driver/mongo/otelmongo/example_test.go
-	opts.Monitor = otelmongo.NewMonitor()
+	// opts.Monitor = otelmongo.NewMonitor()
 
 	client, err := mongo.Connect(ctx, opts)
 	if err != nil {
@@ -105,62 +105,27 @@ func (m *Mongo) ping() {
 	}
 }
 
-func (m *Mongo) Worlds(c context.Context, id []string) ([]*structs.World, error) {
-	var results []*structs.World
-	return results, m.objects(c, colWorlds, bson.M{"_id": bson.M{"$in": id}}, &results)
-}
-
-func (m *Mongo) ListWorlds(c context.Context, labels map[string]string, limit, offset int64) ([]*structs.World, error) {
-	var results []*structs.World
-	return results, m.listObjects(c, colWorlds, labels, limit, offset, &results)
-}
-
-func (m *Mongo) SetWorld(c context.Context, etag string, in *structs.World) (string, error) {
-	m.log.Debug().Str("database", m.cfg.Database).Str("collection", colWorlds).Str("_id", in.Id).Str("etag", in.Etag).Msg("setWorld")
-	if in.Id == "" {
-		return "", fmt.Errorf("%w world id required", ErrInvalid)
-	}
-
-	filter := bson.D{{"_id", in.Id}, {"etag", bson.M{"$in": []string{in.Etag, etag}}}}
-	in.Etag = etag
-
-	result, err := m.collection(colWorlds).UpdateOne(
-		c,
-		filter,
-		bson.M{"$set": in},
-		options.Update().SetUpsert(true),
-	)
-	if err != nil {
-		if mongo.IsDuplicateKeyError(err) {
-			return "", ErrDuplicate
-		}
-		// Timeout / network error
-		return "", err
-	}
-	if result.UpsertedCount+result.ModifiedCount == 0 {
-		return "", ErrEtagMismatch
-	}
-
-	return etag, err
-}
-
-func (m *Mongo) DeleteWorld(c context.Context, id string) error {
-	return m.deleteObject(c, colWorlds, id)
-}
-
 func (m *Mongo) Get(c context.Context, world, kind string, id []string, out interface{}) error {
+	pan := log.NewSpan(c, "db.Find", map[string]interface{}{"world": world, "kind": kind, "ids": len(id)})
+	defer pan.End()
 	return m.objects(c, world_collection(world, kind), bson.M{"_id": bson.M{"$in": id}}, out)
 }
 
 func (m *Mongo) List(c context.Context, world, kind string, labels map[string]string, limit, offset int64, out interface{}) error {
+	pan := log.NewSpan(c, "db.Find", map[string]interface{}{"world": world, "kind": kind, "labels": len(labels), "limit": limit, "offset": offset})
+	defer pan.End()
 	return m.listObjects(c, world_collection(world, kind), labels, limit, offset, out)
 }
 
 func (m *Mongo) Delete(c context.Context, world, kind string, id string) error {
+	pan := log.NewSpan(c, "db.Delete", map[string]interface{}{"world": world, "kind": kind, "id": id})
+	defer pan.End()
 	return m.deleteObject(c, world_collection(world, kind), id)
 }
 
-func (m *Mongo) Set(c context.Context, world, etag string, in []structs.Object) (*Result, error) {
+func (m *Mongo) Set(c context.Context, world, etag string, in []v1.Object) (*Result, error) {
+	pan := log.NewSpan(c, "db.Set", map[string]interface{}{"world": world, "etag": etag, "count": len(in)})
+	defer pan.End()
 	if len(in) == 0 {
 		return nil, fmt.Errorf("%w no objects to set", ErrInvalid)
 	}
@@ -168,7 +133,7 @@ func (m *Mongo) Set(c context.Context, world, etag string, in []structs.Object) 
 	if err != nil {
 		return nil, err
 	}
-	return m.setObjects(c, world_collection(world, in[0].Kind()), models)
+	return m.setObjects(c, world_collection(world, in[0].GetKind()), models)
 }
 
 func (m *Mongo) Close() {
@@ -193,7 +158,7 @@ func (m *Mongo) listObjects(c context.Context, collection string, labels map[str
 	if labels != nil && len(labels) > 0 {
 		filter = map[string]string{}
 		for k, v := range labels {
-			filter[fmt.Sprintf("labels.%s", k)] = v
+			filter[fmt.Sprintf("Labels.%s", k)] = v
 		}
 	}
 
@@ -206,6 +171,7 @@ func (m *Mongo) listObjects(c context.Context, collection string, labels map[str
 	if err != nil {
 		return err
 	}
+
 	return cursor.All(c, out)
 }
 
@@ -236,25 +202,39 @@ func (m *Mongo) setObjects(c context.Context, collection string, models []mongo.
 }
 
 // prepareSet takes a list of objects and prepares them for insert or update
-func prepareSet[o structs.Object](world, newEtag string, in []o) ([]mongo.WriteModel, error) {
+func prepareSet(world, newEtag string, in []v1.Object) ([]mongo.WriteModel, error) {
 	models := []mongo.WriteModel{}
 	for _, v := range in {
+		isCreate := v.GetEtag() == ""
+		if isCreate {
+			v.SetEtag(newEtag)
+			if v.GetId() == "" {
+				v.SetId(uuid.New())
+			}
+		}
+
+		// seriously mongo I should be able to just set an explicit ID on insert
+		// but noooo unless I want to add the field to each struct root I have to
+		// on-the-fly another struct to set it there.
+		//doc := structs.Map(v)
+		//doc["_id"] = v.GetId()
+		//doc["etag"] = v.GetEtag()
+		doc := v
+
 		var mod mongo.WriteModel
-		if v.GetEtag() == "" { // if it doesn't have an Etag we're inserting
-			v.SetId(uuid.NewID().String())
-			mod = mongo.NewInsertOneModel().SetDocument(v)
+		if isCreate { // if it doesn't have an Etag we're inserting
+			mod = mongo.NewInsertOneModel().SetDocument(doc)
 		} else { // otherwise we're updating (well, replacing)
 			// update if the ID and either the new or the old etag match
 			// (ie. if we did a partial update but the etag hasn't changed since our write operation).
 			// If we update with the same etag then nothing will change.
 			// If we update with the old etag (the one we've sent) then we want the update.
-			mod = mongo.NewReplaceOneModel().SetReplacement(v).SetFilter(bson.D{
+			mod = mongo.NewReplaceOneModel().SetReplacement(doc).SetFilter(bson.D{
 				{"_id", v.GetId()},
-				{"etag", bson.M{"$in": []string{v.GetEtag(), newEtag}}},
+				{"_etag", bson.M{"$in": []string{v.GetEtag(), newEtag}}},
 			})
 		}
 		v.SetEtag(newEtag)
-		v.SetWorld(world)
 		models = append(models, mod)
 	}
 	return models, nil
@@ -264,5 +244,9 @@ func prepareSet[o structs.Object](world, newEtag string, in []o) ([]mongo.WriteM
 // ie. actors_world1, actors_world2 etc.
 // This forcibly divides data from different worlds and simplifies data management.
 func world_collection(world, name string) string {
+	if world == "" {
+		// if this doesn't have a world space (ie. it's global or a world itself) then just use the name
+		return strings.ToLower(name)
+	}
 	return strings.ToLower(fmt.Sprintf("%s_%s", name, base36.EncodeBytes([]byte(world))))
 }

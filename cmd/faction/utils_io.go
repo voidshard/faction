@@ -7,18 +7,16 @@ import (
 	"io"
 	"os"
 
-	"github.com/voidshard/faction/pkg/structs"
+	"github.com/voidshard/faction/pkg/kind"
+	v1 "github.com/voidshard/faction/pkg/structs/v1"
+
+	"gopkg.in/yaml.v3"
 )
 
-type marshalable interface {
-	MarshalYAML() ([]byte, error)
-	UnmarshalYAML([]byte) error
-}
-
-func dumpYaml[T marshalable](data []T) ([]byte, error) {
+func dumpYaml(data []v1.Object) ([]byte, error) {
 	ydata := [][]byte{}
 	for _, d := range data {
-		b, err := d.MarshalYAML()
+		b, err := yaml.Marshal(d)
 		if err != nil {
 			return nil, err
 		}
@@ -42,38 +40,19 @@ func calculateFileHash(filename string) (string, error) {
 	return fmt.Sprintf("%x", h.Sum(nil)), nil
 }
 
-func readObjectsFromFile(desired structs.Object, files []string) ([]structs.Object, error) {
-	found := []structs.Object{}
+func readObjectsFromFile(files []string) ([]v1.Object, error) {
+	found := []v1.Object{}
 	for _, f := range files {
 		data, err := os.ReadFile(f)
 		if err != nil {
 			return nil, err
 		}
 		for _, chunk := range bytes.Split(data, []byte("\n---\n")) {
-			// TODO: I give up trying to make this work with generics or the interface
-			switch desired.(type) {
-			case *structs.World:
-				obj := &structs.World{}
-				err := obj.UnmarshalYAML(chunk)
-				if err != nil {
-					return nil, err
-				}
-				found = append(found, obj)
-			case *structs.Faction:
-				obj := &structs.Faction{}
-				err := obj.UnmarshalYAML(chunk)
-				if err != nil {
-					return nil, err
-				}
-				found = append(found, obj)
-			case *structs.Actor:
-				obj := &structs.Actor{}
-				err := obj.UnmarshalYAML(chunk)
-				if err != nil {
-					return nil, err
-				}
-				found = append(found, obj)
+			obj, err := kind.New("", chunk)
+			if err != nil {
+				return nil, err
 			}
+			found = append(found, obj)
 		}
 	}
 	return found, nil

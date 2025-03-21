@@ -1,12 +1,10 @@
 package main
 
 import (
-	"context"
 	"fmt"
 
 	"github.com/voidshard/faction/pkg/client"
-	"github.com/voidshard/faction/pkg/structs"
-	"github.com/voidshard/faction/pkg/util/log"
+	"github.com/voidshard/faction/pkg/kind"
 )
 
 type cliCreateCmd struct {
@@ -14,102 +12,43 @@ type cliCreateCmd struct {
 	optGeneral
 	optCliGlobal
 
-	Object struct {
-		Name string `positional-arg-name:"object" description:"Object to create"`
-	} `positional-args:"true" required:"true"`
-
 	Files []string `short:"f" long:"file" description:"File(s) to read object(s) from"`
 }
 
 func (c *cliCreateCmd) Execute(args []string) error {
-	obj := validObject(c.Object.Name)
-	if obj == nil {
-		return invalidObjectError(c.Object.Name)
-	}
-
-	toWrite, err := readObjectsFromFile(obj, c.Files)
+	conn, err := client.New(client.NewConfig())
 	if err != nil {
 		return err
 	}
-
-	byWorld := map[string][]structs.Object{}
-	for _, v := range toWrite {
-		if v.GetWorld() == "" { // object does not have world set
-			if c.World == "" {
-				return fmt.Errorf("world not set on either object or command line")
-			}
-			v.SetWorld(c.World) // set world to the one given on the command line
-		} else { // object has world set
-			if c.World == "" {
-				// this is fine, object has a world set and command line doesn't specify one
-			} else if v.GetWorld() != c.World {
-				return fmt.Errorf("world mismatch: %s != %s for object %s", v.GetWorld(), c.World, v.GetId())
-			}
-		}
-		byWorld[v.GetWorld()] = append(byWorld[v.GetWorld()], v)
-	}
-
-	conn, err := client.New(c.Host, c.Port, c.IdleTimeout, c.ConnTimeout)
-	if err != nil {
-		return err
-	}
-
-	for world, subobjects := range byWorld {
-		err = updateObjects(conn, world, obj, subobjects)
-		if err != nil {
-			return err
-		}
-	}
-
-	return nil
+	return applyYamlUpdate(conn, c.World, c.Files)
 }
 
-func updateObjects(conn structs.APIClient, world string, obj structs.Object, objs []structs.Object) error {
-	var (
-		rerr *structs.Error
-	)
-	switch obj.(type) {
-	case *structs.Actor:
-		in := make([]*structs.Actor, len(objs))
-		for i, v := range objs {
-			in[i] = v.(*structs.Actor)
-		}
-		resp, err := conn.SetActors(context.TODO(), &structs.SetActorsRequest{World: world, Data: in})
-		if err != nil {
-			return err
-		} else if resp == nil {
-			return fmt.Errorf("nil response")
-		}
-		rerr = resp.Error
-	case *structs.Faction:
-		in := make([]*structs.Faction, len(objs))
-		for i, v := range objs {
-			in[i] = v.(*structs.Faction)
-		}
-		resp, err := conn.SetFactions(context.TODO(), &structs.SetFactionsRequest{World: world, Data: in})
-		if err != nil {
-			return err
-		} else if resp == nil {
-			return fmt.Errorf("nil response")
-		}
-		rerr = resp.Error
-	case *structs.World:
-		for _, v := range objs {
-			resp, err := conn.SetWorld(context.TODO(), &structs.SetWorldRequest{Data: v.(*structs.World)})
-			if err != nil {
-				return err
-			} else if resp == nil {
-				return fmt.Errorf("nil response")
-			} else if resp.Error != nil {
-				return fmt.Errorf("error: %s", resp.Error.Message)
-			}
+func applyYamlUpdate(conn *client.Client, world string, files []string) error {
+	toWrite, err := readObjectsFromFile(files)
+	if err != nil {
+		return err
+	}
+	// set world from cli if needed
+	for _, v := range toWrite {
+		if kind.IsGlobal(v.GetKind()) {
+			// if the object doesn't need a world then it's fine as is
+			continue
+		} else if v.GetWorld() == "" && world != "" {
+			// If object doesn't have a world but we have one from the cli, set it
+			v.SetWorld(world)
+		} else if v.GetWorld() != "" && world == "" {
+			// If the object has a world set and we weren't given one from the cli
+			continue
+		} else if v.GetWorld() == world {
+			// If the object has a world set and we were given one from the cli
+			continue
+		} else {
+			// Either; we have two different conflicting world ids (object vs cli global)
+			// or we have an object that requires a world and we've no default world var set
+			return fmt.Errorf("world required but is not set or ambiguous", v.GetWorld(), world)
 		}
 	}
 
-	var err error
-	if rerr != nil {
-		err = fmt.Errorf("error: %s", rerr.Message)
-	}
-	log.Debug().Err(err).Msg("updateObjects response")
-	return err
+	return conn.Set(toWrite)
+
 }

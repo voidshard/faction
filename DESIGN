@@ -10,17 +10,18 @@ Primitives
 
 - Everything has attributes, a map[string]float of arbitrary numbers
 
-- We define a "Select" object with Any, All, Not fields of map[string]string
+- We define a "Select" object with filters 
 
-    Where the 'Fields' of an object are the union of 
-    - the object Labels (map[string]string)
-    - object specific information
+    Where the 'Fields' of an object are all object data flattened into
+        map[string]interface{}
 
     Ie. an Actor with
 
       Labels:
           "my-culture/class": "serf"
           "favourite-colour": "blue"
+      Attributes:
+          "foobar": 10
       Race: "human"
       Culture: "my-culture"
       Religion: "smurfdom"
@@ -34,6 +35,7 @@ Primitives
         kind: Actor
         labels.my-culture/class: serf
         labels.favourite-colour: blue
+        attributes.foobar: 10
         race: human
         culture: my-culture
         religion: smurfdom
@@ -41,7 +43,17 @@ Primitives
         professions.tailor: expert
         ranks.royal-forge: clerk
 
-    We can then apply 'Any' 'All' and 'Not' semantics.
+    Thus a select can be
+        Select
+          All
+            - Field culture
+              Value my-culture
+              // Op (defaults to "equals")
+            - Field attributes.foobar
+              Value 5
+              Op GreaterThan
+    
+    *in future we could add Any, Not or other semantics
 
 
 - We define a "feeling" object
@@ -97,6 +109,9 @@ Actor:
 
 Profession:
 
+    common:
+      setLabels map[string]string
+      thoughts []Thought
     ranks:
     - name string
       setLabels map[string]string
@@ -105,22 +120,21 @@ Profession:
     [..]
 
     Eg.
-    - name master
-      level 10
-    - name master-in-residence
-      level 10
-    - name apprentice
-      level 1
-    - name expert
-      level 5
-    - name adept
-      level 2
 
-   
-   ranks:
-     leader:
-       eligible:
-         candidates:
+    name: smith
+    common:
+        
+    ranks:
+      - name master
+        level 10
+      - name master-in-residence
+        level 10
+      - name apprentice
+        level 1
+      - name expert
+        level 5
+      - name adept
+        level 2
 
 
 Faction:
@@ -207,6 +221,10 @@ Culture:
           feeling:
             trust: -20
             affiliation: 10
+
+
+Controllers
+===========
 
 
 

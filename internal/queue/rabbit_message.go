@@ -54,7 +54,7 @@ func (m *rabbitMessage) Reply(ctx context.Context, data []byte) error {
 		false,         // mandatory
 		false,         // immediate
 		amqp.Publishing{
-			MessageId:     uuid.NewID().String(),
+			MessageId:     uuid.New(),
 			CorrelationId: m.msg.CorrelationId,
 			Timestamp:     time.Now(),
 			ContentType:   "text/plain",

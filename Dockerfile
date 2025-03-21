@@ -4,10 +4,10 @@ FROM golang:1.22
 WORKDIR /go/src/github.com/voidshard/faction
 COPY go.mod ./
 COPY go.sum ./
+RUN go mod download
 COPY cmd cmd
 COPY pkg pkg
 COPY internal internal
-RUN go mod download
 
 RUN CGO_ENABLED=0 GOOS=linux go build -o /faction ./cmd/faction/*.go
 

@@ -18,7 +18,7 @@ services:
       Q_HOST: rabbit
       Q_USERNAME: admin
       Q_PASSWORD: admin
-      OTEL_EXPORTER_OTLP_ENDPOINT: grpc://otel-collector:4317
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4318
       OTEL_RESOURCE_ATTRIBUTES: "service.name=faction-api,service.version=0.0.1"
       OTEL_LOG_LEVEL: TRACE
       OTEL_EXPORTER_OTLP_INSECURE: "true"
@@ -78,6 +78,7 @@ services:
       - ./otel-collector-config.yaml:/etc/otel-collector-config.yaml
     ports:
       - "4317:4317" # OTLP gRPC receiver
+      - "4318:4318" # OTLP HTTP receiver
       - "1777:1777" # pprof
       - "13133:13133" # collector health listen port
       - "55679:55679" # zpages

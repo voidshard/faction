@@ -2,13 +2,14 @@ package queue
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"strings"
 	"sync"
 	"time"
 
 	amqp "github.com/rabbitmq/amqp091-go"
-	"github.com/voidshard/faction/pkg/structs"
+	"github.com/voidshard/faction/pkg/structs/api"
 	"github.com/voidshard/faction/pkg/util/log"
 	"github.com/voidshard/faction/pkg/util/uuid"
 )
@@ -58,7 +59,7 @@ func NewRabbitQueue(cfg *RabbitConfig) (*RabbitQueue, error) {
 			"host": cfg.Host,
 			"port": cfg.Port,
 		}),
-		replyQueue: fmt.Sprintf("internal.reply.%s", uuid.NewID().String()),
+		replyQueue: fmt.Sprintf("internal.reply.%s", uuid.New()),
 		replyLock:  sync.Mutex{},
 		replyChans: make(map[string]*rabbitSubscription),
 	}, nil
@@ -87,12 +88,12 @@ func (q *RabbitQueue) DeleteQueue(queue string) error {
 
 // Enqueue sends a message to a queue.
 func (q *RabbitQueue) Enqueue(ctx context.Context, queue string, data []byte) error {
-	return q.enqueue(ctx, uuid.NewID().String(), queue, "", data)
+	return q.enqueue(ctx, uuid.New(), queue, "", data)
 }
 
 // Request sends a message to a queue and waits for a reply.
 func (q *RabbitQueue) Request(ctx context.Context, queue string, data []byte) (Subscription, error) {
-	cid := uuid.NewID().String()
+	cid := uuid.New()
 
 	// since we're going to be waiting for a reply we need to ensure we're ready to receive them
 	err := q.ensureReadyForReplies()
@@ -120,7 +121,7 @@ func (q *RabbitQueue) enqueue(ctx context.Context, cid, queue, replyTo string, d
 	}
 
 	// prepare reply channel & message ID
-	mid := uuid.NewID().String()
+	mid := uuid.New()
 
 	// log & trace
 	defer q.log.Debug().Str("MessageId", mid).Str("CorrelationId", cid).Str("Queue", queue).Int("Data", len(data)).Msg("enqueued message")
@@ -215,8 +216,8 @@ func (q *RabbitQueue) Publish(ctx context.Context, topic string, key []string, d
 		return err
 	}
 
-	mid := uuid.NewID().String()
-	cid := uuid.NewID().String()
+	mid := uuid.New()
+	cid := uuid.New()
 	rkey := toRabbitKey(key)
 
 	pan := log.NewSpan(ctx, "rabbit.Publish", map[string]interface{}{
@@ -317,8 +318,8 @@ func (q *RabbitQueue) replyCleanRoutine() {
 	// never going to arrive
 
 	// our standard "time out" message; we can marshal it only once
-	apiErr := &structs.Error{Message: "timeout waiting for reply", Code: structs.ErrorCode_TIMEOUT}
-	errData, err := apiErr.MarshalJSON()
+	apiErr := &api.ErrorResponse{Message: "timeout waiting for reply", Code: 500}
+	errData, err := json.Marshal(apiErr)
 	if err != nil {
 		q.log.Warn().Err(err).Msg("failed to marshal static error data, API error responses may be confused")
 		errData = []byte("timeout")

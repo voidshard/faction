@@ -2,31 +2,41 @@ package api
 
 import (
 	"errors"
+	"fmt"
+	"net/http"
 
 	"github.com/voidshard/faction/internal/db"
-	"github.com/voidshard/faction/pkg/structs"
 )
 
 var (
-	ErrInvalid  = errors.New("invalid")
-	ErrNotFound = errors.New("not found")
+	ErrShuttingDown = fmt.Errorf("shutting down")
+	ErrInvalid      = fmt.Errorf("object invalid")
+	ErrPrecondition = fmt.Errorf("precondition failed")
+	ErrNotFound     = fmt.Errorf("object not found")
 )
 
-func toError(err error, code ...structs.ErrorCode) *structs.Error {
-	if err == nil {
-		return nil
+// errorCodeHTTP returns the HTTP status code for a given error.
+// If we cannot find a specific match we'll default to 500.
+func errorCodeHTTP(err error) int {
+	// API errors
+	if errors.Is(err, ErrShuttingDown) {
+		return http.StatusServiceUnavailable
+	} else if errors.Is(err, ErrInvalid) {
+		return http.StatusBadRequest
+	} else if errors.Is(err, ErrNotFound) {
+		return http.StatusNotFound
+	} else if errors.Is(err, ErrPrecondition) {
+		return http.StatusPreconditionFailed
 	}
-	if len(code) > 0 {
-		return &structs.Error{Code: code[0], Message: err.Error()}
+	// DB errors
+	if errors.Is(err, db.ErrNotFound) {
+		return http.StatusNotFound
+	} else if errors.Is(err, db.ErrDuplicate) {
+		return http.StatusConflict
+	} else if errors.Is(err, db.ErrInvalid) {
+		return http.StatusBadRequest
+	} else if errors.Is(err, db.ErrEtagMismatch) {
+		return http.StatusPreconditionFailed
 	}
-	if errors.Is(err, db.ErrNotFound) || errors.Is(err, ErrNotFound) {
-		return &structs.Error{Code: structs.ErrorCode_NOT_FOUND, Message: err.Error()}
-	}
-	if errors.Is(err, db.ErrDuplicate) || errors.Is(err, db.ErrEtagMismatch) {
-		return &structs.Error{Code: structs.ErrorCode_CONFLICT, Message: err.Error()}
-	}
-	if errors.Is(err, db.ErrInvalid) || errors.Is(err, ErrInvalid) {
-		return &structs.Error{Code: structs.ErrorCode_INVALID, Message: err.Error()}
-	}
-	return &structs.Error{Code: structs.ErrorCode_INTERNAL, Message: err.Error()}
+	return http.StatusInternalServerError
 }

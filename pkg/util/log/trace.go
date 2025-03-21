@@ -10,15 +10,14 @@ import (
 
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace"
-	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc"
+	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp"
 	"go.opentelemetry.io/otel/propagation"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
 	"go.opentelemetry.io/otel/trace"
 )
 
-// tracer os the default global tracer
-var tracer trace.Tracer
 var propgator propagation.TextMapPropagator
+var tracer trace.Tracer
 
 func init() {
 	setupOTelSDK(context.Background())
@@ -66,7 +65,7 @@ func ExtractTraceData(data []byte) (context.Context, []byte, error) {
 func discoverServiceName() string {
 	svcName := os.Getenv("OTEL_SERVICE_NAME")
 	if svcName == "" {
-		svcAttrs := os.Getenv("OTEL_SERVICE_ATTRIBUTES")
+		svcAttrs := os.Getenv("OTEL_RESOURCE_ATTRIBUTES")
 		for _, b := range strings.Split(svcAttrs, ",") {
 			kv := strings.Split(b, "=")
 			if len(kv) != 2 {
@@ -78,9 +77,13 @@ func discoverServiceName() string {
 		}
 	}
 	if svcName == "" {
+		// opentelemetry.io/docs/specs/otel/configuration/sdk-environment-variables/
 		svcName = "unknown"
-		Warn().Str("service", svcName).Msg("Service name not set, OTEL_SERVICE_NAME or OTEL_SERVICE_ATTRIBUTES to set it")
+		Warn().Str("service", svcName).Msg("Service name not set, OTEL_SERVICE_NAME or OTEL_RESOURCE_ATTRIBUTES to set it")
+	} else {
+		Debug().Str("service", svcName).Msg("Service name discovered")
 	}
+
 	return svcName
 }
 
@@ -88,7 +91,7 @@ func discoverServiceName() string {
 // If it does not return an error, make sure to call shutdown for proper cleanup.
 func setupOTelSDK(ctx context.Context) (func(), error) {
 	// Configure a new OTLP exporter
-	client := otlptracegrpc.NewClient()
+	client := otlptracehttp.NewClient()
 	exp, err := otlptrace.New(ctx, client)
 	if err != nil {
 		return nil, err

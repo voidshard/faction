@@ -10,7 +10,8 @@ import (
 )
 
 type Span struct {
-	root trace.Span
+	root    trace.Span
+	Context context.Context
 }
 
 func (s *Span) End() {
@@ -23,13 +24,24 @@ func (s *Span) SetAttributes(attrs ...map[string]interface{}) {
 
 // NewSpan creates a new span with the given name and attributes from the default tracer
 func NewSpan(ctx context.Context, name string, attrs ...map[string]interface{}) *Span {
-	return newSpan(tracer, ctx, name, attrs...)
-}
-
-func newSpan(tr trace.Tracer, ctx context.Context, name string, attrs ...map[string]interface{}) *Span {
 	Debug().Str("span", name).Msg("Starting span")
-	_, span := tr.Start(ctx, name, trace.WithAttributes(toOtelAttrs(attrs...)...))
-	return &Span{root: span}
+
+	// https://pkg.go.dev/go.opentelemetry.io/otel/trace#Tracer
+	// Start creates a span and a context.Context containing the newly-created span.
+	//
+	// If the context.Context provided in `ctx` contains a Span then the newly-created
+	// Span will be a child of that span, otherwise it will be a root span. This behavior
+	// can be overridden by providing `WithNewRoot()` as a SpanOption, causing the
+	// newly-created Span to be a root span even if `ctx` contains a Span.
+	//
+	// When creating a Span it is recommended to provide all known span attributes using
+	// the `WithAttributes()` SpanOption as samplers will only have access to the
+	// attributes provided when a Span is created.
+	//
+	// Any Span that is created MUST also be ended. This is the responsibility of the user.
+	// Implementations of this API may leak memory or other resources if Spans are not ended.
+	ctx, span := tracer.Start(ctx, name, trace.WithAttributes(toOtelAttrs(attrs...)...))
+	return &Span{root: span, Context: ctx}
 }
 
 func (s *Span) Err(err error) error {
@@ -43,6 +55,8 @@ func toOtelAttrs(attrs ...map[string]interface{}) []attribute.KeyValue {
 	otelAttrs := []attribute.KeyValue{}
 	for _, attrset := range attrs {
 		for k, v := range attrset {
+			k := fmt.Sprintf("faction.app.%s", k)
+
 			var val reflect.Value
 			if reflect.TypeOf(v).Kind() == reflect.Ptr {
 				// if the value is a pointer, dereference it (otherwise we get the pointer address)
