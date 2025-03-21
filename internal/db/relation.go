@@ -125,30 +125,6 @@ var (
 	}
 )
 
-func (r Relation) tupleTable() string {
-	return fmt.Sprintf("tuples_%s", r)
-}
-
-func (r Relation) modTable() string {
-	return fmt.Sprintf("modifiers_%s", r)
-}
-
-// SupportsModifiers returns if the relation supports modifiers,
-// ie. the Tuple has a matching Modifer table.
-func (r Relation) SupportsModifiers() bool {
-	// modifiers complicate queries & add calculations but are a nice way of adding
-	// slow burn buffs / debuffs.
-	// In general we only support these on super important tuples (where we have
-	// a use case) since it requires us to track & query a lot more variables.
-	switch r {
-	case RelationPersonFactionAffiliation:
-		return true
-	case RelationFactionActionTypeWeight:
-		return true
-	case RelationFactionFactionTrust:
-		return true
-	case RelationPersonPersonTrust:
-		return true
-	}
-	return false
+func (r Relation) table(worldId string) string {
+	return fmt.Sprintf("tuples_%s_%s", worldId, r)
 }

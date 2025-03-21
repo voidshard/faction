@@ -1,0 +1,70 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: api
+  template:
+    metadata:
+      labels:
+        app: api
+    spec:
+      serviceAccount: faction
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 42000
+        runAsGroup: 42000
+        seccompProfile:
+          type: RuntimeDefault
+      initContainers:
+      - name: waitfordb
+        image: uristmcdwarf/faction:latest
+        args: ["migrate", "run", "--version", "100000"]
+        env:
+        - name: POD_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        - name: POD_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        - name: MIGRATIONS_LEASE
+          value: faction-dbmigrate
+        - name: DATABASE_USER
+          valueFrom:
+            secretKeyRef:
+              name: faction-faction-owner-user.postgres.credentials.postgresql.acid.zalan.do
+              key: username
+        - name: DATABASE_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: faction-faction-owner-user.postgres.credentials.postgresql.acid.zalan.do
+              key: password
+        - name: DATABASE_URL
+          value: postgres://$(DATABASE_USER):$(DATABASE_PASSWORD)@postgres:5432/faction
+      containers:
+      - name: main
+        image: uristmcdwarf/faction:latest
+        args: ["api"]
+        ports:
+        - containerPort: 8080
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+          readOnlyRootFilesystem: true
+        resources:
+          requests:
+            cpu: 100m
+            memory: 150Mi
+          limits:
+            cpu: 250m
+            memory: 300Mi
+        env:
+        - name: PORT
+          value: "8080"
